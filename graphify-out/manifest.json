@@ -1,0 +1,122 @@
+{
+  "client/package.json": {
+    "mtime": 1786223595.9509213,
+    "ast_hash": "52966c30341734f83ff09ed7a4a3f34a",
+    "semantic_hash": "52966c30341734f83ff09ed7a4a3f34a"
+  },
+  "client/src/App.jsx": {
+    "mtime": 1786223623.7510061,
+    "ast_hash": "57d83532554946f676d0f640db958382",
+    "semantic_hash": "57d83532554946f676d0f640db958382"
+  },
+  "client/src/api.js": {
+    "mtime": 1786223603.441842,
+    "ast_hash": "ffaa91998404a250ce6c0b87781521b7",
+    "semantic_hash": "ffaa91998404a250ce6c0b87781521b7"
+  },
+  "client/src/components/EventFormModal.jsx": {
+    "mtime": 1786222617.0899317,
+    "ast_hash": "09926ff9198e1ee298b21f9debae3e5d",
+    "semantic_hash": "09926ff9198e1ee298b21f9debae3e5d"
+  },
+  "client/src/components/ui.jsx": {
+    "mtime": 1786222620.8751397,
+    "ast_hash": "2718bb6a35e1724260897ff2f18e0c9a",
+    "semantic_hash": "2718bb6a35e1724260897ff2f18e0c9a"
+  },
+  "client/src/main.jsx": {
+    "mtime": 1786221795.6313443,
+    "ast_hash": "8d15fdad3e24a39a5810911f2f7d811d",
+    "semantic_hash": "8d15fdad3e24a39a5810911f2f7d811d"
+  },
+  "client/src/pages/EventPage.jsx": {
+    "mtime": 1786223607.8668323,
+    "ast_hash": "a052e19d7d24dda50113b8cf1f764372",
+    "semantic_hash": "a052e19d7d24dda50113b8cf1f764372"
+  },
+  "client/src/pages/EventsPage.jsx": {
+    "mtime": 1786221878.1853461,
+    "ast_hash": "54f64de81c53144c3d895cf1f4d29658",
+    "semantic_hash": "54f64de81c53144c3d895cf1f4d29658"
+  },
+  "client/src/pages/event/EventDashboard.jsx": {
+    "mtime": 1786222668.2579396,
+    "ast_hash": "071a3ebb9ba527b38b2cf4b5692f2a8b",
+    "semantic_hash": "071a3ebb9ba527b38b2cf4b5692f2a8b"
+  },
+  "client/src/pages/event/EventGuests.jsx": {
+    "mtime": 1786223090.9225316,
+    "ast_hash": "b599eec01c109fc4a397a31933206763",
+    "semantic_hash": "b599eec01c109fc4a397a31933206763"
+  },
+  "client/src/pages/event/EventHome.jsx": {
+    "mtime": 1786222636.092519,
+    "ast_hash": "b1e92eb723e411c34fb9719d78e33f97",
+    "semantic_hash": "b1e92eb723e411c34fb9719d78e33f97"
+  },
+  "client/src/pages/event/EventTables.jsx": {
+    "mtime": 1786223743.010486,
+    "ast_hash": "7bae23e224be03f7819619910642894a",
+    "semantic_hash": "7bae23e224be03f7819619910642894a"
+  },
+  "client/vite.config.js": {
+    "mtime": 1786221777.9521468,
+    "ast_hash": "54ec1e87e8756a9b6b903af6ac299eda",
+    "semantic_hash": "54ec1e87e8756a9b6b903af6ac299eda"
+  },
+  "server/package.json": {
+    "mtime": 1786220494.0432565,
+    "ast_hash": "2976f1dd862c5b3411c035c88760a27e",
+    "semantic_hash": "2976f1dd862c5b3411c035c88760a27e"
+  },
+  "server/src/db/index.js": {
+    "mtime": 1786220502.4398925,
+    "ast_hash": "54753cc1aa78ee6ba2cdf594240a14f7",
+    "semantic_hash": "54753cc1aa78ee6ba2cdf594240a14f7"
+  },
+  "server/src/db/init.js": {
+    "mtime": 1786223490.9476004,
+    "ast_hash": "18a5feb0c2eb7bff521e44d858f6ba97",
+    "semantic_hash": "18a5feb0c2eb7bff521e44d858f6ba97"
+  },
+  "server/src/db/schema.sql": {
+    "mtime": 1786223486.0848987,
+    "ast_hash": "cb4241d6069165a9c6b5c456dbb7affb",
+    "semantic_hash": "cb4241d6069165a9c6b5c456dbb7affb"
+  },
+  "server/src/index.js": {
+    "mtime": 1786223547.844088,
+    "ast_hash": "a973c1fccce040b8e9c3b60489af3d85",
+    "semantic_hash": "a973c1fccce040b8e9c3b60489af3d85"
+  },
+  "server/src/routes/events.js": {
+    "mtime": 1786220522.8863883,
+    "ast_hash": "e64dc1d7350be835c2539a95e6a18ac3",
+    "semantic_hash": "e64dc1d7350be835c2539a95e6a18ac3"
+  },
+  "server/src/routes/groups.js": {
+    "mtime": 1786222571.0854857,
+    "ast_hash": "fd4f546dd0468eea366539e8bb6ab525",
+    "semantic_hash": "fd4f546dd0468eea366539e8bb6ab525"
+  },
+  "server/src/routes/guests.js": {
+    "mtime": 1786223521.2428966,
+    "ast_hash": "70ca5d39ac6f578589eda7ba1bdad032",
+    "semantic_hash": "70ca5d39ac6f578589eda7ba1bdad032"
+  },
+  "server/src/routes/tables.js": {
+    "mtime": 1786223508.7251196,
+    "ast_hash": "d94d733173c815e7d1176c9e065da3e4",
+    "semantic_hash": "d94d733173c815e7d1176c9e065da3e4"
+  },
+  "README.md": {
+    "mtime": 1786223769.1949937,
+    "ast_hash": "aa69c71ee0bd412d10a917c2c6403da8",
+    "semantic_hash": "aa69c71ee0bd412d10a917c2c6403da8"
+  },
+  "client/index.html": {
+    "mtime": 1786221784.269902,
+    "ast_hash": "11c5bb3ac19200c5d6216dc067b7957e",
+    "semantic_hash": "11c5bb3ac19200c5d6216dc067b7957e"
+  }
+}

@@ -1,0 +1,40 @@
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import dotenv from "dotenv";
+
+import eventsRouter from "./routes/events.js";
+import groupsRouter from "./routes/groups.js";
+import guestsRouter from "./routes/guests.js";
+import tablesRouter from "./routes/tables.js";
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(morgan("dev"));
+
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
+
+app.use("/api/events", eventsRouter);
+app.use("/api/events/:eventId/groups", groupsRouter);
+app.use("/api/events/:eventId/guests", guestsRouter);
+app.use("/api/events/:eventId/tables", tablesRouter);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: "Ruta no encontrada" });
+});
+
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: "Error interno del servidor", detail: err.message });
+});
+
+const PORT = Number(process.env.PORT || 4000);
+app.listen(PORT, () => {
+  console.log(`API de DisplayEvent escuchando en http://localhost:${PORT}`);
+});
