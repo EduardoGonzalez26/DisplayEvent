@@ -67,6 +67,33 @@ router.get("/:id/stats", async (req, res, next) => {
   }
 });
 
+router.get("/:id/invitation", async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT invitation FROM events WHERE id = ? LIMIT 1`,
+      [req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
+    res.json(rows[0].invitation || {});
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/:id/invitation", async (req, res, next) => {
+  const invitation = req.body;
+  try {
+    const [result] = await pool.query(`UPDATE events SET invitation = ? WHERE id = ?`, [
+      JSON.stringify(invitation || {}),
+      req.params.id,
+    ]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Evento no encontrado" });
+    res.json({ ok: true, invitation });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const [rows] = await pool.query(`SELECT * FROM events WHERE id = ? LIMIT 1`, [req.params.id]);

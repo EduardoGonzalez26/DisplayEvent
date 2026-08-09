@@ -1,8 +1,9 @@
 const BASE = "/api";
 
 async function request(path, options = {}) {
+  const isFormData = options.body instanceof FormData;
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: isFormData ? undefined : { "Content-Type": "application/json" },
     ...options,
   });
   if (res.status === 204) return null;
@@ -16,6 +17,8 @@ export const api = {
     list: () => request("/events"),
     get: (id) => request(`/events/${id}`),
     stats: (id) => request(`/events/${id}/stats`),
+    invitation: (id) => request(`/events/${id}/invitation`),
+    setInvitation: (id, payload) => request(`/events/${id}/invitation`, { method: "PUT", body: JSON.stringify(payload) }),
     create: (payload) => request("/events", { method: "POST", body: JSON.stringify(payload) }),
     update: (id, payload) => request(`/events/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (id) => request(`/events/${id}`, { method: "DELETE" }),
@@ -40,5 +43,14 @@ export const api = {
     create: (eventId, payload) => request(`/events/${eventId}/tables`, { method: "POST", body: JSON.stringify(payload) }),
     update: (eventId, tableId, payload) => request(`/events/${eventId}/tables/${tableId}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (eventId, tableId) => request(`/events/${eventId}/tables/${tableId}`, { method: "DELETE" }),
+  },
+  invitations: {
+    get: (token) => request(`/invitations/${token}`),
+    rsvp: (token, payload) => request(`/invitations/${token}/rsvp`, { method: "PUT", body: JSON.stringify(payload) }),
+  },
+  upload: (file) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request("/uploads", { method: "POST", body });
   },
 };

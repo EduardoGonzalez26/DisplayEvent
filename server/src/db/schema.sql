@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS events (
   date DATE NOT NULL,
   time TIME NOT NULL,
   place VARCHAR(255) NOT NULL,
+  invitation JSON NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -18,9 +19,12 @@ CREATE TABLE IF NOT EXISTS `groups` (
   event_id INT NOT NULL,
   name VARCHAR(255) NOT NULL,
   leader_name VARCHAR(255) NULL,
+  invitation_token VARCHAR(16) NULL,
+  rsvp_note VARCHAR(500) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_group_event FOREIGN KEY (event_id)
     REFERENCES events(id) ON DELETE CASCADE,
+  UNIQUE INDEX uq_groups_token (invitation_token),
   INDEX idx_group_event (event_id)
 );
 
@@ -44,6 +48,7 @@ CREATE TABLE IF NOT EXISTS guests (
   is_child TINYINT(1) NOT NULL DEFAULT 0,
   is_leader TINYINT(1) NOT NULL DEFAULT 0,
   registered TINYINT(1) NOT NULL DEFAULT 0,
+  declined TINYINT(1) NOT NULL DEFAULT 0,
   table_id INT NULL,
   companion_of INT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

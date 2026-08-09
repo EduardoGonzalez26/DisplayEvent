@@ -1,16 +1,29 @@
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route, NavLink, useLocation } from "react-router-dom";
 import EventsPage from "./pages/EventsPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
 import EventHome from "./pages/event/EventHome.jsx";
 import EventGuests from "./pages/event/EventGuests.jsx";
 import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
+import EventInvitation from "./pages/event/EventInvitation.jsx";
+import InvitationPage from "./pages/invitation/InvitationPage.jsx";
 
 export default function App() {
+  const location = useLocation();
+  const isInvitation = location.pathname.startsWith("/invitacion/");
+
   const linkClass = ({ isActive }) =>
     `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
       isActive ? "bg-indigo-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
     }`;
+
+  if (isInvitation) {
+    return (
+      <Routes>
+        <Route path="/invitacion/:token" element={<InvitationPage />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -36,6 +49,7 @@ export default function App() {
             <Route path="invitados" element={<EventGuests />} />
             <Route path="mesas" element={<EventTables />} />
             <Route path="dashboard" element={<EventDashboard />} />
+            <Route path="invitacion" element={<EventInvitation />} />
           </Route>
         </Routes>
       </main>

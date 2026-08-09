@@ -60,12 +60,12 @@ export default function EventHome() {
             <StatCard label="Niños" value={stats.children_count} accent="text-sky-400" />
             <StatCard label="Adultos" value={stats.adults_count} />
             <StatCard
-              label="Registrados"
+              label="Confirmados"
               value={stats.registered_count}
               accent="text-emerald-400"
             />
             <StatCard
-              label="Faltan por registrar"
+              label="Sin confirmar"
               value={stats.unregistered_count}
               accent="text-amber-400"
             />

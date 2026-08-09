@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { generateToken } from "../utils/token.js";
 
 const router = Router({ mergeParams: true });
 
@@ -55,8 +56,8 @@ router.post("/", async (req, res, next) => {
     try {
       await conn.beginTransaction();
       const [result] = await conn.query(
-        `INSERT INTO \`groups\` (event_id, name, leader_name) VALUES (?, ?, ?)`,
-        [req.params.eventId, name, leader_name || null]
+        `INSERT INTO \`groups\` (event_id, name, leader_name, invitation_token) VALUES (?, ?, ?, ?)`,
+        [req.params.eventId, name, leader_name || null, generateToken()]
       );
       const groupId = result.insertId;
       if (leader_name) await insertLeader(conn, groupId, leader_name);
@@ -70,6 +71,23 @@ router.post("/", async (req, res, next) => {
     } finally {
       conn.release();
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Regenera el token de invitación de un grupo (invalida enlaces anteriores).
+router.post("/:groupId/token", async (req, res, next) => {
+  try {
+    const token = generateToken();
+    const [result] = await pool.query(
+      `UPDATE \`groups\` SET invitation_token = ? WHERE id = ? AND event_id = ?`,
+      [token, req.params.groupId, req.params.eventId]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Grupo no encontrado" });
+    }
+    res.json({ ok: true, invitation_token: token });
   } catch (err) {
     next(err);
   }

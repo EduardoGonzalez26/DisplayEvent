@@ -85,10 +85,12 @@ function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
         className={`shrink-0 text-xs rounded-full px-2.5 py-1 transition-colors ${
           guest.registered
             ? "bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30"
-            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            : guest.declined
+              ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
         }`}
       >
-        {guest.registered ? "Registrado" : "Por registrar"}
+        {guest.registered ? "Confirmado" : guest.declined ? "No asistirá" : "Sin confirmar"}
       </button>
       <button onClick={onDelete} className="shrink-0 text-xs text-red-500 hover:text-red-400">
         Eliminar
@@ -109,6 +111,7 @@ function GroupCard({
   onDeleteGuest,
   onEdit,
   onDelete,
+  onCopyInvite,
 }) {
   const [guestName, setGuestName] = useState("");
   const [isChild, setIsChild] = useState(false);
@@ -138,6 +141,16 @@ function GroupCard({
             {group.guests_count ?? 0} invitados
             {group.children_count ? ` · ${group.children_count} niños` : ""}
           </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCopyInvite(group);
+            }}
+            title="Copiar enlace de invitación"
+            className="text-xs text-gold-400 hover:text-gold-300"
+          >
+            Invitación
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -284,6 +297,20 @@ export default function EventGuests() {
     }
   };
 
+  const handleCopyInvite = async (group) => {
+    if (group.invitation_token == null) {
+      alert("Este grupo aún no tiene enlace de invitación.");
+      return;
+    }
+    const url = `${window.location.origin}/invitacion/${group.invitation_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert(`Enlace de invitación copiado:\n${url}`);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleAddGuest = async (group, payload) => {
     await api.guests.create(id, group.id, payload);
     await reloadGuests(group);
@@ -348,6 +375,7 @@ export default function EventGuests() {
               onDeleteGuest={handleDeleteGuest}
               onEdit={(g) => setModal({ mode: "edit-group", group: g })}
               onDelete={handleDeleteGroup}
+              onCopyInvite={handleCopyInvite}
             />
           ))}
         </div>

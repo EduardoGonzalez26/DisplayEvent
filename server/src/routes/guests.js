@@ -60,7 +60,10 @@ router.put("/:groupId/:guestId", async (req, res, next) => {
     const values = [];
     if (name !== undefined) { fields.push("name = ?"); values.push(name); }
     if (is_child !== undefined) { fields.push("is_child = ?"); values.push(is_child ? 1 : 0); }
-    if (registered !== undefined) { fields.push("registered = ?"); values.push(registered ? 1 : 0); }
+    if (registered !== undefined) {
+      fields.push("registered = ?"); values.push(registered ? 1 : 0);
+      if (registered) fields.push("declined = 0");
+    }
     if (fields.length === 0) return res.status(400).json({ error: "No hay campos para actualizar" });
 
     values.push(req.params.guestId);

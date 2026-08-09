@@ -49,6 +49,9 @@ export default function EventPage() {
           <NavLink to={`/events/${id}/dashboard`} className={navLinkClass}>
             Dashboard
           </NavLink>
+          <NavLink to={`/events/${id}/invitacion`} className={navLinkClass}>
+            Invitación
+          </NavLink>
         </nav>
       </aside>
 

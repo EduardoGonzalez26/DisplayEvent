@@ -43,9 +43,9 @@ export default function EventDashboard() {
           <StatCard label="Invitados totales" value={stats.total_guests} />
           <StatCard label="Niños" value={stats.children_count} accent="text-sky-400" />
           <StatCard label="Adultos" value={stats.adults_count} />
-          <StatCard label="Ya registrados" value={stats.registered_count} accent="text-emerald-400" />
+          <StatCard label="Confirmados" value={stats.registered_count} accent="text-emerald-400" />
           <StatCard
-            label="Faltan por registrar"
+            label="Sin confirmar"
             value={stats.unregistered_count}
             accent="text-amber-400"
           />
@@ -71,7 +71,7 @@ export default function EventDashboard() {
               <div className="flex gap-4 text-sm text-gray-300">
                 <span>{g.guests_count ?? 0} invitados</span>
                 <span className="text-sky-400">{g.children_count ?? 0} niños</span>
-                <span className="text-emerald-400">{g.registered_count ?? 0} registrados</span>
+                <span className="text-emerald-400">{g.registered_count ?? 0} confirmados</span>
               </div>
             </div>
           ))}

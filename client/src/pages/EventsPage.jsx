@@ -197,7 +197,7 @@ export default function EventsPage() {
                     {e.guests_count ?? 0} invitados
                   </span>
                   <span className="rounded-full bg-emerald-900/40 text-emerald-300 px-3 py-1">
-                    {e.registered_count ?? 0} registrados
+                    {e.registered_count ?? 0} confirmados
                   </span>
                 </div>
               </div>
