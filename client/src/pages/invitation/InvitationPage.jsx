@@ -42,7 +42,13 @@ export default function InvitationPage() {
         attending={attending}
         declining={declining}
         note={group.rsvp_note}
-        onDone={(updated) => setData((prev) => ({ ...prev, guests: updated.guests, group: { ...prev.group, rsvp_note: updated.note } }))}
+        onDone={(updated) =>
+          setData((prev) => ({
+            ...prev,
+            guests: updated.guests,
+            group: { ...prev.group, rsvp_note: updated.note },
+          }))
+        }
       />
       <footer className="py-10 text-center text-gold-300/60 text-xs tracking-[0.3em] uppercase">
         DisplayEvent · {event.place}
@@ -56,7 +62,9 @@ function InvitationLoader() {
     <div className="min-h-screen bg-wine-950 grid place-items-center text-gold-300">
       <div className="text-center animate-fade-in">
         <div className="text-3xl mb-3">❖</div>
-        <div className="text-sm tracking-[0.4em] uppercase opacity-70">Preparando la invitación…</div>
+        <div className="text-sm tracking-[0.4em] uppercase opacity-70">
+          Preparando la invitación…
+        </div>
       </div>
     </div>
   );
@@ -69,7 +77,9 @@ function InvitationNotFound() {
         <div className="w-12 h-12 mx-auto mb-4 rounded-full border border-gold-400/40 text-gold-300 grid place-items-center text-2xl">
           ×
         </div>
-        <h1 className="font-display text-3xl text-gold-300 mb-2">Invitación no encontrada</h1>
+        <h1 className="font-display text-3xl text-gold-300 mb-2">
+          Invitación no encontrada
+        </h1>
         <p className="text-wine-200">El enlace no es válido o fue revocado.</p>
       </div>
     </div>
@@ -110,16 +120,18 @@ function Hero({ event, family, cfg }) {
         <p className="animate-fade-up delay-2 text-wine-100 text-lg md:text-xl font-light mb-8">
           {cfg.tagline ||
             (cfg.celebrants
-              ? `Los invitados a celebrar junto a ${cfg.celebrants} este día tan especial.`
-              : "Los invitados a celebrar este día tan especial.")}
+              ? `Los invitamos a celebrar junto a ${cfg.celebrants} este día tan especial.`
+              : "Los invitamos a celebrar este día tan especial.")}
         </p>
         <p className="animate-fade-up delay-2 -mt-5 mb-8 text-gold-200/90 text-xs uppercase tracking-[0.35em]">
-          Invitación para {family}
+          Invitación para la {family}
         </p>
         <div className="animate-fade-up delay-3 flex items-center justify-center gap-4 text-gold-200">
           <span className="font-display text-6xl font-semibold">{day}</span>
           <span className="text-left text-sm leading-snug">
-            <span className="block uppercase tracking-widest text-gold-300 capitalize">{month}</span>
+            <span className="block uppercase tracking-widest text-gold-300 capitalize">
+              {month}
+            </span>
             <span className="block text-wine-100">{year}</span>
           </span>
         </div>
@@ -157,7 +169,10 @@ function useCountdown(target) {
 }
 
 function Countdown({ date, time }) {
-  const target = useMemo(() => new Date(`${date}T${time || "00:00:00"}`).getTime(), [date, time]);
+  const target = useMemo(
+    () => new Date(`${date}T${time || "00:00:00"}`).getTime(),
+    [date, time],
+  );
   const { days, hours, minutes, seconds, done } = useCountdown(target);
 
   if (done) {
@@ -212,14 +227,17 @@ function Reveal({ children, className = "", as: Tag = "div", delay = 0 }) {
           obs.disconnect();
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.15 },
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
   return (
-    <Tag ref={ref} className={`reveal ${visible ? "is-visible" : ""} ${delay ? `delay-${delay}` : ""} ${className || ""}`}>
+    <Tag
+      ref={ref}
+      className={`reveal ${visible ? "is-visible" : ""} ${delay ? `delay-${delay}` : ""} ${className || ""}`}
+    >
       {children}
     </Tag>
   );
@@ -228,10 +246,16 @@ function Reveal({ children, className = "", as: Tag = "div", delay = 0 }) {
 function SectionTitle({ eyebrow, title, subtitle }) {
   return (
     <Reveal className="text-center mb-12">
-      <p className="text-gold-300 text-xs uppercase tracking-[0.4em] mb-3">{eyebrow}</p>
-      <h2 className="font-display text-4xl md:text-5xl text-gold-200">{title}</h2>
+      <p className="text-gold-300 text-xs uppercase tracking-[0.4em] mb-3">
+        {eyebrow}
+      </p>
+      <h2 className="font-display text-4xl md:text-5xl text-gold-200">
+        {title}
+      </h2>
       {subtitle && (
-        <p className="mt-4 text-wine-100/90 font-light max-w-xl mx-auto text-lg">{subtitle}</p>
+        <p className="mt-4 text-wine-100/90 font-light max-w-xl mx-auto text-lg">
+          {subtitle}
+        </p>
       )}
     </Reveal>
   );
@@ -243,7 +267,8 @@ function MessageSection({ cfg, family }) {
       <Reveal className="max-w-2xl mx-auto text-center">
         <div className="text-gold-400 text-3xl mb-6">❝</div>
         <p className="font-display text-2xl md:text-3xl text-wine-100 leading-relaxed font-light italic">
-          {cfg.message || `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`}
+          {cfg.message ||
+            `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`}
         </p>
       </Reveal>
     </section>
@@ -251,7 +276,10 @@ function MessageSection({ cfg, family }) {
 }
 
 function ItinerarySection({ cfg }) {
-  const items = (cfg.itinerary || []).map((it) => ({ label: it.label, time: it.time }));
+  const items = (cfg.itinerary || []).map((it) => ({
+    label: it.label,
+    time: it.time,
+  }));
   if (items.length === 0) return null;
 
   return (
@@ -273,7 +301,9 @@ function ItinerarySection({ cfg }) {
                   </div>
                   <div className="pt-1.5">
                     {it.time && (
-                      <div className="text-sm text-gold-300 tracking-widest uppercase">{it.time}</div>
+                      <div className="text-sm text-gold-300 tracking-widest uppercase">
+                        {it.time}
+                      </div>
                     )}
                     <h3 className="mt-1 font-display text-2xl md:text-3xl text-gold-200">
                       {it.label || `Momento ${i + 1}`}
@@ -312,7 +342,8 @@ function LocationsSection({ cfg }) {
   const wazeUrl = (it) => {
     if (it.lat && it.lng)
       return `https://waze.com/ul?ll=${encodeURIComponent(`${it.lat},${it.lng}`)}&navigate=yes`;
-    if (it.place) return `https://waze.com/ul?q=${encodeURIComponent(it.place)}&navigate=yes`;
+    if (it.place)
+      return `https://waze.com/ul?q=${encodeURIComponent(it.place)}&navigate=yes`;
     return null;
   };
   const googleUrl = (it) => googleMapsUrl(it);
@@ -332,7 +363,9 @@ function LocationsSection({ cfg }) {
                 <span className="font-display text-4xl text-gold-300/60">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h3 className="mt-3 font-display text-2xl text-gold-200">{it.label || `Ubicación ${i + 1}`}</h3>
+                <h3 className="mt-3 font-display text-2xl text-gold-200">
+                  {it.label || `Ubicación ${i + 1}`}
+                </h3>
                 <p className="mt-1 text-wine-100/90 font-light">{it.place}</p>
                 <div className="mt-auto pt-5 flex gap-2">
                   {googleUrl(it) && (
@@ -372,23 +405,68 @@ function GallerySection({ cfg }) {
   if (images.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-wine-950">
+    <section className="py-24 px-4 bg-wine-950 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         <SectionTitle eyebrow="Galería" title="Nuestros Mejores Recuerdos" />
-        <div className="columns-2 md:columns-3 gap-4 space-y-4">
-          {images.map((src, i) => (
-            <Reveal key={i} delay={i % 3} className="break-inside-avoid">
-              <img
-                src={src}
-                alt=""
-                loading="lazy"
-                className="w-full rounded-xl border border-gold-400/20 object-cover hover:scale-[1.02] transition-transform duration-500"
-              />
-            </Reveal>
-          ))}
-        </div>
+        <GalleryCylinder images={images} />
+        <p className="mt-10 text-center text-wine-200/70 text-xs uppercase tracking-[0.3em]">
+          Pasa el cursor para pausar
+        </p>
       </div>
     </section>
+  );
+}
+
+function GalleryCylinder({ images }) {
+  const wrapRef = useRef(null);
+  const [radius, setRadius] = useState(300);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    const measure = () => {
+      if (!wrapRef.current) return;
+      const w = wrapRef.current.clientWidth;
+      setRadius(Math.max(180, Math.round(w / 2.4)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const n = images.length;
+  const angleStep = 360 / n;
+
+  return (
+    <Reveal>
+      <div
+        ref={wrapRef}
+        className="relative mx-auto overflow-hidden"
+        style={{ maxWidth: 950, height: 380, perspective: 1200 }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className={`relative ${paused ? "cylinder-paused" : ""} cylinder-spin`}
+            style={{ width: 250, height: 330, transformStyle: "preserve-3d" }}
+          >
+            {images.map((src, i) => (
+              <div
+                key={i}
+                className="absolute inset-0"
+                style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)` }}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="h-full w-full rounded-2xl border border-gold-400/25 object-cover shadow-2xl"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Reveal>
   );
 }
 
@@ -405,7 +483,9 @@ function DressCodeSection({ cfg }) {
             <Reveal key={i} delay={(i % 3) + 1}>
               <div className="flex items-center gap-3 rounded-2xl border border-gold-400/25 bg-wine-800/70 px-6 py-4">
                 <DressIcon name={item.icon} />
-                <span className="font-display text-lg text-gold-200">{item.label}</span>
+                <span className="font-display text-lg text-gold-200">
+                  {item.label}
+                </span>
               </div>
             </Reveal>
           ))}
@@ -431,20 +511,29 @@ function DressIcon({ name }) {
     case "tie":
       return (
         <svg {...common} viewBox="0 0 24 24">
-          <path d="M9 3h6l2 4-4 4 2 8-3 2-3-2 2-8-4-4z" strokeLinejoin="round" />
+          <path
+            d="M9 3h6l2 4-4 4 2 8-3 2-3-2 2-8-4-4z"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case "gown":
       return (
         <svg {...common} viewBox="0 0 24 24">
-          <path d="M12 3c2 0 3 1 3 3 0 1-1 2-3 4s-3-3-3-4c0-2 1-3 3-3z" strokeLinejoin="round" />
+          <path
+            d="M12 3c2 0 3 1 3 3 0 1-1 2-3 4s-3-3-3-4c0-2 1-3 3-3z"
+            strokeLinejoin="round"
+          />
           <path d="M9 6l-4 6 5 9h4l5-9-4-6" strokeLinejoin="round" />
         </svg>
       );
     case "formal":
       return (
         <svg {...common} viewBox="0 0 24 24">
-          <path d="M6 3h5l-1 5h3l6-2v4l-8 12-8-12V6l4 2z" strokeLinejoin="round" />
+          <path
+            d="M6 3h5l-1 5h3l6-2v4l-8 12-8-12V6l4 2z"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     default:
@@ -456,7 +545,15 @@ function DressIcon({ name }) {
   }
 }
 
-function RsvpSection({ token, family, guests, attending, declining, note, onDone }) {
+function RsvpSection({
+  token,
+  family,
+  guests,
+  attending,
+  declining,
+  note,
+  onDone,
+}) {
   const [answers, setAnswers] = useState(() => {
     const map = {};
     for (const g of guests) {
@@ -480,8 +577,12 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
     setMessage("");
     try {
       const updated = await api.invitations.rsvp(token, {
-        attending_ids: guests.filter((g) => answers[g.id] === "yes").map((g) => g.id),
-        declining_ids: guests.filter((g) => answers[g.id] === "no").map((g) => g.id),
+        attending_ids: guests
+          .filter((g) => answers[g.id] === "yes")
+          .map((g) => g.id),
+        declining_ids: guests
+          .filter((g) => answers[g.id] === "no")
+          .map((g) => g.id),
         note: diet,
       });
       setSubmitted(true);
@@ -500,8 +601,12 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
     <section id="rsvp" className="py-24 px-4 bg-wine-900">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
-          <p className="text-gold-300 text-xs uppercase tracking-[0.4em] mb-3">RSVP</p>
-          <h2 className="font-display text-4xl text-gold-200">Confirma tu asistencia</h2>
+          <p className="text-gold-300 text-xs uppercase tracking-[0.4em] mb-3">
+            RSVP
+          </p>
+          <h2 className="font-display text-4xl text-gold-200">
+            Confirma tu asistencia
+          </h2>
           <p className="mt-3 text-wine-100/90 font-light">
             Familia {family}, cuéntanos quiénes podrán acompañarnos.
           </p>
@@ -542,10 +647,22 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
-                      <div className={g.is_leader ? "font-semibold" : "font-normal"}>
+                      <div
+                        className={
+                          g.is_leader ? "font-semibold" : "font-normal"
+                        }
+                      >
                         {g.name}
-                        {g.is_leader && <span className="ml-2 text-[10px] uppercase text-gold-300">Líder</span>}
-                        {g.is_child && <span className="ml-2 text-xs text-wine-100/70">(niño)</span>}
+                        {g.is_leader && (
+                          <span className="ml-2 text-[10px] uppercase text-gold-300">
+                            Líder
+                          </span>
+                        )}
+                        {g.is_child && (
+                          <span className="ml-2 text-xs text-wine-100/70">
+                            (niño)
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -578,7 +695,9 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
             </ul>
 
             <label className="block mb-5">
-              <span className="block text-sm text-wine-100 mb-1.5">Detalles / restricciones alimenticias</span>
+              <span className="block text-sm text-wine-100 mb-1.5">
+                Detalles / restricciones alimenticias
+              </span>
               <textarea
                 value={diet}
                 onChange={(e) => setDiet(e.target.value)}
@@ -595,7 +714,11 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
               disabled={saving || !allAnswered}
               className="w-full rounded-lg bg-gold-400 text-wine-950 font-semibold py-3 hover:bg-gold-300 transition-colors disabled:opacity-50"
             >
-              {saving ? "Enviando…" : allAnswered ? "Confirmar asistencia" : `Faltan ${guests.length - answeredCount} por responder`}
+              {saving
+                ? "Enviando…"
+                : allAnswered
+                  ? "Confirmar asistencia"
+                  : `Faltan ${guests.length - answeredCount} por responder`}
             </button>
           </form>
         )}
@@ -610,9 +733,15 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
               <div className="w-12 h-12 mx-auto mb-4 rounded-full border border-gold-400 text-gold-300 grid place-items-center text-xl">
                 ⚠
               </div>
-              <h3 className="font-display text-2xl text-gold-200 mb-3">¿Confirmar tu asistencia?</h3>
+              <h3 className="font-display text-2xl text-gold-200 mb-3">
+                ¿Confirmar tu asistencia?
+              </h3>
               <p className="text-sm text-wine-100 mb-4 leading-relaxed">
-                Una vez confirmada, <span className="text-gold-300 font-semibold">la selección no podrá ser modificada</span>.
+                Una vez confirmada,{" "}
+                <span className="text-gold-300 font-semibold">
+                  la selección no podrá ser modificada
+                </span>
+                .
               </p>
               <p className="text-sm text-wine-200 mb-6 leading-relaxed">
                 ¿Necesitas alguna aclaración? Escríbenos:
@@ -623,14 +752,18 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                   className="flex items-center justify-center gap-2 rounded-xl border border-gold-400/40 bg-wine-800 px-4 py-2.5 text-wine-100 hover:border-gold-400 transition-colors"
                 >
                   <span className="text-gold-300">Papá</span>
-                  <span className="font-semibold tracking-wide">5515245588</span>
+                  <span className="font-semibold tracking-wide">
+                    5515245588
+                  </span>
                 </a>
                 <a
                   href="tel:+525518986867"
                   className="flex items-center justify-center gap-2 rounded-xl border border-gold-400/40 bg-wine-800 px-4 py-2.5 text-wine-100 hover:border-gold-400 transition-colors"
                 >
                   <span className="text-gold-300">Mamá</span>
-                  <span className="font-semibold tracking-wide">5518986867</span>
+                  <span className="font-semibold tracking-wide">
+                    5518986867
+                  </span>
                 </a>
               </div>
               <div className="flex gap-3">
@@ -664,7 +797,9 @@ function SubmitConfirmation({ count, declining, total, note, family }) {
       <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-gold-400 text-wine-950 grid place-items-center text-2xl">
         ✓
       </div>
-      <h3 className="font-display text-3xl text-gold-300 mb-3">¡Gracias, {family}!</h3>
+      <h3 className="font-display text-3xl text-gold-300 mb-3">
+        ¡Gracias, {family}!
+      </h3>
       <p className="text-wine-100 font-light mb-4">
         <span className="text-gold-300 font-semibold">
           {count} {count === 1 ? "pase confirmado" : "pases confirmados"}
@@ -672,24 +807,32 @@ function SubmitConfirmation({ count, declining, total, note, family }) {
         de {total}.
         {declining > 0 && (
           <span className="block mt-2 text-wine-200">
-            {declining} {declining === 1 ? "pase" : "pases"} con{" "}
-            ausencia confirmada.
+            {declining} {declining === 1 ? "pase" : "pases"} con ausencia
+            confirmada.
           </span>
         )}
       </p>
       {note && (
-        <p className="text-sm text-wine-200 italic mb-4">Detalles recibidos: “{note}”</p>
+        <p className="text-sm text-wine-200 italic mb-4">
+          Detalles recibidos: “{note}”
+        </p>
       )}
       <p className="text-sm text-wine-200 mb-2">
         La selección ya no puede modificarse. ¿Necesitas aclaraciones?
       </p>
       <p className="text-sm text-wine-200">
         Papá{" "}
-        <a href="tel:+525515245588" className="text-gold-300 underline underline-offset-4 hover:text-gold-200">
+        <a
+          href="tel:+525515245588"
+          className="text-gold-300 underline underline-offset-4 hover:text-gold-200"
+        >
           5515245588
         </a>{" "}
         · Mamá{" "}
-        <a href="tel:+525518986867" className="text-gold-300 underline underline-offset-4 hover:text-gold-200">
+        <a
+          href="tel:+525518986867"
+          className="text-gold-300 underline underline-offset-4 hover:text-gold-200"
+        >
           5518986867
         </a>
       </p>

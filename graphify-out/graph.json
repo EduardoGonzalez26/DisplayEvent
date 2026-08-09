@@ -26,9 +26,9 @@
       "source_file": "client/package.json",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_package",
       "community": 2,
-      "norm_label": "client/package.json"
+      "norm_label": "client/package.json",
+      "id": "client_package"
     },
     {
       "label": "name",
@@ -36,9 +36,9 @@
       "source_file": "client/package.json",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "client_package_name",
       "community": 2,
-      "norm_label": "name"
+      "norm_label": "name",
+      "id": "client_package_name"
     },
     {
       "label": "private",
@@ -46,9 +46,9 @@
       "source_file": "client/package.json",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "client_package_private",
       "community": 2,
-      "norm_label": "private"
+      "norm_label": "private",
+      "id": "client_package_private"
     },
     {
       "label": "version",
@@ -56,9 +56,9 @@
       "source_file": "client/package.json",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "client_package_version",
       "community": 2,
-      "norm_label": "version"
+      "norm_label": "version",
+      "id": "client_package_version"
     },
     {
       "label": "type",
@@ -66,9 +66,9 @@
       "source_file": "client/package.json",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "client_package_type",
       "community": 2,
-      "norm_label": "type"
+      "norm_label": "type",
+      "id": "client_package_type"
     },
     {
       "label": "scripts",
@@ -76,9 +76,9 @@
       "source_file": "client/package.json",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "client_package_scripts",
       "community": 2,
-      "norm_label": "scripts"
+      "norm_label": "scripts",
+      "id": "client_package_scripts"
     },
     {
       "label": "dev",
@@ -86,9 +86,9 @@
       "source_file": "client/package.json",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "client_package_scripts_dev",
       "community": 2,
-      "norm_label": "dev"
+      "norm_label": "dev",
+      "id": "client_package_scripts_dev"
     },
     {
       "label": "build",
@@ -96,9 +96,9 @@
       "source_file": "client/package.json",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "client_package_scripts_build",
       "community": 2,
-      "norm_label": "build"
+      "norm_label": "build",
+      "id": "client_package_scripts_build"
     },
     {
       "label": "preview",
@@ -106,9 +106,9 @@
       "source_file": "client/package.json",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "client_package_scripts_preview",
       "community": 2,
-      "norm_label": "preview"
+      "norm_label": "preview",
+      "id": "client_package_scripts_preview"
     },
     {
       "label": "dependencies",
@@ -116,9 +116,9 @@
       "source_file": "client/package.json",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "client_package_dependencies",
-      "community": 3,
-      "norm_label": "dependencies"
+      "community": 5,
+      "norm_label": "dependencies",
+      "id": "client_package_dependencies"
     },
     {
       "label": "@dnd-kit/core",
@@ -126,9 +126,9 @@
       "source_file": "client/package.json",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "client_package_dependencies_dnd_kit_core",
-      "community": 3,
-      "norm_label": "@dnd-kit/core"
+      "community": 5,
+      "norm_label": "@dnd-kit/core",
+      "id": "client_package_dependencies_dnd_kit_core"
     },
     {
       "label": "@dnd-kit/core",
@@ -136,9 +136,9 @@
       "source_file": "client/package.json",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "dnd_kit_core",
-      "community": 3,
-      "norm_label": "@dnd-kit/core"
+      "community": 5,
+      "norm_label": "@dnd-kit/core",
+      "id": "dnd_kit_core"
     },
     {
       "label": "@dnd-kit/sortable",
@@ -146,9 +146,9 @@
       "source_file": "client/package.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "client_package_dependencies_dnd_kit_sortable",
-      "community": 3,
-      "norm_label": "@dnd-kit/sortable"
+      "community": 5,
+      "norm_label": "@dnd-kit/sortable",
+      "id": "client_package_dependencies_dnd_kit_sortable"
     },
     {
       "label": "@dnd-kit/sortable",
@@ -156,9 +156,9 @@
       "source_file": "client/package.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "dnd_kit_sortable",
-      "community": 3,
-      "norm_label": "@dnd-kit/sortable"
+      "community": 5,
+      "norm_label": "@dnd-kit/sortable",
+      "id": "dnd_kit_sortable"
     },
     {
       "label": "@dnd-kit/utilities",
@@ -166,9 +166,9 @@
       "source_file": "client/package.json",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "client_package_dependencies_dnd_kit_utilities",
-      "community": 3,
-      "norm_label": "@dnd-kit/utilities"
+      "community": 5,
+      "norm_label": "@dnd-kit/utilities",
+      "id": "client_package_dependencies_dnd_kit_utilities"
     },
     {
       "label": "@dnd-kit/utilities",
@@ -176,9 +176,9 @@
       "source_file": "client/package.json",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "dnd_kit_utilities",
-      "community": 3,
-      "norm_label": "@dnd-kit/utilities"
+      "community": 5,
+      "norm_label": "@dnd-kit/utilities",
+      "id": "dnd_kit_utilities"
     },
     {
       "label": "react",
@@ -186,9 +186,9 @@
       "source_file": "client/package.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "client_package_dependencies_react",
-      "community": 3,
-      "norm_label": "react"
+      "community": 5,
+      "norm_label": "react",
+      "id": "client_package_dependencies_react"
     },
     {
       "label": "react",
@@ -196,9 +196,9 @@
       "source_file": "client/package.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "react",
-      "community": 3,
-      "norm_label": "react"
+      "community": 5,
+      "norm_label": "react",
+      "id": "react"
     },
     {
       "label": "react-dom",
@@ -206,9 +206,9 @@
       "source_file": "client/package.json",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "client_package_dependencies_react_dom",
-      "community": 3,
-      "norm_label": "react-dom"
+      "community": 5,
+      "norm_label": "react-dom",
+      "id": "client_package_dependencies_react_dom"
     },
     {
       "label": "react-dom",
@@ -216,9 +216,9 @@
       "source_file": "client/package.json",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "react_dom",
-      "community": 3,
-      "norm_label": "react-dom"
+      "community": 5,
+      "norm_label": "react-dom",
+      "id": "react_dom"
     },
     {
       "label": "react-router-dom",
@@ -226,9 +226,9 @@
       "source_file": "client/package.json",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "client_package_dependencies_react_router_dom",
-      "community": 3,
-      "norm_label": "react-router-dom"
+      "community": 5,
+      "norm_label": "react-router-dom",
+      "id": "client_package_dependencies_react_router_dom"
     },
     {
       "label": "react-router-dom",
@@ -236,9 +236,9 @@
       "source_file": "client/package.json",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "react_router_dom",
-      "community": 3,
-      "norm_label": "react-router-dom"
+      "community": 5,
+      "norm_label": "react-router-dom",
+      "id": "react_router_dom"
     },
     {
       "label": "devDependencies",
@@ -246,9 +246,9 @@
       "source_file": "client/package.json",
       "source_location": "L19",
       "_origin": "ast",
-      "id": "client_package_devdependencies",
       "community": 2,
-      "norm_label": "devdependencies"
+      "norm_label": "devdependencies",
+      "id": "client_package_devdependencies"
     },
     {
       "label": "@tailwindcss/vite",
@@ -256,9 +256,9 @@
       "source_file": "client/package.json",
       "source_location": "L20",
       "_origin": "ast",
-      "id": "client_package_devdependencies_tailwindcss_vite",
       "community": 2,
-      "norm_label": "@tailwindcss/vite"
+      "norm_label": "@tailwindcss/vite",
+      "id": "client_package_devdependencies_tailwindcss_vite"
     },
     {
       "label": "@tailwindcss/vite",
@@ -266,9 +266,9 @@
       "source_file": "client/package.json",
       "source_location": "L20",
       "_origin": "ast",
-      "id": "tailwindcss_vite",
       "community": 2,
-      "norm_label": "@tailwindcss/vite"
+      "norm_label": "@tailwindcss/vite",
+      "id": "tailwindcss_vite"
     },
     {
       "label": "@vitejs/plugin-react",
@@ -276,9 +276,9 @@
       "source_file": "client/package.json",
       "source_location": "L21",
       "_origin": "ast",
-      "id": "client_package_devdependencies_vitejs_plugin_react",
       "community": 2,
-      "norm_label": "@vitejs/plugin-react"
+      "norm_label": "@vitejs/plugin-react",
+      "id": "client_package_devdependencies_vitejs_plugin_react"
     },
     {
       "label": "@vitejs/plugin-react",
@@ -286,9 +286,9 @@
       "source_file": "client/package.json",
       "source_location": "L21",
       "_origin": "ast",
-      "id": "vitejs_plugin_react",
       "community": 2,
-      "norm_label": "@vitejs/plugin-react"
+      "norm_label": "@vitejs/plugin-react",
+      "id": "vitejs_plugin_react"
     },
     {
       "label": "tailwindcss",
@@ -296,9 +296,9 @@
       "source_file": "client/package.json",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "client_package_devdependencies_tailwindcss",
       "community": 2,
-      "norm_label": "tailwindcss"
+      "norm_label": "tailwindcss",
+      "id": "client_package_devdependencies_tailwindcss"
     },
     {
       "label": "tailwindcss",
@@ -306,9 +306,9 @@
       "source_file": "client/package.json",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "tailwindcss",
       "community": 2,
-      "norm_label": "tailwindcss"
+      "norm_label": "tailwindcss",
+      "id": "tailwindcss"
     },
     {
       "label": "vite",
@@ -316,9 +316,9 @@
       "source_file": "client/package.json",
       "source_location": "L23",
       "_origin": "ast",
-      "id": "client_package_devdependencies_vite",
       "community": 2,
-      "norm_label": "vite"
+      "norm_label": "vite",
+      "id": "client_package_devdependencies_vite"
     },
     {
       "label": "vite",
@@ -326,9 +326,369 @@
       "source_file": "client/package.json",
       "source_location": "L23",
       "_origin": "ast",
-      "id": "vite",
       "community": 2,
-      "norm_label": "vite"
+      "norm_label": "vite",
+      "id": "vite"
+    },
+    {
+      "label": "EventFormModal.jsx",
+      "file_type": "code",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "eventformmodal.jsx",
+      "id": "client_src_components_eventformmodal"
+    },
+    {
+      "label": "emptyForm",
+      "file_type": "code",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "emptyform",
+      "id": "client_src_components_eventformmodal_emptyform"
+    },
+    {
+      "label": "EventFormModal()",
+      "file_type": "code",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "eventformmodal()",
+      "id": "client_src_components_eventformmodal_eventformmodal"
+    },
+    {
+      "label": "ui.jsx",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "ui.jsx",
+      "id": "client_src_components_ui"
+    },
+    {
+      "label": "Modal()",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "modal()",
+      "id": "client_src_components_ui_modal"
+    },
+    {
+      "label": "Field()",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L27",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "field()",
+      "id": "client_src_components_ui_field"
+    },
+    {
+      "label": "inputClass",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L36",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "inputclass",
+      "id": "client_src_components_ui_inputclass"
+    },
+    {
+      "label": "StatCard()",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L39",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "statcard()",
+      "id": "client_src_components_ui_statcard"
+    },
+    {
+      "label": "Button()",
+      "file_type": "code",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L48",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "button()",
+      "id": "client_src_components_ui_button"
+    },
+    {
+      "label": "main.jsx",
+      "file_type": "code",
+      "source_file": "client/src/main.jsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 0,
+      "norm_label": "main.jsx",
+      "id": "client_src_main"
+    },
+    {
+      "label": "EventTables.jsx",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "eventtables.jsx",
+      "id": "client_src_pages_event_eventtables"
+    },
+    {
+      "label": "PALETTE",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L15",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "palette",
+      "id": "client_src_pages_event_eventtables_palette"
+    },
+    {
+      "label": "SHAPES",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L28",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "shapes",
+      "id": "client_src_pages_event_eventtables_shapes"
+    },
+    {
+      "label": "shapeClasses()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L34",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "shapeclasses()",
+      "id": "client_src_pages_event_eventtables_shapeclasses"
+    },
+    {
+      "label": "DraggableGuest()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L40",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "draggableguest()",
+      "id": "client_src_pages_event_eventtables_draggableguest"
+    },
+    {
+      "label": "TableCard()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L94",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "tablecard()",
+      "id": "client_src_pages_event_eventtables_tablecard"
+    },
+    {
+      "label": "FreeZone()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L175",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "freezone()",
+      "id": "client_src_pages_event_eventtables_freezone"
+    },
+    {
+      "label": "EventTables()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L189",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "eventtables()",
+      "id": "client_src_pages_event_eventtables_eventtables"
+    },
+    {
+      "label": "TableFormModal()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L447",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "tableformmodal()",
+      "id": "client_src_pages_event_eventtables_tableformmodal"
+    },
+    {
+      "label": "DeleteTableModal()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L511",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "deletetablemodal()",
+      "id": "client_src_pages_event_eventtables_deletetablemodal"
+    },
+    {
+      "label": "CompanionsModal()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L530",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "companionsmodal()",
+      "id": "client_src_pages_event_eventtables_companionsmodal"
+    },
+    {
+      "label": "ExportModal()",
+      "file_type": "code",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L589",
+      "_origin": "ast",
+      "community": 7,
+      "norm_label": "exportmodal()",
+      "id": "client_src_pages_event_eventtables_exportmodal"
+    },
+    {
+      "label": "tables.js",
+      "file_type": "code",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 1,
+      "norm_label": "tables.js",
+      "id": "server_src_routes_tables"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 1,
+      "norm_label": "router",
+      "id": "server_src_routes_tables_router"
+    },
+    {
+      "label": "eventExists()",
+      "file_type": "code",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 1,
+      "norm_label": "eventexists()",
+      "id": "server_src_routes_tables_eventexists"
+    },
+    {
+      "label": "getTable()",
+      "file_type": "code",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L11",
+      "_origin": "ast",
+      "community": 1,
+      "norm_label": "gettable()",
+      "id": "server_src_routes_tables_gettable"
+    },
+    {
+      "label": "DisplayEvent App",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "line 1",
+      "community": 8,
+      "norm_label": "displayevent app",
+      "_origin": "semantic",
+      "id": "readme_displayevent_app"
+    },
+    {
+      "label": "Monorepo Structure",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 7",
+      "community": 8,
+      "norm_label": "monorepo structure",
+      "_origin": "semantic",
+      "id": "readme_monorepo_structure"
+    },
+    {
+      "label": "React Frontend",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 11",
+      "community": 8,
+      "norm_label": "react frontend",
+      "_origin": "semantic",
+      "id": "readme_react_frontend"
+    },
+    {
+      "label": "Express Backend",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 12",
+      "community": 8,
+      "norm_label": "express backend",
+      "_origin": "semantic",
+      "id": "readme_express_backend"
+    },
+    {
+      "label": "MySQL Database",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 5",
+      "community": 8,
+      "norm_label": "mysql database",
+      "_origin": "semantic",
+      "id": "readme_mysql_database"
+    },
+    {
+      "label": "Eventos CRUD",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 62",
+      "community": 8,
+      "norm_label": "eventos crud",
+      "_origin": "semantic",
+      "id": "readme_events_feature"
+    },
+    {
+      "label": "Grupos e Invitados",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 65",
+      "community": 8,
+      "norm_label": "grupos e invitados",
+      "_origin": "semantic",
+      "id": "readme_invitados_groups_feature"
+    },
+    {
+      "label": "Organizador de Mesas",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 66",
+      "community": 8,
+      "norm_label": "organizador de mesas",
+      "_origin": "semantic",
+      "id": "readme_mesas_feature"
+    },
+    {
+      "label": "Dashboard Estadisticas",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": "line 67",
+      "community": 8,
+      "norm_label": "dashboard estadisticas",
+      "_origin": "semantic",
+      "id": "readme_dashboard_feature"
+    },
+    {
+      "label": "Vite HTML Shell",
+      "file_type": "document",
+      "source_file": "client/index.html",
+      "source_location": "line 1",
+      "community": 8,
+      "norm_label": "vite html shell",
+      "_origin": "semantic",
+      "id": "client_index_html"
     },
     {
       "label": "App.jsx",
@@ -344,7 +704,7 @@
       "label": "App()",
       "file_type": "code",
       "source_file": "client/src/App.jsx",
-      "source_location": "L9",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "client_src_app_app",
       "community": 0,
@@ -374,111 +734,11 @@
       "label": "api",
       "file_type": "code",
       "source_file": "client/src/api.js",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "client_src_api_api",
       "community": 0,
       "norm_label": "api"
-    },
-    {
-      "label": "EventFormModal.jsx",
-      "file_type": "code",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_components_eventformmodal",
-      "community": 0,
-      "norm_label": "eventformmodal.jsx"
-    },
-    {
-      "label": "emptyForm",
-      "file_type": "code",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L5",
-      "_origin": "ast",
-      "id": "client_src_components_eventformmodal_emptyform",
-      "community": 0,
-      "norm_label": "emptyform"
-    },
-    {
-      "label": "EventFormModal()",
-      "file_type": "code",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L7",
-      "_origin": "ast",
-      "id": "client_src_components_eventformmodal_eventformmodal",
-      "community": 0,
-      "norm_label": "eventformmodal()"
-    },
-    {
-      "label": "ui.jsx",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_components_ui",
-      "community": 0,
-      "norm_label": "ui.jsx"
-    },
-    {
-      "label": "Modal()",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_components_ui_modal",
-      "community": 0,
-      "norm_label": "modal()"
-    },
-    {
-      "label": "Field()",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L27",
-      "_origin": "ast",
-      "id": "client_src_components_ui_field",
-      "community": 0,
-      "norm_label": "field()"
-    },
-    {
-      "label": "inputClass",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L36",
-      "_origin": "ast",
-      "id": "client_src_components_ui_inputclass",
-      "community": 0,
-      "norm_label": "inputclass"
-    },
-    {
-      "label": "StatCard()",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L39",
-      "_origin": "ast",
-      "id": "client_src_components_ui_statcard",
-      "community": 0,
-      "norm_label": "statcard()"
-    },
-    {
-      "label": "Button()",
-      "file_type": "code",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L48",
-      "_origin": "ast",
-      "id": "client_src_components_ui_button",
-      "community": 0,
-      "norm_label": "button()"
-    },
-    {
-      "label": "main.jsx",
-      "file_type": "code",
-      "source_file": "client/src/main.jsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_main",
-      "community": 0,
-      "norm_label": "main.jsx"
     },
     {
       "label": "EventPage.jsx",
@@ -604,7 +864,7 @@
       "label": "GroupCard()",
       "file_type": "code",
       "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L100",
+      "source_location": "L102",
       "_origin": "ast",
       "id": "client_src_pages_event_eventguests_groupcard",
       "community": 0,
@@ -614,7 +874,7 @@
       "label": "EventGuests()",
       "file_type": "code",
       "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L208",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "client_src_pages_event_eventguests_eventguests",
       "community": 0,
@@ -641,124 +901,214 @@
       "norm_label": "eventhome()"
     },
     {
-      "label": "EventTables.jsx",
+      "label": "EventInvitation.jsx",
       "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_pages_event_eventtables",
-      "community": 5,
-      "norm_label": "eventtables.jsx"
-    },
-    {
-      "label": "PALETTE",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L15",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_palette",
-      "community": 5,
-      "norm_label": "palette"
-    },
-    {
-      "label": "SHAPES",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L28",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_shapes",
-      "community": 5,
-      "norm_label": "shapes"
-    },
-    {
-      "label": "shapeClasses()",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L34",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_shapeclasses",
-      "community": 5,
-      "norm_label": "shapeclasses()"
-    },
-    {
-      "label": "DraggableGuest()",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L40",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_draggableguest",
-      "community": 5,
-      "norm_label": "draggableguest()"
-    },
-    {
-      "label": "TableCard()",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L94",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_tablecard",
-      "community": 5,
-      "norm_label": "tablecard()"
-    },
-    {
-      "label": "FreeZone()",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L175",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_freezone",
-      "community": 5,
-      "norm_label": "freezone()"
-    },
-    {
-      "label": "EventTables()",
-      "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L189",
-      "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_eventtables",
+      "id": "client_src_pages_event_eventinvitation",
       "community": 0,
-      "norm_label": "eventtables()"
+      "norm_label": "eventinvitation.jsx"
     },
     {
-      "label": "TableFormModal()",
+      "label": "EMPTY",
       "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L447",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L6",
       "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_tableformmodal",
-      "community": 5,
-      "norm_label": "tableformmodal()"
+      "id": "client_src_pages_event_eventinvitation_empty",
+      "community": 0,
+      "norm_label": "empty"
     },
     {
-      "label": "DeleteTableModal()",
+      "label": "ImageUploader()",
       "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L511",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L17",
       "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_deletetablemodal",
-      "community": 5,
-      "norm_label": "deletetablemodal()"
+      "id": "client_src_pages_event_eventinvitation_imageuploader",
+      "community": 0,
+      "norm_label": "imageuploader()"
     },
     {
-      "label": "CompanionsModal()",
+      "label": "EventInvitation()",
       "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L530",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L71",
       "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_companionsmodal",
-      "community": 5,
-      "norm_label": "companionsmodal()"
+      "id": "client_src_pages_event_eventinvitation_eventinvitation",
+      "community": 0,
+      "norm_label": "eventinvitation()"
     },
     {
-      "label": "ExportModal()",
+      "label": "InvitationPage.jsx",
       "file_type": "code",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L589",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_pages_event_eventtables_exportmodal",
-      "community": 5,
-      "norm_label": "exportmodal()"
+      "id": "client_src_pages_invitation_invitationpage",
+      "community": 3,
+      "norm_label": "invitationpage.jsx"
+    },
+    {
+      "label": "InvitationPage()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_invitationpage",
+      "community": 0,
+      "norm_label": "invitationpage()"
+    },
+    {
+      "label": "InvitationLoader()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_invitationloader",
+      "community": 3,
+      "norm_label": "invitationloader()"
+    },
+    {
+      "label": "InvitationNotFound()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L65",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_invitationnotfound",
+      "community": 3,
+      "norm_label": "invitationnotfound()"
+    },
+    {
+      "label": "Hero()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_hero",
+      "community": 3,
+      "norm_label": "hero()"
+    },
+    {
+      "label": "useCountdown()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L133",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_usecountdown",
+      "community": 3,
+      "norm_label": "usecountdown()"
+    },
+    {
+      "label": "Countdown()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L154",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_countdown",
+      "community": 3,
+      "norm_label": "countdown()"
+    },
+    {
+      "label": "Reveal()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L196",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_reveal",
+      "community": 3,
+      "norm_label": "reveal()"
+    },
+    {
+      "label": "SectionTitle()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L223",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_sectiontitle",
+      "community": 3,
+      "norm_label": "sectiontitle()"
+    },
+    {
+      "label": "MessageSection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L235",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_messagesection",
+      "community": 3,
+      "norm_label": "messagesection()"
+    },
+    {
+      "label": "ItinerarySection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L248",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_itinerarysection",
+      "community": 3,
+      "norm_label": "itinerarysection()"
+    },
+    {
+      "label": "LocationsSection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L287",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_locationssection",
+      "community": 3,
+      "norm_label": "locationssection()"
+    },
+    {
+      "label": "GallerySection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L365",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_gallerysection",
+      "community": 3,
+      "norm_label": "gallerysection()"
+    },
+    {
+      "label": "DressCodeSection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L390",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_dresscodesection",
+      "community": 3,
+      "norm_label": "dresscodesection()"
+    },
+    {
+      "label": "DressIcon()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L418",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_dressicon",
+      "community": 3,
+      "norm_label": "dressicon()"
+    },
+    {
+      "label": "RsvpSection()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L454",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_rsvpsection",
+      "community": 3,
+      "norm_label": "rsvpsection()"
+    },
+    {
+      "label": "SubmitConfirmation()",
+      "file_type": "code",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L656",
+      "_origin": "ast",
+      "id": "client_src_pages_invitation_invitationpage_submitconfirmation",
+      "community": 3,
+      "norm_label": "submitconfirmation()"
     },
     {
       "label": "vite.config.js",
@@ -767,7 +1117,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "client_vite_config",
-      "community": 10,
+      "community": 12,
       "norm_label": "vite.config.js"
     },
     {
@@ -777,7 +1127,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_package",
-      "community": 4,
+      "community": 6,
       "norm_label": "server/package.json"
     },
     {
@@ -787,7 +1137,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "server_package_name",
-      "community": 4,
+      "community": 6,
       "norm_label": "name"
     },
     {
@@ -797,7 +1147,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_package_version",
-      "community": 4,
+      "community": 6,
       "norm_label": "version"
     },
     {
@@ -807,7 +1157,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_package_description",
-      "community": 4,
+      "community": 6,
       "norm_label": "description"
     },
     {
@@ -817,7 +1167,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "server_package_main",
-      "community": 4,
+      "community": 6,
       "norm_label": "main"
     },
     {
@@ -827,7 +1177,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "server_package_type",
-      "community": 4,
+      "community": 6,
       "norm_label": "type"
     },
     {
@@ -837,7 +1187,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_package_scripts",
-      "community": 4,
+      "community": 6,
       "norm_label": "scripts"
     },
     {
@@ -847,7 +1197,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "server_package_scripts_start",
-      "community": 4,
+      "community": 6,
       "norm_label": "start"
     },
     {
@@ -857,7 +1207,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "server_package_scripts_dev",
-      "community": 4,
+      "community": 6,
       "norm_label": "dev"
     },
     {
@@ -867,7 +1217,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "server_package_scripts_init_db",
-      "community": 4,
+      "community": 6,
       "norm_label": "init-db"
     },
     {
@@ -877,137 +1227,177 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "server_package_dependencies",
-      "community": 6,
+      "community": 4,
       "norm_label": "dependencies"
     },
     {
-      "label": "cors",
+      "label": "cloudinary",
       "file_type": "code",
       "source_file": "server/package.json",
       "source_location": "L13",
+      "_origin": "ast",
+      "id": "server_package_dependencies_cloudinary",
+      "community": 4,
+      "norm_label": "cloudinary"
+    },
+    {
+      "label": "cloudinary",
+      "file_type": "concept",
+      "source_file": "server/package.json",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "cloudinary",
+      "community": 4,
+      "norm_label": "cloudinary"
+    },
+    {
+      "label": "cors",
+      "file_type": "code",
+      "source_file": "server/package.json",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "server_package_dependencies_cors",
-      "community": 6,
+      "community": 4,
       "norm_label": "cors"
     },
     {
       "label": "cors",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L13",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "cors",
-      "community": 6,
+      "community": 4,
       "norm_label": "cors"
     },
     {
       "label": "dotenv",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "server_package_dependencies_dotenv",
-      "community": 6,
+      "community": 4,
       "norm_label": "dotenv"
     },
     {
       "label": "dotenv",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "dotenv",
-      "community": 6,
+      "community": 4,
       "norm_label": "dotenv"
     },
     {
       "label": "express",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L15",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "server_package_dependencies_express",
-      "community": 6,
+      "community": 4,
       "norm_label": "express"
     },
     {
       "label": "express",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L15",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "express",
-      "community": 6,
+      "community": 4,
       "norm_label": "express"
     },
     {
       "label": "morgan",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L16",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "server_package_dependencies_morgan",
-      "community": 6,
+      "community": 4,
       "norm_label": "morgan"
     },
     {
       "label": "morgan",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L16",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "morgan",
-      "community": 6,
+      "community": 4,
       "norm_label": "morgan"
+    },
+    {
+      "label": "multer",
+      "file_type": "code",
+      "source_file": "server/package.json",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "server_package_dependencies_multer",
+      "community": 4,
+      "norm_label": "multer"
+    },
+    {
+      "label": "multer",
+      "file_type": "concept",
+      "source_file": "server/package.json",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "multer",
+      "community": 4,
+      "norm_label": "multer"
     },
     {
       "label": "mysql2",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L17",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "server_package_dependencies_mysql2",
-      "community": 6,
+      "community": 4,
       "norm_label": "mysql2"
     },
     {
       "label": "mysql2",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L17",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "mysql2",
-      "community": 6,
+      "community": 4,
       "norm_label": "mysql2"
     },
     {
       "label": "devDependencies",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L19",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "server_package_devdependencies",
-      "community": 4,
+      "community": 6,
       "norm_label": "devdependencies"
     },
     {
       "label": "nodemon",
       "file_type": "code",
       "source_file": "server/package.json",
-      "source_location": "L20",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "server_package_devdependencies_nodemon",
-      "community": 4,
+      "community": 6,
       "norm_label": "nodemon"
     },
     {
       "label": "nodemon",
       "file_type": "concept",
       "source_file": "server/package.json",
-      "source_location": "L20",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "nodemon",
-      "community": 4,
+      "community": 6,
       "norm_label": "nodemon"
     },
     {
@@ -1034,7 +1424,7 @@
       "label": "query()",
       "file_type": "code",
       "source_file": "server/src/db/index.js",
-      "source_location": "L17",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "server_src_db_index_query",
       "community": 1,
@@ -1044,7 +1434,7 @@
       "label": "getConnectionWithReq()",
       "file_type": "code",
       "source_file": "server/src/db/index.js",
-      "source_location": "L22",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "server_src_db_index_getconnectionwithreq",
       "community": 1,
@@ -1057,27 +1447,37 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_db_init",
-      "community": 9,
+      "community": 11,
       "norm_label": "init.js"
+    },
+    {
+      "label": "generateToken()",
+      "file_type": "code",
+      "source_file": "server/src/db/init.js",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "server_src_db_init_generatetoken",
+      "community": 11,
+      "norm_label": "generatetoken()"
     },
     {
       "label": "__dirname",
       "file_type": "code",
       "source_file": "server/src/db/init.js",
-      "source_location": "L9",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "server_src_db_init_dirname",
-      "community": 9,
+      "community": 11,
       "norm_label": "__dirname"
     },
     {
       "label": "main()",
       "file_type": "code",
       "source_file": "server/src/db/init.js",
-      "source_location": "L11",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "server_src_db_init_main",
-      "community": 9,
+      "community": 11,
       "norm_label": "main()"
     },
     {
@@ -1087,7 +1487,7 @@
       "source_location": null,
       "_origin": "ast",
       "id": "server_src_db_schema",
-      "community": 8,
+      "community": 10,
       "norm_label": "schema.sql"
     },
     {
@@ -1097,37 +1497,37 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_db_schema_events",
-      "community": 8,
+      "community": 10,
       "norm_label": "events"
     },
     {
       "label": "`groups`",
       "file_type": "code",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L16",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "server_src_db_schema_groups",
-      "community": 8,
+      "community": 10,
       "norm_label": "`groups`"
     },
     {
       "label": "`tables`",
       "file_type": "code",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L27",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "server_src_db_schema_tables",
-      "community": 8,
+      "community": 10,
       "norm_label": "`tables`"
     },
     {
       "label": "guests",
       "file_type": "code",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L40",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "server_src_db_schema_guests",
-      "community": 8,
+      "community": 10,
       "norm_label": "guests"
     },
     {
@@ -1144,17 +1544,27 @@
       "label": "app",
       "file_type": "code",
       "source_file": "server/src/index.js",
-      "source_location": "L13",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "server_src_index_app",
       "community": 1,
       "norm_label": "app"
     },
     {
+      "label": "__dirname",
+      "file_type": "code",
+      "source_file": "server/src/index.js",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "server_src_index_dirname",
+      "community": 1,
+      "norm_label": "__dirname"
+    },
+    {
       "label": "PORT",
       "file_type": "code",
       "source_file": "server/src/index.js",
-      "source_location": "L37",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "server_src_index_port",
       "community": 1,
@@ -1194,7 +1604,7 @@
       "label": "router",
       "file_type": "code",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "server_src_routes_groups_router",
       "community": 1,
@@ -1204,7 +1614,7 @@
       "label": "eventExists()",
       "file_type": "code",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L6",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_routes_groups_eventexists",
       "community": 1,
@@ -1214,7 +1624,7 @@
       "label": "insertLeader()",
       "file_type": "code",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L11",
+      "source_location": "L12",
       "_origin": "ast",
       "id": "server_src_routes_groups_insertleader",
       "community": 1,
@@ -1224,7 +1634,7 @@
       "label": "getLeader()",
       "file_type": "code",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L18",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "server_src_routes_groups_getleader",
       "community": 1,
@@ -1251,134 +1661,164 @@
       "norm_label": "router"
     },
     {
-      "label": "tables.js",
+      "label": "invitations.js",
       "file_type": "code",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "server_src_routes_tables",
+      "id": "server_src_routes_invitations",
       "community": 1,
-      "norm_label": "tables.js"
+      "norm_label": "invitations.js"
     },
     {
       "label": "router",
       "file_type": "code",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "server_src_routes_tables_router",
+      "id": "server_src_routes_invitations_router",
       "community": 1,
       "norm_label": "router"
     },
     {
-      "label": "eventExists()",
+      "label": "findInvitationByToken()",
       "file_type": "code",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "server_src_routes_tables_eventexists",
+      "id": "server_src_routes_invitations_findinvitationbytoken",
       "community": 1,
-      "norm_label": "eventexists()"
+      "norm_label": "findinvitationbytoken()"
     },
     {
-      "label": "getTable()",
+      "label": "getGuests()",
       "file_type": "code",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "server_src_routes_invitations_getguests",
+      "community": 1,
+      "norm_label": "getguests()"
+    },
+    {
+      "label": "uploads.js",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads",
+      "community": 9,
+      "norm_label": "uploads.js"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_router",
+      "community": 9,
+      "norm_label": "router"
+    },
+    {
+      "label": "__dirname",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_dirname",
+      "community": 9,
+      "norm_label": "__dirname"
+    },
+    {
+      "label": "UPLOAD_DIR",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "server_src_routes_tables_gettable",
+      "id": "server_src_routes_uploads_upload_dir",
+      "community": 9,
+      "norm_label": "upload_dir"
+    },
+    {
+      "label": "upload",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_upload",
+      "community": 9,
+      "norm_label": "upload"
+    },
+    {
+      "label": "mkdirAsync",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_mkdirasync",
+      "community": 9,
+      "norm_label": "mkdirasync"
+    },
+    {
+      "label": "writeFileAsync",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L27",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_writefileasync",
+      "community": 9,
+      "norm_label": "writefileasync"
+    },
+    {
+      "label": "cloudinaryConfigured()",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_cloudinaryconfigured",
+      "community": 9,
+      "norm_label": "cloudinaryconfigured()"
+    },
+    {
+      "label": "uploadToCloudinary()",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_uploadtocloudinary",
+      "community": 9,
+      "norm_label": "uploadtocloudinary()"
+    },
+    {
+      "label": "saveLocally()",
+      "file_type": "code",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L57",
+      "_origin": "ast",
+      "id": "server_src_routes_uploads_savelocally",
+      "community": 9,
+      "norm_label": "savelocally()"
+    },
+    {
+      "label": "token.js",
+      "file_type": "code",
+      "source_file": "server/src/utils/token.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_utils_token",
       "community": 1,
-      "norm_label": "gettable()"
+      "norm_label": "token.js"
     },
     {
-      "label": "DisplayEvent App",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "line 1",
-      "id": "readme_displayevent_app",
-      "community": 7,
-      "norm_label": "displayevent app"
-    },
-    {
-      "label": "Monorepo Structure",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 7",
-      "id": "readme_monorepo_structure",
-      "community": 7,
-      "norm_label": "monorepo structure"
-    },
-    {
-      "label": "React Frontend",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 11",
-      "id": "readme_react_frontend",
-      "community": 7,
-      "norm_label": "react frontend"
-    },
-    {
-      "label": "Express Backend",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 12",
-      "id": "readme_express_backend",
-      "community": 7,
-      "norm_label": "express backend"
-    },
-    {
-      "label": "MySQL Database",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 5",
-      "id": "readme_mysql_database",
-      "community": 7,
-      "norm_label": "mysql database"
-    },
-    {
-      "label": "Eventos CRUD",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 62",
-      "id": "readme_events_feature",
-      "community": 7,
-      "norm_label": "eventos crud"
-    },
-    {
-      "label": "Grupos e Invitados",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 65",
-      "id": "readme_invitados_groups_feature",
-      "community": 7,
-      "norm_label": "grupos e invitados"
-    },
-    {
-      "label": "Organizador de Mesas",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 66",
-      "id": "readme_mesas_feature",
-      "community": 7,
-      "norm_label": "organizador de mesas"
-    },
-    {
-      "label": "Dashboard Estadisticas",
-      "file_type": "concept",
-      "source_file": "README.md",
-      "source_location": "line 67",
-      "id": "readme_dashboard_feature",
-      "community": 7,
-      "norm_label": "dashboard estadisticas"
-    },
-    {
-      "label": "Vite HTML Shell",
-      "file_type": "document",
-      "source_file": "client/index.html",
-      "source_location": "line 1",
-      "id": "client_index_html",
-      "community": 7,
-      "norm_label": "vite html shell"
+      "label": "generateToken()",
+      "file_type": "code",
+      "source_file": "server/src/utils/token.js",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "server_src_utils_token_generatetoken",
+      "community": 1,
+      "norm_label": "generatetoken()"
     }
   ],
   "links": [
@@ -1389,9 +1829,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_dependencies",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies"
     },
     {
       "relation": "contains",
@@ -1400,9 +1840,9 @@
       "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_devdependencies",
-      "confidence_score": 1.0
+      "target": "client_package_devdependencies"
     },
     {
       "relation": "contains",
@@ -1411,9 +1851,9 @@
       "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_name",
-      "confidence_score": 1.0
+      "target": "client_package_name"
     },
     {
       "relation": "contains",
@@ -1422,9 +1862,9 @@
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_private",
-      "confidence_score": 1.0
+      "target": "client_package_private"
     },
     {
       "relation": "contains",
@@ -1433,9 +1873,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_scripts",
-      "confidence_score": 1.0
+      "target": "client_package_scripts"
     },
     {
       "relation": "contains",
@@ -1444,9 +1884,9 @@
       "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_type",
-      "confidence_score": 1.0
+      "target": "client_package_type"
     },
     {
       "relation": "contains",
@@ -1455,9 +1895,9 @@
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package",
-      "target": "client_package_version",
-      "confidence_score": 1.0
+      "target": "client_package_version"
     },
     {
       "relation": "contains",
@@ -1466,9 +1906,9 @@
       "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_scripts",
-      "target": "client_package_scripts_build",
-      "confidence_score": 1.0
+      "target": "client_package_scripts_build"
     },
     {
       "relation": "contains",
@@ -1477,9 +1917,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_scripts",
-      "target": "client_package_scripts_dev",
-      "confidence_score": 1.0
+      "target": "client_package_scripts_dev"
     },
     {
       "relation": "contains",
@@ -1488,9 +1928,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_scripts",
-      "target": "client_package_scripts_preview",
-      "confidence_score": 1.0
+      "target": "client_package_scripts_preview"
     },
     {
       "relation": "contains",
@@ -1499,9 +1939,9 @@
       "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_dnd_kit_core",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_dnd_kit_core"
     },
     {
       "relation": "contains",
@@ -1510,9 +1950,9 @@
       "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_dnd_kit_sortable",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_dnd_kit_sortable"
     },
     {
       "relation": "contains",
@@ -1521,9 +1961,9 @@
       "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_dnd_kit_utilities",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_dnd_kit_utilities"
     },
     {
       "relation": "contains",
@@ -1532,9 +1972,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_react",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_react"
     },
     {
       "relation": "contains",
@@ -1543,9 +1983,9 @@
       "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_react_dom",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_react_dom"
     },
     {
       "relation": "contains",
@@ -1554,9 +1994,9 @@
       "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies",
-      "target": "client_package_dependencies_react_router_dom",
-      "confidence_score": 1.0
+      "target": "client_package_dependencies_react_router_dom"
     },
     {
       "relation": "imports",
@@ -1566,9 +2006,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_dnd_kit_core",
-      "target": "dnd_kit_core",
-      "confidence_score": 1.0
+      "target": "dnd_kit_core"
     },
     {
       "relation": "imports",
@@ -1578,9 +2018,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_dnd_kit_sortable",
-      "target": "dnd_kit_sortable",
-      "confidence_score": 1.0
+      "target": "dnd_kit_sortable"
     },
     {
       "relation": "imports",
@@ -1590,9 +2030,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_dnd_kit_utilities",
-      "target": "dnd_kit_utilities",
-      "confidence_score": 1.0
+      "target": "dnd_kit_utilities"
     },
     {
       "relation": "imports",
@@ -1602,9 +2042,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_react",
-      "target": "react",
-      "confidence_score": 1.0
+      "target": "react"
     },
     {
       "relation": "imports",
@@ -1614,9 +2054,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_react_dom",
-      "target": "react_dom",
-      "confidence_score": 1.0
+      "target": "react_dom"
     },
     {
       "relation": "imports",
@@ -1626,9 +2066,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_dependencies_react_router_dom",
-      "target": "react_router_dom",
-      "confidence_score": 1.0
+      "target": "react_router_dom"
     },
     {
       "relation": "contains",
@@ -1637,9 +2077,9 @@
       "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies",
-      "target": "client_package_devdependencies_tailwindcss",
-      "confidence_score": 1.0
+      "target": "client_package_devdependencies_tailwindcss"
     },
     {
       "relation": "contains",
@@ -1648,9 +2088,9 @@
       "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies",
-      "target": "client_package_devdependencies_tailwindcss_vite",
-      "confidence_score": 1.0
+      "target": "client_package_devdependencies_tailwindcss_vite"
     },
     {
       "relation": "contains",
@@ -1659,9 +2099,9 @@
       "source_location": "L23",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies",
-      "target": "client_package_devdependencies_vite",
-      "confidence_score": 1.0
+      "target": "client_package_devdependencies_vite"
     },
     {
       "relation": "contains",
@@ -1670,9 +2110,9 @@
       "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies",
-      "target": "client_package_devdependencies_vitejs_plugin_react",
-      "confidence_score": 1.0
+      "target": "client_package_devdependencies_vitejs_plugin_react"
     },
     {
       "relation": "imports",
@@ -1682,9 +2122,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies_tailwindcss_vite",
-      "target": "tailwindcss_vite",
-      "confidence_score": 1.0
+      "target": "tailwindcss_vite"
     },
     {
       "relation": "imports",
@@ -1694,9 +2134,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies_vitejs_plugin_react",
-      "target": "vitejs_plugin_react",
-      "confidence_score": 1.0
+      "target": "vitejs_plugin_react"
     },
     {
       "relation": "imports",
@@ -1706,9 +2146,9 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies_tailwindcss",
-      "target": "tailwindcss",
-      "confidence_score": 1.0
+      "target": "tailwindcss"
     },
     {
       "relation": "imports",
@@ -1718,15 +2158,832 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "client_package_devdependencies_vite",
-      "target": "vite",
+      "target": "vite"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_api"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_api_api"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_eventformmodal_emptyform"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_eventformmodal_eventformmodal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_ui"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_ui_button"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_ui_field"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_ui_inputclass"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_eventformmodal",
+      "target": "client_src_components_ui_modal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventHome.jsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventhome",
+      "target": "client_src_components_eventformmodal",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_ui",
+      "target": "client_src_components_ui_button"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_ui",
+      "target": "client_src_components_ui_field"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L36",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_ui",
+      "target": "client_src_components_ui_inputclass"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_ui",
+      "target": "client_src_components_ui_modal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/components/ui.jsx",
+      "source_location": "L39",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_components_ui",
+      "target": "client_src_components_ui_statcard"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventDashboard.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventdashboard",
+      "target": "client_src_components_ui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventGuests.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventguests",
+      "target": "client_src_components_ui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventHome.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventhome",
+      "target": "client_src_components_ui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventinvitation",
+      "target": "client_src_components_ui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_components_ui"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/EventsPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_eventspage",
+      "target": "client_src_components_ui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventGuests.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventguests",
+      "target": "client_src_components_ui_modal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_components_ui_modal"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/EventsPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_eventspage",
+      "target": "client_src_components_ui_modal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventGuests.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventguests",
+      "target": "client_src_components_ui_field",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_components_ui_field"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventGuests.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventguests",
+      "target": "client_src_components_ui_inputclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_components_ui_inputclass"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/EventsPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_eventspage",
+      "target": "client_src_components_ui_inputclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventDashboard.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventdashboard",
+      "target": "client_src_components_ui_statcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventHome.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventhome",
+      "target": "client_src_components_ui_statcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventGuests.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventguests",
+      "target": "client_src_components_ui_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventHome.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventhome",
+      "target": "client_src_components_ui_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_event_eventinvitation",
+      "target": "client_src_components_ui_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_components_ui_button"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/EventsPage.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_eventspage",
+      "target": "client_src_components_ui_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/main.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_main",
+      "target": "client_src_app"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/main.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_main",
+      "target": "client_src_app_app"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/App.jsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_app",
+      "target": "client_src_pages_event_eventtables",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_api"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_api_api"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L530",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_companionsmodal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L511",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_deletetablemodal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_draggableguest"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L189",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_eventtables"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L589",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_exportmodal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L175",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_freezone"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_palette"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_shapeclasses"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_shapes"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_tablecard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L447",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventtables_tableformmodal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/event/EventTables.jsx",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "client_src_pages_event_eventtables_tablecard",
+      "target": "client_src_pages_event_eventtables_shapeclasses"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/index.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_index",
+      "target": "server_src_routes_tables",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_src_routes_tables",
+      "target": "server_src_db_index"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_src_routes_tables",
+      "target": "server_src_db_index_pool"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_src_routes_tables",
+      "target": "server_src_routes_tables_eventexists"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_src_routes_tables",
+      "target": "server_src_routes_tables_gettable"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/tables.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_src_routes_tables",
+      "target": "server_src_routes_tables_router"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_dashboard_feature",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_events_feature",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_express_backend",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_invitados_groups_feature",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_mesas_feature",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_monorepo_structure",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_react_frontend",
+      "target": "readme_displayevent_app"
+    },
+    {
+      "relation": "includes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_monorepo_structure",
+      "target": "readme_express_backend"
+    },
+    {
+      "relation": "includes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_monorepo_structure",
+      "target": "readme_react_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "client/index.html",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "client_index_html",
+      "target": "readme_react_frontend"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_mysql_database",
+      "target": "readme_express_backend"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_dashboard_feature",
+      "target": "readme_invitados_groups_feature"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_origin": "semantic",
+      "source": "readme_mesas_feature",
+      "target": "readme_invitados_groups_feature"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/App.jsx",
-      "source_location": "L9",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_app",
@@ -1810,11 +3067,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/App.jsx",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_app",
-      "target": "client_src_pages_event_eventtables",
+      "target": "client_src_pages_event_eventinvitation",
       "confidence_score": 1.0
     },
     {
@@ -1822,11 +3079,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/App.jsx",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_app",
-      "target": "client_src_pages_event_eventtables_eventtables",
+      "target": "client_src_pages_event_eventinvitation_eventinvitation",
       "confidence_score": 1.0
     },
     {
@@ -1881,31 +3138,31 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/main.jsx",
-      "source_location": "L4",
+      "source_file": "client/src/App.jsx",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_main",
-      "target": "client_src_app",
+      "source": "client_src_app",
+      "target": "client_src_pages_invitation_invitationpage",
       "confidence_score": 1.0
     },
     {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/main.jsx",
-      "source_location": "L4",
+      "source_file": "client/src/App.jsx",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_main",
-      "target": "client_src_app_app",
+      "source": "client_src_app",
+      "target": "client_src_pages_invitation_invitationpage_invitationpage",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/api.js",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_api",
@@ -1927,18 +3184,6 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_api",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "client/src/pages/event/EventDashboard.jsx",
       "source_location": "L3",
       "weight": 1.0,
@@ -1975,11 +3220,11 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L12",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
+      "source": "client_src_pages_event_eventinvitation",
       "target": "client_src_api",
       "confidence_score": 1.0
     },
@@ -2008,15 +3253,15 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports",
+      "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
       "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_api_api",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_api",
       "confidence_score": 1.0
     },
     {
@@ -2059,11 +3304,11 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L12",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
+      "source": "client_src_pages_event_eventinvitation",
       "target": "client_src_api_api",
       "confidence_score": 1.0
     },
@@ -2092,392 +3337,15 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_eventformmodal_emptyform",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_eventformmodal_eventformmodal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L2",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_ui_button",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_ui_field",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_ui_inputclass",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/EventFormModal.jsx",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_eventformmodal",
-      "target": "client_src_components_ui_modal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventHome.jsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventhome",
-      "target": "client_src_components_eventformmodal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventHome.jsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventhome",
-      "target": "client_src_components_eventformmodal_eventformmodal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L48",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_ui",
-      "target": "client_src_components_ui_button",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L27",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_ui",
-      "target": "client_src_components_ui_field",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L36",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_ui",
-      "target": "client_src_components_ui_inputclass",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_ui",
-      "target": "client_src_components_ui_modal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/components/ui.jsx",
-      "source_location": "L39",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_components_ui",
-      "target": "client_src_components_ui_statcard",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventDashboard.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventdashboard",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventguests",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventHome.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventhome",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/EventsPage.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_eventspage",
-      "target": "client_src_components_ui",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventguests",
-      "target": "client_src_components_ui_modal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_components_ui_modal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/EventsPage.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_eventspage",
-      "target": "client_src_components_ui_modal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventguests",
-      "target": "client_src_components_ui_field",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_components_ui_field",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventguests",
-      "target": "client_src_components_ui_inputclass",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_components_ui_inputclass",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/EventsPage.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_eventspage",
-      "target": "client_src_components_ui_inputclass",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventDashboard.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventdashboard",
-      "target": "client_src_components_ui_statcard",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventHome.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventhome",
-      "target": "client_src_components_ui_statcard",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventguests",
-      "target": "client_src_components_ui_button",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventHome.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventhome",
-      "target": "client_src_components_ui_button",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_components_ui_button",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/EventsPage.jsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_pages_eventspage",
-      "target": "client_src_components_ui_button",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_api_api",
       "confidence_score": 1.0
     },
     {
@@ -2550,7 +3418,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L208",
+      "source_location": "L221",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_event_eventguests",
@@ -2561,7 +3429,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/pages/event/EventGuests.jsx",
-      "source_location": "L100",
+      "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_pages_event_eventguests",
@@ -2604,134 +3472,222 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L530",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_companionsmodal",
+      "source": "client_src_pages_event_eventinvitation",
+      "target": "client_src_pages_event_eventinvitation_empty",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L511",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_deletetablemodal",
+      "source": "client_src_pages_event_eventinvitation",
+      "target": "client_src_pages_event_eventinvitation_eventinvitation",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L40",
+      "source_file": "client/src/pages/event/EventInvitation.jsx",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_draggableguest",
+      "source": "client_src_pages_event_eventinvitation",
+      "target": "client_src_pages_event_eventinvitation_imageuploader",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L189",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_eventtables",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_countdown",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L589",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L390",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_exportmodal",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_dresscodesection",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L175",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L418",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_freezone",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_dressicon",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L15",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L365",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_palette",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_gallerysection",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L34",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_shapeclasses",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_hero",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L28",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_shapes",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_invitationloader",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L94",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_tablecard",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_invitationnotfound",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L447",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables",
-      "target": "client_src_pages_event_eventtables_tableformmodal",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_invitationpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L248",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_itinerarysection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L287",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_locationssection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L235",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_messagesection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L196",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_reveal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L454",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_rsvpsection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L223",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_sectiontitle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L656",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_submitconfirmation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_pages_invitation_invitationpage",
+      "target": "client_src_pages_invitation_invitationpage_usecountdown",
       "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "client/src/pages/event/EventTables.jsx",
-      "source_location": "L130",
+      "source_file": "client/src/pages/invitation/InvitationPage.jsx",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "client_src_pages_event_eventtables_tablecard",
-      "target": "client_src_pages_event_eventtables_shapeclasses",
+      "source": "client_src_pages_invitation_invitationpage_countdown",
+      "target": "client_src_pages_invitation_invitationpage_usecountdown",
       "confidence_score": 1.0
     },
     {
@@ -2760,7 +3716,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L19",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package",
@@ -2863,7 +3819,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_dependencies",
-      "target": "server_package_dependencies_cors",
+      "target": "server_package_dependencies_cloudinary",
       "confidence_score": 1.0
     },
     {
@@ -2874,7 +3830,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_dependencies",
-      "target": "server_package_dependencies_dotenv",
+      "target": "server_package_dependencies_cors",
       "confidence_score": 1.0
     },
     {
@@ -2885,7 +3841,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_dependencies",
-      "target": "server_package_dependencies_express",
+      "target": "server_package_dependencies_dotenv",
       "confidence_score": 1.0
     },
     {
@@ -2896,7 +3852,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_dependencies",
-      "target": "server_package_dependencies_morgan",
+      "target": "server_package_dependencies_express",
       "confidence_score": 1.0
     },
     {
@@ -2904,6 +3860,28 @@
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
       "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_package_dependencies",
+      "target": "server_package_dependencies_morgan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_package_dependencies",
+      "target": "server_package_dependencies_multer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/package.json",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_dependencies",
@@ -2918,6 +3896,18 @@
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
+      "source": "server_package_dependencies_cloudinary",
+      "target": "cloudinary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "server/package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast",
       "source": "server_package_dependencies_cors",
       "target": "cors",
       "confidence_score": 1.0
@@ -2926,7 +3916,7 @@
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
@@ -2938,7 +3928,7 @@
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
@@ -2950,7 +3940,7 @@
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
@@ -2962,7 +3952,19 @@
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L17",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import",
+      "_origin": "ast",
+      "source": "server_package_dependencies_multer",
+      "target": "multer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "server/package.json",
+      "source_location": "L19",
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
@@ -2974,7 +3976,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_package_devdependencies",
@@ -2985,7 +3987,7 @@
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "server/package.json",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "context": "import",
       "_origin": "ast",
@@ -2997,7 +3999,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/index.js",
-      "source_location": "L22",
+      "source_location": "L23",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_index",
@@ -3019,7 +4021,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/index.js",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_index",
@@ -3066,11 +4068,11 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_routes_tables",
+      "source": "server_src_routes_invitations",
       "target": "server_src_db_index",
       "confidence_score": 1.0
     },
@@ -3114,11 +4116,11 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L2",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_routes_tables",
+      "source": "server_src_routes_invitations",
       "target": "server_src_db_index_pool",
       "confidence_score": 1.0
     },
@@ -3127,7 +4129,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/index.js",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_index_getconnectionwithreq",
@@ -3150,7 +4152,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/init.js",
-      "source_location": "L9",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_init",
@@ -3161,11 +4163,34 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/init.js",
-      "source_location": "L11",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_db_init",
+      "target": "server_src_db_init_generatetoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/db/init.js",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_init",
       "target": "server_src_db_init_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/db/init.js",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_db_init_main",
+      "target": "server_src_db_init_generatetoken",
       "confidence_score": 1.0
     },
     {
@@ -3183,7 +4208,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema",
@@ -3194,7 +4219,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema",
@@ -3205,7 +4230,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L27",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema",
@@ -3216,7 +4241,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema_groups",
@@ -3227,7 +4252,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L27",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema_tables",
@@ -3238,7 +4263,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema_guests",
@@ -3249,7 +4274,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema_guests",
@@ -3260,7 +4285,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "server/src/db/schema.sql",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_db_schema_guests",
@@ -3271,7 +4296,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L13",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3282,7 +4307,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L37",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_index",
+      "target": "server_src_index_dirname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/index.js",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3294,7 +4330,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3306,7 +4342,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L6",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3318,7 +4354,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L7",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3330,7 +4366,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L7",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3342,7 +4378,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L8",
+      "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3354,7 +4390,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L8",
+      "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
@@ -3366,11 +4402,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L9",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
-      "target": "server_src_routes_tables",
+      "target": "server_src_routes_invitations",
       "confidence_score": 1.0
     },
     {
@@ -3378,11 +4414,35 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server/src/index.js",
-      "source_location": "L9",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_index",
-      "target": "server_src_routes_tables_router",
+      "target": "server_src_routes_invitations_router",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/index.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_index",
+      "target": "server_src_routes_uploads",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/index.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_index",
+      "target": "server_src_routes_uploads_router",
       "confidence_score": 1.0
     },
     {
@@ -3400,7 +4460,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_routes_groups",
@@ -3411,7 +4471,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_routes_groups",
@@ -3422,7 +4482,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_routes_groups",
@@ -3433,11 +4493,35 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/routes/groups.js",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_routes_groups",
       "target": "server_src_routes_groups_router",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/groups.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_routes_groups",
+      "target": "server_src_utils_token",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/groups.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_routes_groups",
+      "target": "server_src_utils_token_generatetoken",
       "confidence_score": 1.0
     },
     {
@@ -3454,152 +4538,169 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_routes_tables",
-      "target": "server_src_routes_tables_eventexists",
+      "source": "server_src_routes_invitations",
+      "target": "server_src_routes_invitations_findinvitationbytoken",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "server/src/routes/tables.js",
-      "source_location": "L11",
+      "source_file": "server/src/routes/invitations.js",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_routes_tables",
-      "target": "server_src_routes_tables_gettable",
+      "source": "server_src_routes_invitations",
+      "target": "server_src_routes_invitations_getguests",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "server/src/routes/tables.js",
+      "source_file": "server/src/routes/invitations.js",
       "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_routes_tables",
-      "target": "server_src_routes_tables_router",
+      "source": "server_src_routes_invitations",
+      "target": "server_src_routes_invitations_router",
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L29",
       "weight": 1.0,
-      "source": "readme_dashboard_feature",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_cloudinaryconfigured",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L10",
       "weight": 1.0,
-      "source": "readme_events_feature",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_dirname",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L26",
       "weight": 1.0,
-      "source": "readme_express_backend",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_mkdirasync",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L9",
       "weight": 1.0,
-      "source": "readme_invitados_groups_feature",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_router",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L57",
       "weight": 1.0,
-      "source": "readme_mesas_feature",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_savelocally",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L15",
       "weight": 1.0,
-      "source": "readme_monorepo_structure",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_upload",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L11",
       "weight": 1.0,
-      "source": "readme_react_frontend",
-      "target": "readme_displayevent_app"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_upload_dir",
+      "confidence_score": 1.0
     },
     {
-      "relation": "includes",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L37",
       "weight": 1.0,
-      "source": "readme_monorepo_structure",
-      "target": "readme_express_backend"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_uploadtocloudinary",
+      "confidence_score": 1.0
     },
     {
-      "relation": "includes",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L27",
       "weight": 1.0,
-      "source": "readme_monorepo_structure",
-      "target": "readme_react_frontend"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads",
+      "target": "server_src_routes_uploads_writefileasync",
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "client/index.html",
-      "weight": 1.0,
-      "source": "client_index_html",
-      "target": "readme_react_frontend"
-    },
-    {
-      "relation": "conceptually_related_to",
+      "relation": "calls",
+      "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L58",
       "weight": 1.0,
-      "source": "readme_mysql_database",
-      "target": "readme_express_backend"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads_savelocally",
+      "target": "server_src_routes_uploads_mkdirasync",
+      "confidence_score": 1.0
     },
     {
-      "relation": "conceptually_related_to",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "README.md",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/routes/uploads.js",
+      "source_location": "L60",
       "weight": 1.0,
-      "source": "readme_dashboard_feature",
-      "target": "readme_invitados_groups_feature"
+      "_origin": "ast",
+      "source": "server_src_routes_uploads_savelocally",
+      "target": "server_src_routes_uploads_writefileasync",
+      "confidence_score": 1.0
     },
     {
-      "relation": "conceptually_related_to",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "README.md",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/utils/token.js",
+      "source_location": "L5",
       "weight": 1.0,
-      "source": "readme_mesas_feature",
-      "target": "readme_invitados_groups_feature"
+      "_origin": "ast",
+      "source": "server_src_utils_token",
+      "target": "server_src_utils_token_generatetoken",
+      "confidence_score": 1.0
     }
   ],
   "hyperedges": [
@@ -3618,5 +4719,5 @@
       "source_file": "README.md"
     }
   ],
-  "built_at_commit": "eae5eb2d589609250ca84a5829be6934040b6f89"
+  "built_at_commit": "8df1299b3841dd1076321c604e49bf65e9b223fb"
 }
