@@ -112,9 +112,11 @@ function GroupCard({
   onEdit,
   onDelete,
   onCopyInvite,
+  onUpdatePeriqueras,
 }) {
   const [guestName, setGuestName] = useState("");
   const [isChild, setIsChild] = useState(false);
+  const [periquerasCount, setPeriquerasCount] = useState(group.high_chairs_count || 1);
 
   const addGuest = async (e) => {
     e.preventDefault();
@@ -140,6 +142,7 @@ function GroupCard({
           <span className="text-xs text-gray-400">
             {group.guests_count ?? 0} invitados
             {group.children_count ? ` · ${group.children_count} niños` : ""}
+            {group.high_chairs ? ` · ${group.high_chairs_count} periqueras` : ""}
           </span>
           <button
             onClick={(e) => {
@@ -212,6 +215,47 @@ function GroupCard({
               ))}
             </ul>
           )}
+
+          <div className="mt-4 pt-4 border-t border-gray-800">
+            <label className="flex items-center gap-2 text-sm text-gray-200 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={group.high_chairs ? true : false}
+                onChange={(e) =>
+                  onUpdatePeriqueras(group, {
+                    high_chairs: e.target.checked,
+                    high_chairs_count: e.target.checked ? periquerasCount : 0,
+                  })
+                }
+                className="w-4 h-4 accent-fuchsia-500"
+              />
+              <span>El grupo ocupa periqueras</span>
+              <span className="text-xs text-gray-500">
+                asiento de bebé (~1 año), no consume platillo
+              </span>
+            </label>
+            {group.high_chairs ? (
+              <div className="flex items-center gap-2 mt-2">
+                <label className="text-xs uppercase tracking-wide text-gray-400">
+                  ¿Cuántas?
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  className={`${inputClass} !w-24 py-1.5`}
+                  value={periquerasCount}
+                  onChange={(e) => setPeriquerasCount(Number(e.target.value))}
+                  onBlur={() =>
+                    onUpdatePeriqueras(group, {
+                      high_chairs: true,
+                      high_chairs_count: periquerasCount >= 1 ? periquerasCount : 1,
+                    })
+                  }
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
       )}
     </div>
@@ -336,6 +380,19 @@ export default function EventGuests() {
     }
   };
 
+  const handleUpdatePeriqueras = async (group, payload) => {
+    try {
+      await api.groups.update(id, group.id, {
+        name: group.name,
+        leader_name: group.leader_name,
+        ...payload,
+      });
+      await refreshGroups();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -376,6 +433,7 @@ export default function EventGuests() {
               onEdit={(g) => setModal({ mode: "edit-group", group: g })}
               onDelete={handleDeleteGroup}
               onCopyInvite={handleCopyInvite}
+              onUpdatePeriqueras={handleUpdatePeriqueras}
             />
           ))}
         </div>

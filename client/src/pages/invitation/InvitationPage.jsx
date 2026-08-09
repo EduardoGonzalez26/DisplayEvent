@@ -94,7 +94,7 @@ function Hero({ event, family, cfg }) {
       style={{
         backgroundImage: cfg.hero_image
           ? `url('${cfg.hero_image}')`
-          : "linear-gradient(160deg, #120408 0%, #4a1624 60%, #6f2e34 100%)",
+          : "linear-gradient(160deg, #1d0a10 0%, #3d1a22 60%, #b46c72 100%)",
       }}
     >
       <div className="absolute inset-0 bg-wine-950/60" />

@@ -30,7 +30,7 @@ export default function App() {
       <header className="border-b border-gray-800 bg-gray-900/70 sticky top-0 z-20 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <NavLink to="/" className="flex items-center gap-2 font-bold text-lg text-white">
-            <span className="w-8 h-8 rounded-lg bg-indigo-600 grid place-items-center text-sm">E</span>
+            <img src="/logo.svg" alt="DisplayEvent" className="h-8 w-8" />{" "}
             DisplayEvent
           </NavLink>
           <nav className="flex items-center gap-1">

@@ -91,7 +91,7 @@ function DraggableGuest({ guest, color }) {
   );
 }
 
-function TableCard({ table, guests, onEdit, onDelete }) {
+function TableCard({ table, guests, colorFor, onEdit, onDelete }) {
   const { setNodeRef, isOver } = useDroppable({ id: `table-${table.id}` });
   const count = guests.length;
   const pct = table.capacity > 0 ? Math.round((count / table.capacity) * 100) : 0;
@@ -107,11 +107,22 @@ function TableCard({ table, guests, onEdit, onDelete }) {
     <div
       ref={setNodeRef}
       className={`rounded-2xl border p-4 transition-colors ${
-        isOver ? "border-indigo-500 bg-indigo-600/10" : "border-gray-800 bg-gray-900"
+        isOver
+          ? "border-indigo-500 bg-indigo-600/10"
+          : table.is_kids
+            ? "border-sky-500/40 bg-sky-950/20"
+            : "border-gray-800 bg-gray-900"
       }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="font-semibold text-white">{table.name}</div>
+        <div className="font-semibold text-white flex items-center gap-2">
+          {table.name}
+          {table.is_kids && (
+            <span className="text-[10px] uppercase tracking-wide text-sky-300 bg-sky-500/20 rounded-full px-2 py-0.5">
+              niños
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-1">
           <button onClick={() => onEdit(table)} className="text-xs text-gray-400 hover:text-white">
             Editar
@@ -128,7 +139,13 @@ function TableCard({ table, guests, onEdit, onDelete }) {
       <div className="flex flex-col items-center gap-1 mb-2">
         <div
           className={`${shapeClasses(table.shape)} border-2 border-dashed grid place-items-center ${
-            isOver ? "border-indigo-400" : full ? "border-red-800" : "border-gray-700"
+            isOver
+              ? "border-indigo-400"
+              : full
+                ? "border-red-800"
+                : table.is_kids
+                  ? "border-sky-500/50"
+                  : "border-gray-700"
           }`}
         >
           <div className="text-center">
@@ -148,22 +165,27 @@ function TableCard({ table, guests, onEdit, onDelete }) {
       </div>
 
       {count === 0 ? (
-        <p className={`text-xs text-center py-2 ${isOver ? "text-indigo-300" : "text-gray-600"}`}>
-          {isOver ? "Suelta aquí" : "Mesa vacía — arrastra invitados"}
+        <p
+          className={`text-xs text-center py-2 ${
+            isOver ? "text-indigo-300" : table.is_kids ? "text-sky-400/70" : "text-gray-600"
+          }`}
+        >
+          {isOver ? "Suelta aquí" : table.is_kids ? "Mesa de niños — arrastra pequeños" : "Mesa vacía — arrastra invitados"}
         </p>
       ) : (
         <ul className="flex flex-wrap gap-1.5 max-h-28 overflow-auto">
           {sorted.map((g) => (
             <li
               key={g.id}
-              className={`text-xs rounded-full px-2 py-1 ${
+              className={`flex items-center gap-1.5 text-xs rounded-full px-2 py-1 ${
                 g.is_leader ? "bg-amber-900/40 text-amber-300" : "bg-gray-800 text-gray-300"
               }`}
             >
-              {g.is_leader && <span className="mr-1">★</span>}
-              {g.name}
-              {g.companion_id && <span className="ml-1 text-gray-500">+1</span>}
-              {g.is_child && <span className="ml-1 text-sky-400">(niño)</span>}
+              <span className={`w-2 h-2 rounded-full ${colorFor(g)} shrink-0`} />
+              {g.is_leader && <span className="shrink-0">★</span>}
+              <span className="truncate">{g.name}</span>
+              {g.companion_id && <span className="shrink-0 text-gray-500">+1</span>}
+              {g.is_child && <span className="shrink-0 text-sky-400">(niño)</span>}
             </li>
           ))}
         </ul>
@@ -195,6 +217,7 @@ export default function EventTables() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [onlyUnassigned, setOnlyUnassigned] = useState(true);
+  const [onlyKids, setOnlyKids] = useState(false);
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState("error");
   const [modal, setModal] = useState(null);
@@ -266,12 +289,13 @@ export default function EventTables() {
   const sidebarGuests = useMemo(() => {
     let list = guests.slice().sort((a, b) => a.name.localeCompare(b.name));
     if (onlyUnassigned) list = list.filter((g) => g.table_id == null);
+    if (onlyKids) list = list.filter((g) => g.is_child);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       list = list.filter((g) => g.name.toLowerCase().includes(q));
     }
     return list;
-  }, [guests, onlyUnassigned, query]);
+  }, [guests, onlyUnassigned, onlyKids, query]);
 
   const guestsByTable = useMemo(() => {
     const map = {};
@@ -290,6 +314,16 @@ export default function EventTables() {
     return m;
   }, [guests]);
 
+  const confirmedCount = guests.filter((g) => g.registered).length;
+  const seatedCount = guests.filter((g) => g.table_id != null).length;
+  const kidsCount = guests.filter((g) => g.is_child).length;
+  const totalPeriqueras = groups.reduce(
+    (sum, g) => sum + (g.high_chairs ? g.high_chairs_count || 0 : 0),
+    0
+  );
+  const groupsWithPeriqueras = groups.filter((g) => g.high_chairs).length;
+  const kidsTables = tables.filter((t) => t.is_kids).length;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -304,10 +338,35 @@ export default function EventTables() {
           <Button onClick={() => setModal({ type: "create" })}>+ Nueva mesa</Button>
         </div>
       </div>
-      <p className="text-sm text-gray-400 mb-5">
+      <p className="text-sm text-gray-400 mb-4">
         Arrastra un invitado confirmado a una mesa. Solo quienes confirmaron asistencia pueden
         sentarse.
       </p>
+
+      <div className="flex flex-wrap gap-2 mb-5">
+        <span className="rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-sm text-gray-300">
+          Confirmados <span className="font-semibold text-white">{confirmedCount}</span>
+        </span>
+        <span className="rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-sm text-gray-300">
+          Sentados <span className="font-semibold text-emerald-300">{seatedCount}</span>
+        </span>
+        <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-sm text-sky-300">
+          Niños <span className="font-semibold">{kidsCount}</span>
+        </span>
+        {kidsTables > 0 && (
+          <span className="rounded-full border border-sky-500/40 bg-sky-500/20 px-3 py-1 text-sm text-sky-200">
+            Mesas de niños <span className="font-semibold">{kidsTables}</span>
+          </span>
+        )}
+        {totalPeriqueras > 0 && (
+          <span
+            className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-sm text-fuchsia-300"
+            title={`${groupsWithPeriqueras} ${groupsWithPeriqueras === 1 ? "grupo" : "grupos"} reservan periqueras`}
+          >
+            Periqueras <span className="font-semibold">{totalPeriqueras}</span>
+          </span>
+        )}
+      </div>
 
       {loading ? (
         <p className="text-gray-400">Cargando…</p>
@@ -338,6 +397,27 @@ export default function EventTables() {
                   />
                   Solo sin asignar
                 </label>
+                <label className="flex items-center gap-1.5 text-xs text-sky-400 mt-1.5">
+                  <input
+                    type="checkbox"
+                    checked={onlyKids}
+                    onChange={(e) => setOnlyKids(e.target.checked)}
+                    className="accent-sky-500"
+                  />
+                  Solo niños
+                </label>{totalPeriqueras > 0 && (
+                  <p className="mt-3 pt-3 border-t border-gray-800 text-xs text-fuchsia-300 leading-relaxed">
+                    {totalPeriqueras} periquera{totalPeriqueras === 1 ? "" : "s"} en {groupsWithPeriqueras}{" "}
+                    {groupsWithPeriqueras === 1 ? "grupo" : "grupos"}. Los bebés con periquera no
+                    cuentan como comensal.
+                  </p>
+                )}
+                {kidsTables > 0 && (
+                  <p className="mt-2 text-xs text-sky-400 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                    La mesa marcada como "niños" está resaltada en azul.
+                  </p>
+                )}
 
                 <div className="mt-3 space-y-1.5 max-h-[55vh] overflow-auto">
                   {sidebarGuests.length === 0 ? (
@@ -352,12 +432,6 @@ export default function EventTables() {
             </div>
 
             <div className="col-span-3">
-              <div className="flex justify-end">
-                <span className="text-xs text-gray-500 mb-2">
-                  {guests.filter((g) => g.table_id != null).length} de{" "}
-                  {guests.filter((g) => g.registered).length} confirmados sentados
-                </span>
-              </div>
               <FreeZone />
 
               {tables.length === 0 ? (
@@ -371,6 +445,7 @@ export default function EventTables() {
                       key={table.id}
                       table={table}
                       guests={guestsByTable[table.id] || []}
+                      colorFor={colorFor}
                       onEdit={(t) => setModal({ type: "edit", table: t })}
                       onDelete={(t) => setModal({ type: "delete", table: t })}
                     />
@@ -425,7 +500,13 @@ export default function EventTables() {
         />
       )}
       {modal?.type === "export" && (
-        <ExportModal tables={tables} guests={guests} guestById={guestById} onClose={() => setModal(null)} />
+        <ExportModal
+          tables={tables}
+          guests={guests}
+          groups={groups}
+          guestById={guestById}
+          onClose={() => setModal(null)}
+        />
       )}
 
       {toast && (
@@ -445,7 +526,11 @@ export default function EventTables() {
 }
 
 function TableFormModal({ initial, onClose, onSave }) {
-  const [form, setForm] = useState(initial || { name: "", capacity: 8, shape: "circle" });
+  const [form, setForm] = useState(
+    initial
+      ? { name: initial.name, capacity: initial.capacity, shape: initial.shape, is_kids: !!initial.is_kids }
+      : { name: "", capacity: 8, shape: "circle", is_kids: false }
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -494,6 +579,16 @@ function TableFormModal({ initial, onClose, onSave }) {
             <option value="rect">Rectangular</option>
           </select>
         </Field>
+        <label className="flex items-center gap-2 text-sm text-gray-200 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={form.is_kids}
+            onChange={(e) => setForm({ ...form, is_kids: e.target.checked })}
+            className="w-4 h-4 accent-sky-500"
+          />
+          <span>Es mesa de niños</span>
+          <span className="text-xs text-gray-500">se resalta en azul para acomodar a los pequeños</span>
+        </label>
         {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} type="button">
@@ -586,7 +681,7 @@ function CompanionsModal({ guests, guestById, eventId, onClose, onChanged, notif
   );
 }
 
-function ExportModal({ tables, guests, guestById, onClose }) {
+function ExportModal({ tables, guests, guestById, groups, onClose }) {
   const guestByIdLocal = useMemo(() => {
     const m = {};
     guests.forEach((g) => (m[g.id] = g));
@@ -631,6 +726,14 @@ function ExportModal({ tables, guests, guestById, onClose }) {
 
   const print = () => {
     const win = window.open("", "_blank");
+    const totalPeriqueras = groups
+      ? groups.reduce((sum, g) => sum + (g.high_chairs ? g.high_chairs_count || 0 : 0), 0)
+      : 0;
+    const kidsTables = tables.filter((t) => t.is_kids).length;
+    const metaExtras = [
+      ...(totalPeriqueras > 0 ? [`${totalPeriqueras} periqueras`] : []),
+      ...[kidsTables > 0 ? `${kidsTables} mesa(s) de niños` : []],
+    ].join(" · ");
     const html = `
       <html><head><title>Lista de mesas</title><style>
         body{font-family:system-ui,sans-serif;padding:2.5rem;color:#111}
@@ -642,11 +745,11 @@ function ExportModal({ tables, guests, guestById, onClose }) {
         .meta{margin-bottom:1.2rem;color:#333}
       </style></head><body>
       <h1>Organización de mesas</h1>
-      <div class="meta">${new Date().toLocaleDateString("es-MX")} · ${tables.length} mesas</div>
+      <div class="meta">${new Date().toLocaleDateString("es-MX")} · ${tables.length} mesas${metaExtras ? ` · ${metaExtras}` : ""}</div>
       ${tables
         .map((t) => {
           const list = rows.filter((r) => r.table === t.name);
-          return `<h2>${t.name} (${list.length}/${t.capacity})</h2>
+          return `<h2>${t.name}${t.is_kids ? " 🧒" : ""} (${list.length}/${t.capacity})</h2>
           <table><thead><tr><th>Nombre</th><th>Detalle</th></tr></thead><tbody>
           ${list
             .map(

@@ -1,14 +1,16 @@
 import { Router } from "express";
 import multer from "multer";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs";
 import { promisify } from "node:util";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import https from "node:https";
 
 const router = Router();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const UPLOAD_DIR = join(__dirname, "..", "..", "uploads");
+const CLOUD_TIMEOUT_MS = 10000;
 
 const allowedMime = /^image\/(jpeg|png|webp|gif)$/;
 
@@ -35,22 +37,65 @@ function cloudinaryConfigured() {
 }
 
 async function uploadToCloudinary(buffer, folder) {
-  const { default: cloudinary } = await import("cloudinary");
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+  const cloud = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const params = { timestamp, folder: folder || "displayevent" };
+  const toSign = Object.keys(params)
+    .sort()
+    .map((k) => `${k}=${params[k]}`)
+    .join("&");
+  const signature = createHash("sha1").update(toSign + apiSecret).digest("hex");
+
+  const boundary = randomUUID();
+  const field = (name, value) =>
+    `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
+  const head = Buffer.from(
+    field("folder", params.folder) +
+      field("timestamp", timestamp) +
+      field("signature", signature) +
+      field("api_key", apiKey) +
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="img"\r\nContent-Type: application/octet-stream\r\n\r\n`
+  );
+  const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+  const body = Buffer.concat([head, buffer, tail]);
 
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: folder || "displayevent", resource_type: "image" },
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
+    const req = https.request(
+      {
+        method: "POST",
+        hostname: "api.cloudinary.com",
+        path: `/v1_1/${cloud}/image/upload`,
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          "Content-Length": body.length,
+        },
+        timeout: CLOUD_TIMEOUT_MS,
+      },
+      (res) => {
+        let out = "";
+        res.on("data", (d) => (out += d));
+        res.on("end", () => {
+          try {
+            const parsed = JSON.parse(out);
+            if (res.statusCode >= 400 || !parsed.secure_url) {
+              const msg = parsed?.error?.message || `HTTP ${res.statusCode}`;
+              return reject(new Error(`Cloudinary: ${msg}`));
+            }
+            resolve({ secure_url: parsed.secure_url, public_id: parsed.public_id });
+          } catch (err) {
+            reject(new Error(`Cloudinary: respuesta inválida (HTTP ${res.statusCode})`));
+          }
+        });
       }
     );
-    stream.end(buffer);
+    req.on("timeout", () => {
+      req.destroy(new Error("Cloudinary: la subida tardó demasiado"));
+    });
+    req.on("error", reject);
+    req.end(body);
   });
 }
 
@@ -69,8 +114,12 @@ router.post("/", upload.single("file"), async (req, res, next) => {
     const ext = req.file.mimetype.split("/")[1] === "jpeg" ? "jpg" : req.file.mimetype.split("/")[1];
 
     if (cloudinaryConfigured()) {
-      const result = await uploadToCloudinary(req.file.buffer, "displayevent");
-      return res.status(201).json({ url: result.secure_url, public_id: result.public_id });
+      try {
+        const result = await uploadToCloudinary(req.file.buffer, "displayevent");
+        return res.status(201).json({ url: result.secure_url, public_id: result.public_id });
+      } catch (cloudErr) {
+        console.error(`[uploads] Cloudinary falló, guardando en local: ${cloudErr.message}`);
+      }
     }
 
     const url = await saveLocally(req.file.buffer, ext);

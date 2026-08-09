@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -33,6 +34,16 @@ app.use("/api/events/:eventId/guests", guestsRouter);
 app.use("/api/events/:eventId/tables", tablesRouter);
 app.use("/api/invitations", invitationsRouter);
 app.use("/api/uploads", uploadsRouter);
+
+// Si existe el build del cliente, lo servimos igual que la API
+// (permite hostear frontend + backend en un solo servicio, p. ej. Render).
+const CLIENT_DIST = join(__dirname, "..", "..", "client", "dist");
+if (existsSync(CLIENT_DIST)) {
+  app.use(express.static(CLIENT_DIST));
+  app.get(/^\/(?!api|uploads).*/, function (_req, res) {
+    res.sendFile(join(CLIENT_DIST, "index.html"));
+  });
+}
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });

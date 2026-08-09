@@ -1,30 +1,29 @@
 import { Router } from "express";
-import { pool } from "../db/index.js";
+import { query, pool } from "../db/index.js";
 
 const router = Router();
 
 async function findInvitationByToken(token) {
-  const [rows] = await pool.query(
+  const rows = await query(
     `SELECT g.id AS group_id, g.event_id, g.name AS name,
             g.leader_name, g.rsvp_note,
             e.name AS event_name, e.date, e.time, e.place, e.invitation
-     FROM \`groups\` g
+     FROM "groups" g
      JOIN events e ON e.id = g.event_id
-     WHERE g.invitation_token = ? LIMIT 1`,
+     WHERE g.invitation_token = $1 LIMIT 1`,
     [token]
   );
   return rows[0] || null;
 }
 
 async function getGuests(groupId) {
-  const [rows] = await pool.query(
+  return query(
     `SELECT id, name, is_child, is_leader, registered, declined, companion_id
      FROM guests
-     WHERE group_id = ?
+     WHERE group_id = $1
      ORDER BY is_leader DESC, id ASC`,
     [groupId]
   );
-  return rows;
 }
 
 router.get("/:token", async (req, res, next) => {
@@ -58,9 +57,10 @@ router.put("/:token/rsvp", async (req, res, next) => {
     const allowIds = Array.isArray(attending_ids) ? attending_ids.map(Number) : [];
     const declineIds = Array.isArray(declining_ids) ? declining_ids.map(Number) : [];
     const allIds = [...allowIds, ...declineIds];
+
     if (allIds.length > 0) {
-      const [owned] = await pool.query(
-        `SELECT id FROM guests WHERE group_id = ? AND id IN (?)`,
+      const owned = await query(
+        `SELECT id FROM guests WHERE group_id = $1 AND id = ANY($2::int[])`,
         [inv.group_id, allIds]
       );
       const ownedSet = new Set(owned.map((g) => g.id));
@@ -70,49 +70,43 @@ router.put("/:token/rsvp", async (req, res, next) => {
       }
     }
 
-    const conn = await pool.getConnection();
     let cleanNote = null;
+    const conn = await pool.connect();
     try {
-      await conn.beginTransaction();
+      await conn.query("BEGIN");
 
       // Pases que asisten: registrados. Pases que no asisten: declinados.
-      // El resto vuelve a "sin respuesta" (nunca se revierte un estado confirmado).
-      const [rows] = await conn.query(`SELECT id FROM guests WHERE group_id = ?`, [
-        inv.group_id,
-      ]);
-      const groupIds = rows.map((g) => g.id);
-      if (groupIds.length > 0) {
+      // El resto vuelve a "sin respuesta".
+      await conn.query(
+        `UPDATE guests SET registered = FALSE, declined = FALSE WHERE group_id = $1`,
+        [inv.group_id]
+      );
+      if (allowIds.length > 0) {
         await conn.query(
-          `UPDATE guests SET registered = 0, declined = 0 WHERE id IN (?)`,
-          [groupIds]
+          `UPDATE guests SET registered = TRUE, declined = FALSE WHERE id = ANY($1::int[])`,
+          [allowIds]
         );
-        if (allowIds.length > 0) {
-          await conn.query(
-            `UPDATE guests SET registered = 1, declined = 0 WHERE id IN (?)`,
-            [allowIds]
-          );
-        }
-        if (declineIds.length > 0) {
-          await conn.query(
-            `UPDATE guests SET registered = 0, declined = 1 WHERE id IN (?)`,
-            [declineIds]
-          );
-        }
+      }
+      if (declineIds.length > 0) {
+        await conn.query(
+          `UPDATE guests SET registered = FALSE, declined = TRUE WHERE id = ANY($1::int[])`,
+          [declineIds]
+        );
       }
 
       const noteStr = typeof note === "string" ? note.trim().slice(0, 500) : null;
       cleanNote = noteStr;
-      await conn.query(`UPDATE \`groups\` SET rsvp_note = ? WHERE id = ?`, [
+      await conn.query(`UPDATE "groups" SET rsvp_note = $1 WHERE id = $2`, [
         cleanNote,
         inv.group_id,
       ]);
 
-      await conn.commit();
-      conn.release();
+      await conn.query("COMMIT");
     } catch (err) {
-      await conn.rollback();
-      conn.release();
+      await conn.query("ROLLBACK").catch(() => {});
       throw err;
+    } finally {
+      conn.release();
     }
 
     const guests = await getGuests(inv.group_id);

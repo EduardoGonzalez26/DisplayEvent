@@ -1,0 +1,19 @@
+# Render blueprint para DisplayEvent
+# Despliegue "Todo en uno": build del cliente + API + uploads en un solo servicio.
+services:
+  - type: web
+    name: displayevent
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm ci && cd ../client && npm ci && npm run build
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
