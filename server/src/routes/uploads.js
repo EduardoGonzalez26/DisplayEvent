@@ -31,32 +31,40 @@ const writeFileAsync = promisify(writeFile);
 function cloudinaryConfigured() {
   return Boolean(
     process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
+      (process.env.CLOUDINARY_PRESET ||
+        (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET))
   );
 }
 
 async function uploadToCloudinary(buffer, folder) {
   const cloud = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const params = { timestamp, folder: folder || "displayevent" };
-  const toSign = Object.keys(params)
-    .sort()
-    .map((k) => `${k}=${params[k]}`)
-    .join("&");
-  const signature = createHash("sha1").update(toSign + apiSecret).digest("hex");
-
+  const preset = process.env.CLOUDINARY_PRESET;
   const boundary = randomUUID();
   const field = (name, value) =>
     `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
+
+  const bodyHeadParts = [field("folder", folder || "displayevent")];
+  const params = { folder: folder || "display" };
+
+  if (preset) {
+    // Subida unsigned: no requiere API key ni firma.
+    bodyHeadParts.push(field("upload_preset", preset));
+  } else {
+    // Subida firmada con API key/secret.
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    params.timestamp = timestamp;
+    const toSign = Object.keys(params)
+      .sort()
+      .map((k) => `${k}=${params[k]}`)
+      .join("&");
+    const signature = createHash("sha1").update(toSign + apiSecret).digest("hex");
+    bodyHeadParts.push(field("timestamp", timestamp), field("signature", signature), field("api_key", apiKey));
+  }
+
   const head = Buffer.from(
-    field("folder", params.folder) +
-      field("timestamp", timestamp) +
-      field("signature", signature) +
-      field("api_key", apiKey) +
+    bodyHeadParts.join("") +
       `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="img"\r\nContent-Type: application/octet-stream\r\n\r\n`
   );
   const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
