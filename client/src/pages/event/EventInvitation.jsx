@@ -8,6 +8,7 @@ const EMPTY = {
   hero_image: "",
   tagline: "",
   message: "",
+  celebrants: "",
   itinerary: [{ label: "", time: "" }],
   locations: [{ label: "", place: "", url: "" }],
   gallery: [],
@@ -210,6 +211,13 @@ export default function EventInvitation() {
               <span className="text-sm text-gray-400 mb-1 block">Frase bajo el título</span>
               <input className={inputCls} value={form.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Los invitamos a celebrar…" />
             </label>
+            <label className="block">
+              <span className="text-sm text-gray-400 mb-1 block">¿Quién celebra? (nombre del homenajeado/a)</span>
+              <input className={inputCls} value={form.celebrants} onChange={(e) => set("celebrants", e.target.value)} placeholder="Alice" />
+            </label>
+            <p className="text-xs text-gray-500">
+              Si dejas vacío "Frase bajo el título", se armará sola: "Los invitados a celebrar junto a {celebrants} este día tan especial."
+            </p>
             <label className="block">
               <span className="text-sm text-gray-400 mb-1 block">Mensaje de bienvenida (se muestra con el nombre de la familia)</span>
               <textarea className={inputCls} rows={3} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Familia …, la alegría de contar con ustedes…" />

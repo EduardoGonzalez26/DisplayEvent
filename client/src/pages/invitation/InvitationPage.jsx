@@ -109,7 +109,12 @@ function Hero({ event, family, cfg }) {
         </h1>
         <p className="animate-fade-up delay-2 text-wine-100 text-lg md:text-xl font-light mb-8">
           {cfg.tagline ||
-            `Los invitados a celebrar junto a la familia ${family} este día tan especial.`}
+            (cfg.celebrants
+              ? `Los invitados a celebrar junto a ${cfg.celebrants} este día tan especial.`
+              : "Los invitados a celebrar este día tan especial.")}
+        </p>
+        <p className="animate-fade-up delay-2 -mt-5 mb-8 text-gold-200/90 text-xs uppercase tracking-[0.35em]">
+          Invitación para {family}
         </p>
         <div className="animate-fade-up delay-3 flex items-center justify-center gap-4 text-gold-200">
           <span className="font-display text-6xl font-semibold">{day}</span>
