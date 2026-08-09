@@ -216,7 +216,7 @@ export default function EventInvitation() {
               <input className={inputCls} value={form.celebrants} onChange={(e) => set("celebrants", e.target.value)} placeholder="Alice" />
             </label>
             <p className="text-xs text-gray-500">
-              Si dejas vacío "Frase bajo el título", se armará sola: "Los invitados a celebrar junto a {celebrants} este día tan especial."
+              {`Si dejas vacío "Frase bajo el título", se armará sola: "Los invitados a celebrar junto a {celébrats} este día tan especial."`}
             </p>
             <label className="block">
               <span className="text-sm text-gray-400 mb-1 block">Mensaje de bienvenida (se muestra con el nombre de la familia)</span>
