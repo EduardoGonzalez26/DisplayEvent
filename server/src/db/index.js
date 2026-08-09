@@ -12,6 +12,7 @@ const connection = process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
+      family: 4,
     }
   : {
       host: process.env.PGHOST || process.env.DB_HOST,
@@ -19,6 +20,7 @@ const connection = process.env.DATABASE_URL
       user: process.env.PGUSER || process.env.DB_USER,
       password: process.env.PGPASSWORD || process.env.DB_PASSWORD,
       database: process.env.PGDATABASE || process.env.DB_NAME,
+      family: 4,
     };
 
 export const pool = new pg.Pool({ ...connection, max: 10 });
