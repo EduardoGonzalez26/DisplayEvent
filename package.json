@@ -1,0 +1,9 @@
+{
+  "name": "displayevent",
+  "private": true,
+  "scripts": {
+    "start": "node server/src/index.js",
+    "build": "cd server && npm ci && cd ../client && npm ci && npm run build",
+    "local": "cd server && npm run dev"
+  }
+}

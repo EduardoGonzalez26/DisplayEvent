@@ -5,8 +5,8 @@ services:
     name: displayevent
     runtime: node
     plan: free
-    buildCommand: cd server && npm ci && cd ../client && npm ci && npm run build
-    startCommand: cd server && npm start
+    buildCommand: npm run build
+    startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL

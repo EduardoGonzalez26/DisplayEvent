@@ -13,7 +13,8 @@ import tablesRouter from "./routes/tables.js";
 import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
 
-dotenv.config();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, "..", ".env") });
 
 const app = express();
 
@@ -21,7 +22,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
 
 app.get("/api/health", (_req, res) => {
