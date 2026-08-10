@@ -67,20 +67,22 @@
 }
 
 @theme {
-  --font-display: "Playfair Display", "Georgia", serif;
+  --font-display: "Poppins", "system-ui", sans-serif;
   --font-body: "Lato", "system-ui", sans-serif;
+  --font-playfair: "Playfair Display", "Georgia", serif;
+  --font-cinzel: "Cinzel", "Georgia", serif;
 
-  --color-wine-50: #fdf4f3;
-  --color-wine-100: #f8e5e2;
-  --color-wine-200: #f0cdcc;
-  --color-wine-300: #e0a9a9;
-  --color-wine-400: #ce8d8e;
-  --color-wine-500: #c07d82;
-  --color-wine-600: #b46c72;
-  --color-wine-700: #8f4d54;
-  --color-wine-800: #5c323a;
-  --color-wine-900: #3d1a22;
-  --color-wine-950: #1d0a10;
+  --color-wine-50: #fff8f7;
+  --color-wine-100: #fff1f0;
+  --color-wine-200: #ffe9e7;
+  --color-wine-300: #ffdddb;
+  --color-wine-400: #f6c6c4;
+  --color-wine-500: #e8a3a1;
+  --color-wine-600: #d17b79;
+  --color-wine-700: #a95351;
+  --color-wine-800: #7d3836;
+  --color-wine-900: #572522;
+  --color-wine-950: #381414;
 
   --color-gold-50: #fbf9f2;
   --color-gold-100: #f4efdf;
@@ -326,6 +328,18 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   animation: gold-shimmer 7s ease-in-out infinite;
+}
+
+/* Sombras del hero: garantizan legibilidad sobre cualquier foto de fondo */
+.hero-title-glow {
+  filter: drop-shadow(0 2px 8px rgba(48, 20, 19, 0.45))
+    drop-shadow(0 1px 28px rgba(48, 20, 19, 0.4));
+}
+
+.hero-text-shadow {
+  text-shadow:
+    0 1px 2px rgba(48, 20, 19, 0.5),
+    0 2px 20px rgba(48, 20, 19, 0.4);
 }
 
 @keyframes gold-shimmer {

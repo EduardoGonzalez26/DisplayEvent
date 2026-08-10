@@ -25,7 +25,7 @@ export default function InvitationPage() {
   const declining = guests.filter((g) => g.declined).length;
 
   return (
-    <div className="min-h-screen bg-wine-950 text-wine-100 font-body overflow-x-clip">
+    <div className="min-h-screen bg-wine-100 text-gold-700 font-body overflow-x-clip">
       <Hero event={event} family={group.name} cfg={cfg} />
       <div className="relative z-10 -mt-12 px-4">
         <Countdown date={event.date} time={event.time} />
@@ -94,7 +94,7 @@ function Corner({ className }) {
 
 function InvitationLoader() {
   return (
-    <div className="min-h-screen bg-wine-950 grid place-items-center text-gold-300 px-6">
+    <div className="min-h-screen bg-wine-100 grid place-items-center text-gold-600 px-6">
       <div className="text-center animate-fade-in">
         <div className="font-script text-8xl text-gold-gradient leading-[1.4]">&</div>
         <Ornament className="mt-5" />
@@ -108,15 +108,15 @@ function InvitationLoader() {
 
 function InvitationNotFound() {
   return (
-    <div className="min-h-screen bg-wine-950 grid place-items-center text-center px-6">
+    <div className="min-h-screen bg-wine-100 grid place-items-center text-center px-6">
       <div className="animate-fade-up">
-        <div className="w-16 h-16 mx-auto mb-5 rounded-full border border-gold-400/40 bg-wine-900 grid place-items-center font-display text-3xl text-gold-gradient">
+        <div className="w-16 h-16 mx-auto mb-5 rounded-full border border-gold-400/40 bg-wine-50 grid place-items-center font-display text-3xl text-gold-gradient">
           ×
         </div>
         <h1 className="font-script text-5xl text-gold-gradient mb-3 leading-[1.5]">
           Invitación no encontrada
         </h1>
-        <p className="text-wine-200 font-light">El enlace no es válido o fue revocado.</p>
+        <p className="text-gold-600 font-light">El enlace no es válido o fue revocado.</p>
         <Ornament className="mt-7" />
       </div>
     </div>
@@ -140,18 +140,19 @@ function Hero({ event, family, cfg }) {
   const year = date.getFullYear();
 
   return (
-    <header className="relative min-h-screen flex items-center justify-center overflow-hidden bg-wine-950">
+    <header className="relative min-h-screen flex items-center justify-center overflow-hidden bg-wine-100">
       <div className="absolute inset-0 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center hero-zoom"
           style={{
             backgroundImage: cfg.hero_image
               ? `url('${cfg.hero_image}')`
-              : "linear-gradient(165deg, #180a0e 0%, #331821 45%, #7a4048 78%, #b46c72 100%)",
+              : "linear-gradient(165deg, #ffe6e3 0%, #ffd9d6 45%, #f4bdba 78%, #e8a3a1 100%)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-wine-950/85 via-wine-950/50 to-wine-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(180,108,114,0.28),transparent_62%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-wine-100/80 via-wine-100/50 to-wine-100/90" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(228,163,161,0.35),transparent_62%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,241,240,0.55),transparent_68%)]" />
       </div>
 
       {/* Marco decorativo en esquinas */}
@@ -163,36 +164,36 @@ function Hero({ event, family, cfg }) {
       </div>
 
       <div className="relative z-10 text-center px-6 py-24 max-w-3xl w-full">
-        <p className="animate-fade-up text-gold-300 text-[0.65rem] md:text-xs tracking-[0.55em] uppercase mb-7">
+        <p className="animate-fade-up hero-text-shadow text-gold-600 text-[0.65rem] md:text-xs font-semibold tracking-[0.55em] uppercase mb-7">
           {cfg.kicker || "Invitación especial"}
         </p>
 
-        <h1 className="animate-fade-up delay-1 font-script text-[4rem] leading-[1.6] md:text-[6.5rem] text-gold-gradient text-balance">
+        <h1 className="animate-fade-up delay-1 hero-title-glow font-cinzel text-5xl md:text-7xl leading-[1.2] tracking-[0.08em] uppercase text-gold-gradient text-balance">
           {event.name}
         </h1>
 
-        <p className="animate-fade-up delay-2 mt-7 text-wine-100 text-lg md:text-xl font-light max-w-2xl mx-auto">
+        <p className="animate-fade-up delay-2 hero-text-shadow mt-7 text-gold-700 text-lg md:text-xl font-medium max-w-2xl mx-auto">
           {cfg.tagline ||
             (cfg.celebrants
               ? `Los invitamos a celebrar junto a ${cfg.celebrants} este día tan especial.`
               : "Los invitamos a celebrar este día tan especial.")}
         </p>
 
-        <p className="animate-fade-up delay-2 mt-9 text-[0.65rem] uppercase tracking-[0.4em] text-wine-200/90">
-          Invitación para&nbsp;la <span className="text-gold-200 capitalize">{family}</span>
+        <p className="animate-fade-up delay-2 hero-text-shadow mt-9 text-[0.65rem] uppercase tracking-[0.4em] text-gold-600">
+          Invitación para&nbsp;la <span className="text-gold-600 font-semibold capitalize">{family}</span>
         </p>
 
         <div className="animate-fade-up delay-3 mt-10 flex items-center justify-center gap-6">
           <span className="hidden sm:block h-px w-12 bg-gradient-to-r from-transparent to-gold-400/50" />
           <div className="flex items-end justify-center gap-3">
-            <span className="font-display text-6xl md:text-7xl font-semibold text-gold-gradient tabular-nums">
+            <span className="font-display hero-title-glow text-6xl md:text-7xl font-semibold text-gold-300 tabular-nums">
               {day}
             </span>
             <span className="text-left text-sm leading-tight pb-2">
-              <span className="block uppercase tracking-[0.28em] text-gold-300">
+              <span className="block hero-text-shadow uppercase tracking-[0.28em] text-gold-500">
                 {month}
               </span>
-              <span className="block text-wine-100 text-lg">{year}</span>
+              <span className="block hero-text-shadow text-gold-700 text-lg">{year}</span>
             </span>
           </div>
           <span className="hidden sm:block h-px w-12 bg-gradient-to-l from-transparent to-gold-400/50" />
@@ -200,12 +201,12 @@ function Hero({ event, family, cfg }) {
 
         <Ornament className="animate-fade-up delay-4 mt-10" />
 
-        <p className="animate-fade-up delay-4 mt-5 text-[0.7rem] uppercase tracking-[0.28em] text-wine-200/80">
+        <p className="animate-fade-up delay-4 hero-text-shadow mt-5 text-[0.7rem] uppercase tracking-[0.28em] text-gold-600">
           {pretty} · {event.time}
         </p>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gold-300/80 text-2xl animate-float-slow">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-gold-500/80 text-2xl animate-float-slow">
         ↓
       </div>
     </header>
@@ -247,7 +248,7 @@ function Countdown({ date, time }) {
   if (done) {
     return (
       <Reveal className="mt-6">
-        <p className="text-center text-gold-300 tracking-[0.3em] uppercase text-sm">
+        <p className="text-center text-gold-600 tracking-[0.3em] uppercase text-sm">
           ¡Es hoy!
         </p>
       </Reveal>
@@ -269,12 +270,12 @@ function Countdown({ date, time }) {
           {units.map((u) => (
             <div
               key={u.label}
-              className="relative rounded-2xl border border-gold-400/30 bg-wine-800/80 backdrop-blur px-2 py-4 md:py-6 text-center shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-gold-400/60 hover:shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
+              className="relative rounded-2xl border border-gold-400/40 bg-wine-50/90 backdrop-blur px-2 py-4 md:py-6 text-center shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-gold-400/60 hover:shadow-[0_18px_40px_rgba(163,81,79,0.18)]"
             >
               <div className="font-display text-3xl md:text-5xl text-gold-gradient tabular-nums">
                 {String(u.value).padStart(2, "0")}
               </div>
-              <div className="mt-2 text-[10px] md:text-xs uppercase tracking-[0.3em] text-wine-200">
+              <div className="mt-2 text-[10px] md:text-xs uppercase tracking-[0.3em] text-gold-600">
                 {u.label}
               </div>
             </div>
@@ -333,7 +334,7 @@ function SectionTitle({ eyebrow, title, subtitle }) {
         {title}
       </h2>
       {subtitle && (
-        <p className="mt-5 text-wine-100/90 font-light max-w-xl mx-auto text-lg">
+        <p className="mt-5 text-gold-700 font-light max-w-xl mx-auto text-lg">
           {subtitle}
         </p>
       )}
@@ -374,31 +375,24 @@ function MessageSection({ cfg, family }) {
     `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`;
 
   return (
-    <section className="relative py-24 md:py-32 px-6 bg-wine-950 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(180,108,114,0.14),transparent_62%)]" />
+    <section className="relative py-24 md:py-32 px-6 bg-wine-100 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(228,163,161,0.22),transparent_62%)]" />
       <div className="pointer-events-none absolute inset-y-0 -left-24 w-64 rounded-full bg-gold-400/10 blur-3xl" />
       <div className="pointer-events-none absolute inset-y-0 -right-24 w-64 rounded-full bg-gold-400/10 blur-3xl" />
 
       <Reveal className="relative max-w-2xl mx-auto">
         <div className="flex items-center justify-center gap-3 mb-8">
           <span className="h-px w-8 bg-gradient-to-r from-transparent to-gold-400/60" />
-          <span className="text-gold-300 text-[0.6rem] tracking-[0.5em] uppercase">
+          <span className="text-gold-500 text-[0.6rem] tracking-[0.5em] uppercase">
             Un mensaje para ustedes
           </span>
           <span className="h-px w-8 bg-gradient-to-l from-transparent to-gold-400/60" />
         </div>
 
-        <div className="relative rounded-[2rem] border border-gold-400/20 bg-gradient-to-b from-wine-900/50 to-wine-800/30 backdrop-blur-sm px-6 md:px-12 py-12 md:py-16 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+        <div className="relative rounded-[2rem] border border-gold-400/30 bg-gradient-to-b from-wine-50 to-wine-100 backdrop-blur-sm px-6 md:px-12 py-12 md:py-16 shadow-[0_30px_80px_rgba(163,81,79,0.12)]">
           <span className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-gold-400/70 to-transparent" />
 
-          <div
-            className="font-script text-[6rem] md:text-[8rem] leading-none text-gold-gradient/70 select-none"
-            aria-hidden="true"
-          >
-            “
-          </div>
-
-          <p className="mt-2 font-display text-2xl md:text-[2rem] leading-[1.7] text-wine-100 italic text-balance">
+          <p className="mt-2 font-playfair text-2xl md:text-[2rem] leading-[1.7] text-gold-500 italic text-balance">
             {highlightMessage(message, family)}
           </p>
         </div>
@@ -409,7 +403,7 @@ function MessageSection({ cfg, family }) {
 
         {cfg.celebrants && (
           <Reveal className="mt-8 text-center" delay={1}>
-            <p className="text-[0.62rem] uppercase tracking-[0.45em] text-wine-200/80 mb-2">
+            <p className="text-[0.62rem] uppercase tracking-[0.45em] text-gold-600 mb-2">
               Con cariño
             </p>
             <p className="font-script text-4xl md:text-6xl text-gold-gradient leading-[1.4]">
@@ -430,7 +424,7 @@ function ItinerarySection({ cfg }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-wine-900">
+    <section className="py-24 px-4 bg-wine-300">
       <div className="max-w-3xl mx-auto">
         <SectionTitle
           eyebrow="Horarios"
@@ -443,16 +437,16 @@ function ItinerarySection({ cfg }) {
             {items.map((it, i) => (
               <Reveal key={i} delay={(i % 3) + 1}>
                 <div className="flex items-start gap-5 md:gap-8 group">
-                  <div className="relative z-10 grid place-items-center w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full border border-gold-400/50 bg-wine-800 ring-4 ring-wine-900 font-display text-base md:text-lg text-gold-gradient transition-transform duration-300 group-hover:scale-110">
+                  <div className="relative z-10 grid place-items-center w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-full border border-gold-400/60 bg-wine-50 ring-4 ring-wine-200 font-display text-base md:text-lg text-gold-gradient transition-transform duration-300 group-hover:scale-110">
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <div className="pt-1.5">
                     {it.time && (
-                      <div className="text-gold-300 text-[0.7rem] tracking-[0.3em] uppercase">
+                      <div className="text-gold-600 text-[0.7rem] tracking-[0.3em] uppercase">
                         {it.time}
                       </div>
                     )}
-                    <h3 className="mt-1.5 font-display text-2xl md:text-3xl text-gold-200">
+                    <h3 className="mt-1.5 font-display text-2xl md:text-3xl text-gold-600">
                       {it.label || `Momento ${i + 1}`}
                     </h3>
                   </div>
@@ -496,7 +490,7 @@ function LocationsSection({ cfg }) {
   const googleUrl = (it) => googleMapsUrl(it);
 
   return (
-    <section className="py-24 px-4 bg-wine-950">
+<section className="py-24 px-4 bg-wine-50">
       <div className="max-w-5xl mx-auto">
         <SectionTitle
           eyebrow="Ubicaciones"
@@ -506,14 +500,14 @@ function LocationsSection({ cfg }) {
         <div className="grid md:grid-cols-3 gap-6">
           {items.map((it, i) => (
             <Reveal key={i} delay={(i % 3) + 1} className="h-full">
-              <article className="group h-full flex flex-col rounded-2xl border border-gold-400/25 bg-wine-800/70 backdrop-blur p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-gold-400/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+              <article className="group h-full flex flex-col rounded-2xl border border-gold-400/30 bg-wine-100/80 backdrop-blur p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-gold-400/50 hover:shadow-[0_20px_50px_rgba(163,81,79,0.14)]">
                 <span className="mb-4 font-script text-4xl text-gold-400/90">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h3 className="font-display text-2xl text-gold-200">
+                <h3 className="font-display text-2xl text-gold-600">
                   {it.label || `Ubicación ${i + 1}`}
                 </h3>
-                <p className="mt-1 text-wine-100/90 font-light">{it.place}</p>
+                <p className="mt-1 text-gold-600 font-light">{it.place}</p>
                 <div className="mt-auto pt-6 flex gap-2">
                   {googleUrl(it) && (
                     <>
@@ -530,7 +524,7 @@ function LocationsSection({ cfg }) {
                           href={wazeUrl(it)}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 rounded-lg border border-gold-400/50 text-gold-200 text-center text-sm px-3 py-2.5 hover:bg-gold-400/10 active:scale-[.98] transition-all"
+                          className="flex-1 rounded-lg border border-gold-400/60 text-gold-600 text-center text-sm px-3 py-2.5 hover:bg-gold-400/15 active:scale-[.98] transition-all"
                         >
                           Waze
                         </a>
@@ -552,7 +546,7 @@ function GallerySection({ cfg }) {
   if (images.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-wine-950">
+    <section className="py-24 px-4 bg-wine-300">
       <div className="max-w-4xl mx-auto">
         <SectionTitle eyebrow="Galería" title="Nuestros Mejores Recuerdos" />
         <GalleryShow images={images} />
@@ -563,7 +557,11 @@ function GallerySection({ cfg }) {
 
 function GalleryShow({ images }) {
   const [index, setIndex] = useState(0);
+  const [ratios, setRatios] = useState({});
+  const [lastRatio, setLastRatio] = useState(16 / 10);
   const intervalRef = useRef(null);
+  const ratiosRef = useRef({});
+  const imgRefs = useRef([]);
 
   const schedule = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -582,6 +580,30 @@ function GalleryShow({ images }) {
     schedule();
   };
 
+  const syncRatios = useCallback(() => {
+    let changed = false;
+    imgRefs.current.forEach((el, i) => {
+      const src = images[i];
+      if (!el || !src || !el.naturalWidth || !el.naturalHeight) return;
+      const r = Math.min(4, Math.max(0.4, el.naturalWidth / el.naturalHeight));
+      if (ratiosRef.current[src] !== r) {
+        ratiosRef.current[src] = r;
+        changed = true;
+      }
+    });
+    if (changed) setRatios({ ...ratiosRef.current });
+  }, [images]);
+
+  useEffect(() => {
+    syncRatios();
+  }, [syncRatios, index]);
+
+  useEffect(() => {
+    if (ratios[images[index]]) setLastRatio(ratios[images[index]]);
+  }, [index, ratios, images]);
+
+  const activeRatio = ratios[images[index]] || lastRatio;
+
   return (
     <Reveal>
       <div
@@ -591,14 +613,18 @@ function GalleryShow({ images }) {
       >
         <div className="p-1.5 md:p-2 rounded-[2rem] bg-gradient-to-br from-gold-400/40 via-transparent to-gold-400/20">
           <div
-            className="relative overflow-hidden rounded-[1.6rem] border border-gold-400/30 shadow-2xl"
-            style={{ aspectRatio: "16 / 10" }}
+            className="relative overflow-hidden rounded-[1.6rem] border border-gold-400/30 shadow-2xl transition-[aspect-ratio] duration-500"
+            style={{ aspectRatio: activeRatio }}
           >
             {images.map((src, i) => (
               <img
                 key={i}
                 src={src}
                 alt=""
+                ref={(el) => {
+                  imgRefs.current[i] = el;
+                }}
+                onLoad={() => syncRatios()}
                 className={`kenburns absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
                   i === index ? "opacity-100" : "opacity-0"
                 }`}
@@ -651,21 +677,21 @@ function DressCodeSection({ cfg }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-wine-900">
+    <section className="py-24 px-4 bg-wine-100">
       <div className="max-w-4xl mx-auto">
         <SectionTitle eyebrow="Dress Code" title="Código de Vestimenta" />
         <div className="flex flex-wrap justify-center gap-4">
           {items.map((item, i) => (
             <Reveal key={i} delay={(i % 3) + 1}>
-              <div className="flex items-center gap-3 rounded-2xl border border-gold-400/25 bg-wine-800/70 px-6 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold-400/50">
+              <div className="flex items-center gap-3 rounded-2xl border border-gold-400/30 bg-wine-50 px-6 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold-400/50">
                 <DressIcon name={item.icon} />
-                <span className="font-display text-lg text-gold-200">{item.label}</span>
+                <span className="font-display text-lg text-gold-600">{item.label}</span>
               </div>
             </Reveal>
           ))}
         </div>
         {cfg.dress_note && (
-          <Reveal className="mt-8 text-center text-wine-200 font-light italic">
+          <Reveal className="mt-8 text-center text-gold-600 font-light italic">
             {cfg.dress_note}
           </Reveal>
         )}
@@ -715,12 +741,12 @@ function DressIcon({ name }) {
 
 function Footer({ event }) {
   return (
-    <footer className="py-12 px-6 text-center bg-wine-950">
+    <footer className="py-12 px-6 text-center bg-wine-100">
       <Ornament />
-      <p className="mt-7 text-gold-300/70 text-xs tracking-[0.35em] uppercase">
+      <p className="mt-7 text-gold-600/80 text-xs tracking-[0.35em] uppercase">
         DisplayEvent · {event.place}
       </p>
-      <p className="mt-2 text-gold-400/40 text-[0.6rem] tracking-[0.3em] uppercase">
+      <p className="mt-2 text-gold-500/60 text-[0.6rem] tracking-[0.3em] uppercase">
         Hecho con ✦ para celebrar juntos
       </p>
     </footer>
@@ -776,7 +802,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
   const allAnswered = answeredCount === guests.length;
 
   return (
-    <section id="rsvp" className="py-24 px-4 bg-wine-900">
+    <section id="rsvp" className="py-24 px-4 bg-wine-300">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-5">
@@ -789,7 +815,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
           <h2 className="font-display text-4xl md:text-5xl text-gold-gradient text-balance">
             Confirma tu asistencia
           </h2>
-          <p className="mt-5 text-wine-100/90 font-light">
+          <p className="mt-5 text-gold-700 font-light">
             Familia {family}, cuéntanos quiénes podrán acompañarnos.
           </p>
         </div>
@@ -810,9 +836,9 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
               e.preventDefault();
               if (allAnswered) setShowModal(true);
             }}
-            className="rounded-2xl border border-gold-400/25 bg-wine-800/70 backdrop-blur p-6 md:p-8 shadow-2xl"
+            className="rounded-2xl border border-gold-400/30 bg-wine-50 backdrop-blur p-6 md:p-8 shadow-2xl"
           >
-            <p className="text-sm text-wine-100 mb-5">
+            <p className="text-sm text-gold-600 mb-5">
               Marca en cada pase si asistirá o no a la celebración:
             </p>
             <ul className="space-y-2.5 mb-6">
@@ -823,8 +849,8 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                     answers[g.id] === "yes"
                       ? "border-gold-400/70 bg-gradient-to-r from-gold-400/15 to-transparent"
                       : answers[g.id] === "no"
-                        ? "border-wine-400/60 bg-wine-950/40"
-                        : "border-wine-700/60 bg-wine-950/30 hover:border-wine-500"
+                        ? "border-wine-400/70 bg-wine-100"
+                        : "border-wine-300 bg-wine-100/50 hover:border-wine-500"
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-3">
@@ -832,12 +858,12 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                       <div className={g.is_leader ? "font-semibold" : "font-normal"}>
                         {g.name}
                         {g.is_leader && (
-                          <span className="ml-2 text-[10px] uppercase text-gold-300">
+                          <span className="ml-2 text-[10px] uppercase text-gold-600">
                             Líder
                           </span>
                         )}
                         {g.is_child && (
-                          <span className="ml-2 text-xs text-wine-100/70">(niño)</span>
+                          <span className="ml-2 text-xs text-gold-600/80">(niño)</span>
                         )}
                       </div>
                     </div>
@@ -848,7 +874,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                         className={`rounded-lg px-3.5 py-1.5 text-sm transition-all active:scale-[.97] ${
                           answers[g.id] === "yes"
                             ? "bg-gradient-to-r from-gold-300 to-gold-500 text-wine-950 font-semibold shadow-md"
-                            : "border border-wine-300 text-wine-100 hover:border-gold-400/70 hover:text-gold-200"
+                            : "border border-wine-300 text-gold-700 hover:border-gold-400/70 hover:text-gold-600"
                         }`}
                       >
                         Sí asistirá
@@ -859,7 +885,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                         className={`rounded-lg px-3.5 py-1.5 text-sm transition-all active:scale-[.97] ${
                           answers[g.id] === "no"
                             ? "bg-wine-500 text-wine-950 font-semibold shadow-md"
-                            : "border border-wine-300 text-wine-100 hover:border-gold-400/70 hover:text-gold-200"
+                            : "border border-wine-300 text-gold-700 hover:border-gold-400/70 hover:text-gold-600"
                         }`}
                       >
                         No asistirá
@@ -871,7 +897,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
             </ul>
 
             <label className="block mb-5">
-              <span className="block text-sm text-wine-100 mb-1.5">
+              <span className="block text-sm text-gold-600 mb-1.5">
                 Detalles / restricciones alimenticias
               </span>
               <textarea
@@ -879,11 +905,11 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                 onChange={(e) => setDiet(e.target.value)}
                 rows={3}
                 placeholder="Ej. Soy alérgico al marisco…"
-                className="w-full rounded-xl bg-wine-950/60 border border-wine-700 px-4 py-3 text-sm text-wine-100 placeholder-gold-400/40 focus:outline-none focus:border-gold-400/70 focus:ring-1 focus:ring-gold-400/40 transition-all"
+                className="w-full rounded-xl bg-wine-100 border border-wine-300 px-4 py-3 text-sm text-gold-700 placeholder-gold-500/50 focus:outline-none focus:border-gold-400/70 focus:ring-1 focus:ring-gold-400/40 transition-all"
               />
             </label>
 
-            {message && <p className="text-sm text-red-300 mb-4">{message}</p>}
+            {message && <p className="text-sm text-red-400 mb-4">{message}</p>}
 
             <button
               type="submit"
@@ -902,10 +928,10 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
         {showModal && (
           <div className="fixed inset-0 z-50 grid place-items-center px-4">
             <div
-              className="absolute inset-0 bg-wine-950/95 backdrop-blur-sm animate-fade"
+              className="absolute inset-0 bg-wine-950/50 backdrop-blur-sm animate-fade"
               onClick={() => setShowModal(false)}
             />
-            <div className="relative z-10 w-full max-w-md rounded-3xl border border-gold-400/40 bg-gradient-to-b from-wine-800/95 to-wine-900/95 p-7 md:p-8 text-center shadow-2xl animate-modal-in">
+            <div className="relative z-10 w-full max-w-md rounded-3xl border border-gold-400/40 bg-gradient-to-b from-wine-50 to-wine-100 p-7 md:p-8 text-center shadow-2xl animate-modal-in">
               <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-br from-gold-300 to-gold-500 text-wine-950 grid place-items-center text-2xl shadow-lg">
                 ⚠
               </div>
@@ -913,31 +939,31 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
               <h3 className="font-script text-4xl text-gold-gradient mb-4 leading-[1.5]">
                 ¿Confirmar tu asistencia?
               </h3>
-              <p className="text-sm text-wine-100 mb-4 leading-relaxed">
+              <p className="text-sm text-gold-600 mb-4 leading-relaxed">
                 Una vez confirmada,{" "}
-                <span className="text-gold-300 font-semibold">
+                <span className="text-gold-600 font-semibold">
                   la selección no podrá ser modificada
                 </span>
                 .
               </p>
-              <p className="text-sm text-wine-200 mb-6 leading-relaxed">
+              <p className="text-sm text-gold-600 mb-6 leading-relaxed">
                 ¿Necesitas alguna aclaración? Escríbenos:
               </p>
               <div className="space-y-2 mb-6">
                 <a
                   href="tel:+525515245588"
-                  className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-wine-950/50 px-4 py-3 text-wine-100 hover:border-gold-400/80 hover:bg-wine-950/80 transition-all"
+                  className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-wine-100 px-4 py-3 text-gold-700 hover:border-gold-400/80 hover:bg-wine-100 transition-all"
                 >
-                  <span className="text-gold-300 uppercase tracking-widest text-[0.65rem]">
+                  <span className="text-gold-600 uppercase tracking-widest text-[0.65rem]">
                     Papá
                   </span>
                   <span className="font-semibold tracking-wider">5515245588</span>
                 </a>
                 <a
                   href="tel:+525518986867"
-                  className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-wine-950/50 px-4 py-3 text-wine-100 hover:border-gold-400/80 hover:bg-wine-950/80 transition-all"
+                  className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-wine-100 px-4 py-3 text-gold-700 hover:border-gold-400/80 hover:bg-wine-100 transition-all"
                 >
-                  <span className="text-gold-300 uppercase tracking-widest text-[0.65rem]">
+                  <span className="text-gold-600 uppercase tracking-widest text-[0.65rem]">
                     Mamá
                   </span>
                   <span className="font-semibold tracking-wider">5518986867</span>
@@ -947,7 +973,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-xl border border-wine-300 text-wine-100 px-3 py-2.5 text-sm hover:bg-wine-800 active:scale-[.98] transition-all"
+                  className="flex-1 rounded-xl border border-wine-300 text-gold-700 px-3 py-2.5 text-sm hover:bg-wine-100 active:scale-[.98] transition-all"
                 >
                   Volver
                 </button>
@@ -970,7 +996,7 @@ function RsvpSection({ token, family, guests, attending, declining, note, onDone
 
 function SubmitConfirmation({ count, declining, total, note, family }) {
   return (
-    <div className="rounded-3xl border border-gold-400/25 bg-gradient-to-b from-wine-800/70 to-wine-900/70 p-8 md:p-10 text-center backdrop-blur shadow-2xl">
+    <div className="rounded-3xl border border-gold-400/30 bg-gradient-to-b from-wine-50 to-wine-100 p-8 md:p-10 text-center backdrop-blur shadow-2xl">
       <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-gold-300 to-gold-500 text-wine-950 grid place-items-center text-3xl shadow-lg">
         ✓
       </div>
@@ -978,37 +1004,37 @@ function SubmitConfirmation({ count, declining, total, note, family }) {
       <h3 className="font-script text-5xl md:text-6xl text-gold-gradient mb-5 leading-[1.6]">
         ¡Gracias, {family}!
       </h3>
-      <p className="text-wine-100 font-light mb-5">
-        <span className="text-gold-300 font-semibold">
+      <p className="text-gold-700 font-light mb-5">
+        <span className="text-gold-600 font-semibold">
           {count} {count === 1 ? "pase confirmado" : "pases confirmados"}
         </span>{" "}
         de {total}.
         {declining > 0 && (
-          <span className="block mt-2 text-wine-200">
+          <span className="block mt-2 text-gold-600">
             {declining} {declining === 1 ? "pase" : "pases"} con ausencia confirmada.
           </span>
         )}
       </p>
       {note && (
-        <p className="text-sm text-wine-200 italic mb-5">
+        <p className="text-sm text-gold-600 italic mb-5">
           Detalles recibidos: “{note}”
         </p>
       )}
-      <p className="text-sm text-wine-200 mb-2">
+      <p className="text-sm text-gold-600 mb-2">
         La selección ya no puede modificarse. ¿Necesitas aclaraciones?
       </p>
-      <p className="text-sm text-wine-200">
+      <p className="text-sm text-gold-600">
         Papá{" "}
         <a
           href="tel:+525515245588"
-          className="text-gold-300 underline underline-offset-4 hover:text-gold-200"
+          className="text-gold-600 underline underline-offset-4 hover:text-gold-500"
         >
           5515245588
         </a>{" "}
         · Mamá{" "}
         <a
           href="tel:+525518986867"
-          className="text-gold-300 underline underline-offset-4 hover:text-gold-200"
+          className="text-gold-600 underline underline-offset-4 hover:text-gold-500"
         >
           5518986867
         </a>
