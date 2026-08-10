@@ -55,28 +55,37 @@ function GroupForm({ initial, onSubmit, onCancel }) {
 
 function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
   return (
-    <li className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800/50">
+    <li className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-colors">
       {guest.is_leader ? (
-        <span className="shrink-0 w-5 h-5 rounded border border-amber-500/50 grid place-items-center text-amber-400 text-[10px]">
+        <span className="shrink-0 w-6 h-6 rounded-lg border border-amber-500/50 bg-amber-900/30 grid place-items-center text-amber-400 text-xs">
           ★
         </span>
       ) : (
         <button
           onClick={onToggleChild}
-          className={`shrink-0 w-5 h-5 rounded border transition-colors ${
-            guest.is_child ? "bg-sky-500 border-sky-500" : "border-gray-600"
+          aria-label={guest.is_child ? "Quitar marca de niño" : "Marcar como niño"}
+          className={`shrink-0 w-6 h-6 rounded-lg border grid place-items-center transition-all ${
+            guest.is_child
+              ? "bg-sky-500 border-sky-500 text-white shadow-sm shadow-sky-900/40"
+              : "border-gray-600 hover:border-sky-500/60"
           }`}
           title={guest.is_child ? "Quitar marca de niño" : "Marcar como niño"}
-        />
+        >
+          {guest.is_child && (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3.5 h-3.5">
+              <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
       )}
-      <span className={`flex-1 truncate ${guest.is_child ? "text-sky-300" : ""}`}>{guest.name}</span>
+      <span className={`flex-1 truncate ${guest.is_child ? "text-sky-400 font-medium" : ""}`}>{guest.name}</span>
       {guest.is_leader ? (
-        <span className="shrink-0 text-[10px] uppercase tracking-wide text-amber-400 bg-amber-900/40 rounded-full px-2 py-0.5">
+        <span className="shrink-0 text-[10px] uppercase tracking-wide text-amber-300 bg-amber-900/40 rounded-full px-2 py-0.5">
           Líder
         </span>
       ) : null}
       {guest.is_child && !guest.is_leader ? (
-        <span className="shrink-0 text-[10px] uppercase tracking-wide text-sky-400 bg-sky-900/40 rounded-full px-2 py-0.5">
+        <span className="shrink-0 text-[10px] uppercase tracking-wide text-sky-300 bg-sky-900/40 rounded-full px-2 py-0.5">
           Niño
         </span>
       ) : null}
@@ -92,8 +101,12 @@ function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
       >
         {guest.registered ? "Confirmado" : guest.declined ? "No asistirá" : "Sin confirmar"}
       </button>
-      <button onClick={onDelete} className="shrink-0 text-xs text-red-500 hover:text-red-400">
-        Eliminar
+      <button
+        onClick={onDelete}
+        className="shrink-0 w-7 h-7 rounded-lg grid place-items-center text-xs text-red-500 hover:text-red-400 hover:bg-red-600/10 transition-colors"
+        title="Eliminar invitado"
+      >
+        ✕
       </button>
     </li>
   );
@@ -127,15 +140,26 @@ function GroupCard({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden">
-      <div className="p-4 flex items-center justify-between gap-3 cursor-pointer" onClick={onToggle}>
+    <div className="rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden transition-colors hover:border-indigo-500/40">
+      <div
+        className="p-4 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-gray-800/40 transition-colors"
+        onClick={onToggle}
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`transition-transform ${expanded ? "rotate-90" : ""}`}>▶</span>
-            <h3 className="font-semibold text-white truncate">{group.name}</h3>
+            <span
+              className={`grid place-items-center w-5 h-5 rounded-md text-gray-400 transition-transform duration-200 ${
+                expanded ? "rotate-90" : ""
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <path d="m9 18 6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <h3 className="font-semibold text-gray-50 truncate">{group.name}</h3>
           </div>
           {group.leader_name && (
-            <p className="text-sm text-gray-400 mt-0.5 ml-6">Líder: {group.leader_name}</p>
+            <p className="text-sm text-gray-400 mt-0.5 ml-7">Líder: {group.leader_name}</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -150,7 +174,7 @@ function GroupCard({
               onCopyInvite(group);
             }}
             title="Copiar enlace de invitación"
-            className="text-xs text-gold-400 hover:text-gold-300"
+            className="text-xs rounded-md px-2 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
           >
             Invitación
           </button>
@@ -159,7 +183,7 @@ function GroupCard({
               e.stopPropagation();
               onEdit(group);
             }}
-            className="text-xs text-gray-400 hover:text-white"
+            className="text-xs text-gray-400 hover:text-white transition-colors"
           >
             Editar
           </button>
@@ -168,7 +192,7 @@ function GroupCard({
               e.stopPropagation();
               onDelete(group);
             }}
-            className="text-xs text-red-500 hover:text-red-400"
+            className="text-xs text-red-500 hover:text-red-400 transition-colors"
           >
             Eliminar
           </button>
@@ -394,19 +418,22 @@ export default function EventGuests() {
   };
 
   return (
-    <div>
+    <div className="animate-page-in">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-gray-50">
           Invitados
           <span className="text-sm font-normal text-gray-400 ml-2">({groups.length} grupos)</span>
         </h1>
         <Button onClick={() => setModal({ mode: "create-group" })}>+ Nuevo grupo</Button>
       </div>
 
-      <p className="text-sm text-gray-400 mb-4">
-        Organiza a los invitados por grupos. El líder de cada grupo se registra automáticamente como
-        invitado.
-      </p>
+      <div className="flex items-start gap-2.5 text-sm text-gray-400 mb-5 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3.5">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400">
+          <path d="M12 2 4 5v6c0 5.25 3.4 10.74 8 12 4.6-1.26 8-6.75 8-12V5l-8-3Zm0 5.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM7.2 17.4A5 5 0 0 1 12 15a5 5 0 0 1 4.8 2.4A8.6 8.6 0 0 1 12 19.5a8.6 8.6 0 0 1-4.8-2.1Z" />
+        </svg>
+        Organiza a los invitados por grupos. El líder de cada grupo se registra automáticamente
+        como invitado.
+      </div>
 
       {loading ? (
         <p className="text-gray-400">Cargando…</p>

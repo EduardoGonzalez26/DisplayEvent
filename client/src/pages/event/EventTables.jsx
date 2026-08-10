@@ -106,12 +106,12 @@ function TableCard({ table, guests, colorFor, onEdit, onDelete }) {
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-2xl border p-4 transition-colors ${
+      className={`rounded-2xl border p-4 transition-all hover:shadow-xl hover:shadow-indigo-950/20 ${
         isOver
           ? "border-indigo-500 bg-indigo-600/10"
           : table.is_kids
             ? "border-sky-500/40 bg-sky-950/20"
-            : "border-gray-800 bg-gray-900"
+            : "border-gray-800 bg-gray-900 hover:border-indigo-500/40"
       }`}
     >
       <div className="flex items-center justify-between mb-2">
@@ -325,10 +325,15 @@ export default function EventTables() {
   const kidsTables = tables.filter((t) => t.is_kids).length;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-xl font-bold text-white">Organizador de mesas</h1>
-        <div className="flex gap-2">
+    <div className="animate-page-in">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-indigo-400 font-medium mb-1">
+            Acomodo
+          </p>
+          <h1 className="text-2xl font-bold text-gray-50">Organizador de mesas</h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setModal({ type: "companions" })}>
             Acompañantes
           </Button>
@@ -381,14 +386,17 @@ export default function EventTables() {
           <div className="grid grid-cols-4 gap-6 items-start">
             <div className="col-span-1">
               <div className="rounded-2xl border border-gray-800 bg-gray-900 p-3 sticky top-24">
-                <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Invitados</div>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  <span className="w-1 h-3.5 rounded-full bg-gradient-to-b from-blue-500 to-violet-500" />
+                  Invitados
+                </div>
                 <input
                   className={inputClass}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar…"
                 />
-                <label className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
+                <label className="flex items-center gap-1.5 text-xs text-gray-400 mt-2 cursor-pointer select-none hover:text-gray-200 transition-colors">
                   <input
                     type="checkbox"
                     checked={onlyUnassigned}
@@ -397,7 +405,7 @@ export default function EventTables() {
                   />
                   Solo sin asignar
                 </label>
-                <label className="flex items-center gap-1.5 text-xs text-sky-400 mt-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-sky-400 mt-1.5 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={onlyKids}
@@ -511,14 +519,17 @@ export default function EventTables() {
 
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-xl text-sm shadow-2xl border text-white ${
+          className={`fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-xl text-sm shadow-2xl border text-white animate-toast-in flex items-start gap-2.5 ${
             toastType === "success"
               ? "bg-emerald-600 border-emerald-500"
               : "bg-red-600 border-red-500"
           }`}
           onClick={() => setToast("")}
         >
-          {toast}
+          <span className="shrink-0 grid place-items-center w-5 h-5 rounded-full bg-white/20 text-xs mt-px">
+            {toastType === "success" ? "✓" : "!"}
+          </span>
+          <span className="flex-1">{toast}</span>
         </div>
       )}
     </div>
@@ -644,7 +655,7 @@ function CompanionsModal({ guests, guestById, eventId, onClose, onChanged, notif
   const confirmados = guests.filter((g) => g.registered);
 
   return (
-    <Modal open onClose={onClose} title="Vincular acompañantes">
+    <Modal open onClose={onClose} title="Vincular acompañantes" wide>
       <p className="text-sm text-gray-400 mb-4">
         Un acompañante se mueve junto a su invitado principal y ocupa su propio asiento.
       </p>
@@ -766,7 +777,7 @@ function ExportModal({ tables, guests, guestById, groups, onClose }) {
   };
 
   return (
-    <Modal open onClose={onClose} title="Exportar acomodo de mesas">
+    <Modal open onClose={onClose} title="Exportar acomodo de mesas" wide>
       <div className="flex gap-2 mb-4">
         <Button variant="secondary" onClick={print}>
           Imprimir lista

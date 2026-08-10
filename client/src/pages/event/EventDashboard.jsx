@@ -29,12 +29,12 @@ export default function EventDashboard() {
     load();
   }, [id]);
 
-  if (loading) return <p className="text-gray-400">Cargando…</p>;
+  if (loading) return <p className="text-gray-400 animate-page-in">Cargando…</p>;
   if (error) return <p className="text-red-400">{error}</p>;
 
   return (
-    <div>
-      <h1 className="text-xl font-bold text-white mb-1">Dashboard</h1>
+    <div className="animate-page-in">
+      <h1 className="text-2xl font-bold text-gray-50 mb-1">Dashboard</h1>
       <p className="text-sm text-gray-400 mb-6">Estadísticas de invitados de este evento.</p>
 
       {stats && (
@@ -52,29 +52,51 @@ export default function EventDashboard() {
         </div>
       )}
 
-      <h2 className="text-lg font-semibold text-white mb-3">Por grupo</h2>
+      <h2 className="text-lg font-semibold text-gray-50 mb-3">Por grupo</h2>
       {groupStats.length === 0 ? (
         <p className="text-gray-500">Este evento no tiene grupos.</p>
       ) : (
-        <div className="space-y-2">
-          {groupStats.map((g) => (
-            <div
-              key={g.id}
-              className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900 px-4 py-3"
-            >
-              <div>
-                <div className="font-medium text-white">{g.name}</div>
-                {g.leader_name && (
-                  <div className="text-xs text-gray-400">Líder: {g.leader_name}</div>
-                )}
+        <div className="space-y-3">
+          {groupStats.map((g) => {
+            const total = g.guests_count ?? 0;
+            const reg = g.registered_count ?? 0;
+            const pct = total > 0 ? Math.round((reg / total) * 100) : 0;
+            return (
+              <div
+                key={g.id}
+                className="rounded-2xl border border-gray-800 bg-gray-900 px-4 py-3 transition-colors hover:border-indigo-500/40"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-50 truncate">{g.name}</div>
+                    {g.leader_name && (
+                      <div className="text-xs text-gray-400">Líder: {g.leader_name}</div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-full bg-gray-800 px-2.5 py-1 text-gray-300">
+                      {total} invitados
+                    </span>
+                    <span className="rounded-full bg-sky-900/40 text-sky-300 px-2.5 py-1">
+                      {g.children_count ?? 0} niños
+                    </span>
+                    <span className="rounded-full bg-emerald-900/40 text-emerald-300 px-2.5 py-1">
+                      {reg} confirmados
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-1.5 flex-1 rounded-full bg-gray-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0 w-10 text-right">{pct}%</span>
+                </div>
               </div>
-              <div className="flex gap-4 text-sm text-gray-300">
-                <span>{g.guests_count ?? 0} invitados</span>
-                <span className="text-sky-400">{g.children_count ?? 0} niños</span>
-                <span className="text-emerald-400">{g.registered_count ?? 0} confirmados</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,5 +1,71 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   DisplayEvent — Admin UI
+   Tema oscuro por defecto, tema claro con data-theme="light".
+   La escala de neutros (gray-*) y el color "white" se mapean a
+   variables dinámicas para que todo el panel cambie de tema sin
+   tocar la lógica del backend ni la invitación pública.
+------------------------------------------------------------------ */
+
+:root {
+  --tone-950: #05070f;
+  --tone-900: #0b1023;
+  --tone-800: #161e42;
+  --tone-700: #232d5b;
+  --tone-600: #303a78;
+  --tone-500: #64748b;
+  --tone-400: #94a3b8;
+  --tone-300: #ccd4e4;
+  --tone-200: #e2e8f0;
+  --tone-100: #eef2f7;
+  --tone-50: #f8fafc;
+  --tone-white: #ffffff;
+
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --emerald-300: #6ee7b7;
+  --emerald-400: #34d399;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --fuchsia-300: #f0abfc;
+  --indigo-200: #c7d2fe;
+  --indigo-300: #a5b4fc;
+  --indigo-400: #818cf8;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+}
+
+:root[data-theme="light"] {
+  --tone-950: #eef1fb;
+  --tone-900: #ffffff;
+  --tone-800: #e7ecf9;
+  --tone-700: #cdd7ee;
+  --tone-600: #94a3c8;
+  --tone-500: #7787ac;
+  --tone-400: #64748b;
+  --tone-300: #475569;
+  --tone-200: #334155;
+  --tone-100: #1e293b;
+  --tone-50: #0f172a;
+  --tone-white: #0f172a;
+
+  --sky-300: #0284c7;
+  --sky-400: #0284c7;
+  --emerald-300: #059669;
+  --emerald-400: #059669;
+  --amber-300: #d97706;
+  --amber-400: #b45309;
+  --amber-500: #b45309;
+  --fuchsia-300: #c026d3;
+  --indigo-200: #4f46e5;
+  --indigo-300: #4f46e5;
+  --indigo-400: #4f46e5;
+  --red-300: #dc2626;
+  --red-400: #dc2626;
+}
+
 @theme {
   --font-display: "Playfair Display", "Georgia", serif;
   --font-body: "Lato", "system-ui", sans-serif;
@@ -24,8 +90,81 @@
   --color-gold-500: #8e744a;
   --color-gold-600: #6b5b37;
   --color-gold-700: #4a3d26;
+
+  --color-gray-50: var(--tone-50);
+  --color-gray-100: var(--tone-100);
+  --color-gray-200: var(--tone-200);
+  --color-gray-300: var(--tone-300);
+  --color-gray-400: var(--tone-400);
+  --color-gray-500: var(--tone-500);
+  --color-gray-600: var(--tone-600);
+  --color-gray-700: var(--tone-700);
+  --color-gray-800: var(--tone-800);
+  --color-gray-900: var(--tone-900);
+  --color-gray-950: var(--tone-950);
+  --color-white: var(--tone-white);
+
+  --color-sky-300: var(--sky-300);
+  --color-sky-400: var(--sky-400);
+  --color-emerald-300: var(--emerald-300);
+  --color-emerald-400: var(--emerald-400);
+  --color-amber-300: var(--amber-300);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-fuchsia-300: var(--fuchsia-300);
+  --color-indigo-200: var(--indigo-200);
+  --color-indigo-300: var(--indigo-300);
+  --color-indigo-400: var(--indigo-400);
+  --color-red-300: var(--red-300);
+  --color-red-400: var(--red-400);
 }
 
+/* En tema claro "white" se convierte en tinta; conservamos blanco sobre
+   fondos de marca/acento (botones con gradiente, toasts, notificaciones). */
+:root[data-theme="light"] .bg-gradient-to-r.text-white,
+:root[data-theme="light"] .bg-gradient-to-br.text-white,
+:root[data-theme="light"] .bg-gradient-to-b.text-white,
+:root[data-theme="light"] .bg-indigo-600.text-white,
+:root[data-theme="light"] .bg-indigo-500.text-white,
+:root[data-theme="light"] .bg-emerald-600.text-white,
+:root[data-theme="light"] .bg-red-600.text-white {
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------------
+   Scrollbar y selección
+------------------------------------------------------------------ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tone-700) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--tone-700);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--tone-600);
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+*:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+   Animaciones existentes (invitación + admin)
+------------------------------------------------------------------ */
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -95,4 +234,135 @@
 
 .kenburns {
   animation: kenburns 18s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   Animaciones nuevas (panel admin)
+------------------------------------------------------------------ */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-modal-in {
+  animation: modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade {
+  animation: fade 0.2s ease-out both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: page-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ------------------------------------------------------------------
+   Invitación pública — refinamientos de elegancia
+------------------------------------------------------------------ */
+.font-script {
+  font-family: "Great Vibes", "Brush Script MT", cursive;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(
+    180deg,
+    #f9efd0 0%,
+    #ecd39f 35%,
+    #d3a95c 68%,
+    #b8873a 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.gold-shimmer {
+  background: linear-gradient(110deg, #b8873a 25%, #f6e6bb 50%, #b8873a 75%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gold-shimmer 7s ease-in-out infinite;
+}
+
+@keyframes gold-shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+.hero-zoom {
+  animation: hero-zoom 22s ease-in-out infinite alternate;
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 4.5s ease-in-out infinite;
 }
