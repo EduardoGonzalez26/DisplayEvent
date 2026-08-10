@@ -79,20 +79,20 @@
   opacity: 1;
   transform: translateY(0);
 }
-/* Cilindro giratorio de fotos */
-@keyframes cylinder-spin {
-  from {
-    transform: rotateY(0deg);
+
+/* Pase de fotos con efecto Ken Burns */
+@keyframes kenburns {
+  0% {
+    transform: scale(1) translate(0, 0);
   }
-  to {
-    transform: rotateY(360deg);
+  50% {
+    transform: scale(1.08) translate(1.5%, -1.5%);
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
   }
 }
 
-.cylinder-spin {
-  animation: cylinder-spin 64s linear infinite;
-}
-
-.cylinder-paused {
-  animation-play-state: paused;
+.kenburns {
+  animation: kenburns 18s ease-in-out infinite;
 }

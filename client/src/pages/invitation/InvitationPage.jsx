@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 
@@ -405,66 +405,93 @@ function GallerySection({ cfg }) {
   if (images.length === 0) return null;
 
   return (
-    <section className="py-24 px-4 bg-wine-950 overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-24 px-4 bg-wine-950">
+      <div className="max-w-4xl mx-auto">
         <SectionTitle eyebrow="Galería" title="Nuestros Mejores Recuerdos" />
-        <GalleryCylinder images={images} />
-        <p className="mt-10 text-center text-wine-200/70 text-xs uppercase tracking-[0.3em]">
-          Pasa el cursor para pausar
-        </p>
+        <GalleryShow images={images} />
       </div>
     </section>
   );
 }
 
-function GalleryCylinder({ images }) {
-  const wrapRef = useRef(null);
-  const [radius, setRadius] = useState(300);
-  const [paused, setPaused] = useState(false);
+function GalleryShow({ images }) {
+  const [index, setIndex] = useState(0);
+  const intervalRef = useRef(null);
+
+  const schedule = useCallback(() => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, 5000);
+  }, [images.length]);
 
   useEffect(() => {
-    const measure = () => {
-      if (!wrapRef.current) return;
-      const w = wrapRef.current.clientWidth;
-      setRadius(Math.max(180, Math.round(w / 2.4)));
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
+    schedule();
+    return () => clearInterval(intervalRef.current);
+  }, [schedule]);
 
-  const n = images.length;
-  const angleStep = 360 / n;
+  const go = (i) => {
+    setIndex(i);
+    schedule();
+  };
 
   return (
     <Reveal>
       <div
-        ref={wrapRef}
-        className="relative mx-auto overflow-hidden"
-        style={{ maxWidth: 950, height: 380, perspective: 1200 }}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
+        className="select-none"
+        onMouseEnter={() => clearInterval(intervalRef.current)}
+        onMouseLeave={schedule}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className={`relative ${paused ? "cylinder-paused" : ""} cylinder-spin`}
-            style={{ width: 250, height: 330, transformStyle: "preserve-3d" }}
-          >
-            {images.map((src, i) => (
-              <div
-                key={i}
-                className="absolute inset-0"
-                style={{ transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)` }}
-              >
-                <img
-                  src={src}
-                  alt=""
-                  className="h-full w-full rounded-2xl border border-gold-400/25 object-cover shadow-2xl"
+        <div
+          className="relative overflow-hidden rounded-3xl border border-gold-400/25 shadow-2xl"
+          style={{ aspectRatio: "16 / 10" }}
+        >
+          {images.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt=""
+              className={`kenburns absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+                i === index ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          ))}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-wine-950/70 to-transparent" />
+
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => go(i)}
+                  aria-label={`Foto ${i + 1}`}
+                  className={`h-1.5 transition-all duration-300 ${
+                    i === index ? "w-6 bg-gold-300" : "w-1.5 bg-white/40 hover:bg-white/80"
+                  }`}
+                  style={{ borderRadius: 99 }}
                 />
-              </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {images.length > 1 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {images.map((src, i) => (
+              <button
+                key={i}
+                onClick={() => go(i)}
+                className={`h-12 w-12 overflow-hidden rounded-lg border-2 transition-all ${
+                  i === index
+                    ? "border-gold-300"
+                    : "border-transparent opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={src} alt="" className="h-full w-full object-cover" />
+              </button>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </Reveal>
   );
