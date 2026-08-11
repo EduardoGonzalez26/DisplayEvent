@@ -4,15 +4,33 @@ async function request(path, options = {}) {
   const isFormData = options.body instanceof FormData;
   const res = await fetch(`${BASE}${path}`, {
     headers: isFormData ? undefined : { "Content-Type": "application/json" },
+    credentials: "include",
     ...options,
   });
   if (res.status === 204) return null;
   const data = res.status !== 204 ? await res.json().catch(() => null) : null;
-  if (!res.ok) throw new Error(data?.error || "Error en la solicitud");
+  if (res.status === 401 && !path.startsWith("/auth/")) {
+    window.dispatchEvent(new CustomEvent("de:unauthorized"));
+  }
+  if (!res.ok) {
+    const err = new Error(data?.error || "Error en la solicitud");
+    err.code = data?.code;
+    throw err;
+  }
   return data;
 }
 
 export const api = {
+  auth: {
+    me: () => request("/auth/me"),
+    login: (payload) => request("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+    register: (payload) =>
+      request("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
+    logout: () => request("/auth/logout", { method: "POST" }),
+    verify: (token) => request("/auth/verify", { method: "POST", body: JSON.stringify({ token }) }),
+    resendVerification: (email) =>
+      request("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email }) }),
+  },
   events: {
     list: () => request("/events"),
     get: (id) => request(`/events/${id}`),

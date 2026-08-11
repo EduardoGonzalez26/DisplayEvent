@@ -23,12 +23,17 @@ DisplayEvent/
 
    ```
    PORT=4000
+   JWT_SECRET=pon_un_secreto_largo
+   CLIENT_URL=http://localhost:5173
    DB_HOST=localhost
    DB_PORT=3306
    DB_USER=root
    DB_PASSWORD=tu_password
    DB_NAME=displayevent
    ```
+
+   También configura el SMTP para el envío del correo de verificación
+   (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`; ver `.env.example`).
 
 2. Crea la base de datos y las tablas:
 
@@ -59,6 +64,7 @@ Abre http://localhost:5173
 
 ## Funcionalidades
 
+- **Autenticación**: registro con verificación de correo (SMTP). Antes de entrar se exige confirmar el enlace enviado por email. JWT en cookie httpOnly. El panel completo está protegido; solo las invitaciones públicas (`/invitacion/<hash>`) no requieren sesión.
 - **Eventos**: crear, editar y eliminar eventos (nombre, día, hora, lugar).
 - **Pantalla de evento** con sidebar de secciones:
   - **Inicio**: resumen del evento y conteos rápidos.
@@ -70,6 +76,12 @@ Abre http://localhost:5173
 
 | Método | Ruta | Descripción |
 | ------ | ---- | ----------- |
+| POST | `/api/auth/register` | Crea un usuario (usuario, correo, contraseña) y envía correo de verificación |
+| POST | `/api/auth/login` | Inicia sesión y devuelve cookie de sesión |
+| POST | `/api/auth/logout` | Cierra sesión |
+| GET | `/api/auth/me` | Usuario autenticado actual |
+| POST | `/api/auth/verify` | Verifica el correo con el token del enlace |
+| POST | `/api/auth/resend-verification` | Reenvía el correo de verificación |
 | GET | `/api/events` | Lista eventos con conteos |
 | POST | `/api/events` | Crea un evento |
 | GET | `/api/events/:id` | Detalle de un evento |

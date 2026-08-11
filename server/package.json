@@ -10,12 +10,16 @@
     "init-db": "node src/db/init.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
+    "nodemailer": "^9.0.5",
     "pg": "^8.23.0"
   },
   "devDependencies": {

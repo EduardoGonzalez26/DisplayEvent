@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, NavLink, useLocation } from "react-router-dom";
+import { Routes, Route, NavLink, useLocation, useNavigate } from "react-router-dom";
 import EventsPage from "./pages/EventsPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
 import EventHome from "./pages/event/EventHome.jsx";
@@ -8,16 +8,31 @@ import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
 import EventInvitation from "./pages/event/EventInvitation.jsx";
 import InvitationPage from "./pages/invitation/InvitationPage.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
+import RequireAuth from "./components/RequireAuth.jsx";
 import { useTheme } from "./theme.jsx";
+import { useAuth } from "./auth.jsx";
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggle } = useTheme();
+  const { user, logout } = useAuth();
   const isInvitation = location.pathname.startsWith("/invitacion/");
+  const isAuth =
+    location.pathname === "/login" ||
+    location.pathname === "/registro" ||
+    location.pathname.startsWith("/verificar-correo");
 
   useEffect(() => {
     document.documentElement.dataset.theme = isInvitation ? "dark" : theme;
   }, [isInvitation, theme]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   const linkClass = ({ isActive }) =>
     `px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -31,6 +46,27 @@ export default function App() {
       <Routes>
         <Route path="/invitacion/:token" element={<InvitationPage />} />
       </Routes>
+    );
+  }
+
+  if (isAuth) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-gray-100 font-body">
+        {/* Fondo decorativo: resplandores azules y morados */}
+        <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" aria-hidden>
+          <div className="absolute -top-32 -left-32 w-[30rem] h-[30rem] rounded-full bg-blue-600/15 blur-3xl" />
+          <div className="absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-violet-600/15 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/3 w-[26rem] h-[26rem] rounded-full bg-fuchsia-600/10 blur-3xl" />
+        </div>
+
+        <main className="relative z-10">
+          <Routes>
+            <Route path="/login" element={<AuthPage mode="login" />} />
+            <Route path="/registro" element={<AuthPage mode="register" />} />
+            <Route path="/verificar-correo" element={<VerifyEmailPage />} />
+          </Routes>
+        </main>
+      </div>
     );
   }
 
@@ -77,14 +113,43 @@ export default function App() {
                 </svg>
               )}
             </button>
+
+            {user && (
+              <div className="flex items-center gap-2 pl-2 border-l border-gray-800">
+                <span className="text-sm text-gray-300 hidden sm:inline">
+                  {user.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-2 py-1.5 transition-colors"
+                  title="Cerrar sesión"
+                >
+                  Salir
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<EventsPage />} />
-          <Route path="/events/:id" element={<EventPage />}>
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <EventsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/events/:id"
+            element={
+              <RequireAuth>
+                <EventPage />
+              </RequireAuth>
+            }
+          >
             <Route index element={<EventHome />} />
             <Route path="invitados" element={<EventGuests />} />
             <Route path="mesas" element={<EventTables />} />

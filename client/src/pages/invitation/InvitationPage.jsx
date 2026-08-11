@@ -164,26 +164,15 @@ function Hero({ event, family, cfg }) {
       </div>
 
       <div className="relative z-10 text-center px-6 py-24 max-w-3xl w-full">
-        <p className="animate-fade-up hero-text-shadow text-gold-600 text-[0.65rem] md:text-xs font-semibold tracking-[0.55em] uppercase mb-7">
-          {cfg.kicker || "Invitación especial"}
-        </p>
-
-        <h1 className="animate-fade-up delay-1 hero-title-glow font-cinzel text-5xl md:text-7xl leading-[1.2] tracking-[0.08em] uppercase text-gold-gradient text-balance">
+        <h1 className="animate-fade-up hero-title-glow font-cinzel text-5xl md:text-7xl leading-[1.2] tracking-[0.08em] uppercase text-gold-gradient text-balance">
           {event.name}
         </h1>
 
-        <p className="animate-fade-up delay-2 hero-text-shadow mt-7 text-gold-700 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-          {cfg.tagline ||
-            (cfg.celebrants
-              ? `Los invitamos a celebrar junto a ${cfg.celebrants} este día tan especial.`
-              : "Los invitamos a celebrar este día tan especial.")}
-        </p>
-
-        <p className="animate-fade-up delay-2 hero-text-shadow mt-9 text-[0.65rem] uppercase tracking-[0.4em] text-gold-600">
+        <p className="animate-fade-up delay-1 hero-text-shadow mt-9 text-[0.65rem] uppercase tracking-[0.4em] text-gold-600">
           Invitación para&nbsp;la <span className="text-gold-600 font-semibold capitalize">{family}</span>
         </p>
 
-        <div className="animate-fade-up delay-3 mt-10 flex items-center justify-center gap-6">
+        <div className="animate-fade-up delay-2 mt-10 flex items-center justify-center gap-6">
           <span className="hidden sm:block h-px w-12 bg-gradient-to-r from-transparent to-gold-400/50" />
           <div className="flex items-end justify-center gap-3">
             <span className="font-display hero-title-glow text-6xl md:text-7xl font-semibold text-gold-300 tabular-nums">
@@ -199,9 +188,9 @@ function Hero({ event, family, cfg }) {
           <span className="hidden sm:block h-px w-12 bg-gradient-to-l from-transparent to-gold-400/50" />
         </div>
 
-        <Ornament className="animate-fade-up delay-4 mt-10" />
+        <Ornament className="animate-fade-up delay-3 mt-10" />
 
-        <p className="animate-fade-up delay-4 hero-text-shadow mt-5 text-[0.7rem] uppercase tracking-[0.28em] text-gold-600">
+        <p className="animate-fade-up delay-3 hero-text-shadow mt-5 text-[0.7rem] uppercase tracking-[0.28em] text-gold-600">
           {pretty} · {event.time}
         </p>
       </div>

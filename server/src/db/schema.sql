@@ -1,6 +1,17 @@
 -- Esquema PostgreSQL de DisplayEvent.
 -- Destinado a Supabase (Postgres). No usa CREATE DATABASE: se ejecuta sobre la base ya creada.
 
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  verification_token VARCHAR(255),
+  verification_token_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS events (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
