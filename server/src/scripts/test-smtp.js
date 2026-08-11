@@ -23,7 +23,7 @@ console.log("Usuario:", process.env.SMTP_USER);
 console.log("Para   :", to);
 
 try {
-  const transporter = getTransporter();
+  const transporter = await getTransporter();
   await transporter.verify();
   console.log("Conexión SMTP válida (credenciales OK).");
   await transporter.sendMail({

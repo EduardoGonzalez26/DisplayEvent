@@ -1,22 +1,46 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
+import net from "node:net";
 
-let transporter = null;
+let transporterPromise = null;
+
+// Render no tiene salida IPv6 (ENETUNREACH) y Nodemailer intenta IPv6 primero.
+// Resolvemos el host a una IP IPv4 literal y conectamos a ella, manteniendo el
+// hostname real en el SNI/TLS (servername) para que Gmail acepte la conexión.
+function resolveIPv4(host) {
+  if (net.isIP(host) === 4) return Promise.resolve(host);
+  return new Promise((resolve, reject) => {
+    dns.lookup(host, { family: 4, all: true }, (err, addresses) => {
+      if (err) return reject(err);
+      if (!addresses || addresses.length === 0) {
+        return reject(new Error(`No se encontró ninguna IP IPv4 para ${host}`));
+      }
+      resolve(addresses[0].address);
+    });
+  });
+}
 
 export function getTransporter() {
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth:
-      process.env.SMTP_USER && process.env.SMTP_PASS
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        : undefined,
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000,
-  });
-  return transporter;
+  if (!transporterPromise) {
+    transporterPromise = (async () => {
+      const host = process.env.SMTP_HOST;
+      const ip = await resolveIPv4(host);
+      return nodemailer.createTransport({
+        host: ip,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: process.env.SMTP_SECURE === "true",
+        tls: { servername: host, rejectUnauthorized: true },
+        auth:
+          process.env.SMTP_USER && process.env.SMTP_PASS
+            ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+            : undefined,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 30000,
+      });
+    })();
+  }
+  return transporterPromise;
 }
 
 export function smtpConfigured() {
@@ -36,7 +60,8 @@ export async function sendVerificationEmail({ to, username, verificationUrl }) {
   if (!smtpConfigured()) {
     throw new Error("SMTP no está configurado en las variables de entorno");
   }
-  await getTransporter().sendMail({
+  const transporter = await getTransporter();
+  await transporter.sendMail({
     from: fromAddress(),
     to,
     subject: "Confirma tu correo en DisplayEvent",
