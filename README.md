@@ -32,8 +32,10 @@ DisplayEvent/
    DB_NAME=displayevent
    ```
 
-   También configura el SMTP para el envío del correo de verificación
-   (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`; ver `.env.example`).
+   También configura el envío del correo de verificación. La opción recomendada para
+   la nube es **Brevo** (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`), que funciona por HTTPS;
+   como alternativa local puede usarse SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+   `SMTP_PASS`; ver `.env.example`). Pruébalo con `npm run test:smtp`.
 
 2. Crea la base de datos y las tablas:
 
