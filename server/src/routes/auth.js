@@ -89,7 +89,8 @@ router.post("/register", async (req, res, next) => {
       await pool.query(`DELETE FROM users WHERE id = $1`, [user.id]).catch(() => {});
       console.error("[auth] No se pudo enviar el correo de verificación:", err.message);
       return res.status(503).json({
-        error: "No se pudo enviar el correo de verificación. Verifica que SMTP esté configurado.",
+        error: "No se pudo enviar el correo de verificación",
+        detail: err.message,
       });
     }
 

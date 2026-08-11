@@ -12,6 +12,9 @@ export function getTransporter() {
       process.env.SMTP_USER && process.env.SMTP_PASS
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
   });
   return transporter;
 }
@@ -26,6 +29,8 @@ function fromAddress() {
     ? `${process.env.SMTP_FROM_NAME} <${from}>`
     : from;
 }
+
+export { fromAddress };
 
 export async function sendVerificationEmail({ to, username, verificationUrl }) {
   if (!smtpConfigured()) {

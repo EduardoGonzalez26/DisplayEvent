@@ -13,7 +13,8 @@ async function request(path, options = {}) {
     window.dispatchEvent(new CustomEvent("de:unauthorized"));
   }
   if (!res.ok) {
-    const err = new Error(data?.error || "Error en la solicitud");
+    const base = data?.error || "Error en la solicitud";
+    const err = new Error(data?.detail ? `${base}: ${data.detail}` : base);
     err.code = data?.code;
     throw err;
   }
