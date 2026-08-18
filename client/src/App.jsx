@@ -7,7 +7,7 @@ import EventGuests from "./pages/event/EventGuests.jsx";
 import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
 import EventInvitation from "./pages/event/EventInvitation.jsx";
-import InvitationPage from "./pages/invitation/InvitationPage.jsx";
+import InvitationPage from "./invitation/InvitationPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";

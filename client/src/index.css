@@ -35,6 +35,54 @@
   --indigo-400: #818cf8;
   --red-300: #fca5a5;
   --red-400: #f87171;
+
+  /* ------------------------------------------------------------------
+     Invitación multiformato — variables semánticas del tema.
+     Cada formato define estos valores sobre el contenedor raíz de la
+     invitación ([data-invitation-theme]). Estos son los valores por
+     defecto (tema "xv", look rosa blush + dorado actual).
+  ------------------------------------------------------------------ */
+  --inv-font-display: "Cinzel", "Georgia", serif;
+  --inv-font-heading: "Poppins", "system-ui", sans-serif;
+  --inv-font-script: "Great Vibes", "Brush Script MT", cursive;
+  --inv-font-serif: "Playfair Display", "Georgia", serif;
+  --inv-font-body: "Lato", "system-ui", sans-serif;
+
+  --inv-bg: #fff1f0;
+  --inv-bg-alt: #ffdddb;
+  --inv-bg-alt2: #fff8f7;
+  --inv-surface: #fff8f7;
+  --inv-card: #fff1f0;
+  --inv-overlay: #381414;
+  --inv-on-accent: #381414;
+  --inv-primary: #ab9268;
+  --inv-primary-light: #d6c49b;
+  --inv-primary-dark: #8e744a;
+  --inv-primary-deep: #6b5b37;
+  --inv-text: #4a3d26;
+  --inv-text-soft: #6b5b37;
+  --inv-text-muted: #8e744a;
+  --inv-text-dim: #ab9268;
+  --inv-text-light: #d6c49b;
+  --inv-accent: #d17b79;
+  --inv-accent-border: #ffdddb;
+  --inv-accent-border-strong: #f6c6c4;
+  --inv-accent-solid: #e8a3a1;
+  --inv-ring: #ffe9e7;
+  --inv-radial-a: rgba(228, 163, 161, 0.35);
+  --inv-radial-b: rgba(255, 241, 240, 0.55);
+  --inv-radial-c: rgba(228, 163, 161, 0.22);
+  --inv-shadow-soft: rgba(163, 81, 79, 0.18);
+  --inv-shadow-card: rgba(163, 81, 79, 0.14);
+  --inv-shadow-mid: rgba(163, 81, 79, 0.12);
+  --inv-shadow-ring: rgba(214, 196, 155, 0.55);
+  --inv-hero-fallback: linear-gradient(
+    165deg,
+    #ffe6e3 0%,
+    #ffd9d6 45%,
+    #f4bdba 78%,
+    #e8a3a1 100%
+  );
 }
 
 :root[data-theme="light"] {
@@ -119,6 +167,65 @@
   --color-indigo-400: var(--indigo-400);
   --color-red-300: var(--red-300);
   --color-red-400: var(--red-400);
+
+  /* ------------------------------------------------------------------
+     Invitación multiformato — colores y fuentes semánticas.
+     Las utilidades bg-inv-*, text-inv-*, border-inv-*, font-inv-*
+     apuntan a variables que cada formato redefine sobre su raíz.
+  ------------------------------------------------------------------ */
+  --font-inv-display: var(--inv-font-display);
+  --font-inv-heading: var(--inv-font-heading);
+  --font-inv-script: var(--inv-font-script);
+  --font-inv-serif: var(--inv-font-serif);
+  --font-inv-body: var(--inv-font-body);
+
+  --color-inv-bg: var(--inv-bg);
+  --color-inv-bg-alt: var(--inv-bg-alt);
+  --color-inv-bg-alt2: var(--inv-bg-alt2);
+  --color-inv-surface: var(--inv-surface);
+  --color-inv-card: var(--inv-card);
+  --color-inv-overlay: var(--inv-overlay);
+  --color-inv-on-accent: var(--inv-on-accent);
+  --color-inv-primary: var(--inv-primary);
+  --color-inv-primary-light: var(--inv-primary-light);
+  --color-inv-primary-dark: var(--inv-primary-dark);
+  --color-inv-primary-deep: var(--inv-primary-deep);
+  --color-inv-text: var(--inv-text);
+  --color-inv-text-soft: var(--inv-text-soft);
+  --color-inv-text-muted: var(--inv-text-muted);
+  --color-inv-text-dim: var(--inv-text-dim);
+  --color-inv-text-light: var(--inv-text-light);
+  --color-inv-accent: var(--inv-accent);
+  --color-inv-accent-border: var(--inv-accent-border);
+  --color-inv-accent-border-strong: var(--inv-accent-border-strong);
+  --color-inv-accent-solid: var(--inv-accent-solid);
+  --color-inv-ring: var(--inv-ring);
+
+  /* Paletas de formatos alternativos (declaradas para que Tailwind
+     genere las utilidades; los temas las usan vía sus variables). */
+  --color-ivory-50: #fcfbf7;
+  --color-ivory-100: #f6f4ec;
+  --color-ivory-200: #ede9da;
+  --color-ivory-300: #ded8c2;
+  --color-ivory-400: #c9c0a0;
+  --color-ivory-500: #ada27d;
+  --color-ivory-600: #8a7f5f;
+  --color-ivory-700: #6b624a;
+  --color-ivory-800: #4c4635;
+  --color-ivory-900: #33302a;
+  --color-ivory-950: #211f1b;
+
+  --color-sage-50: #f2f4ec;
+  --color-sage-100: #e7ebdd;
+  --color-sage-200: #d3dac3;
+  --color-sage-300: #b4c09c;
+  --color-sage-400: #93a478;
+  --color-sage-500: #77885e;
+  --color-sage-600: #5d6d4a;
+  --color-sage-700: #4b573d;
+  --color-sage-800: #3d4633;
+  --color-sage-900: #333a2c;
+  --color-sage-950: #1c2018;
 }
 
 /* En tema claro "white" se convierte en tinta; conservamos blanco sobre
