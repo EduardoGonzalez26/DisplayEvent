@@ -3,9 +3,14 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 import { query, pool } from "../db/index.js";
 import { signToken, requireAuth, COOKIE_NAME, COOKIE_OPTIONS } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { sendVerificationEmail } from "../utils/mailer.js";
 
 const router = Router();
+
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const registerLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
+const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15 });
 
 const VERIFY_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
 
@@ -43,7 +48,7 @@ async function setupVerification(userId, email, username) {
   });
 }
 
-router.post("/register", async (req, res, next) => {
+router.post("/register", registerLimiter, async (req, res, next) => {
   const { username, email, password } = req.body || {};
   try {
     if (!username || !email || !password) {
@@ -103,7 +108,7 @@ router.post("/register", async (req, res, next) => {
   }
 });
 
-router.post("/login", async (req, res, next) => {
+router.post("/login", loginLimiter, async (req, res, next) => {
   const { username, password } = req.body || {};
   try {
     if (!username || !password) {
@@ -133,20 +138,23 @@ router.post("/login", async (req, res, next) => {
 });
 
 // Valida el token enviado por correo y marca el email como verificado.
-router.post("/verify", async (req, res, next) => {
+router.post("/verify", verifyLimiter, async (req, res, next) => {
   const { token } = req.body || {};
   try {
     if (!token || typeof token !== "string") {
       return res.status(400).json({ error: "Falta el token de verificación" });
     }
     const rows = await query(
-      `SELECT id, email, email_verified FROM users
+      `SELECT id, email, email_verified, verification_token_expires_at FROM users
        WHERE verification_token = $1 LIMIT 1`,
       [token]
     );
     const user = rows[0];
     if (!user) {
       return res.status(400).json({ error: "El enlace es inválido o ya fue usado" });
+    }
+    if (user.verification_token_expires_at && new Date(user.verification_token_expires_at) < new Date()) {
+      return res.status(400).json({ error: "El enlace expiró. Solicita reenviar la verificación" });
     }
     if (user.email_verified) {
       return res.json({ ok: true, already_verified: true });
@@ -164,7 +172,7 @@ router.post("/verify", async (req, res, next) => {
 });
 
 // Reenvía el correo de verificación si el usuario no lo ha confirmado todavía.
-router.post("/resend-verification", async (req, res, next) => {
+router.post("/resend-verification", verifyLimiter, async (req, res, next) => {
   const { email } = req.body || {};
   try {
     if (!email) {

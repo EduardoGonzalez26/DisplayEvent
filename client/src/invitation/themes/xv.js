@@ -5,7 +5,8 @@
 export const xv = {
   id: "xv",
   label: "XV años",
-  description: "Rosa blush y dorado. El formato clásico.",
+  description:
+    "Rosa blush y dorado. Portada con monograma XV, padrinos y mesa de regalos.",
   vars: {
     "--inv-font-display": '"Cinzel", "Georgia", serif',
     "--inv-font-heading": '"Poppins", "system-ui", sans-serif',
@@ -41,6 +42,8 @@ export const xv = {
     "--inv-shadow-card": "rgba(163, 81, 79, 0.14)",
     "--inv-shadow-mid": "rgba(163, 81, 79, 0.12)",
     "--inv-shadow-ring": "rgba(214, 196, 155, 0.55)",
+    "--inv-gold-gradient":
+      "linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)",
     "--inv-hero-fallback":
       "linear-gradient(165deg, #ffe6e3 0%, #ffd9d6 45%, #f4bdba 78%, #e8a3a1 100%)",
   },
@@ -52,16 +55,18 @@ export const xv = {
     body: "font-inv-body",
   },
   ornaments: { corners: true, divider: "flor" },
-  sections: [
-    "hero",
-    "countdown",
-    "message",
-    "itinerary",
-    "locations",
-    "gallery",
-    "dress_code",
-    "rsvp",
-  ],
+  // Experiencia de apertura: sobre digital con la inicial de la quinceañera.
+  opening: {
+    envelope: true,
+    cardText: (cfg) => {
+      const name = (cfg.celebrant_name || "").trim();
+      return name ? name[0].toUpperCase() : "XV";
+    },
+    sealText: (cfg) => {
+      const name = (cfg.celebrant_name || "").trim();
+      return name ? name[0].toUpperCase() : "XV";
+    },
+  },
   labels: {
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
@@ -71,7 +76,18 @@ export const xv = {
     gallery: "Nuestros Mejores Recuerdos",
     dressCode: "Código de Vestimenta",
     withLove: "Con cariño",
+    registryEyebrow: "Regalos",
+    registryTitle: "Mesa de Regalos",
+    padrinosEyebrow: "Honor",
+    padrinosTitle: "Nuestros Padrinos",
+    padrinosSubtitle:
+      "Quienes nos acompañan en este camino, con todo su cariño y apoyo.",
+    defaultKicker: "Invitación a mis XV años",
+    parentsLine: (parents) =>
+      `Con el amor de sus padres · ${parents.join(" y ")}`,
     familyGreeting: (family) =>
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
+    defaultMessage: (family) =>
+      `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`,
   },
 };

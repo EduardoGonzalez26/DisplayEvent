@@ -40,6 +40,8 @@ export const boda = {
     "--inv-shadow-card": "rgba(62, 70, 51, 0.13)",
     "--inv-shadow-mid": "rgba(62, 70, 51, 0.11)",
     "--inv-shadow-ring": "rgba(171, 146, 104, 0.5)",
+    "--inv-gold-gradient":
+      "linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)",
     "--inv-hero-fallback":
       "linear-gradient(165deg, #f3f0e6 0%, #e9ead9 45%, #d3dac3 78%, #c2cbaa 100%)",
   },
@@ -51,16 +53,22 @@ export const boda = {
     body: "font-inv-body",
   },
   ornaments: { corners: true, divider: "flor" },
-  sections: [
-    "hero",
-    "countdown",
-    "message",
-    "itinerary",
-    "locations",
-    "gallery",
-    "dress_code",
-    "rsvp",
-  ],
+  // Experiencia de apertura: sobre digital con monograma de la pareja.
+  opening: {
+    envelope: true,
+    cardText: (cfg) => {
+      const couple = cfg.couple || {};
+      return (
+        [couple.nameA, couple.nameB]
+          .filter(Boolean)
+          .map((n) => String(n).trim())
+          .filter(Boolean)
+          .map((n) => n[0].toUpperCase())
+          .join(" & ") || "&"
+      );
+    },
+    sealText: () => "&",
+  },
   labels: {
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
@@ -70,7 +78,11 @@ export const boda = {
     gallery: "Nuestros Mejores Recuerdos",
     dressCode: "Código de Vestimenta",
     withLove: "Con cariño",
+    registryEyebrow: "Regalos",
+    registryTitle: "Mesa de Regalos",
     familyGreeting: (family) =>
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
+    defaultMessage: (family) =>
+      `Familia ${family}, queremos compartir con ustedes la alegría de este día tan especial. Será un honor contar con su presencia.`,
   },
 };

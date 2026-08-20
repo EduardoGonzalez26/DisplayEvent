@@ -24,8 +24,11 @@ router.get("/", async (req, res, next) => {
 router.get("/:groupId", async (req, res, next) => {
   try {
     const rows = await query(
-      `SELECT * FROM guests WHERE group_id = $1 ORDER BY name ASC`,
-      [req.params.groupId]
+      `SELECT gu.* FROM guests gu
+       JOIN "groups" g ON g.id = gu.group_id
+       WHERE gu.group_id = $1 AND g.event_id = $2
+       ORDER BY gu.name ASC`,
+      [req.params.groupId, req.params.eventId]
     );
     res.json(rows);
   } catch (err) {
@@ -73,9 +76,14 @@ router.put("/:groupId/:guestId", async (req, res, next) => {
     }
     if (fields.length === 0) return res.status(400).json({ error: "No hay campos para actualizar" });
 
-    values.push(req.params.guestId);
+    values.push(req.params.guestId, req.params.groupId, req.params.eventId);
     const result = await pool.query(
-      `UPDATE guests SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING *`,
+      `UPDATE guests gu
+       SET ${fields.join(", ")}
+       FROM "groups" g
+       WHERE gu.id = $${values.length - 2} AND gu.group_id = $${values.length - 1}
+         AND g.id = gu.group_id AND g.event_id = $${values.length}
+       RETURNING gu.*`,
       values
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Invitado no encontrado" });
@@ -87,7 +95,12 @@ router.put("/:groupId/:guestId", async (req, res, next) => {
 
 router.delete("/:groupId/:guestId", async (req, res, next) => {
   try {
-    const result = await pool.query(`DELETE FROM guests WHERE id = $1`, [req.params.guestId]);
+    const result = await pool.query(
+      `DELETE FROM guests gu
+       USING "groups" g
+       WHERE gu.id = $1 AND gu.group_id = $2 AND g.id = gu.group_id AND g.event_id = $3`,
+      [req.params.guestId, req.params.groupId, req.params.eventId]
+    );
     if (result.rowCount === 0) return res.status(404).json({ error: "Invitado no encontrado" });
     res.status(204).end();
   } catch (err) {

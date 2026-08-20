@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Reveal, SectionTitle } from "./util.jsx";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { SectionTitle } from "../shared/util.jsx";
+import { EASE, Reveal } from "../motion.jsx";
 
-export default function GallerySection({ cfg }) {
+export default function BodaGallery({ cfg }) {
   const images = cfg.gallery || [];
   if (images.length === 0) return null;
 
@@ -22,6 +24,7 @@ function GalleryShow({ images }) {
   const intervalRef = useRef(null);
   const ratiosRef = useRef({});
   const imgRefs = useRef([]);
+  const reduced = useReducedMotion();
 
   const schedule = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -76,20 +79,34 @@ function GalleryShow({ images }) {
             className="relative overflow-hidden rounded-[1.6rem] border border-inv-primary/30 shadow-2xl transition-[aspect-ratio] duration-500"
             style={{ aspectRatio: activeRatio }}
           >
+            {/* Carga silenciosa de todas las imágenes para medir proporción */}
             {images.map((src, i) => (
               <img
-                key={i}
+                key={`probe-${i}`}
                 src={src}
                 alt=""
+                aria-hidden="true"
                 ref={(el) => {
                   imgRefs.current[i] = el;
                 }}
                 onLoad={() => syncRatios()}
-                className={`kenburns absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-                  i === index ? "opacity-100" : "opacity-0"
-                }`}
+                className="hidden"
               />
             ))}
+
+            <AnimatePresence initial={false}>
+              <motion.img
+                key={index}
+                src={images[index]}
+                alt={`Foto ${index + 1}`}
+                className="absolute inset-0 h-full w-full object-cover"
+                initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 1.12 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 1.04 }}
+                transition={{ opacity: { duration: 0.9, ease: EASE }, scale: { duration: 1.6, ease: EASE } }}
+              />
+            </AnimatePresence>
+
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-inv-overlay/80 to-transparent" />
 
             {images.length > 1 && (
@@ -113,9 +130,14 @@ function GalleryShow({ images }) {
         {images.length > 1 && (
           <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {images.map((src, i) => (
-              <button
+              <motion.button
                 key={i}
                 onClick={() => go(i)}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.06, ease: EASE }}
+                whileHover={reduced ? undefined : { scale: 1.08 }}
                 className={`h-14 w-14 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                   i === index
                     ? "border-inv-text-light shadow-[0_0_18px_var(--inv-shadow-ring)]"
@@ -123,7 +145,7 @@ function GalleryShow({ images }) {
                 }`}
               >
                 <img src={src} alt="" className="h-full w-full object-cover" />
-              </button>
+              </motion.button>
             ))}
           </div>
         )}

@@ -1,0 +1,70 @@
+// Tema "cumpleanos" — pastel colorido y redondeado, tipografía moderna
+// con aire festivo. Comparte la estructura de secciones de "xv".
+
+export const cumpleanos = {
+  id: "cumpleanos",
+  label: "Cumpleaños",
+  description: "Pastel colorido y redondeado. La más informal y festiva.",
+  vars: {
+    "--inv-font-display": '"Cherry Bomb One", "system-ui", sans-serif',
+    "--inv-font-heading": '"Baloo 2", "system-ui", sans-serif',
+    "--inv-font-script": '"Great Vibes", "Brush Script MT", cursive',
+    "--inv-font-serif": '"Nunito", "system-ui", sans-serif',
+    "--inv-font-body": '"Nunito", "system-ui", sans-serif',
+
+    "--inv-bg": "#fff6ea",
+    "--inv-bg-alt": "#ffe4d6",
+    "--inv-bg-alt2": "#fffbef",
+    "--inv-surface": "#fffdf6",
+    "--inv-card": "#fff6ea",
+    "--inv-overlay": "#432c4a",
+    "--inv-on-accent": "#432c4a",
+    "--inv-primary": "#ff9d76",
+    "--inv-primary-light": "#ffd2b8",
+    "--inv-primary-dark": "#f2764a",
+    "--inv-primary-deep": "#cf5a34",
+    "--inv-text": "#54405e",
+    "--inv-text-soft": "#74617e",
+    "--inv-text-muted": "#96839f",
+    "--inv-text-dim": "#b7a5bf",
+    "--inv-text-light": "#d6c7dd",
+    "--inv-accent": "#5ec4a8",
+    "--inv-accent-border": "#d8f1e8",
+    "--inv-accent-border-strong": "#aee3d2",
+    "--inv-accent-solid": "#7fd6bc",
+    "--inv-ring": "#ffe9dc",
+    "--inv-radial-a": "rgba(255, 157, 118, 0.30)",
+    "--inv-radial-b": "rgba(255, 250, 240, 0.55)",
+    "--inv-radial-c": "rgba(255, 157, 118, 0.18)",
+    "--inv-shadow-soft": "rgba(207, 90, 52, 0.18)",
+    "--inv-shadow-card": "rgba(207, 90, 52, 0.14)",
+    "--inv-shadow-mid": "rgba(207, 90, 52, 0.12)",
+    "--inv-shadow-ring": "rgba(255, 157, 118, 0.5)",
+    "--inv-hero-fallback":
+      "linear-gradient(165deg, #ffe9cf 0%, #ffd5b8 40%, #ffb395 72%, #ff9db8 100%)",
+    "--inv-gold-gradient":
+      "linear-gradient(180deg, #ffd166 0%, #ffb35c 30%, #ff8a5c 60%, #ff5fa2 100%)",
+  },
+  fonts: {
+    display: "font-inv-display",
+    heading: "font-inv-heading",
+    script: "font-inv-script",
+    serif: "font-inv-serif",
+    body: "font-inv-body",
+  },
+  ornaments: { corners: true, divider: "flor" },
+  labels: {
+    rsvp: "Confirma tu asistencia",
+    countdown: "Faltan",
+    message: "Un mensaje para ustedes",
+    itinerary: "Nuestro Itinerario",
+    locations: "Cómo Llegar",
+    gallery: "Nuestros Mejores Recuerdos",
+    dressCode: "Código de Vestimenta",
+    withLove: "Con cariño",
+    familyGreeting: (family) =>
+      `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
+    defaultMessage: (family) =>
+      `Familia ${family}, nos encantaría que nos acompañaran a celebrar este día tan especial. ¡Los esperamos con mucha alegría!`,
+  },
+};

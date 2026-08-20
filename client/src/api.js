@@ -63,6 +63,13 @@ export const api = {
     update: (eventId, tableId, payload) => request(`/events/${eventId}/tables/${tableId}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (eventId, tableId) => request(`/events/${eventId}/tables/${tableId}`, { method: "DELETE" }),
   },
+  templates: {
+    list: () => request("/templates"),
+    get: (id) => request(`/templates/${id}`),
+    create: (payload) => request("/templates", { method: "POST", body: JSON.stringify(payload) }),
+    update: (id, payload) => request(`/templates/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+    remove: (id) => request(`/templates/${id}`, { method: "DELETE" }),
+  },
   invitations: {
     get: (token) => request(`/invitations/${token}`),
     rsvp: (token, payload) => request(`/invitations/${token}/rsvp`, { method: "PUT", body: JSON.stringify(payload) }),

@@ -35,6 +35,7 @@ async function main() {
 
   // Migraciones para bases que ya existían antes de las últimas columnas.
   const migrations = [
+    `ALTER TABLE "groups" ALTER COLUMN invitation_token TYPE VARCHAR(64)`,
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs BOOLEAN NOT NULL DEFAULT FALSE`,
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs_count INT NOT NULL DEFAULT 0`,
     `ALTER TABLE "tables" ADD COLUMN IF NOT EXISTS is_kids BOOLEAN NOT NULL DEFAULT FALSE`,
@@ -56,6 +57,17 @@ async function main() {
       row.id,
     ]);
   }
+
+  // Backfill multiformato: toda invitación sin `template` queda marcada como
+  // "xv" (retrocompatibilidad con el formato clásico). Idempotente.
+  await client.query(`
+    UPDATE events
+    SET invitation = CASE
+      WHEN invitation IS NULL THEN '{"template":"xv","version":1}'::jsonb
+      ELSE invitation || '{"template":"xv","version":1}'::jsonb
+    END
+    WHERE invitation IS NULL OR invitation->>'template' IS NULL
+  `);
 
   console.log("Base de datos PostgreSQL lista.");
   await client.end();

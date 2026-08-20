@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "groups" (
   event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   leader_name VARCHAR(255),
-  invitation_token VARCHAR(16) UNIQUE,
+  invitation_token VARCHAR(64) UNIQUE,
   rsvp_note VARCHAR(500),
   high_chairs BOOLEAN NOT NULL DEFAULT FALSE,
   high_chairs_count INT NOT NULL DEFAULT 0,
@@ -66,3 +66,13 @@ CREATE TABLE IF NOT EXISTS guests (
 CREATE INDEX IF NOT EXISTS idx_guest_group ON guests(group_id);
 CREATE INDEX IF NOT EXISTS idx_guest_table ON guests(table_id);
 CREATE INDEX IF NOT EXISTS idx_guest_companion ON guests(companion_id);
+
+CREATE TABLE IF NOT EXISTS invitation_templates (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  config JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_inv_templates_user ON invitation_templates(user_id);

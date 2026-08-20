@@ -5,5 +5,9 @@
     "start": "node server/src/index.js",
     "build": "cd server && npm ci && cd ../client && npm ci && npm run build",
     "local": "cd server && npm run dev"
+  },
+  "dependencies": {
+    "framer-motion": "^13.1.0",
+    "motion": "^13.1.0"
   }
 }

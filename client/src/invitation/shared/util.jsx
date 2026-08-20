@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Reveal, motion, EASE, useReducedMotion } from "../motion.jsx";
+
+export { Reveal };
 
 /* ------------------------------------------------------------------
    Elementos decorativos compartidos
@@ -37,36 +39,6 @@ export function Corner({ className }) {
    Utilidades de animación
 ------------------------------------------------------------------ */
 
-export function Reveal({ children, className = "", as: Tag = "div", delay = 0 }) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <Tag
-      ref={ref}
-      className={`reveal ${visible ? "is-visible" : ""} ${delay ? `delay-${delay}` : ""} ${className || ""}`}
-    >
-      {children}
-    </Tag>
-  );
-}
-
 export function SectionTitle({ eyebrow, title, subtitle }) {
   return (
     <Reveal className="text-center mb-12">
@@ -94,15 +66,27 @@ export function SectionTitle({ eyebrow, title, subtitle }) {
 ------------------------------------------------------------------ */
 
 export function InvitationLoader() {
+  const reduced = useReducedMotion();
   return (
     <div className="min-h-screen bg-inv-bg grid place-items-center text-inv-text-soft px-6">
-      <div className="text-center animate-fade-in">
-        <div className="font-inv-script text-8xl text-gold-gradient leading-[1.4]">&</div>
+      <motion.div
+        className="text-center"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: EASE }}
+      >
+        <motion.div
+          className="font-inv-script text-8xl text-gold-gradient leading-[1.4]"
+          animate={reduced ? {} : { opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          &
+        </motion.div>
         <Ornament className="mt-5" />
         <div className="mt-6 text-[0.65rem] tracking-[0.45em] uppercase opacity-80">
           Preparando la invitación…
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -110,35 +94,26 @@ export function InvitationLoader() {
 export function InvitationNotFound() {
   return (
     <div className="min-h-screen bg-inv-bg grid place-items-center text-center px-6">
-      <div className="animate-fade-up">
-        <div className="w-16 h-16 mx-auto mb-5 rounded-full border border-inv-primary/40 bg-inv-surface grid place-items-center font-inv-heading text-3xl text-gold-gradient">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: EASE }}
+      >
+        <motion.div
+          className="w-16 h-16 mx-auto mb-5 rounded-full border border-inv-primary/40 bg-inv-surface grid place-items-center font-inv-heading text-3xl text-gold-gradient"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 220, damping: 18 }}
+        >
           ×
-        </div>
+        </motion.div>
         <h1 className="font-inv-script text-5xl text-gold-gradient mb-3 leading-[1.5]">
           Invitación no encontrada
         </h1>
         <p className="text-inv-text-soft font-light">El enlace no es válido o fue revocado.</p>
         <Ornament className="mt-7" />
-      </div>
+      </motion.div>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------
-   Pie de página
------------------------------------------------------------------- */
-
-export function Footer({ event }) {
-  return (
-    <footer className="py-12 px-6 text-center bg-inv-bg">
-      <Ornament />
-      <p className="mt-7 text-inv-text-soft/80 text-xs tracking-[0.35em] uppercase">
-        DisplayEvent · {event.place}
-      </p>
-      <p className="mt-2 text-inv-text-muted/60 text-[0.6rem] tracking-[0.3em] uppercase">
-        Hecho con ✦ para celebrar juntos
-      </p>
-    </footer>
   );
 }
 

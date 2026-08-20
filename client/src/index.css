@@ -414,12 +414,9 @@
 }
 
 .text-gold-gradient {
-  background: linear-gradient(
-    180deg,
-    #f9efd0 0%,
-    #ecd39f 35%,
-    #d3a95c 68%,
-    #b8873a 100%
+  background: var(
+    --inv-gold-gradient,
+    linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -486,4 +483,106 @@
 
 .animate-float-slow {
   animation: float-slow 4.5s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   XV premium — monograma de madreperla, seda y paneles de cristal
+------------------------------------------------------------------ */
+/* Monograma esculpido: cara de madreperla iridiscente con canto dorado
+   pulido (text-shadow en capas simula la extrusión) y brillo perlado. */
+.monogram-pearl {
+  background-image: linear-gradient(
+    118deg,
+    #fff8ea 0%,
+    #f9dce8 20%,
+    #f6e9c8 38%,
+    #ffd9de 52%,
+    #efe0f2 72%,
+    #fdf2dc 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(186, 141, 68, 0.85);
+  text-shadow:
+    0 1px 0 rgba(184, 135, 58, 0.9),
+    0 2px 0 rgba(177, 128, 54, 0.85),
+    0 3px 0 rgba(168, 119, 49, 0.8),
+    0 4px 1px rgba(158, 110, 44, 0.7),
+    0 6px 8px rgba(139, 94, 54, 0.32),
+    0 12px 24px rgba(139, 94, 54, 0.26);
+}
+
+.monogram-shimmer {
+  animation: monogram-sheen 6s ease-in-out infinite;
+}
+
+@keyframes monogram-sheen {
+  0%,
+  100% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
+
+/* Resplandor dorado detrás del monograma */
+.monogram-halo {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 226, 178, 0.55),
+    rgba(255, 226, 178, 0.12) 45%,
+    transparent 70%
+  );
+  filter: blur(2px);
+}
+
+/* Fondo de seda: grano fino tejido vía SVG turbulence (sin assets) */
+.silk-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.05' numOctaves='3' seed='12' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+
+/* Paneles de cristal esmerilado con borde dorado y neumorfismo */
+.glass-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.38),
+    rgba(255, 248, 247, 0.24)
+  );
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  backdrop-filter: blur(14px) saturate(1.25);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 8px 32px rgba(163, 81, 79, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Hueso del dígito: hueco esculpido en la propia superficie de seda */
+.glass-numeral {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.4)
+  );
+  box-shadow:
+    inset 2px 3px 7px rgba(163, 81, 79, 0.18),
+    inset -2px -3px 7px rgba(255, 255, 255, 0.9);
+}
+
+/* ------------------------------------------------------------------
+   Movimiento reducido: respeta la preferencia del usuario
+------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

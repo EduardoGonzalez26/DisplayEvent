@@ -148,3 +148,8 @@ server/uploads/
 
 # Graphify output
 graphify-out/
+
+# Formatos de invitados / archivos de cliente
+*.xlsx
+*.xls
+*.csv

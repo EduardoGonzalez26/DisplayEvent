@@ -9,6 +9,12 @@ function EventForm({ initial, onSubmit, onCancel }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [templates, setTemplates] = useState([]);
+  const [templateId, setTemplateId] = useState("");
+
+  useEffect(() => {
+    api.templates.list().then(setTemplates).catch(() => setTemplates([]));
+  }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -17,7 +23,7 @@ function EventForm({ initial, onSubmit, onCancel }) {
     setSaving(true);
     setError("");
     try {
-      await onSubmit(form);
+      await onSubmit({ ...form, templateId });
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -73,6 +79,29 @@ function EventForm({ initial, onSubmit, onCancel }) {
         />
       </div>
 
+      {templates.length > 0 && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            Empezar desde plantilla (opcional)
+          </label>
+          <select
+            className={inputClass}
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+          >
+            <option value="">Sin plantilla</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Copia la invitación (formato, textos, galería, contactos) al nuevo evento.
+          </p>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 
       <div className="flex justify-end gap-2">
@@ -115,7 +144,11 @@ export default function EventsPage() {
     if (modal.mode === "edit") {
       await api.events.update(modal.event.id, form);
     } else {
-      await api.events.create(form);
+      const created = await api.events.create(form);
+      if (form.templateId) {
+        const tpl = await api.templates.get(form.templateId);
+        await api.events.setInvitation(created.id, tpl.config);
+      }
     }
     setModal(null);
     await load();

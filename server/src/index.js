@@ -11,6 +11,7 @@ import eventsRouter from "./routes/events.js";
 import groupsRouter from "./routes/groups.js";
 import guestsRouter from "./routes/guests.js";
 import tablesRouter from "./routes/tables.js";
+import templatesRouter from "./routes/templates.js";
 import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
 import authRouter from "./routes/auth.js";
@@ -21,7 +22,26 @@ dotenv.config({ path: join(__dirname, "..", ".env") });
 
 const app = express();
 
-app.use(cors());
+// Render y otros proxies envían X-Forwarded-For; sin esto req.ip siempre es el proxy.
+app.set("trust proxy", 1);
+
+// Solo orígenes permitidos: la URL pública del frontend y localhost en desarrollo.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error("Origen no permitido por CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -32,16 +52,19 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
+// Protección CSRF: aplica a todo /api (auth e invitaciones incluidas).
+app.use("/api", csrfProtection);
+
 // Públicas: autenticación e invitaciones (enlace con token que recibe el invitado).
 app.use("/api/auth", authRouter);
 app.use("/api/invitations", invitationsRouter);
 
 // Protegidas: todo el panel de administración.
-app.use("/api", csrfProtection);
 app.use("/api/events", requireAuth, eventsRouter);
 app.use("/api/events/:eventId/groups", requireAuth, groupsRouter);
 app.use("/api/events/:eventId/guests", requireAuth, guestsRouter);
 app.use("/api/events/:eventId/tables", requireAuth, tablesRouter);
+app.use("/api/templates", requireAuth, templatesRouter);
 app.use("/api/uploads", requireAuth, uploadsRouter);
 
 // Si existe el build del cliente, lo servimos igual que la API
@@ -60,7 +83,23 @@ app.use((_req, res) => {
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: "Error interno del servidor", detail: err.message });
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "JSON inválido en la petición" });
+  }
+  if (err.name === "MulterError") {
+    const msg =
+      err.code === "LIMIT_FILE_SIZE"
+        ? "La imagen supera el tamaño máximo de 8 MB"
+        : "Error al subir el archivo";
+    return res.status(400).json({ error: msg });
+  }
+  if (err.message === "Origen no permitido por CORS") {
+    return res.status(403).json({ error: err.message });
+  }
+  if (err.message && err.message.startsWith("Solo se permiten")) {
+    return res.status(400).json({ error: err.message });
+  }
+  res.status(500).json({ error: "Error interno del servidor" });
 });
 
 const PORT = Number(process.env.PORT || 4000);

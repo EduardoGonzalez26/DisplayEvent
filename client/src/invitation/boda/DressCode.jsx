@@ -1,23 +1,47 @@
-import { Reveal, SectionTitle } from "./util.jsx";
+import { motion, useReducedMotion } from "motion/react";
+import { SectionTitle } from "../shared/util.jsx";
+import { EASE, Reveal } from "../motion.jsx";
 
-export default function DressCodeSection({ cfg }) {
-  const items = cfg.dress_code || [];
+export default function BodaDressCode({ cfg }) {
+  const raw = cfg.dress_code || [];
+  const items = Array.isArray(raw)
+    ? raw
+    : raw
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((label) => ({ label }));
+  const reduced = useReducedMotion();
   if (items.length === 0) return null;
 
   return (
     <section className="py-24 px-4 bg-inv-bg">
       <div className="max-w-4xl mx-auto">
         <SectionTitle eyebrow="Dress Code" title="Código de Vestimenta" />
-        <div className="flex flex-wrap justify-center gap-4">
-          {items.map((item, i) => (
-            <Reveal key={i} delay={(i % 3) + 1}>
-              <div className="flex items-center gap-3 rounded-2xl border border-inv-primary/30 bg-inv-surface px-6 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-inv-primary/50">
+        <Reveal>
+          <motion.div
+            className="flex flex-wrap justify-center gap-4"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+          >
+            {items.map((item, i) => (
+              <motion.div
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, scale: 0.85 },
+                  show: { opacity: 1, scale: 1, transition: { duration: 0.55, ease: EASE } },
+                }}
+                whileHover={reduced ? undefined : { y: -4, transition: { type: "spring", stiffness: 300, damping: 18 } }}
+                className="flex items-center gap-3 rounded-2xl border border-inv-primary/30 bg-inv-surface px-6 py-4 transition-colors duration-300 hover:border-inv-primary/50"
+              >
                 <DressIcon name={item.icon} />
                 <span className="font-inv-heading text-lg text-inv-text-soft">{item.label}</span>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </Reveal>
         {cfg.dress_note && (
           <Reveal className="mt-8 text-center text-inv-text-soft font-light italic">
             {cfg.dress_note}

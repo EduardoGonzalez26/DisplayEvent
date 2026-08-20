@@ -1,6 +1,14 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "cambia-este-secreto-por-uno-seguro";
+const FALLBACK_SECRET = "cambia-este-secreto-por-uno-seguro";
+const JWT_SECRET = process.env.JWT_SECRET || FALLBACK_SECRET;
+
+// En producción un secreto por defecto permitiría forjar sesiones de administrador.
+if (process.env.NODE_ENV === "production" && JWT_SECRET === FALLBACK_SECRET) {
+  console.error("[auth] CRÍTICO: JWT_SECRET no está configurado. El servidor no arranca.");
+  process.exit(1);
+}
+
 const TOKEN_TTL = Number(process.env.JWT_EXPIRES_IN || 7 * 24 * 60 * 60);
 
 export const COOKIE_NAME = "de_token";

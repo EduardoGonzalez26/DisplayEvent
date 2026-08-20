@@ -77,8 +77,17 @@ router.get("/:id/invitation", async (req, res, next) => {
   }
 });
 
+// Formatos de invitación conocidos (validación ligera del JSONB al guardar).
+const KNOWN_TEMPLATES = ["xv", "boda", "cumpleanos", "baby_shower"];
+
 router.put("/:id/invitation", async (req, res, next) => {
   const invitation = req.body;
+  if (!invitation || typeof invitation !== "object" || Array.isArray(invitation)) {
+    return res.status(400).json({ error: "La configuración de invitación es inválida" });
+  }
+  if (invitation.template !== undefined && !KNOWN_TEMPLATES.includes(invitation.template)) {
+    return res.status(400).json({ error: "Formato de invitación desconocido" });
+  }
   try {
     const result = await pool.query(
       `UPDATE events SET invitation = $1::jsonb WHERE id = $2`,

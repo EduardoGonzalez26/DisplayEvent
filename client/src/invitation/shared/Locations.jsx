@@ -1,4 +1,6 @@
-import { Reveal, SectionTitle } from "./util.jsx";
+import { motion, useReducedMotion } from "motion/react";
+import { SectionTitle } from "./util.jsx";
+import { EASE, Reveal } from "../motion.jsx";
 
 export default function LocationsSection({ cfg }) {
   const legacies = cfg.itinerary || [];
@@ -10,6 +12,7 @@ export default function LocationsSection({ cfg }) {
     lat: it.lat,
     lng: it.lng,
   }));
+  const reduced = useReducedMotion();
   if (items.length === 0) return null;
 
   const googleMapsUrl = (it) => {
@@ -37,10 +40,24 @@ export default function LocationsSection({ cfg }) {
           title="Cómo Llegar"
           subtitle="Encuentra cada recinto de la celebración y navega directo con tu app favorita."
         />
-        <div className="grid md:grid-cols-3 gap-6">
-          {items.map((it, i) => (
-            <Reveal key={i} delay={(i % 3) + 1} className="h-full">
-              <article className="group h-full flex flex-col rounded-2xl border border-inv-primary/30 bg-inv-card/80 backdrop-blur p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-inv-primary/50 hover:shadow-[0_20px_50px_var(--inv-shadow-card)]">
+        <Reveal>
+          <motion.div
+            className="grid md:grid-cols-3 gap-6"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.1 }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.14 } } }}
+          >
+            {items.map((it, i) => (
+              <motion.article
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 32 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
+                }}
+                whileHover={reduced ? undefined : { y: -8, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                className="group h-full flex flex-col rounded-2xl border border-inv-primary/30 bg-inv-card/80 backdrop-blur p-6 transition-shadow duration-300 hover:shadow-[0_20px_50px_var(--inv-shadow-card)]"
+              >
                 <span className="mb-4 font-inv-script text-4xl text-inv-primary/90">
                   {String(i + 1).padStart(2, "0")}
                 </span>
@@ -72,10 +89,10 @@ export default function LocationsSection({ cfg }) {
                     </>
                   )}
                 </div>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+              </motion.article>
+            ))}
+          </motion.div>
+        </Reveal>
       </div>
     </section>
   );
