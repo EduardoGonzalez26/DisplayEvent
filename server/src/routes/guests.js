@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { query, pool } from "../db/index.js";
+import { query, pool, transaction } from "../db/index.js";
 
 const router = Router({ mergeParams: true });
 
@@ -112,10 +112,7 @@ router.delete("/:groupId/:guestId", async (req, res, next) => {
 router.put("/:groupId/:guestId/assign", async (req, res, next) => {
   const { table_id } = req.body;
   try {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-
+    const result = await transaction(async (client) => {
       const { rows: guestRows } = await client.query(
         `SELECT gu.*, g.event_id FROM guests gu
          JOIN "groups" g ON g.id = gu.group_id
@@ -123,23 +120,26 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
         [req.params.guestId, req.params.eventId]
       );
       if (guestRows.length === 0) {
-        await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Invitado no encontrado" });
+        const err = new Error("Invitado no encontrado");
+        err.status = 404;
+        throw err;
       }
       const guest = guestRows[0];
 
       if (guest.companion_id) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({
-          error: `${guest.name} es acompañante; muévelo junto con su invitado principal`,
-        });
+        const err = new Error(
+          `${guest.name} es acompañante; muévelo junto con su invitado principal`
+        );
+        err.status = 400;
+        throw err;
       }
 
       if (!guest.registered) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({
-          error: `${guest.name} no ha confirmado asistencia y no puede ser asignado a una mesa`,
-        });
+        const err = new Error(
+          `${guest.name} no ha confirmado asistencia y no puede ser asignado a una mesa`
+        );
+        err.status = 400;
+        throw err;
       }
 
       // Bloque: el invitado + sus acompañantes.
@@ -155,8 +155,7 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
             blockIds,
           ]);
         }
-        await client.query("COMMIT");
-        return res.json({ ok: true, table_id: null });
+        return { ok: true, table_id: null };
       }
 
       const { rows: tableRows } = await client.query(
@@ -164,8 +163,9 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
         [table_id, req.params.eventId]
       );
       if (tableRows.length === 0) {
-        await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Mesa no encontrada" });
+        const err = new Error("Mesa no encontrada");
+        err.status = 404;
+        throw err;
       }
       const table = tableRows[0];
 
@@ -179,27 +179,25 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
       const seatsLeft = table.capacity - occupied;
 
       if (blockIds.length > seatsLeft) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({
-          error: `La mesa "${table.name}" tiene ${occupied} ocupados y solo quedan ${seatsLeft} lugares; ${
+        const err = new Error(
+          `La mesa "${table.name}" tiene ${occupied} ocupados y solo quedan ${seatsLeft} lugares; ${
             blockIds.length === 1 ? "tu invitado" : `el bloque de ${blockIds.length} invitados`
-          } no cabe.`,
-        });
+          } no cabe.`
+        );
+        err.status = 400;
+        throw err;
       }
 
       await client.query(
         `UPDATE guests SET table_id = $1 WHERE id = ANY($2::int[])`,
         [table.id, blockIds]
       );
-      await client.query("COMMIT");
-      res.json({ ok: true, table_id: table.id, moved: blockIds.length });
-    } catch (err) {
-      await client.query("ROLLBACK").catch(() => {});
-      throw err;
-    } finally {
-      client.release();
-    }
+      return { ok: true, table_id: table.id, moved: blockIds.length };
+    });
+
+    res.json(result);
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
   }
 });
@@ -208,8 +206,7 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
 router.put("/:groupId/:guestId/companion", async (req, res, next) => {
   const { companion_id } = req.body;
   try {
-    const client = await pool.connect();
-    try {
+    const result = await transaction(async (client) => {
       const { rows: guestRows } = await client.query(
         `SELECT gu.*, g.event_id FROM guests
          JOIN "groups" g ON g.id = gu.group_id
@@ -217,24 +214,26 @@ router.put("/:groupId/:guestId/companion", async (req, res, next) => {
         [req.params.guestId, req.params.eventId]
       );
       if (guestRows.length === 0) {
-        return res.status(404).json({ error: "Invitado no encontrado" });
+        const err = new Error("Invitado no encontrado");
+        err.status = 404;
+        throw err;
       }
-      const guest = guestRows[0];
 
       if (companion_id == null || companion_id === "") {
         await client.query(
           `UPDATE guests SET companion_id = NULL, table_id = NULL WHERE id = $1`,
           [req.params.guestId]
         );
-        const { rows: updated } = await client.query(
-          `SELECT * FROM guests WHERE id = $1`,
-          [req.params.guestId]
-        );
-        return res.json(updated[0]);
+        const { rows: updated } = await client.query(`SELECT * FROM guests WHERE id = $1`, [
+          req.params.guestId,
+        ]);
+        return updated[0];
       }
 
       if (Number(companion_id) === Number(req.params.guestId)) {
-        return res.status(400).json({ error: "Un invitado no puede ser su propio acompañante" });
+        const err = new Error("Un invitado no puede ser su propio acompañante");
+        err.status = 400;
+        throw err;
       }
 
       const { rows: mainRows } = await client.query(
@@ -244,14 +243,18 @@ router.put("/:groupId/:guestId/companion", async (req, res, next) => {
         [companion_id, req.params.eventId]
       );
       if (mainRows.length === 0) {
-        return res.status(404).json({ error: "El invitado principal no existe o no pertenece al evento" });
+        const err = new Error("El invitado principal no existe o no pertenece al evento");
+        err.status = 404;
+        throw err;
       }
       const main = mainRows[0];
 
       if (main.companion_id) {
-        return res.status(400).json({
-          error: `${main.name} ya es acompañante de otro invitado; úsalo como principal`,
-        });
+        const err = new Error(
+          `${main.name} ya es acompañante de otro invitado; úsalo como principal`
+        );
+        err.status = 400;
+        throw err;
       }
 
       await client.query(
@@ -261,11 +264,12 @@ router.put("/:groupId/:guestId/companion", async (req, res, next) => {
       const { rows: updated } = await client.query(`SELECT * FROM guests WHERE id = $1`, [
         req.params.guestId,
       ]);
-      res.json(updated[0]);
-    } finally {
-      client.release();
-    }
+      return updated[0];
+    });
+
+    res.json(result);
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
   }
 });

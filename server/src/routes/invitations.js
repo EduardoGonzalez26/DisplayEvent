@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { query, pool } from "../db/index.js";
+import { query, transaction } from "../db/index.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
@@ -74,11 +74,7 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
       }
     }
 
-    let cleanNote = null;
-    const conn = await pool.connect();
-    try {
-      await conn.query("BEGIN");
-
+    const cleanNote = await transaction(async (conn) => {
       // Pases que asisten: registrados. Pases que no asisten: declinados.
       // El resto vuelve a "sin respuesta".
       await conn.query(
@@ -99,19 +95,12 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
       }
 
       const noteStr = typeof note === "string" ? note.trim().slice(0, 500) : null;
-      cleanNote = noteStr;
       await conn.query(`UPDATE "groups" SET rsvp_note = $1 WHERE id = $2`, [
-        cleanNote,
+        noteStr,
         inv.group_id,
       ]);
-
-      await conn.query("COMMIT");
-    } catch (err) {
-      await conn.query("ROLLBACK").catch(() => {});
-      throw err;
-    } finally {
-      conn.release();
-    }
+      return noteStr;
+    });
 
     const guests = await getGuests(inv.group_id);
     res.json({
