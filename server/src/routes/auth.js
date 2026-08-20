@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { query, pool } from "../db/index.js";
 import { signToken, requireAuth, COOKIE_NAME, COOKIE_OPTIONS } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
-import { sendVerificationEmail } from "../utils/mailer.js";
+import { sendVerificationEmail, emailChannel } from "../utils/mailer.js";
 
 const router = Router();
 
@@ -41,10 +41,13 @@ async function setupVerification(userId, email, username) {
      WHERE id = $3`,
     [token, expiresAt, userId]
   );
-  await sendVerificationEmail({
+  // Envío en segundo plano: la respuesta HTTP no espera al canal de correo.
+  sendVerificationEmail({
     to: email,
     username,
     verificationUrl: verificationUrlFor(token),
+  }).catch((err) => {
+    console.error("[mailer] No se pudo enviar el correo de verificación:", err.message);
   });
 }
 
@@ -78,6 +81,14 @@ router.post("/register", registerLimiter, async (req, res, next) => {
       return res.status(409).json({ error: "Ese usuario o correo ya está registrado" });
     }
 
+    // Sin canal de correo no se puede verificar la cuenta; fallamos antes de crearla.
+    if (emailChannel() === "none") {
+      return res.status(503).json({
+        error: "El servicio de correo no está configurado",
+        code: "EMAIL_CHANNEL_UNAVAILABLE",
+      });
+    }
+
     const passwordHash = await bcrypt.hash(String(password), 10);
     const { rows } = await pool.query(
       `INSERT INTO users (username, email, password_hash)
@@ -90,11 +101,11 @@ router.post("/register", registerLimiter, async (req, res, next) => {
     try {
       await setupVerification(user.id, cleanEmail, user.username);
     } catch (err) {
-      // Si el correo no se puede enviar, no dejamos cuentas huérfanas sin verificar.
+      // No se pudo guardar el token de verificación: no dejamos cuentas a medias.
       await pool.query(`DELETE FROM users WHERE id = $1`, [user.id]).catch(() => {});
-      console.error("[auth] No se pudo enviar el correo de verificación:", err.message);
+      console.error("[auth] No se pudo preparar la verificación:", err.message);
       return res.status(503).json({
-        error: "No se pudo enviar el correo de verificación",
+        error: "No se pudo preparar la verificación de la cuenta",
         detail: err.message,
       });
     }
