@@ -15,8 +15,20 @@ export default function LocationsSection({ cfg }) {
   const reduced = useReducedMotion();
   if (items.length === 0) return null;
 
+  const safeUrl = (url) => {
+    if (!url) return null;
+    try {
+      const u = new URL(String(url));
+      if (u.protocol === "http:" || u.protocol === "https:") return u.href;
+    } catch {
+      /* noop: solo se aceptan URLs absolutas http(s) */
+    }
+    return null;
+  };
+
   const googleMapsUrl = (it) => {
-    if (it.url) return it.url;
+    const custom = safeUrl(it.url);
+    if (custom) return custom;
     if (it.lat && it.lng)
       return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${it.lat},${it.lng}`)}`;
     if (it.place)

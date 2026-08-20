@@ -130,9 +130,11 @@
 
 ### 4.3 Frontend — Invitación
 
-| Severidad | Bug | Ubicación |
-|---|---|---|
-| 🟠 Alto | **XSS vía `href`**: `it.url` se usa directo en `<a href>` sin validar `http(s)://`; un `javascript:alert(1)` se ejecuta al hacer clic | `shared/Locations.jsx:18-19, 72` |
+> **Estado:** en progreso — el primer punto está resuelto (verificado 20/08/2026).
+
+| Severidad | Bug | Ubicación | Estado |
+|---|---|---|---|
+| 🟠 Alto | **XSS vía `href`**: `it.url` se usa directo en `<a href>` sin validar `http(s)://`; un `javascript:alert(1)` se ejecuta al hacer clic | `shared/Locations.jsx:18-19, 72` | ✅ Hecho — `safeUrl()` solo acepta URLs absolutas `http:`/`https:` (`Locations.jsx:18-27`); `javascript:`, `data:` y relativas → `null` (commit pendiente) |
 | 🟠 Alto | El **sobre digital es imposible de abrir por teclado**: solo `onTap`/drag, sin `tabIndex`/`role="button"`/`onKeyDown` | `envelope/EnvelopeLoader.jsx:95-120` |
 | 🟡 Medio | Boda: el hero anima **detrás del sobre** (no recibe `reveal`) — al abrir el sobre la animación ya pasó; el velo de XV tampoco espera | `boda/BodaLayout.jsx:19`; `boda/Hero.jsx:74-77`; `xv/Hero.jsx:118-126` |
 | 🟡 Medio | **Fallback roto de ubicaciones**: si no hay `locations`, cae a `itinerary` y renderiza tarjetas "Ubicación N" vacías | `shared/Locations.jsx:6-7, 64-90` |
