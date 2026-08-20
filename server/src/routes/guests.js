@@ -144,7 +144,7 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
 
       // Bloque: el invitado + sus acompañantes.
       const { rows: blockRows } = await client.query(
-        `SELECT id FROM guests WHERE id = $1 OR companion_id = $1`,
+        `SELECT id FROM guests WHERE id = $1 OR companion_id = $1 ORDER BY id FOR UPDATE`,
         [guest.id]
       );
       const blockIds = blockRows.map((r) => r.id);
@@ -160,7 +160,7 @@ router.put("/:groupId/:guestId/assign", async (req, res, next) => {
       }
 
       const { rows: tableRows } = await client.query(
-        `SELECT * FROM "tables" WHERE id = $1 AND event_id = $2 LIMIT 1`,
+        `SELECT * FROM "tables" WHERE id = $1 AND event_id = $2 LIMIT 1 FOR UPDATE`,
         [table_id, req.params.eventId]
       );
       if (tableRows.length === 0) {

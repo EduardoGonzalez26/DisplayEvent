@@ -16,6 +16,7 @@ import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
 import authRouter from "./routes/auth.js";
 import { requireAuth, csrfProtection } from "./middleware/auth.js";
+import { eventAccess } from "./middleware/eventAccess.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "..", ".env") });
@@ -61,9 +62,9 @@ app.use("/api/invitations", invitationsRouter);
 
 // Protegidas: todo el panel de administración.
 app.use("/api/events", requireAuth, eventsRouter);
-app.use("/api/events/:eventId/groups", requireAuth, groupsRouter);
-app.use("/api/events/:eventId/guests", requireAuth, guestsRouter);
-app.use("/api/events/:eventId/tables", requireAuth, tablesRouter);
+app.use("/api/events/:eventId/groups", requireAuth, eventAccess, groupsRouter);
+app.use("/api/events/:eventId/guests", requireAuth, eventAccess, guestsRouter);
+app.use("/api/events/:eventId/tables", requireAuth, eventAccess, tablesRouter);
 app.use("/api/templates", requireAuth, templatesRouter);
 app.use("/api/uploads", requireAuth, uploadsRouter);
 

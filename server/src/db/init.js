@@ -39,6 +39,7 @@ async function main() {
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs BOOLEAN NOT NULL DEFAULT FALSE`,
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs_count INT NOT NULL DEFAULT 0`,
     `ALTER TABLE "tables" ADD COLUMN IF NOT EXISTS is_kids BOOLEAN NOT NULL DEFAULT FALSE`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE CASCADE`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255)`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ`,
@@ -46,6 +47,14 @@ async function main() {
   for (const statement of migrations) {
     await client.query(statement);
   }
+
+  // Backfill multitenencia: los eventos huérfanos (sin user_id) se asignan al
+  // primer usuario. Antes de esto eran visibles para todos los usuarios.
+  await client.query(`
+    UPDATE events
+    SET user_id = (SELECT id FROM users ORDER BY id ASC LIMIT 1)
+    WHERE user_id IS NULL AND EXISTS (SELECT 1 FROM users)
+  `);
 
   // Backfill: tokens de invitación faltantes.
   const { rows } = await client.query(

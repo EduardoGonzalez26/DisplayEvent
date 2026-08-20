@@ -14,8 +14,10 @@ router.get("/", async (_req, res, next) => {
        FROM events e
        LEFT JOIN "groups" g ON g.event_id = e.id
        LEFT JOIN guests gu ON gu.group_id = g.id
+       WHERE e.user_id = $1
        GROUP BY e.id
-       ORDER BY e.date DESC`
+       ORDER BY e.date DESC`,
+      [req.user.id]
     );
     res.json(rows);
   } catch (err) {
@@ -25,7 +27,10 @@ router.get("/", async (_req, res, next) => {
 
 router.get("/:id/stats", async (req, res, next) => {
   try {
-    const eventRow = await query(`SELECT id FROM events WHERE id = $1 LIMIT 1`, [req.params.id]);
+    const eventRow = await query(`SELECT id FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`, [
+      req.params.id,
+      req.user.id,
+    ]);
     if (eventRow.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
 
     const [groupsRow] = await query(
@@ -67,8 +72,9 @@ router.get("/:id/stats", async (req, res, next) => {
 
 router.get("/:id/invitation", async (req, res, next) => {
   try {
-    const rows = await query(`SELECT invitation FROM events WHERE id = $1 LIMIT 1`, [
+    const rows = await query(`SELECT invitation FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`, [
       req.params.id,
+      req.user.id,
     ]);
     if (rows.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(rows[0].invitation || {});
@@ -90,8 +96,8 @@ router.put("/:id/invitation", async (req, res, next) => {
   }
   try {
     const result = await pool.query(
-      `UPDATE events SET invitation = $1::jsonb WHERE id = $2`,
-      [JSON.stringify(invitation || {}), req.params.id]
+      `UPDATE events SET invitation = $1::jsonb WHERE id = $2 AND user_id = $3`,
+      [JSON.stringify(invitation || {}), req.params.id, req.user.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json({ ok: true, invitation });
@@ -102,7 +108,10 @@ router.put("/:id/invitation", async (req, res, next) => {
 
 router.get("/:id", async (req, res, next) => {
   try {
-    const rows = await query(`SELECT * FROM events WHERE id = $1 LIMIT 1`, [req.params.id]);
+    const rows = await query(`SELECT * FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`, [
+      req.params.id,
+      req.user.id,
+    ]);
     if (rows.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(rows[0]);
   } catch (err) {
@@ -117,8 +126,9 @@ router.post("/", async (req, res, next) => {
   }
   try {
     const result = await pool.query(
-      `INSERT INTO events (name, date, time, place) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [name, date, time, place]
+      `INSERT INTO events (user_id, name, date, time, place)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [req.user.id, name, date, time, place]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -133,8 +143,9 @@ router.put("/:id", async (req, res, next) => {
   }
   try {
     const result = await pool.query(
-      `UPDATE events SET name = $1, date = $2, time = $3, place = $4 WHERE id = $5 RETURNING *`,
-      [name, date, time, place, req.params.id]
+      `UPDATE events SET name = $1, date = $2, time = $3, place = $4
+       WHERE id = $5 AND user_id = $6 RETURNING *`,
+      [name, date, time, place, req.params.id, req.user.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(result.rows[0]);
@@ -145,7 +156,10 @@ router.put("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const result = await pool.query(`DELETE FROM events WHERE id = $1`, [req.params.id]);
+    const result = await pool.query(`DELETE FROM events WHERE id = $1 AND user_id = $2`, [
+      req.params.id,
+      req.user.id,
+    ]);
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.status(204).end();
   } catch (err) {
