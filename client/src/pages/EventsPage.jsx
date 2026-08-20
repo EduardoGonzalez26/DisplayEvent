@@ -118,6 +118,9 @@ function EventForm({ initial, onSubmit, onCancel }) {
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null); // null | { mode: "create" } | { mode: "edit", event }
@@ -125,9 +128,13 @@ export default function EventsPage() {
   const monthAbbr = (d) =>
     d.toLocaleDateString("es-MX", { month: "short" }).replace(".", "");
 
-  const load = async () => {
+  const load = async (p) => {
     try {
-      setEvents(await api.events.list());
+      const res = await api.events.list({ page: p ?? page, limit: 20 });
+      setEvents(res.data);
+      setPage(res.page);
+      setTotalPages(res.total_pages);
+      setTotal(res.total);
       setError("");
     } catch (err) {
       setError(err.message);
@@ -137,7 +144,8 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    load();
+    load(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (form) => {
@@ -263,6 +271,30 @@ export default function EventsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {!loading && !error && total > 0 && (
+        <div className="flex items-center justify-between mt-6 text-sm text-gray-400">
+          <span>
+            {total} evento{total === 1 ? "" : "s"} · página {page} de {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:pointer-events-none"
+              disabled={page <= 1}
+              onClick={() => load(page - 1)}
+            >
+              ← Anterior
+            </button>
+            <button
+              className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40 disabled:pointer-events-none"
+              disabled={page >= totalPages}
+              onClick={() => load(page + 1)}
+            >
+              Siguiente →
+            </button>
+          </div>
         </div>
       )}
 

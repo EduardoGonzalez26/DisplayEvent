@@ -33,7 +33,10 @@ export const api = {
       request("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email }) }),
   },
   events: {
-    list: () => request("/events"),
+    list: (params) => {
+      const q = params ? `?${new URLSearchParams(params)}` : "";
+      return request(`/events${q}`);
+    },
     get: (id) => request(`/events/${id}`),
     stats: (id) => request(`/events/${id}/stats`),
     invitation: (id) => request(`/events/${id}/invitation`),

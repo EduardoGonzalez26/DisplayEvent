@@ -3,23 +3,43 @@ import { query, pool } from "../db/index.js";
 
 const router = Router();
 
-router.get("/", async (_req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const rows = await query(
-      `SELECT e.*,
-              COUNT(DISTINCT g.id)::int AS groups_count,
-              COUNT(DISTINCT gu.id)::int AS guests_count,
-              COUNT(DISTINCT gu.id) FILTER (WHERE gu.is_child)::int AS children_count,
-              COUNT(DISTINCT gu.id) FILTER (WHERE gu.registered)::int AS registered_count
-       FROM events e
-       LEFT JOIN "groups" g ON g.event_id = e.id
-       LEFT JOIN guests gu ON gu.group_id = g.id
-       WHERE e.user_id = $1
-       GROUP BY e.id
-       ORDER BY e.date DESC`,
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
+
+    const [{ total }] = await query(
+      `SELECT COUNT(*)::int AS total FROM events WHERE user_id = $1`,
       [req.user.id]
     );
-    res.json(rows);
+
+    const rows = await query(
+      `SELECT e.*,
+              (SELECT COUNT(*) FROM "groups" g WHERE g.event_id = e.id)::int AS groups_count,
+              (SELECT COUNT(*) FROM guests gu
+                 JOIN "groups" g ON g.id = gu.group_id
+                 WHERE g.event_id = e.id)::int AS guests_count,
+              (SELECT COUNT(*) FROM guests gu
+                 JOIN "groups" g ON g.id = gu.group_id
+                 WHERE g.event_id = e.id AND gu.is_child)::int AS children_count,
+              (SELECT COUNT(*) FROM guests gu
+                 JOIN "groups" g ON g.id = gu.group_id
+                 WHERE g.event_id = e.id AND gu.registered)::int AS registered_count
+       FROM events e
+       WHERE e.user_id = $1
+       ORDER BY e.date DESC
+       LIMIT $2 OFFSET $3`,
+      [req.user.id, limit, offset]
+    );
+
+    res.json({
+      data: rows,
+      page,
+      limit,
+      total,
+      total_pages: Math.ceil(total / limit),
+    });
   } catch (err) {
     next(err);
   }
