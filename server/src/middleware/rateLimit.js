@@ -9,9 +9,9 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL_MS);
 
-export function rateLimit({ windowMs, max }) {
+export function rateLimit({ windowMs, max, keyFn }) {
   return (req, res, next) => {
-    const key = req.ip || "unknown";
+    const key = keyFn ? keyFn(req) : req.ip || "unknown";
     const now = Date.now();
     const bucket = buckets.get(key);
     if (!bucket || bucket.resetAt <= now) {

@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { query, pool } from "../db/index.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
+
+const invitationViewLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 120 });
+const rsvpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
 
 async function findInvitationByToken(token) {
   const rows = await query(
@@ -26,7 +30,7 @@ async function getGuests(groupId) {
   );
 }
 
-router.get("/:token", async (req, res, next) => {
+router.get("/:token", invitationViewLimiter, async (req, res, next) => {
   try {
     const inv = await findInvitationByToken(req.params.token);
     if (!inv) return res.status(404).json({ error: "Invitación no encontrada" });
@@ -48,7 +52,7 @@ router.get("/:token", async (req, res, next) => {
   }
 });
 
-router.put("/:token/rsvp", async (req, res, next) => {
+router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
   const { attending_ids, declining_ids, note } = req.body;
   try {
     const inv = await findInvitationByToken(req.params.token);

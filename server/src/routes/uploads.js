@@ -6,11 +6,19 @@ import { promisify } from "node:util";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import https from "node:https";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const UPLOAD_DIR = join(__dirname, "..", "..", "uploads");
 const CLOUD_TIMEOUT_MS = 10000;
+
+// Cuota por usuario: evita saturar el almacenamiento (local o Cloudinary).
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 50,
+  keyFn: (req) => `user:${req.user?.id ?? req.ip}`,
+});
 
 const allowedMime = /^image\/(jpeg|png|webp|gif)$/;
 
@@ -114,7 +122,7 @@ async function saveLocally(buffer, ext) {
   return `/uploads/${name}`;
 }
 
-router.post("/", upload.single("file"), async (req, res, next) => {
+router.post("/", uploadLimiter, upload.single("file"), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No se recibió ningún archivo" });
