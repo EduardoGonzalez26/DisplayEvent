@@ -33,14 +33,28 @@ function verificationUrlFor(token) {
 }
 
 async function setupVerification(userId, email, username) {
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + VERIFY_TTL_MS);
-  await pool.query(
-    `UPDATE users
-     SET verification_token = $1, verification_token_expires_at = $2
-     WHERE id = $3`,
-    [token, expiresAt, userId]
+  // Reutiliza el token vigente (no expirado) en lugar de pisarlo: así el
+  // reenvío no invalida un enlace que el usuario todavía puede usar.
+  const now = Date.now();
+  const [{ verification_token, verification_token_expires_at } = {}] = await query(
+    `SELECT verification_token, verification_token_expires_at FROM users WHERE id = $1`,
+    [userId]
   );
+  const validToken =
+    verification_token &&
+    verification_token_expires_at &&
+    new Date(verification_token_expires_at).getTime() > now;
+
+  const token = validToken ? verification_token : randomBytes(32).toString("hex");
+  if (!validToken) {
+    await pool.query(
+      `UPDATE users
+       SET verification_token = $1, verification_token_expires_at = $2
+       WHERE id = $3`,
+      [token, new Date(now + VERIFY_TTL_MS), userId]
+    );
+  }
+
   // Envío en segundo plano: la respuesta HTTP no espera al canal de correo.
   sendVerificationEmail({
     to: email,
