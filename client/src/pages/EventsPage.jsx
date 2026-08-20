@@ -1,120 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
-import { Modal, inputClass, Button } from "../components/ui.jsx";
-
-const emptyForm = { name: "", date: "", time: "", place: "" };
-
-function EventForm({ initial, onSubmit, onCancel }) {
-  const [form, setForm] = useState(initial);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [templates, setTemplates] = useState([]);
-  const [templateId, setTemplateId] = useState("");
-
-  useEffect(() => {
-    api.templates.list().then(setTemplates).catch(() => setTemplates([]));
-  }, []);
-
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-    try {
-      await onSubmit({ ...form, templateId });
-    } catch (err) {
-      setError(err.message);
-      setSaving(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">Nombre del evento</label>
-        <input
-          className={inputClass}
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Ej. Fiesta de cumpleaños"
-          required
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Día
-          <input
-            className={`${inputClass} mt-1`}
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Hora
-          <input
-            className={`${inputClass} mt-1`}
-            type="time"
-            name="time"
-            value={form.time}
-            onChange={handleChange}
-            required
-          />
-        </label>
-      </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-1">Lugar</label>
-        <input
-          className={inputClass}
-          name="place"
-          value={form.place}
-          onChange={handleChange}
-          placeholder="Ej. Salón Los Pinos"
-          required
-        />
-      </div>
-
-      {templates.length > 0 && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Empezar desde plantilla (opcional)
-          </label>
-          <select
-            className={inputClass}
-            value={templateId}
-            onChange={(e) => setTemplateId(e.target.value)}
-          >
-            <option value="">Sin plantilla</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            Copia la invitación (formato, textos, galería, contactos) al nuevo evento.
-          </p>
-        </div>
-      )}
-
-      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
-
-      <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel} type="button">
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Guardando…" : "Guardar"}
-        </Button>
-      </div>
-    </form>
-  );
-}
+import { Button } from "../components/ui.jsx";
+import EventFormModal from "../components/EventFormModal.jsx";
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -147,20 +35,6 @@ export default function EventsPage() {
     load(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleSubmit = async (form) => {
-    if (modal.mode === "edit") {
-      await api.events.update(modal.event.id, form);
-    } else {
-      const created = await api.events.create(form);
-      if (form.templateId) {
-        const tpl = await api.templates.get(form.templateId);
-        await api.events.setInvitation(created.id, tpl.config);
-      }
-    }
-    setModal(null);
-    await load();
-  };
 
   const handleDelete = async (event) => {
     if (!confirm(`¿Eliminar el evento "${event.name}"?`)) return;
@@ -298,19 +172,13 @@ export default function EventsPage() {
         </div>
       )}
 
-      <Modal
-        open={modal !== null}
-        onClose={() => setModal(null)}
-        title={modal?.mode === "edit" ? "Editar evento" : "Nuevo evento"}
-      >
-        {modal && (
-          <EventForm
-            initial={modal.mode === "edit" ? { ...modal.event } : emptyForm}
-            onSubmit={handleSubmit}
-            onCancel={() => setModal(null)}
-          />
-        )}
-      </Modal>
+      {modal && (
+        <EventFormModal
+          event={modal.mode === "edit" ? modal.event : null}
+          onClose={() => setModal(null)}
+          onSaved={() => load()}
+        />
+      )}
     </div>
   );
 }

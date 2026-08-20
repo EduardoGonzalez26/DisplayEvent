@@ -153,6 +153,7 @@ router.post("/login", loginLimiter, async (req, res, next) => {
       return res.status(403).json({
         error: "Antes de iniciar sesión verifica tu correo con el enlace que te enviamos.",
         code: "EMAIL_NOT_VERIFIED",
+        email: user.email,
       });
     }
     setAuthCookie(res, user);

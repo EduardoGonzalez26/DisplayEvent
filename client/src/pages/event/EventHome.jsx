@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { StatCard } from "../../components/ui.jsx";
@@ -10,20 +10,29 @@ export default function EventHome() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
+  const cancelledRef = useRef(false);
 
   const load = async () => {
     try {
       const [ev, s] = await Promise.all([api.events.get(id), api.events.stats(id)]);
+      if (cancelledRef.current) return;
       setEvent(ev);
       setStats(s);
       setError("");
     } catch (err) {
-      setError(err.message);
+      if (!cancelledRef.current) setError(err.message);
     }
   };
 
   useEffect(() => {
+    cancelledRef.current = false;
+    setEvent(null);
+    setStats(null);
+    setError("");
     load();
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [id]);
 
   if (!event && !error) return <p className="text-gray-400 animate-page-in">Cargando…</p>;

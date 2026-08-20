@@ -16,6 +16,7 @@ async function request(path, options = {}) {
     const base = data?.error || "Error en la solicitud";
     const err = new Error(data?.detail ? `${base}: ${data.detail}` : base);
     err.code = data?.code;
+    err.email = data?.email;
     throw err;
   }
   return data;

@@ -11,22 +11,31 @@ export default function EventDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setStats(null);
+    setGroupStats([]);
+    setLoading(true);
+    setError("");
+    let cancelled = false;
     const load = async () => {
       try {
         const [s, g] = await Promise.all([
           api.events.stats(id),
           api.groups.list(id),
         ]);
+        if (cancelled) return;
         setStats(s);
         setGroupStats(g);
         setError("");
       } catch (err) {
-        setError(err.message);
+        if (!cancelled) setError(err.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) return <p className="text-gray-400 animate-page-in">Cargando…</p>;

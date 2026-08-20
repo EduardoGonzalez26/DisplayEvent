@@ -16,6 +16,7 @@ export default function AuthPage({ mode }) {
 
   // Estado tras crear la cuenta: esperando verificación del correo.
   const [pendingEmail, setPendingEmail] = useState(null);
+  const [resendEmail, setResendEmail] = useState(null);
   const [resending, setResending] = useState(false);
   const [resendMsg, setResendMsg] = useState("");
 
@@ -37,12 +38,14 @@ export default function AuthPage({ mode }) {
           password: form.password,
         });
         setPendingEmail(form.email);
+        setResendEmail(form.email);
       } else {
         await login({ username: form.username, password: form.password });
         const from = location.state?.from?.pathname || "/";
         navigate(from, { replace: true });
       }
     } catch (err) {
+      if (err.code === "EMAIL_NOT_VERIFIED") setResendEmail(err.email || form.username);
       setError(err.code === "EMAIL_NOT_VERIFIED" ? "email_not_verified" : err.message);
       setSaving(false);
     }
@@ -52,7 +55,7 @@ export default function AuthPage({ mode }) {
     setResending(true);
     setResendMsg("");
     try {
-      await api.auth.resendVerification(pendingEmail || form.username);
+      await api.auth.resendVerification(resendEmail || pendingEmail);
       setResendMsg("Correo reenviado. Revisa tu bandeja (y spam).");
     } catch (err) {
       setResendMsg(err.message);

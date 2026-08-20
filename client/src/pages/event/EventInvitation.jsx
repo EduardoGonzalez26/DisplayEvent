@@ -69,6 +69,21 @@ function toFormState(cfg) {
   };
 }
 
+// Claves estables por fila de listas editables: se conservan al reordenar y se
+// descartan al guardar (save() serializa solo los campos conocidos).
+let rowUid = 0;
+const withUid = (item) => ({ ...item, _uid: ++rowUid });
+const withUids = (list) => list.map((item) => (item && item._uid ? item : withUid(item)));
+
+function normalizeLists(f) {
+  return {
+    ...f,
+    itinerary: withUids(f.itinerary || []),
+    locations: withUids(f.locations || []),
+    contacts: withUids(f.contacts || []),
+  };
+}
+
 function ImageUploader({ label, value, onChange }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -147,7 +162,7 @@ export default function EventInvitation() {
     api.groups.list(id).then(setGroups).catch(() => setGroups([]));
     api.events
       .invitation(id)
-      .then((cfg) => setForm(toFormState(cfg)))
+      .then((cfg) => setForm(normalizeLists(toFormState(cfg))))
       .catch(() => setForm(EMPTY))
       .finally(() => setLoading(false));
   }, [id]);
@@ -165,7 +180,8 @@ export default function EventInvitation() {
       ...f,
       itinerary: f.itinerary.map((it, idx) => (idx === i ? { ...it, [key]: value } : it)),
     }));
-  const addItin = () => setForm((f) => ({ ...f, itinerary: [...f.itinerary, { label: "", time: "" }] }));
+  const addItin = () =>
+    setForm((f) => ({ ...f, itinerary: [...f.itinerary, withUid({ label: "", time: "" })] }));
   const delItin = (i) =>
     setForm((f) => ({ ...f, itinerary: f.itinerary.filter((_, idx) => idx !== i) }));
   const setLoc = (i, key, value) =>
@@ -174,7 +190,10 @@ export default function EventInvitation() {
       locations: f.locations.map((it, idx) => (idx === i ? { ...it, [key]: value } : it)),
     }));
   const addLoc = () =>
-    setForm((f) => ({ ...f, locations: [...f.locations, { label: "", place: "", url: "" }] }));
+    setForm((f) => ({
+      ...f,
+      locations: [...f.locations, withUid({ label: "", place: "", url: "" })],
+    }));
   const delLoc = (i) =>
     setForm((f) => ({ ...f, locations: f.locations.filter((_, idx) => idx !== i) }));
 
@@ -197,7 +216,7 @@ export default function EventInvitation() {
       contacts: f.contacts.map((c, idx) => (idx === i ? { ...c, [key]: value } : c)),
     }));
   const addContact = () =>
-    setForm((f) => ({ ...f, contacts: [...f.contacts, { name: "", phone: "" }] }));
+    setForm((f) => ({ ...f, contacts: [...f.contacts, withUid({ name: "", phone: "" })] }));
   const delContact = (i) =>
     setForm((f) => ({ ...f, contacts: f.contacts.filter((_, idx) => idx !== i) }));
 
@@ -207,11 +226,11 @@ export default function EventInvitation() {
       // Boda: "Ceremonia y recepción" por defecto si aún no hay ubicaciones reales.
       if (templateId === "boda" && !f.locations.some((l) => l.place)) {
         next.locations = [
-          { label: "Ceremonia", place: "", url: "" },
-          { label: "Recepción", place: "", url: "" },
+          withUid({ label: "Ceremonia", place: "", url: "" }),
+          withUid({ label: "Recepción", place: "", url: "" }),
         ];
       }
-      return next;
+      return normalizeLists(next);
     });
   };
 
@@ -238,7 +257,7 @@ export default function EventInvitation() {
     setTplError("");
     try {
       const full = await api.templates.get(tpl.id);
-      setForm(toFormState(full.config));
+      setForm(normalizeLists(toFormState(full.config)));
       setTplOpen(false);
       setMessage(`Plantilla "${full.name}" aplicada. Recuerda guardar los cambios.`);
     } catch (err) {
@@ -537,7 +556,7 @@ export default function EventInvitation() {
           <p className="text-sm text-gray-500 mb-3">La secuencia de momentos del evento (etiqueta y hora).</p>
           <div className="space-y-3">
             {form.itinerary.map((it, i) => (
-              <div key={i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
+              <div key={it._uid ?? i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
                 <input className={inputCls} value={it.label} onChange={(e) => setItin(i, "label", e.target.value)} placeholder="Etiqueta (Ceremonia)" />
                 <div className="flex gap-2">
                   <input className={inputCls} value={it.time} onChange={(e) => setItin(i, "time", e.target.value)} placeholder="Hora (17:00)" />
@@ -561,7 +580,7 @@ export default function EventInvitation() {
           </p>
           <div className="space-y-3">
             {form.locations.map((l, i) => (
-              <div key={i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
+              <div key={l._uid ?? i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
                 <input className={inputCls} value={l.label} onChange={(e) => setLoc(i, "label", e.target.value)} placeholder="Etiqueta (Ceremonia)" />
                 <input className={inputCls} value={l.place} onChange={(e) => setLoc(i, "place", e.target.value)} placeholder="Lugar (Catedral San José)" />
                 <div className="flex gap-2 md:col-span-2">
@@ -595,7 +614,7 @@ export default function EventInvitation() {
           </p>
           <div className="space-y-3">
             {form.contacts.map((c, i) => (
-              <div key={i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
+              <div key={c._uid ?? i} className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2">
                 <input className={inputCls} value={c.name} onChange={(e) => setContact(i, "name", e.target.value)} placeholder="Nombre (Papá)" />
                 <div className="flex gap-2">
                   <input className={inputCls} value={c.phone} onChange={(e) => setContact(i, "phone", e.target.value)} placeholder="Teléfono (Ej. 5512345678)" />
@@ -622,8 +641,8 @@ export default function EventInvitation() {
             <p className="text-sm text-gray-500">Aún no hay fotos. Sube las que quieras mostrar en la invitación.</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {form.gallery.map((src, i) => (
-                <div key={i} className="group relative">
+              {form.gallery.map((src) => (
+                <div key={src} className="group relative">
                   <img src={src} alt="" className="aspect-square w-full rounded-lg border border-zinc-700 object-cover" />
                   <button
                     type="button"

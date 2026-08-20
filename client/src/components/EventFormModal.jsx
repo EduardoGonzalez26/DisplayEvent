@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Field, inputClass, Button } from "./ui.jsx";
 import { api } from "../api.js";
 
@@ -9,6 +9,13 @@ export default function EventFormModal({ event, onClose, onSaved }) {
   const [form, setForm] = useState(event ? { ...event } : emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [templates, setTemplates] = useState([]);
+  const [templateId, setTemplateId] = useState("");
+
+  useEffect(() => {
+    if (isEdit) return;
+    api.templates.list().then(setTemplates).catch(() => setTemplates([]));
+  }, [isEdit]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -17,8 +24,15 @@ export default function EventFormModal({ event, onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      if (isEdit) await api.events.update(event.id, form);
-      else await api.events.create(form);
+      if (isEdit) {
+        await api.events.update(event.id, form);
+      } else {
+        const created = await api.events.create(form);
+        if (templateId) {
+          const tpl = await api.templates.get(templateId);
+          await api.events.setInvitation(created.id, tpl.config);
+        }
+      }
       await onSaved?.();
       onClose();
     } catch (err) {
@@ -68,9 +82,30 @@ export default function EventFormModal({ event, onClose, onSaved }) {
             name="place"
             value={form.place}
             onChange={handleChange}
+            placeholder="Ej. Salón Los Pinos"
             required
           />
         </Field>
+
+        {!isEdit && templates.length > 0 && (
+          <Field label="Empezar desde plantilla (opcional)">
+            <select
+              className={inputClass}
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              <option value="">Sin plantilla</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Copia la invitación (formato, textos, galería, contactos) al nuevo evento.
+            </p>
+          </Field>
+        )}
 
         {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 

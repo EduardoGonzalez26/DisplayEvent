@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   DndContext,
@@ -24,6 +24,12 @@ const PALETTE = [
   "bg-cyan-500",
   "bg-fuchsia-500",
 ];
+
+const hashColor = (s) => {
+  let h = 0;
+  for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h;
+};
 
 const SHAPES = {
   circle: "Redonda",
@@ -246,15 +252,18 @@ export default function EventTables() {
     load();
   }, [id]);
 
+  const toastTimer = useRef(null);
+
   const notify = (message, type = "error") => {
     setToast(message);
     setToastType(type);
-    setTimeout(() => setToast(""), 4000);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 4000);
   };
 
   const colorBy = useMemo(() => {
     const map = {};
-    groups.forEach((group, i) => (map[group.id] = PALETTE[i % PALETTE.length]));
+    groups.forEach((group) => (map[group.id] = PALETTE[hashColor(group.id) % PALETTE.length]));
     return map;
   }, [groups]);
 
@@ -263,16 +272,20 @@ export default function EventTables() {
   const handleDragEnd = async (e) => {
     const { active, over } = e;
     if (!over) return;
-    const guestId = Number(active.id.toString().slice(2));
-    const guest = guests.find((g) => g.id === guestId);
+    const idMatch = active.id.toString().match(/^g-(\d+)$/);
+    if (!idMatch) return;
+    const guest = guests.find((g) => g.id === Number(idMatch[1]));
     if (!guest) return;
 
     const target = over.id.toString();
     let tableId;
     if (target === "unassign") tableId = null;
-    else if (target.startsWith("table-")) tableId = Number(target.slice(6));
-    else if (target.startsWith("g-")) tableId = guest.table_id;
-    else return;
+    else {
+      const tableMatch = target.match(/^table-(\d+)$/);
+      if (tableMatch) tableId = Number(tableMatch[1]);
+      else if (target.startsWith("g-")) tableId = guest.table_id;
+      else return;
+    }
 
     try {
       await api.guests.assign(id, guest.group_id, guest.id, { table_id: tableId });
@@ -286,16 +299,20 @@ export default function EventTables() {
     }
   };
 
+  const tableIds = useMemo(() => new Set(tables.map((t) => t.id)), [tables]);
+
+  const isOrphan = (g) => g.table_id != null && !tableIds.has(g.table_id);
+
   const sidebarGuests = useMemo(() => {
     let list = guests.slice().sort((a, b) => a.name.localeCompare(b.name));
-    if (onlyUnassigned) list = list.filter((g) => g.table_id == null);
+    if (onlyUnassigned) list = list.filter((g) => g.table_id == null || isOrphan(g));
     if (onlyKids) list = list.filter((g) => g.is_child);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       list = list.filter((g) => g.name.toLowerCase().includes(q));
     }
     return list;
-  }, [guests, onlyUnassigned, onlyKids, query]);
+  }, [guests, onlyUnassigned, onlyKids, query, tableIds]);
 
   const guestsByTable = useMemo(() => {
     const map = {};
@@ -315,7 +332,7 @@ export default function EventTables() {
   }, [guests]);
 
   const confirmedCount = guests.filter((g) => g.registered).length;
-  const seatedCount = guests.filter((g) => g.table_id != null).length;
+  const seatedCount = guests.filter((g) => g.table_id != null && !isOrphan(g)).length;
   const kidsCount = guests.filter((g) => g.is_child).length;
   const totalPeriqueras = groups.reduce(
     (sum, g) => sum + (g.high_chairs ? g.high_chairs_count || 0 : 0),
@@ -491,6 +508,12 @@ export default function EventTables() {
           table={modal.table}
           onClose={() => setModal(null)}
           onConfirm={async () => {
+            const orphans = guests.filter((g) => g.table_id === modal.table.id);
+            await Promise.all(
+              orphans.map((g) =>
+                api.guests.assign(id, g.group_id, g.id, { table_id: null })
+              )
+            );
             await api.tables.remove(id, modal.table.id);
             setModal(null);
             await load();
@@ -615,18 +638,34 @@ function TableFormModal({ initial, onClose, onSave }) {
 }
 
 function DeleteTableModal({ table, onClose, onConfirm }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const run = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  };
+
   return (
     <Modal open onClose={onClose} title="Eliminar mesa">
       <p className="text-sm text-gray-300 mb-4">
         ¿Eliminar <span className="text-white font-medium">{table.name}</span>? Los invitados
         asignados quedan libres para recolocar.
       </p>
+      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={onClose} disabled={saving}>
           Cancelar
         </Button>
-        <Button variant="danger" onClick={onConfirm}>
-          Eliminar
+        <Button variant="danger" onClick={run} disabled={saving}>
+          {saving ? "Eliminando…" : "Eliminar"}
         </Button>
       </div>
     </Modal>
@@ -737,6 +776,13 @@ function ExportModal({ tables, guests, guestById, groups, onClose }) {
 
   const print = () => {
     const win = window.open("", "_blank");
+    const esc = (s) =>
+      String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     const totalPeriqueras = groups
       ? groups.reduce((sum, g) => sum + (g.high_chairs ? g.high_chairs_count || 0 : 0), 0)
       : 0;
@@ -760,12 +806,12 @@ function ExportModal({ tables, guests, guestById, groups, onClose }) {
       ${tables
         .map((t) => {
           const list = rows.filter((r) => r.table === t.name);
-          return `<h2>${t.name}${t.is_kids ? " 🧒" : ""} (${list.length}/${t.capacity})</h2>
+          return `<h2>${esc(t.name)}${t.is_kids ? " 🧒" : ""} (${list.length}/${t.capacity})</h2>
           <table><thead><tr><th>Nombre</th><th>Detalle</th></tr></thead><tbody>
           ${list
             .map(
               (r) =>
-                `<tr><td>${r.name}${r.is_leader ? " ★" : ""}</td><td>${r.is_child ? "Niño " : ""}${r.companion ? "· acompañante de " + r.companion : ""}</td></tr>`
+                `<tr><td>${esc(r.name)}${r.is_leader ? " ★" : ""}</td><td>${r.is_child ? "Niño " : ""}${r.companion ? "· acompañante de " + esc(r.companion) : ""}</td></tr>`
             )
             .join("")}
           </tbody></table>`;

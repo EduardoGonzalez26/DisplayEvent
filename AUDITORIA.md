@@ -94,19 +94,21 @@
 
 ### 4.1 Backend
 
-| Severidad | Bug | Ubicación |
-|---|---|---|
-| 🔴 Crítico | **Multitenencia rota**: eventos/grupos/invitados/mesas no se filtran por usuario | `schema.sql:15-23`; `routes/events.js`, `groups.js`, `guests.js`, `tables.js` |
-| 🟠 Alto | **Race condition en asignación de mesas**: la ocupación se lee y se escribe sin `FOR UPDATE`; dos asignaciones concurrentes pueden sobreocupar | `routes/guests.js:162-193` |
-| 🟠 Alto | Registro sincrónico con envío de correo: si SMTP tarda, la respuesta de `POST /register` se bloquea; un fallo borra la cuenta pero el rate-limit ya se gastó | `routes/auth.js:90-100` |
-| 🟡 Medio | `getTransporter()` cachea una promesa fallida; un fallo de DNS en el arranque rompe el SMTP **para siempre** hasta reiniciar | `utils/mailer.js:92-113` |
-| 🟡 Medio | Sin rate limit en RSVP público y uploads | `routes/invitations.js`; `routes/uploads.js` |
-| 🟡 Medio | Dos patrones de transacción incompatibles (helper `transaction()` vs manual) | `db/index.js:52` vs `guests.js:115`, `invitations.js:76` |
-| 🟡 Medio | `POST /events` no valida formato de `date`/`time`/`place` ni longitud | `routes/events.js:113-127` |
-| 🟡 Medio | Enviar `PUT /events/:id/invitation` con `{}` sobreescribe toda la config previa (borra galería/contactos) | `routes/events.js:83-101` |
-| 🟡 Medio | `GET /events` sin paginación: 4 subconsultas COUNT por evento sobre toda la tabla | `routes/events.js:6-24` |
-| 🟢 Bajo | `resend-verification` no reenvía si el token anterior no expiró (pisa token válido) | `routes/auth.js:175-199` |
-| 🟢 Bajo | Regenerar token de invitación (`POST /groups/:id/token`) no revoca el anterior en ningún canal ni invalida copias impresas | `routes/groups.js:72-86` |
+> **Estado: todos los puntos de esta sección están resueltos en el código actual** (verificado 20/08/2026). Cada fix está commiteado y `git log` lo respalda.
+
+| Severidad | Bug | Ubicación | Estado |
+|---|---|---|---|
+| 🔴 Crítico | **Multitenencia rota**: eventos/grupos/invitados/mesas no se filtran por usuario | `schema.sql:15-23`; `routes/events.js`, `groups.js`, `guests.js`, `tables.js` | ✅ Hecho — `events.user_id` + filtro en todas las rutas + middleware `eventAccess` (`index.js:65-67`); backfill de huérfanos en `init.js:53-57` (commit `c5a494b`) |
+| 🟠 Alto | **Race condition en asignación de mesas**: la ocupación se lee y se escribe sin `FOR UPDATE`; dos asignaciones concurrentes pueden sobreocupar | `routes/guests.js:162-193` | ✅ Hecho — `FOR UPDATE` sobre el bloque de invitados y la mesa; conteo de ocupados dentro de la transacción (commit `c5a494b`) |
+| 🟠 Alto | Registro sincrónico con envío de correo: si SMTP tarda, la respuesta de `POST /register` se bloquea; un fallo borra la cuenta pero el rate-limit ya se gastó | `routes/auth.js:90-100` | ✅ Hecho — envío en segundo plano (`.catch` sin `await`), ya no borra la cuenta si el correo falla (commit `279dcd7`) |
+| 🟡 Medio | `getTransporter()` cachea una promesa fallida; un fallo de DNS en el arranque rompe el SMTP **para siempre** hasta reiniciar | `utils/mailer.js:92-113` | ✅ Hecho — la promesa fallida se limpia y se reintenta en el siguiente envío (commit `0e763e3`) |
+| 🟡 Medio | Sin rate limit en RSVP público y uploads | `routes/invitations.js`; `routes/uploads.js` | ✅ Hecho — `rsvpLimiter` (60/15 min), `invitationViewLimiter` (120/15 min) y `uploadLimiter` (50/h por usuario) (commit `6091050`) |
+| 🟡 Medio | Dos patrones de transacción incompatibles (helper `transaction()` vs manual) | `db/index.js:52` vs `guests.js:115`, `invitations.js:76` | ✅ Hecho — `guests.js` (assign/companion) y `invitations.js` (rsvp) usan el helper `transaction()`; `tables.js` aún usa `pool.connect()` (sin BEGIN/COMMIT, solo conexión dedicada) (commit `837fb7b`) |
+| 🟡 Medio | `POST /events` no valida formato de `date`/`time`/`place` ni longitud | `routes/events.js:113-127` | ✅ Hecho — `validateEventPayload` valida fecha real (AAAA-MM-DD), hora (HH:MM) y longitud máx. 255 en POST y PUT (commit `593f56f`) |
+| 🟡 Medio | Enviar `PUT /events/:id/invitation` con `{}` sobreescribe toda la config previa (borra galería/contactos) | `routes/events.js:83-101` | ✅ Hecho — merge JSONB con `||` (fusiona en vez de reemplazar) (commit `b2ee05b`) |
+| 🟡 Medio | `GET /events` sin paginación: 4 subconsultas COUNT por evento sobre toda la tabla | `routes/events.js:6-24` | ✅ Hecho — paginación `page`/`limit` (máx. 100) con `total`/`total_pages` (commit `5d7d22f`) |
+| 🟢 Bajo | `resend-verification` no reenvía si el token anterior no expiró (pisa token válido) | `routes/auth.js:175-199` | ✅ Hecho — `setupVerification` reutiliza el token vigente no expirado (commit `a278a0b`) |
+| 🟢 Bajo | Regenerar token de invitación (`POST /groups/:id/token`) no revoca el anterior en ningún canal ni invalida copias impresas | `routes/groups.js:72-86` | ✅ Hecho — tabla `revoked_invitation_tokens` + check en `findInvitationByToken` (commit `7003990`) |
 
 ### 4.2 Frontend — Panel
 

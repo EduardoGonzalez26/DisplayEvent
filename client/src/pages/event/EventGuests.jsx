@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { Modal, Field, inputClass, Button } from "../../components/ui.jsx";
@@ -130,13 +130,19 @@ function GroupCard({
   const [guestName, setGuestName] = useState("");
   const [isChild, setIsChild] = useState(false);
   const [periquerasCount, setPeriquerasCount] = useState(group.high_chairs_count || 1);
+  const [saving, setSaving] = useState(false);
 
   const addGuest = async (e) => {
     e.preventDefault();
-    if (!guestName.trim()) return;
-    await onAddGuest(group, { name: guestName.trim(), is_child: isChild });
-    setGuestName("");
-    setIsChild(false);
+    if (!guestName.trim() || saving) return;
+    setSaving(true);
+    try {
+      await onAddGuest(group, { name: guestName.trim(), is_child: isChild });
+      setGuestName("");
+      setIsChild(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -217,8 +223,8 @@ function GroupCard({
               />
               Niño
             </label>
-            <Button type="submit" disabled={!guestName.trim()}>
-              Agregar
+            <Button type="submit" disabled={!guestName.trim() || saving}>
+              {saving ? "Agregando…" : "Agregar"}
             </Button>
           </form>
 
@@ -286,6 +292,38 @@ function GroupCard({
   );
 }
 
+function ConfirmModal({ title, message, confirmLabel = "Eliminar", onClose, onConfirm }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const run = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open onClose={onClose} title={title}>
+      <p className="text-sm text-gray-300 mb-4">{message}</p>
+      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onClose} disabled={saving}>
+          Cancelar
+        </Button>
+        <Button variant="danger" onClick={run} disabled={saving}>
+          {saving ? "Eliminando…" : confirmLabel}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
 export default function EventGuests() {
   const { id } = useParams();
   const [groups, setGroups] = useState([]);
@@ -295,26 +333,56 @@ export default function EventGuests() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState("");
+  const [toastType, setToastType] = useState("error");
+  const [confirm, setConfirm] = useState(null);
+  const cancelledRef = useRef(false);
+  const toastTimer = useRef(null);
+
+  const notify = (message, type = "error") => {
+    setToast(message);
+    setToastType(type);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 4000);
+  };
 
   const load = async () => {
     try {
       const g = await api.groups.list(id);
+      if (cancelledRef.current) return;
       setGroups(g);
       setError("");
     } catch (err) {
-      setError(err.message);
+      if (!cancelledRef.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    cancelledRef.current = false;
+    setGroups([]);
+    setGuestsByGroup({});
+    setLoadingGroups({});
+    setExpanded({});
+    setLoading(true);
+    setError("");
+    setModal(null);
+    setToast("");
+    setConfirm(null);
     load();
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [id]);
 
   const refreshGroups = async () => {
-    const g = await api.groups.list(id);
-    setGroups(g);
+    try {
+      const g = await api.groups.list(id);
+      setGroups(g);
+    } catch (err) {
+      notify(err.message);
+    }
   };
 
   const toggleGroup = async (group) => {
@@ -326,7 +394,7 @@ export default function EventGuests() {
         const guests = await api.guests.listByGroup(id, group.id);
         setGuestsByGroup((s) => ({ ...s, [group.id]: guests }));
       } catch (err) {
-        alert(err.message);
+        notify(err.message);
       } finally {
         setLoadingGroups((s) => ({ ...s, [group.id]: false }));
       }
@@ -334,8 +402,12 @@ export default function EventGuests() {
   };
 
   const reloadGuests = async (group) => {
-    const guests = await api.guests.listByGroup(id, group.id);
-    setGuestsByGroup((s) => ({ ...s, [group.id]: guests }));
+    try {
+      const guests = await api.guests.listByGroup(id, group.id);
+      setGuestsByGroup((s) => ({ ...s, [group.id]: guests }));
+    } catch (err) {
+      notify(err.message);
+    }
     await refreshGroups();
   };
 
@@ -351,57 +423,81 @@ export default function EventGuests() {
     await refreshGroups();
   };
 
-  const handleDeleteGroup = async (group) => {
-    if (!confirm(`¿Eliminar el grupo "${group.name}" y todos sus invitados?`)) return;
-    try {
-      await api.groups.remove(id, group.id);
-      setGuestsByGroup((s) => {
-        const { [group.id]: _removed, ...rest } = s;
-        return rest;
-      });
-      await refreshGroups();
-    } catch (err) {
-      alert(err.message);
-    }
+  const handleDeleteGroup = (group) => {
+    setConfirm({
+      title: "Eliminar grupo",
+      message: `¿Eliminar el grupo "${group.name}" y todos sus invitados?`,
+      confirmLabel: "Eliminar",
+      action: async () => {
+        try {
+          await api.groups.remove(id, group.id);
+          setGuestsByGroup((s) => {
+            const { [group.id]: _removed, ...rest } = s;
+            return rest;
+          });
+          await refreshGroups();
+        } catch (err) {
+          notify(err.message);
+        }
+      },
+    });
   };
 
   const handleCopyInvite = async (group) => {
     if (group.invitation_token == null) {
-      alert("Este grupo aún no tiene enlace de invitación.");
+      notify("Este grupo aún no tiene enlace de invitación.");
       return;
     }
     const url = `${window.location.origin}/invitacion/${group.invitation_token}`;
     try {
       await navigator.clipboard.writeText(url);
-      alert(`Enlace de invitación copiado:\n${url}`);
+      notify("Enlace de invitación copiado", "success");
     } catch (err) {
-      alert(err.message);
+      notify(err.message);
     }
   };
 
   const handleAddGuest = async (group, payload) => {
-    await api.guests.create(id, group.id, payload);
-    await reloadGuests(group);
+    try {
+      await api.guests.create(id, group.id, payload);
+      await reloadGuests(group);
+    } catch (err) {
+      notify(err.message);
+    }
   };
 
   const handleToggleChild = async (group, guest) => {
-    await api.guests.update(id, group.id, guest.id, { is_child: !guest.is_child });
-    await reloadGuests(group);
+    try {
+      await api.guests.update(id, group.id, guest.id, { is_child: !guest.is_child });
+      await reloadGuests(group);
+    } catch (err) {
+      notify(err.message);
+    }
   };
 
   const handleToggleRegistered = async (group, guest) => {
-    await api.guests.update(id, group.id, guest.id, { registered: !guest.registered });
-    await reloadGuests(group);
-  };
-
-  const handleDeleteGuest = async (group, guest) => {
-    if (!confirm(`¿Eliminar a ${guest.name}?`)) return;
     try {
-      await api.guests.remove(id, group.id, guest.id);
+      await api.guests.update(id, group.id, guest.id, { registered: !guest.registered });
       await reloadGuests(group);
     } catch (err) {
-      alert(err.message);
+      notify(err.message);
     }
+  };
+
+  const handleDeleteGuest = (group, guest) => {
+    setConfirm({
+      title: "Eliminar invitado",
+      message: `¿Eliminar a ${guest.name}?`,
+      confirmLabel: "Eliminar",
+      action: async () => {
+        try {
+          await api.guests.remove(id, group.id, guest.id);
+          await reloadGuests(group);
+        } catch (err) {
+          notify(err.message);
+        }
+      },
+    });
   };
 
   const handleUpdatePeriqueras = async (group, payload) => {
@@ -413,7 +509,7 @@ export default function EventGuests() {
       });
       await refreshGroups();
     } catch (err) {
-      alert(err.message);
+      notify(err.message);
     }
   };
 
@@ -479,6 +575,33 @@ export default function EventGuests() {
             onCancel={() => setModal(null)}
           />
         </Modal>
+      )}
+
+      {confirm && (
+        <ConfirmModal
+          title={confirm.title}
+          message={confirm.message}
+          confirmLabel={confirm.confirmLabel}
+          onClose={() => setConfirm(null)}
+          onConfirm={confirm.action}
+        />
+      )}
+
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-xl text-sm shadow-2xl border text-white animate-toast-in flex items-start gap-2.5 ${
+            toastType === "success"
+              ? "bg-emerald-600 border-emerald-500"
+              : "bg-red-600 border-red-500"
+          }`}
+          onClick={() => setToast("")}
+          role="alert"
+        >
+          <span className="shrink-0 grid place-items-center w-5 h-5 rounded-full bg-white/20 text-xs mt-px">
+            {toastType === "success" ? "✓" : "!"}
+          </span>
+          <span className="flex-1">{toast}</span>
+        </div>
       )}
     </div>
   );
