@@ -89,25 +89,32 @@ function resolveIPv4(host) {
   });
 }
 
+async function createTransporter() {
+  const host = process.env.SMTP_HOST;
+  const ip = await resolveIPv4(host);
+  return nodemailer.createTransport({
+    host: ip,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    tls: { servername: host, rejectUnauthorized: true },
+    auth:
+      process.env.SMTP_USER && process.env.SMTP_PASS
+        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        : undefined,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+  });
+}
+
 export function getTransporter() {
   if (!transporterPromise) {
-    transporterPromise = (async () => {
-      const host = process.env.SMTP_HOST;
-      const ip = await resolveIPv4(host);
-      return nodemailer.createTransport({
-        host: ip,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: process.env.SMTP_SECURE === "true",
-        tls: { servername: host, rejectUnauthorized: true },
-        auth:
-          process.env.SMTP_USER && process.env.SMTP_PASS
-            ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-            : undefined,
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 30000,
-      });
-    })();
+    // No cacheamos la promesa fallida: si falla (p. ej. DNS), se limpia y el
+    // siguiente intento vuelve a crear el transporter.
+    transporterPromise = createTransporter().catch((err) => {
+      transporterPromise = null;
+      throw err;
+    });
   }
   return transporterPromise;
 }
