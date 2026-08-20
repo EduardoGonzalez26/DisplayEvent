@@ -40,6 +40,13 @@ CREATE TABLE IF NOT EXISTS "groups" (
 CREATE INDEX IF NOT EXISTS idx_group_event ON "groups"(event_id);
 CREATE INDEX IF NOT EXISTS idx_group_token ON "groups"(invitation_token);
 
+-- Tokens de invitación revocados: al regenerar el token de un grupo, el
+-- anterior queda aquí y deja de funcionar (invalida enlaces y copias impresas).
+CREATE TABLE IF NOT EXISTS revoked_invitation_tokens (
+  token VARCHAR(64) PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "tables" (
   id SERIAL PRIMARY KEY,
   event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,

@@ -14,7 +14,11 @@ async function findInvitationByToken(token) {
             e.name AS event_name, e.date, e.time, e.place, e.invitation
      FROM "groups" g
      JOIN events e ON e.id = g.event_id
-     WHERE g.invitation_token = $1 LIMIT 1`,
+     WHERE g.invitation_token = $1
+       AND NOT EXISTS (
+         SELECT 1 FROM revoked_invitation_tokens r WHERE r.token = g.invitation_token
+       )
+     LIMIT 1`,
     [token]
   );
   return rows[0] || null;

@@ -71,16 +71,34 @@ router.post("/", async (req, res, next) => {
 
 router.post("/:groupId/token", async (req, res, next) => {
   try {
-    const token = generateToken();
-    const result = await pool.query(
-      `UPDATE "groups" SET invitation_token = $1 WHERE id = $2 AND event_id = $3 RETURNING id`,
-      [token, req.params.groupId, req.params.eventId]
-    );
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Grupo no encontrado" });
-    }
+    const token = await transaction(async (client) => {
+      const { rows } = await client.query(
+        `SELECT invitation_token FROM "groups" WHERE id = $1 AND event_id = $2`,
+        [req.params.groupId, req.params.eventId]
+      );
+      if (rows.length === 0) {
+        const err = new Error("Grupo no encontrado");
+        err.status = 404;
+        throw err;
+      }
+      // Revoca el token anterior para que el enlace/copias impresas viejos dejen de funcionar.
+      const previous = rows[0].invitation_token;
+      if (previous) {
+        await client.query(
+          `INSERT INTO revoked_invitation_tokens (token) VALUES ($1) ON CONFLICT (token) DO NOTHING`,
+          [previous]
+        );
+      }
+      const token = generateToken();
+      await client.query(`UPDATE "groups" SET invitation_token = $1 WHERE id = $2`, [
+        token,
+        req.params.groupId,
+      ]);
+      return token;
+    });
     res.json({ ok: true, invitation_token: token });
   } catch (err) {
+    if (err.status === 404) return res.status(404).json({ error: err.message });
     next(err);
   }
 });
