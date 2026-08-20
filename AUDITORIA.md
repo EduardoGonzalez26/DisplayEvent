@@ -112,19 +112,21 @@
 
 ### 4.2 Frontend — Panel
 
-| Severidad | Bug | Ubicación |
-|---|---|---|
-| 🔴 Alto | **XSS almacenado**: `print()` inyecta con `document.write` los nombres de mesa/invitado/acompañante **sin escapar**; un nombre con `<img onerror=…>` se ejecuta en la ventana de impresión | `pages/event/EventTables.jsx:738-777` (especialmente 762-768) |
-| 🟠 Alto | `alert()`/`confirm()` como única vía de error (bloquea UI, inaccesible, no testeable) | `pages/event/EventGuests.jsx:329, 355, 364, 370, 376, 378, 398, 403, 416` |
-| 🟠 Alto | **Estados stale al cambiar de evento**: mapas `guestsByGroup/expanded/loadingGroups` no se limpian en `EventGuests`; `EventDashboard` no resetea `loading` ni datos → muestra evento anterior | `EventGuests.jsx:291-297`; `EventDashboard.jsx:13-30`; `EventHome.jsx:14-27` |
-| 🟠 Alto | **Promesas sin capturar**: acciones sin try/catch (crear grupo, agregar invitado, toggles, borrar mesa) → errores silenciosos y doble-submit posible | `EventGuests.jsx:315-352, 382-395`; `EventTables.jsx:493-497, 617-634` |
-| 🟡 Medio | Toast con `setTimeout` sin limpiar: dos notificaciones se pisan | `EventTables.jsx:249-253` |
-| 🟡 Medio | Parseo frágil del id del drag `Number(id.slice(2))` (asume prefijo `g-` + número) | `EventTables.jsx:266` |
-| 🟡 Medio | Invitados con `table_id` de una mesa borrada quedan **invisibles** (ni en sidebar ni en mesas) | `EventTables.jsx:291 vs 300-309` |
-| 🟡 Medio | Colores de grupo asignados por índice → cambian de color al reordenar/eliminar grupos | `EventTables.jsx:255-259` |
-| 🟡 Medio | Confusión email vs usuario en el reenvío: usa `form.username` cuando el backend espera email → falla si el usuario usó su nombre | `pages/AuthPage.jsx:55` |
-| 🟡 Medio | Dos formularios de evento distintos (`EventForm` inline con plantilla vs `EventFormModal` sin plantilla) → comportamiento divergente | `pages/EventsPage.jsx:8-117` vs `components/EventFormModal.jsx` |
-| 🟢 Bajo | `key={i}` en listas editables (itinerario, ubicaciones, dress code, contactos, galería) → estado de React incorrecto al reordenar | `EventTables.jsx:806`; ver también sección invitación |
+> **Estado: todos los puntos de esta sección están resueltos en el código actual** (verificado 20/08/2026). Fixes en el commit `1bc3da8`.
+
+| Severidad | Bug | Ubicación | Estado |
+|---|---|---|---|
+| 🔴 Alto | **XSS almacenado**: `print()` inyecta con `document.write` los nombres de mesa/invitado/acompañante **sin escapar**; un nombre con `<img onerror=…>` se ejecuta en la ventana de impresión | `pages/event/EventTables.jsx:738-777` (especialmente 762-768) | ✅ Hecho — helper `esc()` escapa `& < > " '` en mesas, invitados y acompañantes (`EventTables.jsx:779-785`) |
+| 🟠 Alto | `alert()`/`confirm()` como única vía de error (bloquea UI, inaccesible, no testeable) | `pages/event/EventGuests.jsx:329, 355, 364, 370, 376, 378, 398, 403, 416` | ✅ Hecho — sustituidos por `ConfirmModal` + toast con `role="alert"` |
+| 🟠 Alto | **Estados stale al cambiar de evento**: mapas `guestsByGroup/expanded/loadingGroups` no se limpian en `EventGuests`; `EventDashboard` no resetea `loading` ni datos → muestra evento anterior | `EventGuests.jsx:291-297`; `EventDashboard.jsx:13-30`; `EventHome.jsx:14-27` | ✅ Hecho — reset de estado + flag `cancelledRef`/`cancelled` en los 3 componentes |
+| 🟠 Alto | **Promesas sin capturar**: acciones sin try/catch (crear grupo, agregar invitado, toggles, borrar mesa) → errores silenciosos y doble-submit posible | `EventGuests.jsx:315-352, 382-395`; `EventTables.jsx:493-497, 617-634` | ✅ Hecho — try/catch + `notify()` en todas las acciones y modales |
+| 🟡 Medio | Toast con `setTimeout` sin limpiar: dos notificaciones se pisan | `EventTables.jsx:249-253` | ✅ Hecho — `toastTimer` con `clearTimeout` (`EventTables.jsx:255-262`; `EventGuests.jsx:340-347`) |
+| 🟡 Medio | Parseo frágil del id del drag `Number(id.slice(2))` (asume prefijo `g-` + número) | `EventTables.jsx:266` | ✅ Hecho — regex `/^g-(\d+)$/` y `/^table-(\d+)$/` (`EventTables.jsx:275, 284`) |
+| 🟡 Medio | Invitados con `table_id` de una mesa borrada quedan **invisibles** (ni en sidebar ni en mesas) | `EventTables.jsx:291 vs 300-309` | ✅ Hecho — `isOrphan` los muestra en el sidebar; borrar mesa libera primero a los asignados (`EventTables.jsx:302-315, 510-521`) |
+| 🟡 Medio | Colores de grupo asignados por índice → cambian de color al reordenar/eliminar grupos | `EventTables.jsx:255-259` | ✅ Hecho — color por `hashColor(group.id)` (`EventTables.jsx:264-268`) |
+| 🟡 Medio | Confusión email vs usuario en el reenvío: usa `form.username` cuando el backend espera email → falla si el usuario usó su nombre | `pages/AuthPage.jsx:55` | ✅ Hecho — el front envía email (`AuthPage.jsx:41, 58`) y el backend acepta email **o** username (`auth.js:210`) |
+| 🟡 Medio | Dos formularios de evento distintos (`EventForm` inline con plantilla vs `EventFormModal` sin plantilla) → comportamiento divergente | `pages/EventsPage.jsx:8-117` vs `components/EventFormModal.jsx` | ✅ Hecho — unificado en `EventFormModal` (crear y editar) con plantillas en crear (`EventsPage.jsx:175-181`) |
+| 🟢 Bajo | `key={i}` en listas editables (itinerario, ubicaciones, dress code, contactos, galería) → estado de React incorrecto al reordenar | `EventTables.jsx:806`; ver también sección invitación | ✅ Hecho en panel — el `key={i}` restante en `EventTables.jsx:852` es lista de solo lectura (sin riesgo). Pendiente: listas editables de la invitación (sección 4.3) |
 
 ### 4.3 Frontend — Invitación
 
