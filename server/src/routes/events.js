@@ -119,11 +119,44 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
+
+function cleanRequiredString(value, maxLen) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLen);
+}
+
+function isValidDate(value) {
+  if (typeof value !== "string" || !DATE_RE.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return (
+    date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d
+  );
+}
+
+function isValidTime(value) {
+  if (typeof value !== "string" || !TIME_RE.test(value)) return false;
+  const [h, mi] = value.split(":").map(Number);
+  return h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
+}
+
+// Valida y normaliza el payload de un evento (POST/PUT).
+function validateEventPayload({ name, date, time, place }) {
+  const cleanName = cleanRequiredString(name, 255);
+  const cleanPlace = cleanRequiredString(place, 255);
+  if (!cleanName) return { error: "El nombre del evento es obligatorio" };
+  if (!isValidDate(date)) return { error: "La fecha no es válida (formato AAAA-MM-DD)" };
+  if (!isValidTime(time)) return { error: "La hora no es válida (formato HH:MM)" };
+  if (!cleanPlace) return { error: "El lugar es obligatorio" };
+  return { value: { name: cleanName, date, time, place: cleanPlace } };
+}
+
 router.post("/", async (req, res, next) => {
-  const { name, date, time, place } = req.body;
-  if (!name || !date || !time || !place) {
-    return res.status(400).json({ error: "Todos los campos son obligatorios" });
-  }
+  const validated = validateEventPayload(req.body || {});
+  if (validated.error) return res.status(400).json({ error: validated.error });
+  const { name, date, time, place } = validated.value;
   try {
     const result = await pool.query(
       `INSERT INTO events (user_id, name, date, time, place)
@@ -137,10 +170,9 @@ router.post("/", async (req, res, next) => {
 });
 
 router.put("/:id", async (req, res, next) => {
-  const { name, date, time, place } = req.body;
-  if (!name || !date || !time || !place) {
-    return res.status(400).json({ error: "Todos los campos son obligatorios" });
-  }
+  const validated = validateEventPayload(req.body || {});
+  if (validated.error) return res.status(400).json({ error: validated.error });
+  const { name, date, time, place } = validated.value;
   try {
     const result = await pool.query(
       `UPDATE events SET name = $1, date = $2, time = $3, place = $4
