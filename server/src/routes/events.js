@@ -96,11 +96,14 @@ router.put("/:id/invitation", async (req, res, next) => {
   }
   try {
     const result = await pool.query(
-      `UPDATE events SET invitation = $1::jsonb WHERE id = $2 AND user_id = $3`,
-      [JSON.stringify(invitation || {}), req.params.id, req.user.id]
+      `UPDATE events
+       SET invitation = COALESCE(invitation, '{}'::jsonb) || $1::jsonb
+       WHERE id = $2 AND user_id = $3
+       RETURNING invitation`,
+      [JSON.stringify(invitation), req.params.id, req.user.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
-    res.json({ ok: true, invitation });
+    res.json({ ok: true, invitation: result.rows[0].invitation });
   } catch (err) {
     next(err);
   }
