@@ -45,26 +45,31 @@ export const cumpleanos = {
     "--inv-gold-gradient":
       "linear-gradient(180deg, #ffd166 0%, #ffb35c 30%, #ff8a5c 60%, #ff5fa2 100%)",
   },
-  fonts: {
-    display: "font-inv-display",
-    heading: "font-inv-heading",
-    script: "font-inv-script",
-    serif: "font-inv-serif",
-    body: "font-inv-body",
-  },
-  ornaments: { corners: true, divider: "flor" },
   labels: {
+    rsvpEyebrow: "RSVP",
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
     message: "Un mensaje para ustedes",
     itinerary: "Nuestro Itinerario",
+    itineraryEyebrow: "Horarios",
+    itinerarySubtitle:
+      "Los momentos que viviremos juntos durante la celebración.",
     locations: "Cómo Llegar",
+    locationsEyebrow: "Ubicaciones",
+    locationsSubtitle:
+      "Encuentra cada recinto de la celebración y navega directo con tu app favorita.",
     gallery: "Nuestros Mejores Recuerdos",
+    galleryEyebrow: "Galería",
     dressCode: "Código de Vestimenta",
+    dressCodeEyebrow: "Dress Code",
     withLove: "Con cariño",
     familyGreeting: (family) =>
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
     defaultMessage: (family) =>
       `Familia ${family}, nos encantaría que nos acompañaran a celebrar este día tan especial. ¡Los esperamos con mucha alegría!`,
+  },
+  resolvers: {
+    // Sin firma especial: se usa `cfg.celebrants` tal cual.
+    signature: () => null,
   },
 };

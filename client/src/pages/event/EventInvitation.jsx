@@ -2,87 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { Button } from "../../components/ui.jsx";
-import { TEMPLATES, DEFAULT_THEME_ID } from "../../invitation/themes/index.js";
+import { TEMPLATES } from "../../invitation/themes/index.js";
 import InvitationView from "../../invitation/InvitationView.jsx";
 import {
   getFieldsForTemplate,
   getField,
   setField,
-} from "../../invitation/themes/fields.js";
-
-const EMPTY = {
-  version: 1,
-  template: DEFAULT_THEME_ID,
-  kicker: "",
-  hero_image: "",
-  tagline: "",
-  message: "",
-  celebrants: "",
-  celebrant_name: "",
-  registry_note: "",
-  padrinos: [],
-  itinerary: [{ label: "", time: "" }],
-  locations: [{ label: "", place: "", url: "" }],
-  gallery: [],
-  dress_code: "",
-  dress_note: "",
-  contacts: [{ name: "", phone: "" }],
-  contact_note: "",
-};
-
-// Convierte un config guardado (JSONB) al estado del formulario, tolerando
-// formatos viejos (itinerario con place, dress_code como string, etc.).
-function toFormState(cfg) {
-  const oldItin = cfg.itinerary || [];
-  const hasLocations = Array.isArray(cfg.locations) && cfg.locations.length;
-  const legacy = oldItin.filter((it) => it.place);
-  const formItinerary = oldItin
-    .map((it) => ({ label: it.label, time: it.time }))
-    .filter((it) => it.label || it.time);
-  const mapLoc = (l) => ({ label: l.label, place: l.place, url: l.url || "" });
-  const formLocations = hasLocations
-    ? cfg.locations.map(mapLoc)
-    : legacy.map(mapLoc).filter((l) => l.place);
-  return {
-    ...EMPTY,
-    ...cfg,
-    version: cfg.version || 1,
-    template: cfg.template || DEFAULT_THEME_ID,
-    itinerary: formItinerary.length ? formItinerary : EMPTY.itinerary,
-    locations: formLocations.length ? formLocations : EMPTY.locations,
-    gallery: cfg.gallery || [],
-    contacts:
-      cfg.contacts && cfg.contacts.length
-        ? cfg.contacts.map((c) => ({ name: c.name || "", phone: c.phone || "" }))
-        : [{ name: "", phone: "" }],
-    contact_note: cfg.contact_note || "",
-    dress_note: cfg.dress_note || "",
-    parents:
-      Array.isArray(cfg.parents)
-        ? cfg.parents.map((p) => (p && typeof p === "object" ? p.name : p) || "")
-        : [],
-    padrinos:
-      Array.isArray(cfg.padrinos)
-        ? cfg.padrinos.map((p) => (p && typeof p === "object" ? p.name : p) || "")
-        : [],
-    dress_code: (cfg.dress_code || []).map((d) => d.label || d).join("\n"),
-  };
-}
-
-// Claves estables por fila de listas editables: se conservan al reordenar y se
-// descartan al guardar (save() serializa solo los campos conocidos).
-let rowUid = 0;
-const withUid = (item) => ({ ...item, _uid: ++rowUid });
-const withUids = (list) => list.map((item) => (item && item._uid ? item : withUid(item)));
-
-function normalizeLists(f) {
-  return {
-    ...f,
-    itinerary: withUids(f.itinerary || []),
-    locations: withUids(f.locations || []),
-    contacts: withUids(f.contacts || []),
-  };
-}
+} from "../../invitation/schema/fields.js";
+import {
+  toFormState,
+  serializeForm,
+  withUid,
+} from "../../invitation/schema/normalize.js";
 
 function ImageUploader({ label, value, onChange }) {
   const inputRef = useRef(null);
@@ -140,7 +71,7 @@ function ImageUploader({ label, value, onChange }) {
 
 export default function EventInvitation() {
   const { id } = useParams();
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => toFormState({}));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -162,8 +93,8 @@ export default function EventInvitation() {
     api.groups.list(id).then(setGroups).catch(() => setGroups([]));
     api.events
       .invitation(id)
-      .then((cfg) => setForm(normalizeLists(toFormState(cfg))))
-      .catch(() => setForm(EMPTY))
+      .then((cfg) => setForm(toFormState(cfg)))
+      .catch(() => setForm(toFormState({})))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -230,7 +161,7 @@ export default function EventInvitation() {
           withUid({ label: "Recepción", place: "", url: "" }),
         ];
       }
-      return normalizeLists(next);
+      return next;
     });
   };
 
@@ -257,7 +188,7 @@ export default function EventInvitation() {
     setTplError("");
     try {
       const full = await api.templates.get(tpl.id);
-      setForm(normalizeLists(toFormState(full.config)));
+      setForm(toFormState(full.config));
       setTplOpen(false);
       setMessage(`Plantilla "${full.name}" aplicada. Recuerda guardar los cambios.`);
     } catch (err) {
@@ -314,31 +245,7 @@ export default function EventInvitation() {
     setMessage("");
     setError("");
     try {
-      const payload = {
-        ...form,
-        gallery: form.gallery.filter(Boolean),
-        parents: (form.parents || [])
-          .map((p) => String(p || "").trim())
-          .filter(Boolean),
-        padrinos: (form.padrinos || [])
-          .map((p) => String(p || "").trim())
-          .filter(Boolean),
-        contacts: form.contacts
-          .map((c) => ({ name: (c.name || "").trim(), phone: (c.phone || "").trim() }))
-          .filter((c) => c.name || c.phone),
-        contact_note: (form.contact_note || "").trim(),
-        dress_code: form.dress_code.split("\n").map((s) => s.trim()).filter(Boolean).map((line) => ({ label: line })),
-        dress_note: (form.dress_note || "").trim(),
-        itinerary: form.itinerary.map((it) => ({
-          label: it.label,
-          time: it.time,
-        })).filter((it) => it.label || it.time),
-        locations: form.locations.map((l) => ({
-          label: l.label,
-          place: l.place,
-          url: l.url,
-        })).filter((l) => l.place),
-      };
+      const payload = serializeForm(form);
       await api.events.setInvitation(id, payload);
       setMessage("Configuración guardada correctamente.");
     } catch (err) {

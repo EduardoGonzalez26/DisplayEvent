@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
-import { SectionTitle } from "../shared/util.jsx";
+import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function BabyShowerRegistryNote({ cfg, theme }) {
+export default function RegistryNote({ cfg, theme }) {
   const text = (cfg.registry_note || "").trim();
   if (!text) return null;
 

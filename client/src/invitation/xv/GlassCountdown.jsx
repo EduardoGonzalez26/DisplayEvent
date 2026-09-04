@@ -38,12 +38,15 @@ function GlassNumber({ value, label, reduced }) {
 }
 
 export default function GlassCountdown({ date, time }) {
-  const target = useMemo(
-    () => new Date(`${date}T${time || "00:00:00"}`).getTime(),
-    [date, time],
-  );
+  const target = useMemo(() => {
+    if (!date) return null;
+    const ts = new Date(`${date}T${time || "00:00:00"}`).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  }, [date, time]);
   const { days, hours, minutes, seconds, done } = useCountdown(target);
   const reduced = useReducedMotion();
+
+  if (target == null) return null;
 
   if (done) {
     return (

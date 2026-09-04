@@ -46,22 +46,23 @@ export const baby_shower = {
     "--inv-hero-fallback":
       "linear-gradient(165deg, #fde9f1 0%, #f7d2e0 45%, #eeb8d0 78%, #d7ecdf 100%)",
   },
-  fonts: {
-    display: "font-inv-display",
-    heading: "font-inv-heading",
-    script: "font-inv-script",
-    serif: "font-inv-serif",
-    body: "font-inv-body",
-  },
-  ornaments: { corners: true, divider: "flor" },
   labels: {
+    rsvpEyebrow: "RSVP",
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
     message: "Un mensaje para ustedes",
     itinerary: "Nuestro Itinerario",
+    itineraryEyebrow: "Horarios",
+    itinerarySubtitle:
+      "Los momentos que viviremos juntos durante la celebración.",
     locations: "Cómo Llegar",
+    locationsEyebrow: "Ubicaciones",
+    locationsSubtitle:
+      "Encuentra cada recinto de la celebración y navega directo con tu app favorita.",
     gallery: "Nuestros Mejores Recuerdos",
+    galleryEyebrow: "Galería",
     dressCode: "Código de Vestimenta",
+    dressCodeEyebrow: "Dress Code",
     withLove: "Con cariño",
     registryEyebrow: "Baby shower",
     registryTitle: "Regalos",
@@ -71,5 +72,17 @@ export const baby_shower = {
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
     defaultMessage: (family) =>
       `Familia ${family}, queremos compartir con ustedes la llegada de nuestro bebé. Su compañía será nuestro mejor regalo.`,
+  },
+  resolvers: {
+    // Firma al pie del mensaje: papás unidos con " & ", si no `celebrants`.
+    signature: (cfg) => {
+      const parents = Array.isArray(cfg.parents)
+        ? cfg.parents
+            .map((p) => (p && typeof p === "object" ? p.name : p) || "")
+            .map((p) => (p || "").trim())
+            .filter(Boolean)
+        : [];
+      return parents.length ? parents.join(" & ") : null;
+    },
   },
 };

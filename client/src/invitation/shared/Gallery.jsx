@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { SectionTitle } from "../shared/util.jsx";
+import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function BodaGallery({ cfg }) {
+export default function Gallery({ cfg, theme }) {
   const images = cfg.gallery || [];
   if (images.length === 0) return null;
 
   return (
     <section className="py-24 px-4 bg-inv-bg-alt">
       <div className="max-w-4xl mx-auto">
-        <SectionTitle eyebrow="Galería" title="Nuestros Mejores Recuerdos" />
+        <SectionTitle
+          eyebrow={theme?.labels?.galleryEyebrow ?? "Galería"}
+          title={theme?.labels?.gallery ?? "Nuestros Mejores Recuerdos"}
+        />
         <GalleryShow images={images} />
       </div>
     </section>
@@ -79,10 +82,9 @@ function GalleryShow({ images }) {
             className="relative overflow-hidden rounded-[1.6rem] border border-inv-primary/30 shadow-2xl transition-[aspect-ratio] duration-500"
             style={{ aspectRatio: activeRatio }}
           >
-            {/* Carga silenciosa de todas las imágenes para medir proporción */}
             {images.map((src, i) => (
               <img
-                key={`probe-${i}`}
+                key={`probe-${src}-${i}`}
                 src={src}
                 alt=""
                 aria-hidden="true"
@@ -113,7 +115,7 @@ function GalleryShow({ images }) {
               <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
                 {images.map((_, i) => (
                   <button
-                    key={i}
+                    key={`${images[i]}-${i}`}
                     onClick={() => go(i)}
                     aria-label={`Foto ${i + 1}`}
                     className={`h-1.5 transition-all duration-300 ${
@@ -131,7 +133,7 @@ function GalleryShow({ images }) {
           <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {images.map((src, i) => (
               <motion.button
-                key={i}
+                key={`${src}-${i}`}
                 onClick={() => go(i)}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}

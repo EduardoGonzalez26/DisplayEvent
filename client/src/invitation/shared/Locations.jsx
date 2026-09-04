@@ -2,16 +2,19 @@ import { motion, useReducedMotion } from "motion/react";
 import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function LocationsSection({ cfg }) {
-  const legacies = cfg.itinerary || [];
-  const raw = cfg.locations || legacies.map((it) => it);
-  const items = raw.map((it) => ({
-    label: it.label,
-    place: it.place,
-    url: it.url || "",
-    lat: it.lat,
-    lng: it.lng,
-  }));
+export default function LocationsSection({ cfg, theme }) {
+  // Sin `locations` no se muestra nada: el itinerario no es una ubicación y
+  // solo renderizaríamos tarjetas "Ubicación N" vacías.
+  const raw = cfg.locations || [];
+  const items = raw
+    .filter((it) => it && (it.place || it.label))
+    .map((it) => ({
+      label: it.label,
+      place: it.place,
+      url: it.url || "",
+      lat: it.lat,
+      lng: it.lng,
+    }));
   const reduced = useReducedMotion();
   if (items.length === 0) return null;
 
@@ -36,6 +39,9 @@ export default function LocationsSection({ cfg }) {
     return null;
   };
   const wazeUrl = (it) => {
+    // Si hay una URL custom válida, el botón "Google Maps" ya enlaza a ella;
+    // no forzamos un enlace de Waze por nombre que la ignore.
+    if (safeUrl(it.url)) return null;
     if (it.lat && it.lng)
       return `https://waze.com/ul?ll=${encodeURIComponent(`${it.lat},${it.lng}`)}&navigate=yes`;
     if (it.place)
@@ -48,9 +54,12 @@ export default function LocationsSection({ cfg }) {
     <section className="py-24 px-4 bg-inv-bg-alt2">
       <div className="max-w-5xl mx-auto">
         <SectionTitle
-          eyebrow="Ubicaciones"
-          title="Cómo Llegar"
-          subtitle="Encuentra cada recinto de la celebración y navega directo con tu app favorita."
+          eyebrow={theme?.labels?.locationsEyebrow ?? "Ubicaciones"}
+          title={theme?.labels?.locations ?? "Cómo Llegar"}
+          subtitle={
+            theme?.labels?.locationsSubtitle ??
+            "Encuentra cada recinto de la celebración y navega directo con tu app favorita."
+          }
         />
         <Reveal>
           <motion.div
@@ -62,7 +71,7 @@ export default function LocationsSection({ cfg }) {
           >
             {items.map((it, i) => (
               <motion.article
-                key={i}
+                key={`${it.place || it.label || i}-${i}`}
                 variants={{
                   hidden: { opacity: 0, y: 32 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },

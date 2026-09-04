@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { Ornament } from "./util.jsx";
 import { EASE } from "../motion.jsx";
 
-export default function Footer({ event }) {
+export default function Footer({ event, theme }) {
   return (
     <footer className="py-12 px-6 text-center bg-inv-bg">
       <motion.div

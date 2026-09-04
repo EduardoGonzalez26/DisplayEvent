@@ -1,9 +1,6 @@
-import { Suspense, lazy } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { Corner, Ornament } from "../shared/util.jsx";
 import { EASE } from "../motion.jsx";
-
-const RingsHero3D = lazy(() => import("../3d/RingsHero3D.jsx"));
 
 const entrance = (i = 0) => ({
   hidden: { opacity: 0, y: 30 },
@@ -36,18 +33,12 @@ export default function BodaHero({ event, family, cfg }) {
 
   return (
     <header className="relative min-h-screen flex items-center justify-center overflow-hidden bg-inv-bg">
-      {/* Fondo: anillos 3D con scroll-away */}
+      {/* Fondo: gradiente estático */}
       <div className="absolute inset-0 overflow-hidden">
-        <Suspense
-          fallback={
-            <div
-              className="absolute inset-0"
-              style={{ background: "var(--inv-hero-fallback)" }}
-            />
-          }
-        >
-          <RingsHero3D />
-        </Suspense>
+        <div
+          className="absolute inset-0"
+          style={{ background: "var(--inv-hero-fallback)" }}
+        />
         <motion.div
           className="absolute inset-0 bg-gradient-to-b from-inv-bg/70 via-transparent to-inv-bg/85"
           style={{ y: bgY }}

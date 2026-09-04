@@ -1,5 +1,5 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { Corner, Ornament } from "../shared/util.jsx";
+import { Corner, Ornament, safeCssUrl } from "../shared/util.jsx";
 import { EASE } from "../motion.jsx";
 
 const entrance = (i = 0) => ({
@@ -22,6 +22,7 @@ export default function BabyShowerHero({ event, family, cfg, theme }) {
   const month = date.toLocaleDateString("es-MX", { month: "long" });
   const day = date.getDate();
   const year = date.getFullYear();
+  const bg = safeCssUrl(cfg.hero_image);
 
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
@@ -44,9 +45,7 @@ export default function BabyShowerHero({ event, family, cfg, theme }) {
           <div
             className="absolute inset-0 h-full w-full bg-cover bg-center hero-zoom"
             style={{
-              backgroundImage: cfg.hero_image
-                ? `url('${cfg.hero_image}')`
-                : "var(--inv-hero-fallback)",
+              backgroundImage: bg ? `url('${bg}')` : "var(--inv-hero-fallback)",
             }}
           />
         </motion.div>

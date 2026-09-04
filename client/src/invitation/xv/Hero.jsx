@@ -1,4 +1,4 @@
-import { Suspense, lazy, useRef } from "react";
+import { useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -10,8 +10,6 @@ import {
 import { Corner, Ornament } from "../shared/util.jsx";
 import GlassCountdown from "./GlassCountdown.jsx";
 import { EASE } from "../motion.jsx";
-
-const XvPearlsHero3D = lazy(() => import("../3d/XvPearlsHero3D.jsx"));
 
 /* Iniciales de la quinceañera para el monograma ("Alice Renata" -> "AR"). */
 const initialsOf = (name) => {
@@ -194,13 +192,6 @@ export default function XvHero({ event, family, cfg, theme, reveal = true }) {
       onPointerMove={onPointerMove}
     >
       <SilkBackdrop reveal={reveal} reduced={reduced} bgY={bgY} />
-
-      {/* Perlas y orbes dorados en planos de profundidad */}
-      <div className="absolute inset-0">
-        <Suspense fallback={null}>
-          <XvPearlsHero3D pointer={pointerRef} active={reveal} />
-        </Suspense>
-      </div>
 
       {/* Marco de filigrana dorada con esquinas ornamentales */}
       <div

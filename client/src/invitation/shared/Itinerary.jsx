@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function ItinerarySection({ cfg }) {
+export default function ItinerarySection({ cfg, theme }) {
   const items = (cfg.itinerary || []).map((it) => ({
     label: it.label,
     time: it.time,
@@ -14,9 +14,12 @@ export default function ItinerarySection({ cfg }) {
     <section className="py-24 px-4 bg-inv-bg-alt">
       <div className="max-w-3xl mx-auto">
         <SectionTitle
-          eyebrow="Horarios"
-          title="Nuestro Itinerario"
-          subtitle="Los momentos que viviremos juntos durante la celebración."
+          eyebrow={theme?.labels?.itineraryEyebrow ?? "Horarios"}
+          title={theme?.labels?.itinerary ?? "Nuestro Itinerario"}
+          subtitle={
+            theme?.labels?.itinerarySubtitle ??
+            "Los momentos que viviremos juntos durante la celebración."
+          }
         />
         <div className="relative">
           <motion.div
@@ -40,7 +43,7 @@ export default function ItinerarySection({ cfg }) {
           >
             {items.map((it, i) => (
               <motion.div
-                key={i}
+                key={`${it.label || it.time || i}-${i}`}
                 variants={{
                   hidden: { opacity: 0, x: -24 },
                   show: {

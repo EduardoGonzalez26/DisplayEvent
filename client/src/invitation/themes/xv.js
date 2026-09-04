@@ -47,14 +47,6 @@ export const xv = {
     "--inv-hero-fallback":
       "linear-gradient(165deg, #ffe6e3 0%, #ffd9d6 45%, #f4bdba 78%, #e8a3a1 100%)",
   },
-  fonts: {
-    display: "font-inv-display",
-    heading: "font-inv-heading",
-    script: "font-inv-script",
-    serif: "font-inv-serif",
-    body: "font-inv-body",
-  },
-  ornaments: { corners: true, divider: "flor" },
   // Experiencia de apertura: sobre digital con la inicial de la quinceañera.
   opening: {
     envelope: true,
@@ -68,13 +60,22 @@ export const xv = {
     },
   },
   labels: {
+    rsvpEyebrow: "RSVP",
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
     message: "Un mensaje para ustedes",
     itinerary: "Nuestro Itinerario",
+    itineraryEyebrow: "Horarios",
+    itinerarySubtitle:
+      "Los momentos que viviremos juntos durante la celebración.",
     locations: "Cómo Llegar",
+    locationsEyebrow: "Ubicaciones",
+    locationsSubtitle:
+      "Encuentra cada recinto de la celebración y navega directo con tu app favorita.",
     gallery: "Nuestros Mejores Recuerdos",
+    galleryEyebrow: "Galería",
     dressCode: "Código de Vestimenta",
+    dressCodeEyebrow: "Dress Code",
     withLove: "Con cariño",
     registryEyebrow: "Regalos",
     registryTitle: "Mesa de Regalos",
@@ -89,5 +90,19 @@ export const xv = {
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
     defaultMessage: (family) =>
       `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`,
+  },
+  resolvers: {
+    // Firma al pie del mensaje: nombre de la quinceañera, si no papás
+    // unidos con " y ", si no `celebrants`.
+    signature: (cfg) => {
+      const celebrantName = (cfg.celebrant_name || "").trim();
+      const parents = Array.isArray(cfg.parents)
+        ? cfg.parents
+            .map((p) => (p && typeof p === "object" ? p.name : p) || "")
+            .map((p) => (p || "").trim())
+            .filter(Boolean)
+        : [];
+      return celebrantName || (parents.length ? parents.join(" y ") : null);
+    },
   },
 };

@@ -1,8 +1,8 @@
 import { motion, useReducedMotion } from "motion/react";
-import { SectionTitle } from "../shared/util.jsx";
+import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function XvPadrinos({ cfg, theme }) {
+export default function Padrinos({ cfg, theme }) {
   const padrinos = (Array.isArray(cfg.padrinos) ? cfg.padrinos : [])
     .map((p) => (p && typeof p === "object" ? p.name : p) || "")
     .map((p) => (p || "").trim())
@@ -28,7 +28,7 @@ export default function XvPadrinos({ cfg, theme }) {
           >
             {padrinos.map((name, i) => (
               <motion.div
-                key={i}
+                key={`${name}-${i}`}
                 variants={{
                   hidden: { opacity: 0, scale: 0.9, y: 20 },
                   show: {

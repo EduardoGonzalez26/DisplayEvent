@@ -4,6 +4,13 @@ import { boda } from "./boda.js";
 import { cumpleanos } from "./cumpleanos.js";
 import { baby_shower } from "./baby_shower.js";
 
+// RECETA para agregar un formato nuevo:
+//   1. Crea el archivo de tema en `themes/<formato>.js` (id, label, labels, etc.).
+//   2. Regístralo aquí: importa el tema, añádelo a `registry` y agrega su caso
+//      en `getThemeLayout` (lazy import del layout en `../<formato>/`).
+//   3. Declara sus campos en `schema/fields.js` (entrada en `EXTRA_FIELDS`).
+//   4. Crea `layouts/<formato>/Hero.jsx` + `layouts/<formato>/<Formato>Layout.jsx`.
+//   5. Añade `TEMPLATES` + la variante del schema en `server/src/schemas/invitation.js`.
 // Registry: id de template -> definición de tema.
 const registry = {
   [xv.id]: xv,

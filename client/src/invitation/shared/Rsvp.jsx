@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { api } from "../../api.js";
 import { Ornament } from "./util.jsx";
 import { EASE } from "../motion.jsx";
+
+function buildAnswers(guests) {
+  const map = {};
+  for (const g of guests) {
+    if (g.registered) map[g.id] = "yes";
+    else if (g.declined) map[g.id] = "no";
+  }
+  return map;
+}
 
 export default function RsvpSection({
   token,
@@ -20,19 +29,26 @@ export default function RsvpSection({
   const contactNote = (cfg?.contact_note || "").trim();
   const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
   const reduced = useReducedMotion();
-  const [answers, setAnswers] = useState(() => {
-    const map = {};
-    for (const g of guests) {
-      if (g.registered) map[g.id] = "yes";
-      else if (g.declined) map[g.id] = "no";
-    }
-    return map;
-  });
+  const [answers, setAnswers] = useState(() => buildAnswers(guests));
   const [diet, setDiet] = useState(note || "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
   const [showModal, setShowModal] = useState(false);
+
+  // Sincroniza el estado local con las props (p.ej. al editar en preview):
+  // respuestas iniciales, nota y estado "enviado" se recalculan si cambian.
+  useEffect(() => {
+    setAnswers(buildAnswers(guests));
+  }, [guests]);
+
+  useEffect(() => {
+    setDiet(note || "");
+  }, [note]);
+
+  useEffect(() => {
+    setSubmitted(attending > 0 || declining > 0);
+  }, [attending, declining]);
 
   const setAnswer = (id, value) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -82,7 +98,7 @@ export default function RsvpSection({
           >
             <span className="h-px w-9 bg-gradient-to-r from-transparent to-inv-primary/60" />
             <span className="text-inv-primary text-[0.65rem] uppercase tracking-[0.45em]">
-              RSVP
+              {theme?.labels?.rsvpEyebrow ?? "RSVP"}
             </span>
             <span className="h-px w-9 bg-gradient-to-l from-transparent to-inv-primary/60" />
           </motion.div>
@@ -273,7 +289,7 @@ export default function RsvpSection({
                     <div className="space-y-2 mb-6">
                       {contacts.map((c, i) => (
                         <a
-                          key={i}
+                          key={`${c.phone || c.name || i}-${i}`}
                           href={telHref(c.phone)}
                           className="flex items-center justify-center gap-3 rounded-xl border border-inv-primary/40 bg-inv-bg px-4 py-3 text-inv-text hover:border-inv-primary/80 hover:bg-inv-bg transition-all"
                         >
@@ -375,7 +391,7 @@ function SubmitConfirmation({ count, declining, total, note, family, contacts, c
         <p className="text-sm text-inv-text-soft">
           {contactNote ? `${contactNote} ` : "¿Necesitas aclaraciones? "}
           {contacts.map((c, i) => (
-            <span key={i}>
+            <span key={`${c.phone || c.name || i}-${i}`}>
               {i > 0 && " · "}
               {c.name && <span>{c.name} </span>}
               <a

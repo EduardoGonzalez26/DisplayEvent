@@ -1,20 +1,14 @@
 import { motion, useReducedMotion } from "motion/react";
-import { Ornament, highlightMessage } from "../shared/util.jsx";
+import { Ornament, highlightMessage } from "./util.jsx";
 import { EASE } from "../motion.jsx";
 
-export default function BabyShowerMessage({ cfg, family, theme }) {
+export default function Message({ cfg, family, theme }) {
   const message =
     cfg.message ||
     theme?.labels?.defaultMessage?.(family) ||
-    `Familia ${family}, queremos compartir con ustedes la llegada de nuestro bebé. Su compañía será nuestro mejor regalo.`;
+    `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`;
 
-  const parents = Array.isArray(cfg.parents)
-    ? cfg.parents
-        .map((p) => (p && typeof p === "object" ? p.name : p) || "")
-        .map((p) => (p || "").trim())
-        .filter(Boolean)
-    : [];
-  const signature = (parents.length ? parents.join(" & ") : null) || cfg.celebrants || null;
+  const signature = theme?.resolvers?.signature?.(cfg) || cfg.celebrants || null;
   const reduced = useReducedMotion();
 
   return (
@@ -39,7 +33,7 @@ export default function BabyShowerMessage({ cfg, family, theme }) {
         >
           <span className="h-px w-8 bg-gradient-to-r from-transparent to-inv-primary/60" />
           <span className="text-inv-text-muted text-[0.6rem] tracking-[0.5em] uppercase">
-            Un mensaje para ustedes
+            {theme?.labels?.message ?? "Un mensaje para ustedes"}
           </span>
           <span className="h-px w-8 bg-gradient-to-l from-transparent to-inv-primary/60" />
         </motion.div>
@@ -82,7 +76,7 @@ export default function BabyShowerMessage({ cfg, family, theme }) {
             className="mt-8 text-center"
           >
             <p className="text-[0.62rem] uppercase tracking-[0.45em] text-inv-text-soft mb-2">
-              Con cariño
+              {theme?.labels?.withLove ?? "Con cariño"}
             </p>
             <p className="font-inv-script text-4xl md:text-6xl text-gold-gradient leading-[1.4]">
               {signature}

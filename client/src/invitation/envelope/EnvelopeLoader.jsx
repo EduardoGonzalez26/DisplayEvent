@@ -81,6 +81,13 @@ export default function EnvelopeLoader({ monogram = "&", seal = "&", onOpen }) {
     );
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open();
+    }
+  };
+
   if (done) return null;
 
   const moving = opening && !reduced;
@@ -118,6 +125,10 @@ export default function EnvelopeLoader({ monogram = "&", seal = "&", onOpen }) {
           if (info.offset.y < -48) open();
         }}
         onTap={open}
+        onKeyDown={onKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-label="Abrir invitación"
         whileTap={reduced ? undefined : { scale: 0.98 }}
       >
         <div

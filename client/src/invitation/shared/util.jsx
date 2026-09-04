@@ -125,6 +125,25 @@ export function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/* ------------------------------------------------------------------
+   Sanitización de URLs para CSS (evita inyección vía backgroundImage)
+------------------------------------------------------------------ */
+
+// Devuelve una URL segura para interpolar en `url('...')` dentro de un
+// estilo inline, o `null` si el valor es inseguro/vacío. Acepta únicamente
+// URLs absolutas http(s) o rutas relativas que empiezan por `/`; rechaza
+// cualquier carácter que permita salir de la cadena CSS (`"`, `'`, `(`, `)`,
+// `;`, espacios, backslash) y los protocolos javascript:/data:/vbscript:.
+export function safeCssUrl(url) {
+  if (typeof url !== "string") return null;
+  const value = url.trim();
+  if (!value) return null;
+  if (/["'();\\\s]/.test(value)) return null;
+  if (/^(javascript|data|vbscript):/i.test(value)) return null;
+  if (/^https?:\/\//i.test(value) || value.startsWith("/")) return value;
+  return null;
+}
+
 export function highlightMessage(message, family) {
   if (!family) return message;
   const re = new RegExp(`(${escapeRegExp(family)})`, "gi");

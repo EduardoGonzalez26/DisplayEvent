@@ -45,14 +45,6 @@ export const boda = {
     "--inv-hero-fallback":
       "linear-gradient(165deg, #f3f0e6 0%, #e9ead9 45%, #d3dac3 78%, #c2cbaa 100%)",
   },
-  fonts: {
-    display: "font-inv-display",
-    heading: "font-inv-heading",
-    script: "font-inv-script",
-    serif: "font-inv-serif",
-    body: "font-inv-body",
-  },
-  ornaments: { corners: true, divider: "flor" },
   // Experiencia de apertura: sobre digital con monograma de la pareja.
   opening: {
     envelope: true,
@@ -70,13 +62,22 @@ export const boda = {
     sealText: () => "&",
   },
   labels: {
+    rsvpEyebrow: "RSVP",
     rsvp: "Confirma tu asistencia",
     countdown: "Faltan",
     message: "Un mensaje para ustedes",
     itinerary: "Nuestro Itinerario",
+    itineraryEyebrow: "Horarios",
+    itinerarySubtitle:
+      "Los momentos que viviremos juntos durante la celebración.",
     locations: "Cómo Llegar",
+    locationsEyebrow: "Ubicaciones",
+    locationsSubtitle:
+      "Encuentra cada recinto de la celebración y navega directo con tu app favorita.",
     gallery: "Nuestros Mejores Recuerdos",
+    galleryEyebrow: "Galería",
     dressCode: "Código de Vestimenta",
+    dressCodeEyebrow: "Dress Code",
     withLove: "Con cariño",
     registryEyebrow: "Regalos",
     registryTitle: "Mesa de Regalos",
@@ -84,5 +85,13 @@ export const boda = {
       `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
     defaultMessage: (family) =>
       `Familia ${family}, queremos compartir con ustedes la alegría de este día tan especial. Será un honor contar con su presencia.`,
+  },
+  resolvers: {
+    // Firma al pie del mensaje: nombres de la pareja unidos con " & ",
+    // si no `celebrants`.
+    signature: (cfg) => {
+      const couple = cfg.couple || {};
+      return [couple.nameA, couple.nameB].filter(Boolean).join(" & ") || null;
+    },
   },
 };

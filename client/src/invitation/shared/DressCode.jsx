@@ -1,8 +1,8 @@
 import { motion, useReducedMotion } from "motion/react";
-import { SectionTitle } from "../shared/util.jsx";
+import { SectionTitle } from "./util.jsx";
 import { EASE, Reveal } from "../motion.jsx";
 
-export default function BodaDressCode({ cfg }) {
+export default function DressCode({ cfg, theme }) {
   const raw = cfg.dress_code || [];
   const items = Array.isArray(raw)
     ? raw
@@ -17,7 +17,10 @@ export default function BodaDressCode({ cfg }) {
   return (
     <section className="py-24 px-4 bg-inv-bg">
       <div className="max-w-4xl mx-auto">
-        <SectionTitle eyebrow="Dress Code" title="Código de Vestimenta" />
+        <SectionTitle
+          eyebrow={theme?.labels?.dressCodeEyebrow ?? "Dress Code"}
+          title={theme?.labels?.dressCode ?? "Código de Vestimenta"}
+        />
         <Reveal>
           <motion.div
             className="flex flex-wrap justify-center gap-4"
@@ -28,7 +31,7 @@ export default function BodaDressCode({ cfg }) {
           >
             {items.map((item, i) => (
               <motion.div
-                key={i}
+                key={`${item.label || item.icon || i}-${i}`}
                 variants={{
                   hidden: { opacity: 0, scale: 0.85 },
                   show: { opacity: 1, scale: 1, transition: { duration: 0.55, ease: EASE } },
