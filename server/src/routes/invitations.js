@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { query, transaction } from "../db/index.js";
 import { rateLimit } from "../middleware/rateLimit.js";
+import { normalizeForRead } from "../schemas/invitation.js";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get("/:token", invitationViewLimiter, async (req, res, next) => {
         date: inv.date,
         time: inv.time,
         place: inv.place,
-        invitation: inv.invitation,
+        invitation: normalizeForRead(inv.invitation),
       },
       group: { name: inv.name, leader_name: inv.leader_name, rsvp_note: inv.rsvp_note },
       guests,

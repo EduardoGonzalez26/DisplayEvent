@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { query, pool } from "../db/index.js";
+import { parseInvitation, normalizeForRead } from "../schemas/invitation.js";
 
 const router = Router();
 
@@ -97,22 +98,24 @@ router.get("/:id/invitation", async (req, res, next) => {
       req.user.id,
     ]);
     if (rows.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
-    res.json(rows[0].invitation || {});
+    res.json(normalizeForRead(rows[0].invitation));
   } catch (err) {
     next(err);
   }
 });
-
-// Formatos de invitación conocidos (validación ligera del JSONB al guardar).
-const KNOWN_TEMPLATES = ["xv", "boda", "cumpleanos", "baby_shower"];
 
 router.put("/:id/invitation", async (req, res, next) => {
   const invitation = req.body;
   if (!invitation || typeof invitation !== "object" || Array.isArray(invitation)) {
     return res.status(400).json({ error: "La configuración de invitación es inválida" });
   }
-  if (invitation.template !== undefined && !KNOWN_TEMPLATES.includes(invitation.template)) {
-    return res.status(400).json({ error: "Formato de invitación desconocido" });
+  // Valida y normaliza ANTES de persistir (contrato v2). Mantiene el merge `||`
+  // con lo ya guardado, igual que antes.
+  let parsed;
+  try {
+    parsed = parseInvitation(invitation);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
   }
   try {
     const result = await pool.query(
@@ -120,7 +123,7 @@ router.put("/:id/invitation", async (req, res, next) => {
        SET invitation = COALESCE(invitation, '{}'::jsonb) || $1::jsonb
        WHERE id = $2 AND user_id = $3
        RETURNING invitation`,
-      [JSON.stringify(invitation), req.params.id, req.user.id]
+      [JSON.stringify(parsed), req.params.id, req.user.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json({ ok: true, invitation: result.rows[0].invitation });
