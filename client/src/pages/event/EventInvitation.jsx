@@ -155,7 +155,10 @@ export default function EventInvitation() {
     setForm((f) => {
       const next = { ...f, template: templateId };
       // Boda: "Ceremonia y recepción" por defecto si aún no hay ubicaciones reales.
-      if (templateId === "boda" && !f.locations.some((l) => l.place)) {
+      if (
+        (templateId === "boda" || templateId === "boda_jorge_macarena") &&
+        !f.locations.some((l) => l.place)
+      ) {
         next.locations = [
           withUid({ label: "Ceremonia", place: "", url: "" }),
           withUid({ label: "Recepción", place: "", url: "" }),

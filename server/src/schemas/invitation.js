@@ -9,7 +9,14 @@ import { z } from "zod";
    desconocidas. NO se renombra ningún campo existente.
 ------------------------------------------------------------------ */
 
-export const TEMPLATES = ["xv", "boda", "cumpleanos", "baby_shower"];
+export const TEMPLATES = [
+  "xv",
+  "boda",
+  "cumpleanos",
+  "baby_shower",
+  "alice_xv",
+  "boda_jorge_macarena",
+];
 
 /* ------------------------------------------------------------------
    Helpers de normalización (tolerantes, idempotentes, nunca lanzan).
@@ -200,6 +207,22 @@ const babyShowerSchema = z.object({
   registry_note: z.string().default(""),
 });
 
+const aliceXvSchema = z.object({
+  template: z.literal("alice_xv"),
+  ...commonFields,
+  celebrant_name: z.string().default(""),
+  parents: z.array(z.string()).default([]),
+  padrinos: z.array(z.string()).default([]),
+  registry_note: z.string().default(""),
+});
+
+const bodaJorgeMacarenaSchema = z.object({
+  template: z.literal("boda_jorge_macarena"),
+  ...commonFields,
+  couple: coupleSchema.default({}),
+  registry_note: z.string().default(""),
+});
+
 // Raíz: unión discriminada sobre `template`. Cada variante valida los campos
 // comunes + los específicos de ese formato y descarta el resto.
 export const invitationSchema = z.discriminatedUnion("template", [
@@ -207,6 +230,8 @@ export const invitationSchema = z.discriminatedUnion("template", [
   bodaSchema,
   cumpleanosSchema,
   babyShowerSchema,
+  aliceXvSchema,
+  bodaJorgeMacarenaSchema,
 ]);
 
 /* ------------------------------------------------------------------
@@ -269,6 +294,16 @@ export function normalizeInvitation(raw) {
       out.gender = str(source.gender);
       out.registry_note = str(source.registry_note);
       break;
+    case "alice_xv":
+      out.celebrant_name = str(source.celebrant_name);
+      out.parents = normalizeNames(source.parents);
+      out.padrinos = normalizeNames(source.padrinos);
+      out.registry_note = str(source.registry_note);
+      break;
+    case "boda_jorge_macarena":
+      out.couple = normalizeCouple(source.couple);
+      out.registry_note = str(source.registry_note);
+      break;
   }
 
   return out;
@@ -300,10 +335,10 @@ export function normalizeForRead(raw) {
   for (const key of arrayKeys) {
     if (!Array.isArray(out[key])) out[key] = [];
   }
-  if (out.template === "xv" || out.template === "baby_shower") {
+  if (out.template === "xv" || out.template === "alice_xv" || out.template === "baby_shower") {
     if (!Array.isArray(out.parents)) out.parents = [];
   }
-  if (out.template === "xv") {
+  if (out.template === "xv" || out.template === "alice_xv") {
     if (!Array.isArray(out.padrinos)) out.padrinos = [];
   }
   return out;

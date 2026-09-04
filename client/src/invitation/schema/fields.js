@@ -133,6 +133,63 @@ export const EXTRA_FIELDS = {
       required: false,
     },
   ],
+  alice_xv: [
+    {
+      key: "celebrant_name",
+      label: "Nombre de la quinceañera",
+      placeholder: "Ej. Alice",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "parents",
+      label: "Papá y mamá (quienes invitan)",
+      placeholder: "Nombre del papá o de la mamá",
+      itemLabel: "Papá/Mamá",
+      type: "list",
+      required: false,
+    },
+    {
+      key: "padrinos",
+      label: "Padrinos (opcional)",
+      placeholder: "Nombre del padrino o madrina",
+      itemLabel: "Padrino/Madrina",
+      type: "list",
+      required: false,
+    },
+    {
+      key: "registry_note",
+      label: "Mesa de regalos",
+      placeholder:
+        "Ej. Compartiremos una mesa de regalos. Si desean honrarnos con un detalle, será bienvenido.",
+      type: "textarea",
+      required: false,
+    },
+  ],
+  boda_jorge_macarena: [
+    {
+      key: "couple.nameA",
+      label: "Nombre del novio",
+      placeholder: "Andrés",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "couple.nameB",
+      label: "Nombre de la novia",
+      placeholder: "María",
+      type: "text",
+      required: true,
+    },
+    {
+      key: "registry_note",
+      label: "Mesa de regalos",
+      placeholder:
+        "Ej. Compartiremos una mesa de regalos. Si desean apoyarnos con un detalle, será bienvenido.",
+      type: "textarea",
+      required: false,
+    },
+  ],
 };
 
 // Descriptor completo por formato: campos comunes + específicos.

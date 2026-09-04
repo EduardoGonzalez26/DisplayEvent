@@ -10,7 +10,14 @@
 //   dress_code[{label,icon?}], dress_note, contacts[{name,phone}],
 //   contact_note + campos por formato (xv/boda/cumpleanos/baby_shower).
 
-const TEMPLATES = ["xv", "boda", "cumpleanos", "baby_shower"];
+const TEMPLATES = [
+  "xv",
+  "boda",
+  "cumpleanos",
+  "baby_shower",
+  "alice_xv",
+  "boda_jorge_macarena",
+];
 
 /* ------------------------------------------------------------------
    Helpers de coerción (equivalentes a los del backend, nunca lanzan).
@@ -168,6 +175,16 @@ export function normalizeInvitation(raw) {
       out.gender = str(source.gender);
       out.registry_note = str(source.registry_note);
       break;
+    case "alice_xv":
+      out.celebrant_name = str(source.celebrant_name);
+      out.parents = normalizeNames(source.parents);
+      out.padrinos = normalizeNames(source.padrinos);
+      out.registry_note = str(source.registry_note);
+      break;
+    case "boda_jorge_macarena":
+      out.couple = normalizeCouple(source.couple);
+      out.registry_note = str(source.registry_note);
+      break;
   }
 
   return out;
@@ -238,6 +255,16 @@ export function toFormState(raw) {
     case "baby_shower":
       form.parents = c.parents;
       form.gender = c.gender;
+      form.registry_note = c.registry_note;
+      break;
+    case "alice_xv":
+      form.celebrant_name = c.celebrant_name;
+      form.parents = c.parents;
+      form.padrinos = c.padrinos;
+      form.registry_note = c.registry_note;
+      break;
+    case "boda_jorge_macarena":
+      form.couple = { ...c.couple };
       form.registry_note = c.registry_note;
       break;
   }

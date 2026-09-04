@@ -3,6 +3,8 @@ import { xv } from "./xv.js";
 import { boda } from "./boda.js";
 import { cumpleanos } from "./cumpleanos.js";
 import { baby_shower } from "./baby_shower.js";
+import { alice_xv } from "./alice_xv.js";
+import { boda_jorge_macarena } from "./boda_jorge_macarena.js";
 
 // RECETA para agregar un formato nuevo:
 //   1. Crea el archivo de tema en `themes/<formato>.js` (id, label, labels, etc.).
@@ -17,6 +19,8 @@ const registry = {
   [boda.id]: boda,
   [cumpleanos.id]: cumpleanos,
   [baby_shower.id]: baby_shower,
+  [alice_xv.id]: alice_xv,
+  [boda_jorge_macarena.id]: boda_jorge_macarena,
 };
 
 // Tema por defecto: todo evento sin campo `template` (o con uno
@@ -39,6 +43,10 @@ export function getThemeLayout(templateId) {
       return lazy(() => import("../cumpleanos/CumpleanosLayout.jsx"));
     case "baby_shower":
       return lazy(() => import("../baby_shower/BabyShowerLayout.jsx"));
+    case "alice_xv":
+      return lazy(() => import("../alice_xv/AliceXvLayout.jsx"));
+    case "boda_jorge_macarena":
+      return lazy(() => import("../boda_jorge_macarena/BodaJorgeMacarenaLayout.jsx"));
     case "xv":
     default:
       return lazy(() => import("../xv/XvLayout.jsx"));
