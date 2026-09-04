@@ -1,5 +1,7 @@
 # Plan: Invitaciones Multiformato
 
+> **Estado actual (septiembre 2026):** ejecutado — Fases 0–4 completadas. El resultado real difiere del plan en que la duplicación por formato se resolvió **unificando las secciones en `client/src/invitation/shared/`** (en lugar de carpetas por formato), el contrato de datos quedó formalizado en `client/src/invitation/schema/` + `server/src/schemas/invitation.js` (zod, con validación en `events.js`/`invitations.js` y backfill `backfill-invitation-v2`), el editor pasó a ser schema-driven (`EventInvitation.jsx`) y `theme.labels` ahora se consumen desde las secciones. Los ornamentos WebGL 3D (perlas XV, anillos boda) se retiraron y quedan inertes en `client/src/invitation/3d/`.
+
 > **Objetivo:** convertir la invitación actual (pensada para XV años) en un sistema
 > de **formatos/templates reutilizables** (XV años, boda, cumpleaños, baby shower, etc.)
 > que el usuario pueda elegir y personalizar desde el panel.

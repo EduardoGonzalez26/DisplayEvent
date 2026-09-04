@@ -1,5 +1,7 @@
 # Auditoría técnica — DisplayEvent
 
+> **Actualización (post-auditoría, septiembre 2026):** la sección de invitaciones fue reestructurada. Se resolvió la duplicación 4× unificando las secciones en `client/src/invitation/shared/` (Gallery/DressCode/Message/etc. dejaron de vivir copiadas por formato), se añadió un contrato de datos formal (zod en `server/src/schemas/invitation.js` + espejo en `client/src/invitation/schema/`, con validación en `events.js`/`invitations.js` y backfill `backfill-invitation-v2`) y el editor quedó schema-driven. Se retiraron los ornamentos WebGL 3D (perlas XV / anillos boda), que permanecen inertes en `client/src/invitation/3d/`. Lo señalado en las secciones siguientes es el estado **previo** a esta reestructuración.
+
 > Fecha: 20 de agosto de 2026
 > Alcance: repositorio completo (backend Express + PostgreSQL, frontend React/Vite, invitación multiformato).
 > Método: lectura de código fuente, revisión de esquema, `git status/log`, ejecución local verificada (API :4000, frontend :5173).
