@@ -131,6 +131,86 @@ function normalizeCouple(v) {
 }
 
 /* ------------------------------------------------------------------
+   Mesa de regalos (registry): campo común a todos los templates.
+   Permite regalos monetarios por Stripe y/o depósito bancario.
+   ------------------------------------------------------------------ */
+
+export const DEFAULT_SUGGESTED_MXN = [
+  2000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000, 20000, 25000,
+  30000,
+];
+export const DEFAULT_SUGGESTED_EUR = [
+  100, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000, 1250, 1500,
+];
+
+// Booleano tolerante. null/undefined -> default. Strings "true"/"false"/"0"/"1".
+function toBool(v, dflt) {
+  if (typeof v === "boolean") return v;
+  if (v == null) return dflt;
+  if (typeof v === "string") {
+    const t = v.trim().toLowerCase();
+    if (t === "true" || t === "1" || t === "si" || t === "sí" || t === "yes") return true;
+    if (t === "false" || t === "0" || t === "no" || t === "") return false;
+    return dflt;
+  }
+  if (typeof v === "number") return v !== 0;
+  return dflt;
+}
+
+// Entero ≥ 0. null/undefined o inválido -> default.
+function toNonNegInt(v, dflt) {
+  if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.floor(v));
+  if (typeof v === "string" && v.trim() !== "") {
+    const n = Number(v);
+    if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
+  }
+  return dflt;
+}
+
+// Array de enteros ≥ 0, filtrando entradas inválidas. No-array -> default.
+function toIntArray(v, dflt) {
+  if (!Array.isArray(v)) return dflt.slice();
+  const out = [];
+  for (const item of v) {
+    if (typeof item === "number" && Number.isFinite(item) && item >= 0) {
+      out.push(Math.floor(item));
+    } else if (typeof item === "string" && item.trim() !== "") {
+      const n = Number(item);
+      if (Number.isFinite(n) && n >= 0) out.push(Math.floor(n));
+    }
+  }
+  return out;
+}
+
+// Datos bancarios (depósito/transferencia).
+function normalizeBank(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    bank_name: str(obj.bank_name),
+    holder: str(obj.holder),
+    account_number: str(obj.account_number),
+    concept: str(obj.concept),
+  };
+}
+
+// Normaliza `registry`. Idempotente y tolerante (nunca lanza). Descarta claves
+// desconocidas y aplica defaults para todo lo ausente/inválido.
+export function normalizeRegistry(raw) {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(source.enabled, false),
+    allow_custom: toBool(source.allow_custom, true),
+    min_mxn: toNonNegInt(source.min_mxn, 2000),
+    min_eur: toNonNegInt(source.min_eur, 100),
+    suggested_mxn: toIntArray(source.suggested_mxn, DEFAULT_SUGGESTED_MXN),
+    suggested_eur: toIntArray(source.suggested_eur, DEFAULT_SUGGESTED_EUR),
+    stripe_enabled: toBool(source.stripe_enabled, false),
+    bank: normalizeBank(source.bank),
+  };
+}
+
+/* ------------------------------------------------------------------
    Schema zod (validación de tipos + defaults).
 ------------------------------------------------------------------ */
 
@@ -160,6 +240,25 @@ const coupleSchema = z.object({
   nameB: z.string().default(""),
 });
 
+const bankSchema = z.object({
+  enabled: z.boolean().default(false),
+  bank_name: z.string().default(""),
+  holder: z.string().default(""),
+  account_number: z.string().default(""),
+  concept: z.string().default(""),
+});
+
+const registrySchema = z.object({
+  enabled: z.boolean().default(false),
+  allow_custom: z.boolean().default(true),
+  min_mxn: z.number().int().nonnegative().default(2000),
+  min_eur: z.number().int().nonnegative().default(100),
+  suggested_mxn: z.array(z.number().int().nonnegative()).default(DEFAULT_SUGGESTED_MXN),
+  suggested_eur: z.array(z.number().int().nonnegative()).default(DEFAULT_SUGGESTED_EUR),
+  stripe_enabled: z.boolean().default(false),
+  bank: bankSchema.default({}),
+});
+
 const commonFields = {
   version: z.number().int().nonnegative().default(2),
   hero_image: z.string().default(""),
@@ -174,6 +273,7 @@ const commonFields = {
   dress_note: z.string().default(""),
   contacts: z.array(contactItemSchema).default([]),
   contact_note: z.string().default(""),
+  registry: registrySchema.default({}),
 };
 
 const xvSchema = z.object({
@@ -266,6 +366,7 @@ export function normalizeInvitation(raw) {
     dress_note: str(source.dress_note),
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
+    registry: normalizeRegistry(source.registry),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.
@@ -334,6 +435,16 @@ export function normalizeForRead(raw) {
   const arrayKeys = ["itinerary", "locations", "gallery", "dress_code", "contacts"];
   for (const key of arrayKeys) {
     if (!Array.isArray(out[key])) out[key] = [];
+  }
+  // `registry` siempre presente, con subestructuras saneadas para lectura.
+  if (!out.registry || typeof out.registry !== "object" || Array.isArray(out.registry)) {
+    out.registry = normalizeRegistry(null);
+  } else {
+    if (!Array.isArray(out.registry.suggested_mxn)) out.registry.suggested_mxn = DEFAULT_SUGGESTED_MXN.slice();
+    if (!Array.isArray(out.registry.suggested_eur)) out.registry.suggested_eur = DEFAULT_SUGGESTED_EUR.slice();
+    if (!out.registry.bank || typeof out.registry.bank !== "object" || Array.isArray(out.registry.bank)) {
+      out.registry.bank = normalizeBank(null);
+    }
   }
   if (out.template === "xv" || out.template === "alice_xv" || out.template === "baby_shower") {
     if (!Array.isArray(out.parents)) out.parents = [];

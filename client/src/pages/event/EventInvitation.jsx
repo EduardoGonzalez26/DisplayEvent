@@ -69,6 +69,45 @@ function ImageUploader({ label, value, onChange }) {
   );
 }
 
+// Editor de lista de montos (suggested_mxn / suggested_eur). Los valores se
+// editan como strings y `normalizeRegistry` los coerce a enteros al guardar.
+function AmountListEditor({ inputCls, label, values, onChange }) {
+  const update = (i, v) => onChange(values.map((x, idx) => (idx === i ? v : x)));
+  const add = () => onChange([...values, ""]);
+  const remove = (i) => onChange(values.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="block">
+      <span className="text-sm text-gray-400 mb-1 block">{label}</span>
+      <div className="space-y-2">
+        {values.map((v, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              className={inputCls}
+              value={String(v ?? "")}
+              onChange={(e) => update(i, e.target.value)}
+              placeholder="0"
+            />
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              className="shrink-0 text-sm text-red-500 hover:text-red-400 px-2"
+            >
+              Quitar
+            </button>
+          </div>
+        ))}
+        <Button type="button" variant="secondary" onClick={add}>
+          + Agregar monto
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function EventInvitation() {
   const { id } = useParams();
   const [form, setForm] = useState(() => toFormState({}));
@@ -129,6 +168,11 @@ export default function EventInvitation() {
     setForm((f) => ({ ...f, locations: f.locations.filter((_, idx) => idx !== i) }));
 
   const setExtra = (key, value) => setForm((f) => setField(f, key, value));
+
+  // Mesa de Regalos (`registry`): objeto con `bank` anidado. Escritura por
+  // dot-path reutiliza `setField`; las listas de montos se editan como arrays.
+  const setReg = (key, value) => setForm((f) => setField(f, `registry.${key}`, value));
+  const setBank = (key, value) => setForm((f) => setField(f, `registry.bank.${key}`, value));
 
   const listOf = (cfg, key) =>
     Array.isArray(getField(cfg, key)) ? getField(cfg, key) : [];
@@ -564,6 +608,141 @@ export default function EventInvitation() {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <h2 className="text-base font-semibold text-white mb-1">Mesa de Regalos</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Regalos monetarios: montos sugeridos, depósito bancario y/o pago con
+            tarjeta (Stripe). Disponible en todos los formatos.
+          </p>
+
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!form.registry?.enabled}
+              onChange={(e) => setReg("enabled", e.target.checked)}
+              className="h-4 w-4 accent-gold-400"
+            />
+            <span className="text-sm text-gray-300">Activar mesa de regalos</span>
+          </label>
+
+          {form.registry?.enabled && (
+            <div className="mt-5 space-y-5 pl-6 border-l border-gray-800">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={!!form.registry?.allow_custom}
+                  onChange={(e) => setReg("allow_custom", e.target.checked)}
+                  className="h-4 w-4 accent-gold-400"
+                />
+                <span className="text-sm text-gray-300">Permitir monto libre</span>
+              </label>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">Monto mínimo (MXN)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={inputCls}
+                    value={form.registry?.min_mxn ?? ""}
+                    onChange={(e) => setReg("min_mxn", e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">Monto mínimo (EUR)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={inputCls}
+                    value={form.registry?.min_eur ?? ""}
+                    onChange={(e) => setReg("min_eur", e.target.value)}
+                  />
+                </label>
+              </div>
+
+              <AmountListEditor
+                inputCls={inputCls}
+                label="Montos sugeridos (MXN)"
+                values={form.registry?.suggested_mxn || []}
+                onChange={(next) => setReg("suggested_mxn", next)}
+              />
+              <AmountListEditor
+                inputCls={inputCls}
+                label="Montos sugeridos (EUR)"
+                values={form.registry?.suggested_eur || []}
+                onChange={(next) => setReg("suggested_eur", next)}
+              />
+
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={!!form.registry?.stripe_enabled}
+                  onChange={(e) => setReg("stripe_enabled", e.target.checked)}
+                  className="h-4 w-4 accent-gold-400"
+                />
+                <span className="text-sm text-gray-300">Habilitar pago con tarjeta (Stripe)</span>
+              </label>
+
+              <div className="rounded-xl border border-gray-800 p-4 space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!form.registry?.bank?.enabled}
+                    onChange={(e) => setBank("enabled", e.target.checked)}
+                    className="h-4 w-4 accent-gold-400"
+                  />
+                  <span className="text-sm text-gray-300 font-medium">
+                    Depósito / transferencia bancaria
+                  </span>
+                </label>
+
+                {form.registry?.bank?.enabled && (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-sm text-gray-400 mb-1 block">Banco</span>
+                      <input
+                        className={inputCls}
+                        value={form.registry?.bank?.bank_name || ""}
+                        onChange={(e) => setBank("bank_name", e.target.value)}
+                        placeholder="Ej. BBVA"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-400 mb-1 block">Titular de la cuenta</span>
+                      <input
+                        className={inputCls}
+                        value={form.registry?.bank?.holder || ""}
+                        onChange={(e) => setBank("holder", e.target.value)}
+                        placeholder="Ej. Alice Pérez"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-400 mb-1 block">Número de cuenta / CLABE</span>
+                      <input
+                        className={inputCls}
+                        value={form.registry?.bank?.account_number || ""}
+                        onChange={(e) => setBank("account_number", e.target.value)}
+                        placeholder="Ej. 0123456789"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-400 mb-1 block">Concepto</span>
+                      <input
+                        className={inputCls}
+                        value={form.registry?.bank?.concept || ""}
+                        onChange={(e) => setBank("concept", e.target.value)}
+                        placeholder="Ej. Regalo para Alice"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>

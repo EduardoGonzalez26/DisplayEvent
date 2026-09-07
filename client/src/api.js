@@ -77,6 +77,7 @@ export const api = {
   invitations: {
     get: (token) => request(`/invitations/${token}`),
     rsvp: (token, payload) => request(`/invitations/${token}/rsvp`, { method: "PUT", body: JSON.stringify(payload) }),
+    payment: (token, payload) => request(`/invitations/${token}/payment`, { method: "POST", body: JSON.stringify(payload) }),
   },
   upload: (file) => {
     const body = new FormData();

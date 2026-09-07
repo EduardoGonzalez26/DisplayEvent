@@ -21,7 +21,7 @@ export default function InvitationPage() {
   if (loading) return <InvitationLoader />;
   if (error || !data) return <InvitationNotFound />;
 
-  const { event, group, guests } = data;
+  const { event, group, guests, public_config } = data;
 
   return (
     <InvitationView
@@ -31,6 +31,7 @@ export default function InvitationPage() {
       guests={guests}
       token={token}
       rsvpNote={group.rsvp_note}
+      publishableKey={public_config?.stripe_publishable_key || null}
       onRsvpDone={(updated) =>
         setData((prev) => ({
           ...prev,

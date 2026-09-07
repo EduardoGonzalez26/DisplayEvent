@@ -123,6 +123,87 @@ function normalizeCouple(v) {
 }
 
 /* ------------------------------------------------------------------
+   Mesa de regalos (registry): campo común a todos los templates.
+   Objeto con `bank` anidado. Espeja `normalizeRegistry` del backend
+   (`server/src/schemas/invitation.js`) exactamente.
+------------------------------------------------------------------ */
+
+export const DEFAULT_SUGGESTED_MXN = [
+  2000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000, 20000, 25000,
+  30000,
+];
+export const DEFAULT_SUGGESTED_EUR = [
+  100, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000, 1250, 1500,
+];
+
+// Booleano tolerante. null/undefined -> default. Strings "true"/"false"/"0"/"1".
+function toBool(v, dflt) {
+  if (typeof v === "boolean") return v;
+  if (v == null) return dflt;
+  if (typeof v === "string") {
+    const t = v.trim().toLowerCase();
+    if (t === "true" || t === "1" || t === "si" || t === "sí" || t === "yes") return true;
+    if (t === "false" || t === "0" || t === "no" || t === "") return false;
+    return dflt;
+  }
+  if (typeof v === "number") return v !== 0;
+  return dflt;
+}
+
+// Entero ≥ 0. null/undefined o inválido -> default.
+function toNonNegInt(v, dflt) {
+  if (typeof v === "number" && Number.isFinite(v)) return Math.max(0, Math.floor(v));
+  if (typeof v === "string" && v.trim() !== "") {
+    const n = Number(v);
+    if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
+  }
+  return dflt;
+}
+
+// Array de enteros ≥ 0, filtrando entradas inválidas. No-array -> default.
+function toIntArray(v, dflt) {
+  if (!Array.isArray(v)) return dflt.slice();
+  const out = [];
+  for (const item of v) {
+    if (typeof item === "number" && Number.isFinite(item) && item >= 0) {
+      out.push(Math.floor(item));
+    } else if (typeof item === "string" && item.trim() !== "") {
+      const n = Number(item);
+      if (Number.isFinite(n) && n >= 0) out.push(Math.floor(n));
+    }
+  }
+  return out;
+}
+
+// Datos bancarios (depósito/transferencia).
+function normalizeBank(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    bank_name: str(obj.bank_name),
+    holder: str(obj.holder),
+    account_number: str(obj.account_number),
+    concept: str(obj.concept),
+  };
+}
+
+// Normaliza `registry`. Idempotente y tolerante (nunca lanza). Aplica defaults
+// para todo lo ausente/inválido y descarta claves desconocidas.
+export function normalizeRegistry(raw) {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(source.enabled, false),
+    allow_custom: toBool(source.allow_custom, true),
+    min_mxn: toNonNegInt(source.min_mxn, 2000),
+    min_eur: toNonNegInt(source.min_eur, 100),
+    suggested_mxn: toIntArray(source.suggested_mxn, DEFAULT_SUGGESTED_MXN),
+    suggested_eur: toIntArray(source.suggested_eur, DEFAULT_SUGGESTED_EUR),
+    stripe_enabled: toBool(source.stripe_enabled, false),
+    bank: normalizeBank(source.bank),
+  };
+}
+
+/* ------------------------------------------------------------------
    API pública
 ------------------------------------------------------------------ */
 
@@ -147,6 +228,7 @@ export function normalizeInvitation(raw) {
     dress_note: str(source.dress_note),
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
+    registry: normalizeRegistry(source.registry),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.
@@ -235,6 +317,12 @@ export function toFormState(raw) {
     locations: rows(c.locations, EMPTY_ROWS.locations),
     gallery: c.gallery,
     contacts: rows(c.contacts, EMPTY_ROWS.contacts),
+    registry: {
+      ...c.registry,
+      suggested_mxn: c.registry.suggested_mxn.slice(),
+      suggested_eur: c.registry.suggested_eur.slice(),
+      bank: { ...c.registry.bank },
+    },
   };
 
   switch (c.template) {

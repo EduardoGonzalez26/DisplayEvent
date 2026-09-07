@@ -519,6 +519,31 @@
   animation: monogram-sheen 6s ease-in-out infinite;
 }
 
+/* Monograma de oro pulido: gradiente metálico multicapa + canto dorado
+   y extrusión sutil. Complementa a .monogram-pearl (madreperla). */
+.monogram-gold {
+  background-image: linear-gradient(
+    112deg,
+    #fff7d6 0%,
+    #f9e7b0 18%,
+    #eecb7c 38%,
+    #d8a94e 52%,
+    #f3dfa4 70%,
+    #b8873a 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(163, 122, 46, 0.5);
+  text-shadow:
+    0 1px 0 rgba(170, 128, 50, 0.55),
+    0 2px 0 rgba(150, 108, 40, 0.35),
+    0 4px 1px rgba(138, 96, 36, 0.28),
+    0 8px 18px rgba(150, 108, 40, 0.28);
+}
+
 @keyframes monogram-sheen {
   0%,
   100% {
@@ -544,6 +569,13 @@
 .silk-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.05' numOctaves='3' seed='12' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 240px 240px;
+}
+
+/* Textura de papel de alta calidad: grano fino SVG sobre el degradado.
+   Se aplica con opacidad baja + mix-blend-multiply para un acabado sutil. */
+.paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: 260px 260px;
 }
 
 /* Paneles de cristal esmerilado con borde dorado y neumorfismo */

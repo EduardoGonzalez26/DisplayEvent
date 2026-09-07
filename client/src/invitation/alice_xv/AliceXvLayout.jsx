@@ -6,6 +6,7 @@ import Message from "../shared/Message.jsx";
 import Gallery from "../shared/Gallery.jsx";
 import DressCode from "../shared/DressCode.jsx";
 import RegistryNote from "../shared/RegistryNote.jsx";
+import Gifts from "../shared/Gifts.jsx";
 import Padrinos from "../shared/Padrinos.jsx";
 import Hero from "./Hero.jsx";
 
@@ -13,7 +14,7 @@ import Hero from "./Hero.jsx";
    XV de Alice — monograma madreperla, seda lavanda, perlas 3D, padrinos
    y mesa de regalos. Misma composición que "xv"; cambia la paleta.
 ------------------------------------------------------------------ */
-export default function AliceXvLayout({ event, family, cfg, theme, rsvp, reveal = true }) {
+export default function AliceXvLayout({ event, family, cfg, theme, rsvp, reveal = true, token, publishableKey }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} theme={theme} reveal={reveal} />
@@ -23,6 +24,7 @@ export default function AliceXvLayout({ event, family, cfg, theme, rsvp, reveal 
       <Gallery cfg={cfg} theme={theme} />
       <DressCode cfg={cfg} theme={theme} />
       <RegistryNote cfg={cfg} theme={theme} />
+      <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
       <Padrinos cfg={cfg} theme={theme} />
       <Rsvp {...rsvp} />
       <Footer event={event} theme={theme} />

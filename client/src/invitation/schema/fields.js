@@ -26,6 +26,10 @@ export const COMMON_FIELDS = [
   { key: "gallery", label: "Galería de fotos", type: "list", itemLabel: "Imagen", required: false },
   { key: "contacts", label: "Contactos (RSVP)", type: "list", itemLabel: "Contacto", required: false },
   { key: "contact_note", label: "Mensaje de aclaración", type: "text", required: false },
+  // `registry` (Mesa de Regalos) es un objeto común con `bank` anidado. Se
+  // edita en una sección propia del editor (no en la grilla genérica) y se
+  // normaliza/serializa en `schema/normalize.js` vía `normalizeRegistry`.
+  { key: "registry", label: "Mesa de Regalos", type: "registry", required: false },
 ];
 
 // Campos específicos por formato. El editor los muestra solo si el template

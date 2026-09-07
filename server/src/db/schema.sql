@@ -86,3 +86,22 @@ CREATE TABLE IF NOT EXISTS invitation_templates (
 );
 
 CREATE INDEX IF NOT EXISTS idx_inv_templates_user ON invitation_templates(user_id);
+
+-- Aportaciones/regalos confirmados vía Stripe.
+CREATE TABLE IF NOT EXISTS gifts (
+  id SERIAL PRIMARY KEY,
+  event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  group_id INT REFERENCES "groups"(id) ON DELETE SET NULL,
+  amount_minor BIGINT NOT NULL,
+  currency VARCHAR(3) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  stripe_payment_intent_id VARCHAR(255),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_gifts_event ON gifts(event_id);
+
+-- Un payment intent se corresponde 1:1 con una sesión de checkout completada.
+-- El índice único da idempotencia al webhook (ON CONFLICT DO NOTHING) y evita
+-- regalos duplicados cuando Stripe reenvía el mismo evento.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_gifts_payment_intent ON gifts(stripe_payment_intent_id);

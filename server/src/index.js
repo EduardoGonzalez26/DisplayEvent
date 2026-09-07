@@ -15,6 +15,7 @@ import templatesRouter from "./routes/templates.js";
 import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
 import authRouter from "./routes/auth.js";
+import webhooksRouter from "./routes/webhooks.js";
 import { requireAuth, csrfProtection } from "./middleware/auth.js";
 import { eventAccess } from "./middleware/eventAccess.js";
 
@@ -25,6 +26,11 @@ const app = express();
 
 // Render y otros proxies envían X-Forwarded-For; sin esto req.ip siempre es el proxy.
 app.set("trust proxy", 1);
+
+// Webhooks de Stripe: ANTES de cors() y express.json(). La ruta usa
+// express.raw() internamente para verificar la firma sobre el body crudo.
+// Al estar montada primero, no pasa por CORS (Stripe es server-to-server).
+app.use("/api/webhooks", webhooksRouter);
 
 // Solo orígenes permitidos: la URL pública del frontend y localhost en desarrollo.
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "")

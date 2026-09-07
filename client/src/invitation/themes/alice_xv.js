@@ -6,12 +6,12 @@ export const alice_xv = {
   id: "alice_xv",
   label: "XV de Alice",
   description:
-    "Lavanda y dorado suave. Portada con monograma XV, padrinos y mesa de regalos.",
+    "Lavanda y dorado. Portada con monograma AR en oro, papel y contador premium.",
   vars: {
-    "--inv-font-display": '"Cinzel", "Georgia", serif',
+    "--inv-font-display": '"Cormorant Garamond", "Georgia", serif',
     "--inv-font-heading": '"Poppins", "system-ui", sans-serif',
-    "--inv-font-script": '"Great Vibes", "Brush Script MT", cursive',
-    "--inv-font-serif": '"Playfair Display", "Georgia", serif',
+    "--inv-font-script": '"Dancing Script", "Brush Script MT", cursive',
+    "--inv-font-serif": '"Cormorant Garamond", "Georgia", serif',
     "--inv-font-body": '"Lato", "system-ui", sans-serif',
 
     "--inv-bg": "#f5f2fb",
@@ -45,7 +45,7 @@ export const alice_xv = {
     "--inv-gold-gradient":
       "linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)",
     "--inv-hero-fallback":
-      "linear-gradient(165deg, #efe9f8 0%, #e3daf4 45%, #cdbce9 78%, #a994dc 100%)",
+      "linear-gradient(165deg, #e6e0f3 0%, #efe7f6 50%, #f3e9f7 100%)",
   },
   // Experiencia de apertura: sobre digital con la inicial de la quinceañera.
   opening: {
@@ -84,6 +84,7 @@ export const alice_xv = {
     padrinosSubtitle:
       "Quienes nos acompañan en este camino, con todo su cariño y apoyo.",
     defaultKicker: "Invitación a mis XV años",
+    heroInvite: "Te Invitamos a Mis XV Años",
     parentsLine: (parents) =>
       `Con el amor de sus padres · ${parents.join(" y ")}`,
     familyGreeting: (family) =>

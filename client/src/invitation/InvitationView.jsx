@@ -20,6 +20,7 @@ export default function InvitationView({
   rsvpNote,
   preview = false,
   onRsvpDone,
+  publishableKey,
 }) {
   const theme = getTheme(cfg.template);
   const Layout = getThemeLayout(cfg.template);
@@ -51,6 +52,8 @@ export default function InvitationView({
           cfg={cfg}
           theme={theme}
           reveal={reveal}
+          token={token}
+          publishableKey={publishableKey}
           rsvp={{
             token,
             family,

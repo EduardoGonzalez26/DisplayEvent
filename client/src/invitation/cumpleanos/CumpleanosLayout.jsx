@@ -6,12 +6,13 @@ import Footer from "../shared/Footer.jsx";
 import Message from "../shared/Message.jsx";
 import Gallery from "../shared/Gallery.jsx";
 import DressCode from "../shared/DressCode.jsx";
+import Gifts from "../shared/Gifts.jsx";
 import Hero from "./Hero.jsx";
 
 /* ------------------------------------------------------------------
    Cumpleaños — flujo festivo sin mesa de regalos ni padrinos.
 ------------------------------------------------------------------ */
-export default function CumpleanosLayout({ event, family, cfg, theme, rsvp }) {
+export default function CumpleanosLayout({ event, family, cfg, theme, rsvp, token, publishableKey }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} />
@@ -23,6 +24,7 @@ export default function CumpleanosLayout({ event, family, cfg, theme, rsvp }) {
       <Locations cfg={cfg} theme={theme} />
       <Gallery cfg={cfg} theme={theme} />
       <DressCode cfg={cfg} theme={theme} />
+      <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
       <Rsvp {...rsvp} />
       <Footer event={event} theme={theme} />
     </div>

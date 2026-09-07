@@ -1,17 +1,10 @@
-import { useRef } from "react";
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "motion/react";
-import { Corner, Ornament } from "../shared/util.jsx";
-import GlassCountdown from "../xv/GlassCountdown.jsx";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { Ornament, safeCssUrl } from "../shared/util.jsx";
+import Countdown from "./Countdown.jsx";
 import { EASE } from "../motion.jsx";
 
-/* Iniciales de la quinceañera para el monograma ("Alice Renata" -> "AR"). */
+/* Iniciales de la quinceañera para el monograma ("Alice Renata" -> "AR").
+   Primera letra de la primera palabra + primera letra de la ÚLTIMA palabra. */
 const initialsOf = (name) => {
   const parts = String(name || "")
     .trim()
@@ -24,285 +17,256 @@ const initialsOf = (name) => {
 };
 
 /* ------------------------------------------------------------------
-   Monograma esculpido: cara de madreperla iridiscente (CSS) con canto
-   dorado. Se ensambla a partir de fragmentos al abrir la invitación y
-   se inclina suavemente siguiendo el ratón.
+   Arte botánico dorado para el margen inferior: tallo horizontal con
+   hojas simétricas, bayas y una flor central. Oro metálico vía gradiente.
 ------------------------------------------------------------------ */
-function Monogram({ letters, tiltX, tiltY, reveal, reduced }) {
-  const rotX = useSpring(useTransform(tiltY, [-1, 1], [12, -12]), {
-    stiffness: 55,
-    damping: 16,
-  });
-  const rotY = useSpring(useTransform(tiltX, [-1, 1], [-14, 14]), {
-    stiffness: 55,
-    damping: 16,
-  });
-
+function Leaf({ x, y, flip = false, s = 1 }) {
   return (
-    <motion.div
-      className="relative inline-block select-none"
-      style={{
-        perspective: 900,
-        transformStyle: "preserve-3d",
-        rotateX: reduced ? 0 : rotX,
-        rotateY: reduced ? 0 : rotY,
-      }}
+    <path
+      d="M0 0 C 10 -1, 16 -12, 26 -18 C 16 -6, 14 0, 0 0 Z"
+      transform={`translate(${x} ${y}) scale(${flip ? -s : s} ${s})`}
+      fill="url(#bot-gold)"
+      opacity="0.85"
+    />
+  );
+}
+
+function BotanicalBorder({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 1200 130"
+      className={`w-full ${className}`}
+      fill="none"
       aria-hidden="true"
+      preserveAspectRatio="xMidYMax meet"
     >
-      <span className="monogram-halo pointer-events-none absolute -inset-x-16 -inset-y-10 -z-10" />
-      <div
-        className="flex items-center justify-center font-inv-display leading-none tracking-[0.03em]"
-        style={{ fontSize: "clamp(5.5rem, 21vw, 11rem)" }}
-      >
-        {letters.map((letter, i) => (
-          <motion.span
-            key={i}
-            className="monogram-pearl monogram-shimmer inline-block"
-            initial={
-              reduced
-                ? { opacity: 0 }
-                : { opacity: 0, scale: 0.2, rotateY: i === 0 ? -150 : 150, x: i === 0 ? -80 : 80 }
-            }
-            animate={
-              reduced
-                ? { opacity: reveal ? 1 : 0 }
-                : { opacity: reveal ? 1 : 0, scale: 1, rotateY: 0, x: 0 }
-            }
-            transition={{
-              type: "spring",
-              stiffness: 120,
-              damping: 15,
-              delay: reveal ? 0.35 + i * 0.18 : 0,
-            }}
-          >
-            {letter}
-          </motion.span>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
+      <defs>
+        <linearGradient
+          id="bot-gold"
+          x1="600"
+          y1="0"
+          x2="600"
+          y2="130"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0" stopColor="#efd9a0" />
+          <stop offset="0.5" stopColor="#d3a95c" />
+          <stop offset="1" stopColor="#b8873a" />
+        </linearGradient>
+      </defs>
 
-/* ------------------------------------------------------------------
-   Fondo de alta costura: seda lavanda con pliegues realistas (gradientes
-   derivados del tema + grano SVG) y un velo que se despliega al abrir.
-   Usa variables del tema (--inv-hero-fallback, --inv-radial-*, --inv-bg-alt)
-   para que la paleta cambie automáticamente.
------------------------------------------------------------------- */
-function SilkBackdrop({ reveal, reduced, bgY }) {
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      <motion.div className="absolute inset-0" style={{ y: bgY }}>
-        {/* Seda base (paleta del tema) */}
-        <div
-          className="absolute inset-0"
-          style={{ background: "var(--inv-hero-fallback)" }}
-        />
-        {/* Pliegues de seda */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(120% 90% at 16% 8%, rgba(255,255,255,0.55), transparent 55%), radial-gradient(110% 100% at 86% 30%, var(--inv-radial-a), transparent 52%), radial-gradient(130% 110% at 50% 108%, var(--inv-radial-b), transparent 60%), radial-gradient(70% 55% at 30% 90%, var(--inv-radial-c), transparent 60%)",
-          }}
-        />
-        {/* Grano tejido de la seda */}
-        <div
-          className="silk-grain absolute inset-0 mix-blend-soft-light opacity-70"
-          style={{ transform: "scale(1.15)" }}
-        />
-        {/* Velo que se despliega suavemente al abrir */}
-        {!reduced && (
-          <motion.div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(180deg, var(--inv-surface), var(--inv-bg-alt))" }}
-            initial={{ opacity: reveal ? 0 : 1 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 1.3, ease: "easeOut", delay: reveal ? 0.15 : 0 }}
+      {/* Tallo principal */}
+      <path
+        d="M0 106 C 160 64, 320 96, 480 92 S 720 92, 900 88 S 1080 98, 1200 76"
+        stroke="url(#bot-gold)"
+        strokeWidth="1.6"
+        opacity="0.6"
+      />
+
+      {/* Racimos laterales: hojas + bayas */}
+      <Leaf x={180} y={92} s={1.1} />
+      <Leaf x={216} y={86} flip s={1.1} />
+      <circle cx={250} cy={90} r="2.4" fill="url(#bot-gold)" opacity="0.9" />
+      <circle cx={266} cy={82} r="2" fill="url(#bot-gold)" opacity="0.75" />
+
+      <Leaf x={920} y={86} s={1.1} flip />
+      <Leaf x={956} y={92} s={1.1} />
+      <circle cx={988} cy={84} r="2.4" fill="url(#bot-gold)" opacity="0.9" />
+      <circle cx={1004} cy={90} r="2" fill="url(#bot-gold)" opacity="0.75" />
+
+      {/* Motivo central: rama + flor */}
+      <path
+        d="M600 92 C 590 60, 618 30, 600 10"
+        stroke="url(#bot-gold)"
+        strokeWidth="1.4"
+        opacity="0.85"
+      />
+      <Leaf x={596} y={46} s={0.9} />
+      <Leaf x={604} y={40} flip s={0.9} />
+      <g transform="translate(600 12)">
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+          <ellipse
+            key={a}
+            cx="0"
+            cy="-8"
+            rx="2.6"
+            ry="6.5"
+            transform={`rotate(${a})`}
+            fill="url(#bot-gold)"
+            opacity="0.92"
           />
-        )}
-      </motion.div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_62%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--inv-radial-b),transparent_68%)]" />
-    </div>
+        ))}
+        <circle r="3.2" fill="#e9c87c" />
+      </g>
+    </svg>
   );
 }
 
 /* ------------------------------------------------------------------
-   Hero XV premium (variante Alice): monograma madreperla, seda lavanda,
-   perlas 3D y paneles de cristal con filigrana dorada. La apertura
-   (sobre) sincroniza el ensamblaje del monograma, el despliegue de la
-   seda y la flotación de las perlas.
+   Hero XV premium (variante Alice): degradado lavanda + textura de papel,
+   monograma "AR" en oro pulido, nombre serif + script, fecha larga y
+   contador premium. La apertura (sobre) sincroniza las transiciones.
 ------------------------------------------------------------------ */
 export default function AliceXvHero({ event, family, cfg, theme, reveal = true }) {
   const date = new Date(`${event.date}T00:00:00`);
-  const pretty = date.toLocaleDateString("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const month = date.toLocaleDateString("es-MX", { month: "long" });
-  const day = date.getDate();
+
+  // Formato largo "27 de Mayo, 2024".
+  const dayNum = date.getDate();
+  const monthName = date.toLocaleDateString("es-MX", { month: "long" });
+  const monthCap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
   const year = date.getFullYear();
+  const pretty = `${dayNum} de ${monthCap}, ${year}`;
 
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const bgY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -60]);
 
-  // Ratón normalizado (-1..1) para el parallax de perlas y la inclinación
-  // del monograma, medido sobre todo el hero.
-  const pointerRef = useRef({ x: 0, y: 0 });
-  const tiltX = useMotionValue(0);
-  const tiltY = useMotionValue(0);
-  const onPointerMove = (e) => {
-    if (reduced) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width - 0.5) * 2;
-    const y = ((e.clientY - r.top) / r.height - 0.5) * 2;
-    pointerRef.current = { x, y };
-    tiltX.set(x);
-    tiltY.set(y);
-  };
-
   const celebrantName = (cfg.celebrant_name || "").trim() || event.name;
-  const kicker = (cfg.kicker || "").trim() || theme?.labels?.defaultKicker;
   const monogram = initialsOf(celebrantName);
-  const parents = Array.isArray(cfg.parents)
-    ? cfg.parents
-        .map((p) => (p && typeof p === "object" ? p.name : p) || "")
-        .map((p) => (p || "").trim())
-        .filter(Boolean)
-    : [];
+  const inviteLine = theme?.labels?.heroInvite || "Te Invitamos a Mis XV Años";
+  const bgImage = safeCssUrl(cfg.hero_image);
+
+  // Nombre: primera palabra en serif (Cormorant Garamond), el resto en
+  // script (Dancing Script) con acabado dorado.
+  const nameParts = celebrantName.split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ");
 
   const entrance = (i = 0) => ({
     hidden: { opacity: 0, y: 30 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.9, ease: EASE, delay: 0.5 + i * 0.14 },
+      transition: { duration: 0.9, ease: EASE, delay: 0.35 + i * 0.14 },
     },
   });
 
   return (
     <header
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-inv-bg"
-      onPointerMove={onPointerMove}
     >
-      <SilkBackdrop reveal={reveal} reduced={reduced} bgY={bgY} />
+      {/* Fondo: degradado lavanda + textura de papel + arte botánico */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div className="absolute inset-0" style={{ y: bgY }}>
+          {bgImage ? (
+            <>
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url('${bgImage}')` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-inv-bg/75 via-inv-bg/45 to-inv-bg/85" />
+            </>
+          ) : (
+            <>
+              <div
+                className="absolute inset-0"
+                style={{ background: "var(--inv-hero-fallback)" }}
+              />
+              <div className="paper-grain absolute inset-0 opacity-40 mix-blend-multiply" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_62%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--inv-radial-b),transparent_68%)]" />
+            </>
+          )}
+        </motion.div>
 
-      {/* Marco de filigrana dorada con esquinas ornamentales */}
-      <div
-        className="pointer-events-none absolute inset-4 md:inset-8 z-[2] rounded-[1.6rem] text-inv-primary/70"
-        style={{
-          border: "1px solid rgba(171,146,104,0.5)",
-          outline: "1px solid rgba(171,146,104,0.22)",
-          outlineOffset: 6,
-        }}
-      >
+        {/* Arte botánico dorado en el margen inferior */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: reveal ? 1 : 0 }}
-          transition={{ duration: 1.6, ease: EASE, delay: reveal ? 0.6 : 0 }}
+          className="absolute inset-x-0 bottom-0 text-inv-primary"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: reveal ? 1 : 0, y: reveal ? 0 : 20 }}
+          transition={{ duration: 1.4, ease: EASE, delay: reveal ? 0.7 : 0 }}
         >
-          <Corner className="top-0 left-0" />
-          <Corner className="top-0 right-0 rotate-90" />
-          <Corner className="bottom-0 left-0 -rotate-90" />
-          <Corner className="bottom-0 right-0 rotate-180" />
+          <BotanicalBorder className="h-28 md:h-40 opacity-70" />
         </motion.div>
       </div>
 
       <motion.div
-        className="relative z-10 text-center px-5 py-24 md:py-28 max-w-3xl w-full"
+        className="relative z-10 text-center px-6 py-20 md:py-28 max-w-3xl w-full"
         style={{ y: contentY }}
       >
-        <motion.p
+        {/* Monograma "AR" en oro pulido */}
+        <motion.div
           initial="hidden"
           animate={reveal ? "show" : "hidden"}
           variants={entrance(0)}
-          className="glass-panel mx-auto inline-block rounded-full px-5 py-2 text-[0.62rem] uppercase tracking-[0.5em] text-inv-text-soft"
         >
-          {kicker}
-        </motion.p>
+          <span
+            className="monogram-gold font-inv-serif inline-block leading-none select-none"
+            style={{ fontSize: "clamp(5.5rem, 22vw, 12rem)" }}
+            aria-hidden="true"
+          >
+            {monogram}
+          </span>
+        </motion.div>
 
-        <div className="mt-4 md:mt-6">
-          <Monogram
-            letters={[...monogram]}
-            tiltX={tiltX}
-            tiltY={tiltY}
-            reveal={reveal}
-            reduced={reduced}
-          />
-        </div>
-
+        {/* Nombre: serif + script */}
         <motion.h1
           initial="hidden"
           animate={reveal ? "show" : "hidden"}
           variants={entrance(1)}
-          className="hero-title-glow mt-2 font-inv-script text-5xl md:text-7xl leading-[1.3] text-gold-gradient text-balance"
+          className="mt-5 md:mt-7 leading-[1.1] text-balance"
         >
-          {celebrantName}
+          <span className="font-inv-serif text-5xl md:text-7xl text-inv-text">
+            {firstName}
+          </span>
+          {lastName && (
+            <>
+              {" "}
+              <span className="font-inv-script text-6xl md:text-8xl text-gold-gradient">
+                {lastName}
+              </span>
+            </>
+          )}
         </motion.h1>
 
-        {parents.length > 0 && (
-          <motion.div
-            initial="hidden"
-            animate={reveal ? "show" : "hidden"}
-            variants={entrance(2)}
-            className="glass-panel mx-auto mt-8 max-w-lg rounded-[1.5rem] px-6 py-4"
-          >
-            <p className="text-[0.7rem] uppercase tracking-[0.3em] text-inv-text-soft">
-              {theme?.labels?.parentsLine?.(parents) ||
-                `Con el amor de sus padres · ${parents.join(" y ")}`}
-            </p>
-          </motion.div>
-        )}
+        <motion.div
+          initial="hidden"
+          animate={reveal ? "show" : "hidden"}
+          variants={entrance(1)}
+        >
+          <Ornament className="mt-6 md:mt-8" />
+        </motion.div>
 
+        {/* Texto de invitación */}
+        <motion.p
+          initial="hidden"
+          animate={reveal ? "show" : "hidden"}
+          variants={entrance(2)}
+          className="mt-6 md:mt-8 font-inv-serif italic text-xl md:text-2xl text-inv-text-soft text-balance"
+        >
+          {inviteLine}
+        </motion.p>
+
+        {/* Fecha larga */}
         <motion.div
           initial="hidden"
           animate={reveal ? "show" : "hidden"}
           variants={entrance(3)}
-          className="glass-panel mx-auto mt-4 flex max-w-md items-center justify-center gap-6 rounded-2xl px-6 py-4"
+          className="mt-8 md:mt-10"
         >
-          <div className="flex items-end justify-center gap-3">
-            <span className="font-inv-heading hero-title-glow text-5xl md:text-6xl font-semibold text-inv-text-light tabular-nums">
-              {day}
-            </span>
-            <span className="text-left text-sm leading-tight pb-1.5">
-              <span className="block hero-text-shadow uppercase tracking-[0.28em] text-inv-text-muted">
-                {month}
-              </span>
-              <span className="block hero-text-shadow text-inv-text text-lg">{year}</span>
-            </span>
-          </div>
-          <span className="hidden sm:block h-px w-10 bg-gradient-to-r from-transparent to-inv-primary/60" />
-          <p className="hero-text-shadow text-[0.65rem] uppercase tracking-[0.2em] text-inv-text-soft text-left">
+          <p className="font-inv-serif text-2xl md:text-4xl text-inv-text">
             {pretty}
-            <span className="block mt-1 text-inv-text">{event.time}</span>
           </p>
+          {event.time && (
+            <p className="mt-3 text-[0.7rem] uppercase tracking-[0.4em] text-inv-text-soft">
+              {event.time}
+            </p>
+          )}
         </motion.div>
 
-        <motion.div
-          initial="hidden"
-          animate={reveal ? "show" : "hidden"}
-          variants={entrance(3)}
-        >
-          <Ornament className="mt-8" />
-        </motion.div>
+        {/* Contador premium */}
+        {reveal && <Countdown date={event.date} time={event.time} />}
 
         <motion.p
           initial="hidden"
           animate={reveal ? "show" : "hidden"}
           variants={entrance(4)}
-          className="hero-text-shadow mt-5 text-[0.65rem] uppercase tracking-[0.4em] text-inv-text-soft"
+          className="mt-10 text-[0.65rem] uppercase tracking-[0.4em] text-inv-text-soft"
         >
           Invitación para&nbsp;la{" "}
           <span className="text-inv-text-soft font-semibold capitalize">{family}</span>
         </motion.p>
-
-        {/* Contador de cristal integrado en el hero */}
-        {reveal && <GlassCountdown date={event.date} time={event.time} />}
       </motion.div>
 
       <motion.div
