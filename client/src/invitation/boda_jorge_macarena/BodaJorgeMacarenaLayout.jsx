@@ -7,14 +7,14 @@ import Gallery from "./Gallery.jsx";
 import DressCode from "./DressCode.jsx";
 import RegistryNote from "./RegistryNote.jsx";
 import Footer from "./Footer.jsx";
-import Gifts from "../shared/Gifts.jsx";
+import Gifts from "./Gifts.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
 
 /* ------------------------------------------------------------------
    Boda de Jorge & Macarena — flujo claro botánico (marfil + acentos
    vibrantes). Todas las secciones de presentación son locales (Hero,
    Countdown, Message, Itinerary, Locations, Gallery, DressCode,
-   RegistryNote, Footer); solo Gifts y Rsvp siguen siendo compartidos
+   RegistryNote, Footer, Gifts); solo Rsvp sigue siendo compartido
    (lógica Stripe/API intacta). El contador flota sobre el cierre del
    hero.
 ------------------------------------------------------------------ */
