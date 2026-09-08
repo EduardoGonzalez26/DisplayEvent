@@ -245,8 +245,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
             <motion.div
               className="flex flex-wrap justify-center gap-3"
               initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.2 }}
+              animate="show"
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
             >
               {suggested.map((v) => (
