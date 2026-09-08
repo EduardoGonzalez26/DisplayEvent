@@ -262,6 +262,19 @@
   background: var(--tone-600);
 }
 
+/* Scrollbar botánico — solo invitación pública (clase `de-invitation` en <html>).
+   El ancho fino (10px) y el track transparente ya vienen del bloque global. */
+html.de-invitation::-webkit-scrollbar-thumb {
+  background: #2c4c3b;
+}
+html.de-invitation::-webkit-scrollbar-thumb:hover {
+  background: #e76f51;
+}
+html.de-invitation {
+  scrollbar-color: #2c4c3b transparent;
+  scrollbar-width: thin;
+}
+
 ::selection {
   background: rgba(99, 102, 241, 0.35);
 }

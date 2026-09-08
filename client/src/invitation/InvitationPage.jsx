@@ -18,6 +18,11 @@ export default function InvitationPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  useEffect(() => {
+    document.documentElement.classList.add("de-invitation");
+    return () => document.documentElement.classList.remove("de-invitation");
+  }, []);
+
   if (loading) return <InvitationLoader />;
   if (error || !data) return <InvitationNotFound />;
 

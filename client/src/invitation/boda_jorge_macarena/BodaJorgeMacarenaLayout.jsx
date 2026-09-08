@@ -9,6 +9,7 @@ import RegistryNote from "./RegistryNote.jsx";
 import Footer from "./Footer.jsx";
 import Gifts from "./Gifts.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
+import SectionNav from "./SectionNav.jsx";
 
 /* ------------------------------------------------------------------
    Boda de Jorge & Macarena — composición "carta panel por panel"
@@ -50,13 +51,13 @@ function CardEdge() {
 
 /* Tarjeta apilable. `flow` = true para contenido que puede exceder el
    viewport (Rsvp): no se fija, fluye normal manteniendo el acabado. */
-function StackCard({ z, bg, flow = false, children }) {
+function StackCard({ z, bg, flow = false, id, children }) {
   const finish =
     "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
 
   if (flow) {
     return (
-      <div className={`${finish} ${z} ${bg}`}>
+      <div id={id} className={`${finish} ${z} ${bg}`}>
         <CardEdge />
         {children}
       </div>
@@ -65,6 +66,7 @@ function StackCard({ z, bg, flow = false, children }) {
 
   return (
     <div
+      id={id}
       className={`${finish} ${z} ${bg} sticky top-0 flex min-h-[100dvh] flex-col justify-center`}
     >
       <CardEdge />
@@ -110,17 +112,33 @@ export default function BodaJorgeMacarenaLayout({
   const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
   const showGifts = !!(cfg.registry && cfg.registry.enabled);
 
+  // Puntos de la navegación lateral: una entrada por sección VISIBLE
+  // (mismas condiciones que arriba). "Regalos" apunta a la nota si existe,
+  // si no a la Mesa de Regalos (`mesa-regalos`).
+  const sections = [
+    { id: "carta", label: "Carta" },
+    showItinerary && { id: "itinerario", label: "Itinerario" },
+    showLocations && { id: "ubicaciones", label: "Ubicaciones" },
+    showGallery && { id: "galeria", label: "Galería" },
+    showDressCode && { id: "dresscode", label: "Dress Code" },
+    (showRegistryNote || showGifts) && {
+      id: showRegistryNote ? "regalos" : "mesa-regalos",
+      label: "Regalos",
+    },
+    { id: "confirmaciones", label: "Confirmaciones" },
+  ].filter(Boolean);
+
   return (
     <div>
       {/* Card 0 — portada (ya sticky h-dvh) */}
-      <div className="sticky top-0 z-0">
+      <div className="sticky top-0 z-0" id="inicio">
         <Hero event={event} family={family} cfg={cfg} reveal={reveal} />
       </div>
 
       {/* Card 1 — contador + carta (el contador es pequeño) */}
-      <StackCard z="z-10" bg="bg-inv-bg">
+      <StackCard z="z-10" bg="bg-inv-bg" id="carta">
         {hasCountdown && (
-          <div className="px-4 pb-6 md:pb-10">
+          <div className="px-4 pt-6 pb-6 md:pt-8 md:pb-10">
             <Countdown date={event.date} time={event.time} theme={theme} />
           </div>
         )}
@@ -129,42 +147,42 @@ export default function BodaJorgeMacarenaLayout({
 
       {/* Card 2 — itinerario */}
       {showItinerary && (
-        <StackCard z="z-20" bg="bg-inv-bg">
+        <StackCard z="z-20" bg="bg-inv-bg" id="itinerario">
           <Itinerary cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 3 — ubicaciones */}
       {showLocations && (
-        <StackCard z="z-30" bg="bg-inv-bg-alt2">
+        <StackCard z="z-30" bg="bg-inv-bg-alt2" id="ubicaciones">
           <Locations cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 4 — galería */}
       {showGallery && (
-        <StackCard z="z-40" bg="bg-inv-bg-alt" flow>
+        <StackCard z="z-40" bg="bg-inv-bg-alt" flow id="galeria">
           <Gallery cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 5 — dress code */}
       {showDressCode && (
-        <StackCard z="z-50" bg="bg-inv-bg">
+        <StackCard z="z-50" bg="bg-inv-bg" id="dresscode">
           <DressCode cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 6 — nota de regalos */}
       {showRegistryNote && (
-        <StackCard z="z-60" bg="bg-inv-bg">
+        <StackCard z="z-60" bg="bg-inv-bg" id="regalos">
           <RegistryNote cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 7 — mesa de regalos */}
       {showGifts && (
-        <StackCard z="z-70" bg="bg-inv-bg-alt2">
+        <StackCard z="z-70" bg="bg-inv-bg-alt2" id="mesa-regalos">
           <Gifts
             cfg={cfg}
             theme={theme}
@@ -175,7 +193,7 @@ export default function BodaJorgeMacarenaLayout({
       )}
 
       {/* Card 8 — RSVP (compartido): fluye normal, no sticky */}
-      <StackCard z="z-80" bg="bg-inv-bg-alt" flow>
+      <StackCard z="z-80" bg="bg-inv-bg-alt" flow id="confirmaciones">
         <Rsvp {...rsvp} />
       </StackCard>
 
@@ -183,6 +201,15 @@ export default function BodaJorgeMacarenaLayout({
       <StackCard z="z-90" bg="bg-inv-bg-alt">
         <Footer event={event} theme={theme} cfg={cfg} />
       </StackCard>
+
+      {/* Navegación lateral flotante (solo tras abrir el sobre) */}
+      {reveal && (
+        <SectionNav
+          sections={sections}
+          rsvpId="confirmaciones"
+          topId="inicio"
+        />
+      )}
     </div>
   );
 }
