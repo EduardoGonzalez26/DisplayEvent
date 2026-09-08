@@ -72,6 +72,7 @@ export default function InvitationView({
         <EnvelopeLoader
           monogram={opening?.cardText?.(cfg) || "&"}
           seal={opening?.sealText?.(cfg) || "&"}
+          family={family}
           onOpen={() => setEnvelopeOpen(true)}
         />
       )}

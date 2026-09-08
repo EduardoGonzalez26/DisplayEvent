@@ -271,6 +271,11 @@
   outline-offset: 2px;
 }
 
+.envelope-focus:focus-visible {
+  outline: 2px solid var(--inv-envelope-focus, var(--inv-primary, #ab9268));
+  outline-offset: 6px;
+}
+
 /* ------------------------------------------------------------------
    Animaciones existentes (invitación + admin)
 ------------------------------------------------------------------ */
@@ -576,6 +581,25 @@
 .paper-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
   background-size: 260px 260px;
+}
+
+/* Capitular dorada para cartas editoriales (primera letra del mensaje).
+   Utilidad genérica: toma tipografía y dorado de las variables --inv-*. */
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--inv-font-serif, "Playfair Display", "Georgia", serif);
+  font-style: normal;
+  font-size: 3.4em;
+  line-height: 0.82;
+  padding: 0.05em 0.14em 0 0;
+  background: var(
+    --inv-gold-gradient,
+    linear-gradient(180deg, #f9efd0 0%, #d3a95c 68%, #b8873a 100%)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 /* Paneles de cristal esmerilado con borde dorado y neumorfismo */
