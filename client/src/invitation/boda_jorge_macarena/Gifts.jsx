@@ -207,7 +207,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const showAmount = stripeReady && Number.isFinite(activeAmount) && activeAmount > 0;
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg-alt2 px-4 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-inv-bg-alt2 px-4 py-6 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-3xl">
@@ -345,7 +345,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
         )}
 
         {/* CTA principal: pago con tarjeta + alternativa de depósito */}
-        <div className="mt-10 flex flex-col items-center gap-4">
+        <div className="mt-7 flex flex-col items-center gap-4">
           {hasCard && (
             <Reveal>
               <div className="w-full max-w-md">

@@ -97,7 +97,7 @@ export default function Locations({ cfg, theme }) {
   const googleUrl = (it) => googleMapsUrl(it);
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg-alt2 px-4 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-inv-bg-alt2 px-4 py-8 md:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-5xl">

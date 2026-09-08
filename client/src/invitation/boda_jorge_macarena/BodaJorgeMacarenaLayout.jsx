@@ -11,16 +11,68 @@ import Gifts from "./Gifts.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
 
 /* ------------------------------------------------------------------
-   Boda de Jorge & Macarena — flujo claro botánico (marfil + acentos
-   vibrantes). Todas las secciones de presentación son locales (Hero,
-   Countdown, Message, Itinerary, Locations, Gallery, DressCode,
-   RegistryNote, Footer, Gifts); solo Rsvp sigue siendo compartido
-   (lógica Stripe/API intacta).
+   Boda de Jorge & Macarena — composición "carta panel por panel"
+   (tarjetas apiladas con sticky). Cada sección es una tarjeta que:
 
-   Composición de scroll "sticky + tapado": la portada queda fija arriba
-   (contenedor sticky z-0) mientras el contenido posterior (z-10, fondo
-   marfil sólido) sube y la va cubriendo al hacer scroll.
+     1. Se queda fija arriba (`sticky top-0`).
+     2. Tiene fondo sólido opaco (coincide con el de la sección interna).
+     3. Tiene `min-h-[100dvh]` para tapar por completo a la anterior.
+     4. Usa z-index creciente (la siguiente cubre a la anterior).
+     5. Lleva acabado de tarjeta: esquinas superiores redondeadas,
+        hairline botánico superior y sombra suave ascendente.
+
+   Orden: Hero (z-0, ya existente), Countdown+Message (z-10),
+   Itinerary (z-20), Locations (z-30), Gallery (z-40), DressCode (z-50),
+   RegistryNote (z-60), Gifts (z-70), Rsvp (z-80), Footer (z-90).
+
+   Rsvp NO es sticky: la lista de invitados no tiene cota superior, por
+   lo que fijarla a `100dvh` podría dejar invitados inaccesibles. Fluye
+   normal (mantiene el acabado de tarjeta) y cubre a Gifts al scrollear.
+
+   Las secciones que devuelven `null` no dejan una tarjeta vacía: el
+   layout replica sus condiciones de `return null` y omite el wrapper.
 ------------------------------------------------------------------ */
+
+/* Canto superior botánico fino (hairline + rombo amarillo) que marca el
+   borde de cada tarjeta, coherente con los hairline/diamantes del tema. */
+function CardEdge() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 pt-3 md:pt-4"
+    >
+      <span className="h-px w-20 bg-gradient-to-r from-transparent to-[var(--inv-botanical)]/40" />
+      <span className="h-1.5 w-1.5 rotate-45 bg-[var(--inv-accent-yellow)]/70" />
+      <span className="h-px w-20 bg-gradient-to-l from-transparent to-[var(--inv-botanical)]/40" />
+    </div>
+  );
+}
+
+/* Tarjeta apilable. `flow` = true para contenido que puede exceder el
+   viewport (Rsvp): no se fija, fluye normal manteniendo el acabado. */
+function StackCard({ z, bg, flow = false, children }) {
+  const finish =
+    "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
+
+  if (flow) {
+    return (
+      <div className={`${finish} ${z} ${bg}`}>
+        <CardEdge />
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${finish} ${z} ${bg} sticky top-0 flex min-h-[100dvh] flex-col justify-center`}
+    >
+      <CardEdge />
+      {children}
+    </div>
+  );
+}
+
 export default function BodaJorgeMacarenaLayout({
   event,
   family,
@@ -31,34 +83,106 @@ export default function BodaJorgeMacarenaLayout({
   token,
   publishableKey,
 }) {
-  // Evita dejar un hueco con padding superior si el contador no va a
-  // renderizar (sin fecha o fecha inválida): en ese caso la primera
-  // sección arranca pegada al contenido que tapa la portada.
+  // Evita un hueco con el contador cuando no hay fecha (o es inválida).
   const hasCountdown = (() => {
     if (!event.date) return false;
     const ts = new Date(`${event.date}T${event.time || "00:00:00"}`).getTime();
     return !Number.isNaN(ts);
   })();
 
+  // Réplicas de las condiciones de `return null` de cada sección para no
+  // renderizar tarjetas vacías de 100dvh.
+  const showItinerary = (cfg.itinerary || []).length > 0;
+  const showLocations = (cfg.locations || []).some(
+    (it) => it && (it.place || it.label)
+  );
+  const showGallery = (cfg.gallery || []).length > 0;
+  const showDressCode = (() => {
+    const raw = cfg.dress_code || [];
+    if (Array.isArray(raw)) return raw.length > 0;
+    return (
+      String(raw)
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean).length > 0
+    );
+  })();
+  const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
+  const showGifts = !!(cfg.registry && cfg.registry.enabled);
+
   return (
     <div>
+      {/* Card 0 — portada (ya sticky h-dvh) */}
       <div className="sticky top-0 z-0">
         <Hero event={event} family={family} cfg={cfg} reveal={reveal} />
       </div>
-      <div className="relative z-10 bg-inv-bg">
-        <div className={hasCountdown ? "px-4 pt-12 md:pt-16" : ""}>
-          <Countdown date={event.date} time={event.time} theme={theme} />
-        </div>
+
+      {/* Card 1 — contador + carta (el contador es pequeño) */}
+      <StackCard z="z-10" bg="bg-inv-bg">
+        {hasCountdown && (
+          <div className="px-4 pb-6 md:pb-10">
+            <Countdown date={event.date} time={event.time} theme={theme} />
+          </div>
+        )}
         <Message cfg={cfg} family={family} theme={theme} />
-        <Itinerary cfg={cfg} theme={theme} />
-        <Locations cfg={cfg} theme={theme} />
-        <Gallery cfg={cfg} theme={theme} />
-        <DressCode cfg={cfg} theme={theme} />
-        <RegistryNote cfg={cfg} theme={theme} />
-        <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
+      </StackCard>
+
+      {/* Card 2 — itinerario */}
+      {showItinerary && (
+        <StackCard z="z-20" bg="bg-inv-bg">
+          <Itinerary cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Card 3 — ubicaciones */}
+      {showLocations && (
+        <StackCard z="z-30" bg="bg-inv-bg-alt2">
+          <Locations cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Card 4 — galería */}
+      {showGallery && (
+        <StackCard z="z-40" bg="bg-inv-bg-alt" flow>
+          <Gallery cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Card 5 — dress code */}
+      {showDressCode && (
+        <StackCard z="z-50" bg="bg-inv-bg">
+          <DressCode cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Card 6 — nota de regalos */}
+      {showRegistryNote && (
+        <StackCard z="z-60" bg="bg-inv-bg">
+          <RegistryNote cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Card 7 — mesa de regalos */}
+      {showGifts && (
+        <StackCard z="z-70" bg="bg-inv-bg-alt2">
+          <Gifts
+            cfg={cfg}
+            theme={theme}
+            token={token}
+            publishableKey={publishableKey}
+          />
+        </StackCard>
+      )}
+
+      {/* Card 8 — RSVP (compartido): fluye normal, no sticky */}
+      <StackCard z="z-80" bg="bg-inv-bg-alt" flow>
         <Rsvp {...rsvp} />
+      </StackCard>
+
+      {/* Card 9 — cierre */}
+      <StackCard z="z-90" bg="bg-inv-bg-alt">
         <Footer event={event} theme={theme} cfg={cfg} />
-      </div>
+      </StackCard>
     </div>
   );
 }

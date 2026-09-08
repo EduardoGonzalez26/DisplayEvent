@@ -39,7 +39,7 @@ export default function Message({ cfg, family, theme }) {
   const reduced = useReducedMotion();
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg px-6 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-inv-bg px-6 py-6 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-prose">

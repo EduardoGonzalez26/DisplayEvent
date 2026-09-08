@@ -13,7 +13,7 @@ export default function RegistryNote({ cfg, theme }) {
   if (!text) return null;
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg px-4 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-inv-bg px-4 py-8 md:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-b),transparent_58%)]" />
 
       <div className="relative mx-auto max-w-2xl">

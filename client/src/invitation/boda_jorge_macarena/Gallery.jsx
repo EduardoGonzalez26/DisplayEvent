@@ -16,7 +16,7 @@ export default function Gallery({ cfg, theme }) {
   if (images.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg-alt px-4 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-inv-bg-alt px-4 py-8 md:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_58%)]" />
       <div className="relative mx-auto max-w-4xl">
         <WeddingSectionTitle
@@ -89,7 +89,7 @@ function GalleryShow({ images }) {
         {/* Marco botánico fino de esquinas recortadas alrededor de la foto */}
         <GoldFrame accent className="rounded-[1.6rem] p-2.5 md:rounded-[2rem] md:p-3">
           <div
-            className="relative overflow-hidden rounded-[1.1rem] shadow-[0_40px_90px_var(--inv-shadow-soft)] transition-[aspect-ratio] duration-500 md:rounded-[1.5rem]"
+            className="relative max-md:max-h-[50dvh] w-full overflow-hidden rounded-[1.1rem] shadow-[0_40px_90px_var(--inv-shadow-soft)] transition-[aspect-ratio] duration-500 md:rounded-[1.5rem]"
             style={{ aspectRatio: activeRatio }}
           >
             {images.map((src, i) => (
