@@ -30,7 +30,8 @@ router.get("/", async (req, res, next) => {
       `SELECT g.*,
               COUNT(gu.id)::int AS guests_count,
               COUNT(gu.id) FILTER (WHERE gu.is_child)::int AS children_count,
-              COUNT(gu.id) FILTER (WHERE gu.registered)::int AS registered_count
+              COUNT(gu.id) FILTER (WHERE gu.registered)::int AS registered_count,
+              COUNT(gu.id) FILTER (WHERE gu.declined)::int AS declined_count
        FROM "groups" g
        LEFT JOIN guests gu ON gu.group_id = g.id
        WHERE g.event_id = $1

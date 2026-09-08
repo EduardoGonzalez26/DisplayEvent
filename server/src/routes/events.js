@@ -71,7 +71,8 @@ router.get("/:id/stats", async (req, res, next) => {
 
     const [rsvpStats] = await query(
       `SELECT COUNT(*) FILTER (WHERE gu.registered)::int AS registered_count,
-              COUNT(*) FILTER (WHERE NOT gu.registered)::int AS unregistered_count
+              COUNT(*) FILTER (WHERE gu.declined)::int AS declined_count,
+              COUNT(*) FILTER (WHERE NOT gu.registered AND NOT gu.declined)::int AS unregistered_count
        FROM guests gu
        JOIN "groups" g ON g.id = gu.group_id
        WHERE g.event_id = $1`,
@@ -84,6 +85,7 @@ router.get("/:id/stats", async (req, res, next) => {
       children_count: guestStats.children_count,
       adults_count: guestStats.adults_count,
       registered_count: rsvpStats.registered_count,
+      declined_count: rsvpStats.declined_count,
       unregistered_count: rsvpStats.unregistered_count,
     });
   } catch (err) {

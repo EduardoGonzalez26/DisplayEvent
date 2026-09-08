@@ -54,7 +54,12 @@ export default function EventDashboard() {
           <StatCard label="Adultos" value={stats.adults_count} />
           <StatCard label="Confirmados" value={stats.registered_count} accent="text-emerald-400" />
           <StatCard
-            label="Sin confirmar"
+            label="No asistirán"
+            value={stats.declined_count ?? 0}
+            accent="text-rose-400"
+          />
+          <StatCard
+            label="Sin responder"
             value={stats.unregistered_count}
             accent="text-amber-400"
           />
@@ -91,6 +96,9 @@ export default function EventDashboard() {
                     </span>
                     <span className="rounded-full bg-emerald-900/40 text-emerald-300 px-2.5 py-1">
                       {reg} confirmados
+                    </span>
+                    <span className="rounded-full bg-rose-900/40 text-rose-300 px-2.5 py-1">
+                      {g.declined_count ?? 0} no asistirán
                     </span>
                   </div>
                 </div>
