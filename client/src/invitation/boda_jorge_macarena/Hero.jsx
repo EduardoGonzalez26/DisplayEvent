@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { safeCssUrl } from "../shared/util.jsx";
 import { EASE } from "../motion.jsx";
@@ -105,9 +106,20 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
   const weekday = cap(date.toLocaleDateString("es-MX", { weekday: "long" }));
 
   const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll();
+  // Ref al propio <header> (el sticky lo posiciona visualmente, pero
+  // useScroll mide vía offsetTop/offsetParent, así que el progreso no se
+  // corrompe con el sticky). `scrollYProgress` va de 0 (portada visible)
+  // a 1 (portada completamente tapada por el contenido que sube).
+  const headerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: headerRef,
+    offset: ["start start", "end start"],
+  });
   const bgY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -60]);
+  // Fade/scale sutil del contenido al ser tapado (efecto premium).
+  const contentOpacity = useTransform(scrollYProgress, [0, 1], [1, reduced ? 1 : 0.4]);
+  const contentScale = useTransform(scrollYProgress, [0, 1], [1, reduced ? 1 : 0.96]);
 
   const couple = cfg.couple || {};
   const nameA = String(couple.nameA || "").trim();
@@ -121,7 +133,8 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
 
   return (
     <header
-      className="relative flex min-h-screen items-center justify-center overflow-hidden"
+      ref={headerRef}
+      className="relative flex h-dvh items-center justify-center overflow-hidden"
       style={{ background: "var(--inv-hero-fallback)" }}
     >
       {/* Fondo con parallax: foto etérea con overlay marfil o degradado claro */}
@@ -180,17 +193,17 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
       </motion.div>
 
       <motion.div
-        className="relative z-10 w-full max-w-3xl px-6 pb-28 pt-24 text-center md:pb-32 md:pt-28"
+        className="relative z-10 w-full max-w-3xl px-6 pb-20 pt-14 text-center md:pb-32 md:pt-28"
         initial="hidden"
         animate={reveal ? "show" : "hidden"}
-        style={{ y: contentY }}
+        style={{ y: contentY, opacity: contentOpacity, scale: contentScale }}
       >
         {/* Monograma + kicker */}
         <motion.div variants={entrance(0)} className="flex flex-col items-center gap-3">
           {monogram && (
             <span
               aria-hidden="true"
-              className="font-inv-serif text-3xl tracking-[0.25em] text-[var(--inv-botanical)] md:text-4xl"
+              className="font-inv-serif text-2xl tracking-[0.25em] text-[var(--inv-botanical)] md:text-4xl"
             >
               {monogram}
             </span>
@@ -206,42 +219,42 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
         <motion.h1
           variants={entrance(1, 0.3)}
           aria-label={heroTitle}
-          className="mt-8 font-inv-script text-6xl leading-[1.2] text-balance text-[var(--inv-accent-pink)] sm:text-8xl md:text-[7rem]"
+          className="mt-5 font-inv-script text-5xl leading-[1.15] text-balance text-[var(--inv-accent-pink)] sm:leading-[1.2] sm:text-8xl md:text-[7rem]"
         >
           <AnimatedLetters text={heroTitle} delay={0.3} reduced={reduced} />
         </motion.h1>
 
         <motion.div variants={entrance(2)}>
-          <Flourish className="mx-auto mt-10 h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
+          <Flourish className="mx-auto mt-6 h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
         </motion.div>
 
         {tagline && (
           <motion.p
             variants={entrance(2)}
-            className="mt-8 font-inv-serif text-lg italic text-balance text-[var(--inv-text-soft)] md:text-2xl"
+            className="mt-4 font-inv-serif text-base italic text-balance text-[var(--inv-text-soft)] md:text-2xl"
           >
             {tagline}
           </motion.p>
         )}
 
         {/* Fecha/hora: tipografía Playfair verde, separada por líneas amarillas 1px */}
-        <motion.div variants={entrance(3)} className="mt-12">
-          <div className="flex flex-col items-center gap-5">
+        <motion.div variants={entrance(3)} className="mt-7">
+          <div className="flex flex-col items-center gap-4">
             <div className="flex items-center justify-center gap-5">
               <span className="h-px w-10 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
-              <p className="font-inv-heading text-2xl text-[var(--inv-text)] md:text-3xl">
+              <p className="font-inv-heading text-xl text-[var(--inv-text)] md:text-3xl">
                 {weekday}
               </p>
               <span className="h-px w-10 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
             </div>
-            <p className="font-inv-heading text-4xl font-medium tabular-nums text-[var(--inv-text)] md:text-5xl">
+            <p className="font-inv-heading text-3xl font-medium tabular-nums text-[var(--inv-text)] md:text-5xl">
               <span className="text-[var(--inv-primary)]">{day}</span> de {month},{" "}
               <span className="text-[var(--inv-text-muted)]">{year}</span>
             </p>
             {event.time && (
               <>
                 <span className="h-px w-24 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
-                <p className="text-sm uppercase tracking-[0.35em] tabular-nums text-[var(--inv-text-soft)] md:text-base">
+                <p className="text-xs uppercase tracking-[0.35em] tabular-nums text-[var(--inv-text-soft)] md:text-base">
                   {event.time}
                 </p>
               </>
@@ -251,7 +264,7 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
 
         <motion.p
           variants={entrance(4)}
-          className="mt-12 text-[0.62rem] uppercase tracking-[0.4em] text-[var(--inv-text-muted)] md:text-xs"
+          className="mt-7 text-[0.62rem] uppercase tracking-[0.4em] text-[var(--inv-text-muted)] md:text-xs"
         >
           Invitación para&nbsp;la{" "}
           <span className="font-semibold capitalize text-[var(--inv-accent-pink)]">
@@ -262,7 +275,7 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
 
       {/* Scroll cue "Desliza" */}
       <motion.div
-        className="absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-[var(--inv-primary)] md:bottom-20"
+        className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-[var(--inv-primary)] md:bottom-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: reveal ? 1 : 0 }}
         transition={{ duration: 1, delay: 1.8 }}
