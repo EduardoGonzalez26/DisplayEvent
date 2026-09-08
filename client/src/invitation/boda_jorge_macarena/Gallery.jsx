@@ -55,6 +55,16 @@ function GalleryShow({ images }) {
     schedule();
   };
 
+  const next = () => {
+    setIndex((i) => (i + 1) % images.length);
+    schedule();
+  };
+
+  const prev = () => {
+    setIndex((i) => (i - 1 + images.length) % images.length);
+    schedule();
+  };
+
   const syncRatios = useCallback(() => {
     let changed = false;
     imgRefs.current.forEach((el, i) => {
@@ -107,16 +117,27 @@ function GalleryShow({ images }) {
             ))}
 
             <AnimatePresence initial={false}>
-              <motion.img
+              <motion.div
                 key={index}
-                src={images[index]}
-                alt={`Foto ${index + 1}`}
-                className={`absolute inset-0 h-full w-full object-cover ${reduced ? "" : "kenburns"}`}
+                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                drag={reduced ? false : "x"}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -60) next();
+                  else if (info.offset.x > 60) prev();
+                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ opacity: { duration: 0.9, ease: EASE } }}
-              />
+              >
+                <motion.img
+                  src={images[index]}
+                  alt={`Foto ${index + 1}`}
+                  className={`h-full w-full object-cover ${reduced ? "" : "kenburns"}`}
+                />
+              </motion.div>
             </AnimatePresence>
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#FDFBF7]/85 to-transparent" />
