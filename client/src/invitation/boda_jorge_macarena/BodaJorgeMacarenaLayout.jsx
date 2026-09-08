@@ -40,7 +40,7 @@ export default function BodaJorgeMacarenaLayout({
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} reveal={reveal} />
-      <div className={`relative z-10 ${hasCountdown ? "-mt-14 px-4 md:-mt-20" : ""}`}>
+      <div className={`relative z-10 ${hasCountdown ? "-mt-10 px-4 md:-mt-16" : ""}`}>
         <Countdown date={event.date} time={event.time} theme={theme} />
       </div>
       <Message cfg={cfg} family={family} theme={theme} />
