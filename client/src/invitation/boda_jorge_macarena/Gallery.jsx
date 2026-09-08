@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import { EASE, Reveal } from "../motion.jsx";
 import { GoldFrame, WeddingSectionTitle } from "./decor.jsx";
 
@@ -13,23 +19,42 @@ import { GoldFrame, WeddingSectionTitle } from "./decor.jsx";
 ------------------------------------------------------------------ */
 export default function Gallery({ cfg, theme }) {
   const images = cfg.gallery || [];
+  const reduced = useReducedMotion();
+  const sectionRef = useRef(null);
+  // La sección de galería NO es sticky (fluye normal), así que medir el
+  // progreso sobre su propio contenedor es fiable: 0 cuando entra en el
+  // viewport y 1 cuando sale por completo.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  // Parallax sutil vertical de la foto dentro de su marco (±12px).
+  // Con reduced-motion el rango colapsa a 0 y el drift queda neutral.
+  const frameY = useTransform(scrollYProgress, [0, 1], [
+    reduced ? 0 : -12,
+    reduced ? 0 : 12,
+  ]);
+
   if (images.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg-alt px-4 py-8 md:py-16">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden bg-inv-bg-alt px-4 py-8 md:py-16"
+    >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_58%)]" />
       <div className="relative mx-auto max-w-4xl">
         <WeddingSectionTitle
           eyebrow={theme?.labels?.galleryEyebrow ?? "Galería"}
           title={theme?.labels?.gallery ?? "Momentos para Recordar"}
         />
-        <GalleryShow images={images} />
+        <GalleryShow images={images} frameY={frameY} />
       </div>
     </section>
   );
 }
 
-function GalleryShow({ images }) {
+function GalleryShow({ images, frameY }) {
   const [index, setIndex] = useState(0);
   const [ratios, setRatios] = useState({});
   const [lastRatio, setLastRatio] = useState(16 / 10);
@@ -116,29 +141,39 @@ function GalleryShow({ images }) {
               />
             ))}
 
-            <AnimatePresence initial={false}>
-              <motion.div
-                key={index}
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                drag={reduced ? false : "x"}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.15}
-                onDragEnd={(_, info) => {
-                  if (info.offset.x < -60) next();
-                  else if (info.offset.x > 60) prev();
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ opacity: { duration: 0.9, ease: EASE } }}
-              >
-                <motion.img
-                  src={images[index]}
-                  alt={`Foto ${index + 1}`}
-                  className={`h-full w-full object-cover ${reduced ? "" : "kenburns"}`}
-                />
-              </motion.div>
-            </AnimatePresence>
+            {/* Parallax sutil: la foto deriva unos px dentro de su marco.
+                Se aplica a un wrapper propio (NO al <img> con `kenburns`
+                ni al wrapper del `drag`, para no chocar con sus transform).
+                El contenedor con `overflow-hidden` recorta el deslizamiento;
+                el `-inset-4` da sangrado para no dejar huecos al derivar. */}
+            <motion.div
+              className={`absolute ${reduced ? "inset-0" : "-inset-4"}`}
+              style={{ y: frameY }}
+            >
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={index}
+                  className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                  drag={reduced ? false : "x"}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.15}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -60) next();
+                    else if (info.offset.x > 60) prev();
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ opacity: { duration: 0.9, ease: EASE } }}
+                >
+                  <motion.img
+                    src={images[index]}
+                    alt={`Foto ${index + 1}`}
+                    className={`h-full w-full object-cover ${reduced ? "" : "kenburns"}`}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#FDFBF7]/85 to-transparent" />
 

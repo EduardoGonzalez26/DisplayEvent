@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { escapeRegExp } from "../shared/util.jsx";
 import { Reveal } from "../motion.jsx";
 import { BotanicalCorner, Flourish } from "./decor.jsx";
@@ -38,6 +38,14 @@ export default function Message({ cfg, family, theme }) {
   const signature = theme?.resolvers?.signature?.(cfg) || cfg.celebrants || null;
   const reduced = useReducedMotion();
 
+  // Drift sutil de los ornamentos de esquina. La tarjeta es sticky, por lo
+  // que `useScroll({ target })` (que mide vía offsetTop) no refleja bien el
+  // pinning; derivamos del scroll global con un desplazamiento pequeño y
+  // opuesto por esquina para sugerir profundidad en la "carta".
+  const { scrollYProgress } = useScroll();
+  const cornerTopY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 14]);
+  const cornerBottomY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -14]);
+
   return (
     <section className="relative overflow-hidden bg-inv-bg px-6 py-6 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
@@ -52,19 +60,23 @@ export default function Message({ cfg, family, theme }) {
             <span className="h-px w-10 bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]" />
           </div>
 
-          {/* Orla botánica fina en las esquinas */}
-          <div
+          {/* Orla botánica fina en las esquinas (con deriva parallax sutil) */}
+          <motion.div
             className="pointer-events-none absolute -left-3 -top-3 h-24 w-24 text-[var(--inv-botanical)]/40 md:h-28 md:w-28"
             aria-hidden="true"
+            style={{ y: cornerTopY }}
           >
             <BotanicalCorner className="left-0 top-0 h-full w-full" />
-          </div>
-          <div
-            className="pointer-events-none absolute -bottom-3 -right-3 h-24 w-24 rotate-180 text-[var(--inv-botanical)]/40 md:h-28 md:w-28"
+          </motion.div>
+          <motion.div
+            className="pointer-events-none absolute -bottom-3 -right-3 h-24 w-24 text-[var(--inv-botanical)]/40 md:h-28 md:w-28"
             aria-hidden="true"
+            style={{ y: cornerBottomY }}
           >
-            <BotanicalCorner className="left-0 top-0 h-full w-full" />
-          </div>
+            <div className="h-full w-full rotate-180">
+              <BotanicalCorner className="left-0 top-0 h-full w-full" />
+            </div>
+          </motion.div>
 
           <Flourish className="mx-auto h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
           <p className="mt-8 font-inv-serif text-xl italic leading-[1.7] text-balance text-[var(--inv-text)] sm:text-2xl">

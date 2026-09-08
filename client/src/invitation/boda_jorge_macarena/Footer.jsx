@@ -1,3 +1,4 @@
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { Reveal } from "../motion.jsx";
 import { BotanicalDivider, Flourish } from "./decor.jsx";
 
@@ -11,6 +12,13 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
    nombres de la pareja (el layout lo pasa; sin él degrada a event.name).
 ------------------------------------------------------------------ */
 export default function Footer({ event, theme, cfg }) {
+  const reduced = useReducedMotion();
+  // Drift sutil del divisor botánico. La tarjeta final es sticky, así que
+  // no usamos `useScroll({ target })` (offsetTop no refleja el pinning) y
+  // derivamos del scroll global con un desplazamiento pequeño.
+  const { scrollYProgress } = useScroll();
+  const dividerY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -14]);
+
   const couple = cfg?.couple || {};
   const names = [String(couple.nameA || "").trim(), String(couple.nameB || "").trim()]
     .filter(Boolean)
@@ -32,7 +40,13 @@ export default function Footer({ event, theme, cfg }) {
 
       <div className="relative mx-auto max-w-3xl">
         <Reveal>
-          <BotanicalDivider className="mx-auto h-12 w-72 text-[var(--inv-botanical)] opacity-90 md:h-14 md:w-96" />
+          <motion.div
+            className="pointer-events-none"
+            aria-hidden="true"
+            style={{ y: dividerY }}
+          >
+            <BotanicalDivider className="mx-auto h-12 w-72 text-[var(--inv-botanical)] opacity-90 md:h-14 md:w-96" />
+          </motion.div>
           <p className="mt-8 text-[0.65rem] uppercase tracking-[0.5em] text-[var(--inv-accent-pink)] md:text-xs">
             {theme?.labels?.withLove ?? "Con todo nuestro cariño"}
           </p>
