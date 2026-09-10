@@ -1,6 +1,7 @@
 // Tema "alice_xv" — XV de Alice. Replica la estructura de "xv" (mismo set de
-// vars, labels, resolvers y opening) con una paleta propia: lavanda/lila +
-// dorado suave + blanco perla. Mismas fuentes que "xv".
+// vars, labels, resolvers y opening) con una paleta propia: rosa pastel +
+// blanco + dorado. Mismas fuentes que "xv" (Cormorant Garamond / Poppins /
+// Dancing Script / Lato).
 
 export const alice_xv = {
   id: "alice_xv",
@@ -14,38 +15,65 @@ export const alice_xv = {
     "--inv-font-serif": '"Cormorant Garamond", "Georgia", serif',
     "--inv-font-body": '"Lato", "system-ui", sans-serif',
 
-    "--inv-bg": "#f5f2fb",
-    "--inv-bg-alt": "#e6e0f4",
-    "--inv-bg-alt2": "#fbf9fd",
-    "--inv-surface": "#fbf9fd",
-    "--inv-card": "#f5f2fb",
-    "--inv-overlay": "#2a2340",
-    "--inv-on-accent": "#2a2340",
-    "--inv-primary": "#ab9268",
-    "--inv-primary-light": "#d6c49b",
-    "--inv-primary-dark": "#8e744a",
-    "--inv-primary-deep": "#6b5b37",
-    "--inv-text": "#3f3554",
-    "--inv-text-soft": "#5a4d75",
-    "--inv-text-muted": "#7a6b98",
-    "--inv-text-dim": "#9d8fbd",
-    "--inv-text-light": "#c3b6e0",
-    "--inv-accent": "#8b74c9",
-    "--inv-accent-border": "#ded5f2",
-    "--inv-accent-border-strong": "#c3b4e6",
-    "--inv-accent-solid": "#a994dc",
-    "--inv-ring": "#ede6f9",
-    "--inv-radial-a": "rgba(169, 148, 220, 0.35)",
-    "--inv-radial-b": "rgba(250, 247, 253, 0.55)",
-    "--inv-radial-c": "rgba(169, 148, 220, 0.20)",
-    "--inv-shadow-soft": "rgba(90, 74, 140, 0.18)",
-    "--inv-shadow-card": "rgba(90, 74, 140, 0.14)",
-    "--inv-shadow-mid": "rgba(90, 74, 140, 0.12)",
-    "--inv-shadow-ring": "rgba(214, 196, 155, 0.55)",
+    // Fondo rosa pastel + blanco.
+    "--inv-bg": "#FDF1F5",
+    "--inv-bg-alt": "#F7E3EA",
+    "--inv-bg-alt2": "#FFFFFF",
+    "--inv-surface": "#FFFFFF",
+    "--inv-card": "#FFFFFF",
+    // Overlay OSCURO: es el backdrop del modal de Rsvp y del depósito
+    // bancario. El overlay rosa/blanco del Hero se aplica en Hero.jsx.
+    "--inv-overlay": "#4A2433",
+    "--inv-on-accent": "#FFFFFF",
+
+    // Dorado (acento principal): botones, divisores gruesos e íconos.
+    "--inv-primary": "#C9A24B",
+    "--inv-primary-light": "#E3C685",
+    "--inv-primary-dark": "#A9822E",
+    "--inv-primary-deep": "#8C6A22",
+
+    // Texto (rosa-marrón profundo para lectura, jerarquía).
+    "--inv-text": "#6B4A57",
+    "--inv-text-soft": "#7E5B68",
+    "--inv-text-muted": "#9A7A86",
+    "--inv-text-dim": "#B69AA5",
+    "--inv-text-light": "#D8C2CB",
+
+    // Rosa (acento secundario). `--inv-accent-solid` se usa en el estado
+    // "No asistirá" de Rsvp.
+    "--inv-accent": "#D98AA4",
+    "--inv-accent-solid": "#D98AA4",
+    "--inv-accent-border": "#F3DFE6",
+    "--inv-accent-border-strong": "#E4BECB",
+
+    // Acentos XV (rosa + dorado). `--inv-botanical` reemplaza el verde de
+    // boda por el dorado: colorea las orlas/divisores de decor.jsx.
+    "--inv-accent-pink": "#D98AA4",
+    "--inv-accent-yellow": "#E0B35A",
+    "--inv-botanical": "#C9A24B",
+    "--inv-script-pink": "#D98AA4",
+    "--inv-accent-orange": "#E0B35A",
+
+    "--inv-ring": "#FBE9EF",
+    "--inv-radial-a": "rgba(217, 138, 164, 0.14)",
+    "--inv-radial-b": "rgba(201, 162, 75, 0.08)",
+    "--inv-radial-c": "rgba(217, 138, 164, 0.10)",
+
+    // Sombras rosas suaves (~5%).
+    "--inv-shadow-soft": "rgba(107, 74, 87, 0.06)",
+    "--inv-shadow-card": "rgba(107, 74, 87, 0.05)",
+    "--inv-shadow-mid": "rgba(107, 74, 87, 0.08)",
+    "--inv-shadow-ring": "rgba(201, 162, 75, 0.22)",
+    "--inv-shadow-deep": "rgba(107, 74, 87, 0.12)",
+    "--inv-shadow-gold": "rgba(201, 162, 75, 0.22)",
+
+    // Gradiente dorado cálido para los títulos compartidos que usan
+    // `text-gold-gradient` (títulos de Rsvp/Gifts, loaders, nombres).
     "--inv-gold-gradient":
-      "linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)",
-    "--inv-hero-fallback":
-      "linear-gradient(165deg, #e6e0f3 0%, #efe7f6 50%, #f3e9f7 100%)",
+      "linear-gradient(180deg, #E9CF8F 0%, #D6B263 45%, #C9A24B 70%, #A9822E 100%)",
+
+    // Portada clara: degradado rosa/blanco suave como fallback sin foto.
+    "--inv-hero-fallback": "linear-gradient(160deg, #FDF1F5 0%, #F7DCE4 100%)",
   },
   // Experiencia de apertura: sobre digital con la inicial de la quinceañera.
   opening: {
@@ -62,7 +90,7 @@ export const alice_xv = {
   labels: {
     rsvpEyebrow: "RSVP",
     rsvp: "Confirma tu asistencia",
-    countdown: "Faltan",
+    countdown: "Quedan",
     message: "Un mensaje para ustedes",
     itinerary: "Nuestro Itinerario",
     itineraryEyebrow: "Horarios",
