@@ -73,7 +73,7 @@ client/src/invitation/
 │   ├── BodaJorgeMacarenaLayout.jsx, decor.jsx (kit de ornamentos), SectionNav.jsx
 │   ├── Hero.jsx, Countdown.jsx, Message.jsx, Itinerary.jsx, Locations.jsx,
 │   │   Gallery.jsx, DressCode.jsx, RegistryNote.jsx, Gifts.jsx, Footer.jsx
-│   ├── PhotoBackdrop.jsx  # (SIN COMMITEAR) fondo de fotos por tarjeta
+│   ├── SectionPhoto.jsx  # fondo de UNA foto B&N por sección (solo boda)
 │   └── (solo usa shared/Rsvp.jsx como sección compartida)
 ├── 3d/                # Escenas WebGL RETIRADAS (inertes; re-agregar a pedido)
 │   └── RingsHero3D.jsx, RingsScene.jsx, XvPearlsHero3D.jsx, XvPearlsScene.jsx
@@ -94,7 +94,7 @@ client/src/invitation/
 
 ### 3.1 Plantillas "especiales" con componentes propios
 
-Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **dejaron de usar `shared/*` como secciones**: cada una tiene copias locales de `decor.jsx` (kit de ornamentos), `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Footer.jsx` y `SectionNav.jsx`. `alice_xv` incluye además `Padrinos.jsx`.
+Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **dejaron de usar `shared/*` como secciones**: cada una tiene copias locales de `decor.jsx` (kit de ornamentos), `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Footer.jsx` y `SectionNav.jsx`. `alice_xv` incluye además `Padrinos.jsx`, y `boda_jorge_macarena` incluye además `SectionPhoto.jsx` (fondos de foto B&N por sección). **`alice_xv` NO tiene `SectionPhoto.jsx` ni fondos de foto** (decisión del usuario).
 
 - `decor.jsx` (ambas) exporta el kit de ornamentos: `BotanicalCorner`, `BotanicalDivider`, `Flourish`, `WeddingSectionTitle`, `GoldFrame`.
 - La **única** sección compartida que consumen es `shared/Rsvp.jsx` (más utilidades sueltas: `shared/util.jsx` → `safeCssUrl`/`escapeRegExp`; `shared/Countdown.jsx` → `useCountdown`).
@@ -104,14 +104,15 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **dejaron de u
 
 Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit `46f7628`):
 
-- **Efecto "carta desplegable"** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta `sticky top-0` con `min-h-[100dvh]`, **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`) y `CardEdge` (hairline + rombo). La siguiente sección cubre por completo a la anterior al scrollear. Los `z`: Hero (z-0), Carta/Contador (z-10), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), Padrinos en `alice_xv` (z-75), RSVP (z-80), Footer (z-90).
-- **RSVP no es sticky** (`flow`): la lista de invitados no tiene cota superior; fluye normal manteniendo el acabado de tarjeta.
-- **Navegación lateral** (`SectionNav.jsx`): dots a la izquierda con scrollspy + tooltip; botón de confirmaciones (sobre) a la derecha que se convierte en "volver arriba" cuando la sección activa es el RSVP. Para saltar una tarjeta sticky **clavada** usa `flowTop()` (suma de alturas de hermanos en flujo) porque `offsetTop` de un sticky clavado devuelve la posición visual, no la de flujo (**bug corregido**). Escucha `scroll` en fase de captura y respeta `prefers-reduced-motion`.
+- **Tarjetas apiladas** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta con **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`), sombra ascendente y `CardEdge` (hairline + rombo). El fondo y (si aplica) la foto viven en **capas `absolute` propias dentro del wrapper**, de modo que el `StackCard` **no** gana `backdrop-filter` y no se convierte en contenedor de posicionamiento para descendientes `fixed` (el modal de datos bancarios de Gifts sigue anclado al viewport). Los `z`: Hero (z-0), Carta/Contador (z-10), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), Padrinos en `alice_xv` (z-75), RSVP (z-80), Footer (z-90).
+- **Solo Hero y Footer quedan `sticky`; el resto pasa a `flow`** (boda: commit `a6447c7`; la paridad de `alice_xv` está **sin commitear**, ver §10): la portada (Hero z-0) sigue `sticky top-0` con `min-h-[100dvh]` —efecto "carta desplegable": el contenido la tapa— y el cierre/Footer (z-90, con `SectionPhoto` en boda) también es sticky. Las secciones con contenido de altura variable pasan a **`flow`** (no sticky) porque `sticky top-0` + `min-h-[100dvh]` recortaba su parte inferior en móvil (sobre todo **Ubicaciones** al añadir los mapas): **Carta/Contador, Itinerario, Ubicaciones, Galería, Dress Code, Nota de regalos, Mesa de regalos y RSVP**; en `alice_xv` también **Padrinos**. Fluyen normal manteniendo el acabado de tarjeta y, al cubrir a la anterior, conservan el efecto de apilado sin quedar clavadas. Resultado: el efecto "carta desplegable" queda **solo para la portada**; ninguna sección se recorta.
+- **Mapa embebido en Ubicaciones** (`Locations.jsx` de ambas especiales; boda: commit `d615457`, `alice_xv`: **sin commitear**, ver §10): cada ubicación embebe un **mapa de Google por `<iframe>` sin API key** (`mapSrc(it)` → `https://maps.google.com/maps?q=<encodeURIComponent(place||label)>&z=15&output=embed`, con `loading="lazy"`, `title`, `allowFullScreen` y `referrerPolicy`). **Layout adaptativo al número de ubicaciones**: 1 → tarjeta centrada a ancho completo (`max-w-3xl`); 2 → 2 columnas (`md:grid-cols-2`); 3+ → grid responsive 1/2/3 (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`). Se conservan los botones Google Maps/Waze (URLs seguras) y el `null` si no hay ubicaciones. El endpoint es un embed público no oficial de Google; con URLs custom el embed se centra por `place`/`label`.
+- **Navegación lateral** (`SectionNav.jsx`): dots a la izquierda con scrollspy + tooltip; botón de confirmaciones (sobre) a la derecha que se convierte en "volver arriba" cuando la sección activa es el RSVP. Para saltar una tarjeta sticky **clavada** usa `flowTop()` (suma de alturas de hermanos en flujo) porque `offsetTop` de un sticky clavado devuelve la posición visual, no la de flujo (**bug corregido**). `flowTop()` **ignora hermanos fuera de flujo** (`position: fixed`/`absolute`) al sumar alturas. Escucha `scroll` en fase de captura y respeta `prefers-reduced-motion`.
 - **Portada sticky + parallax** (`Hero.jsx`): `h-dvh`, `useScroll({ target, offset: ["start start", "end start"] })`; al ser tapada, el fondo hace parallax y el contenido hace fade/scale (`contentOpacity`, `contentScale`).
 - **Parallax** en Galería, Mensaje y Footer (`useScroll()` global, porque `useScroll({ target })` no refleja bien el pinning de las tarjetas sticky).
 - **Swipe en la Galería**: arrastre horizontal (`drag="x"` con umbral) y **wrap-around** entre fotos.
 - **Mesa de regalos local** (`boda_jorge_macarena/Gifts.jsx`, replicada en `alice_xv/Gifts.jsx`): replica la lógica de `shared/Gifts.jsx` pero con **dropdowns nativos** de moneda/monto (opción "Monto libre"), **pago con tarjeta como CTA principal** y **depósito en modal** accesible (`BankModal`).
-- **`PhotoBackdrop`** (`boda_jorge_macarena/PhotoBackdrop.jsx`): fotos de `cfg.gallery` dispersas como fondo **DENTRO** de cada tarjeta (rejilla perimetral 3×3 sin celda central + jitter, opacidad sutil ~0.14–0.24, determinista por `seed`). **OJO: este trabajo está SIN COMMITEAR** (ver sección 10). `alice_xv` aún **no** lo incluye.
+- **Fondos de foto por sección — SOLO en `boda_jorge_macarena`** (`SectionPhoto.jsx`, commit `8878c88`): **UNA** foto de `cfg.gallery` **full-bleed** como fondo de la tarjeta, en **blanco y negro** (`grayscale`) + un **scrim** de degradado del `--inv-bg` (~94% en bordes / ~80% al centro) para legibilidad. `null` si no hay foto → cae a fondo sólido. `StackCard` acepta la prop `photo` (URL); `PHOTO_SECTIONS = ["itinerario","ubicaciones","dresscode","cierre"]` y el helper `photoFor(id)` reparte `gallery[i % gallery.length]`. Sustituye al antiguo `PhotoBackdrop.jsx` (fotos dispersas), **eliminado** en el mismo commit. ⚠️ **`alice_xv` NO tiene fondos de foto** (decisión del usuario): no existe `SectionPhoto.jsx` ni la prop `photo` allí.
 
 ### 3.3 Mesa de Regalos (archivos)
 
@@ -192,7 +193,9 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 **`alice_xv` — XV de "Alice Renata" (pedido especial):**
 - Paleta **rosa pastel + blanco + dorado**: fondo `#FDF1F5`, dorado `#C9A24B`, rosa `#D98AA4`, texto rosa-marrón `#6B4A57`.
 - Fuentes **Cormorant Garamond** + **Poppins** + **Dancing Script** + **Lato**.
-- **Replicó toda la arquitectura de `boda_jorge_macarena`**: componentes locales propios (`decor.jsx`, `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Padrinos.jsx`, `Footer.jsx`, `SectionNav.jsx`), efecto "carta desplegable" (`StackCard`), portada sticky + parallax, parallax, swipe, etc. Solo comparte `shared/Rsvp.jsx`.
+- **Replicó toda la arquitectura de `boda_jorge_macarena`**: componentes locales propios (`decor.jsx`, `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Padrinos.jsx`, `Footer.jsx`, `SectionNav.jsx`), portada sticky + parallax, parallax, swipe, etc. Solo comparte `shared/Rsvp.jsx`.
+- **Tiene mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky), igual que boda. ⚠️ Ese trabajo está **SIN COMMITEAR** (ver §10).
+- ⚠️ **NO tiene fondos de foto por sección** (no existe `SectionPhoto.jsx`): decisión explícita del usuario.
 - Monograma con inicial dinámica de `celebrant_name`, fecha larga y contador propio.
 - ⚠️ **Pendiente:** el `description` de `themes/alice_xv.js` sigue diciendo **"Lavanda y dorado"** (desactualizado tras el cambio a rosa pastel + blanco + dorado).
 
@@ -200,7 +203,8 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - Paleta **botánica vibrante** inspirada en flora CDMX: marfil `#FDFBF7`, verde `#2C4C3B`, rosa bugambilia `#C2436A`, naranja granada `#E76F51`, amarillo cempasúchil `#E5B15D`.
 - Fuentes **Playfair Display** + **Great Vibes** + **Lato**.
 - Ornamentos SVG de línea fina (granada, bugambilia, cempasúchil) en `decor.jsx`; sobre de apertura con paleta botánica.
-- Mismos efectos de layout que `alice_xv` + **`PhotoBackdrop`** (fotos de la galería como fondo por tarjeta, **sin commitear**).
+- **Mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky).
+- **Fondos de foto por sección** (`SectionPhoto.jsx`, solo boda): una foto B&N full-bleed + scrim en Itinerario, Ubicaciones, Dress Code y Cierre. Sustituyó al antiguo `PhotoBackdrop`.
 - ✅ Diseño botánico **completado** (ya no es la "base azul noche").
 - ⚠️ **Pendiente:** el doc `INVITACION_BODA_JORGE_MACARENA.md` describe el diseño **anterior** (azul noche/dorado).
 
@@ -236,11 +240,11 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 8. Decisiones / pendientes
 
-- [ ] **Reproducir `PhotoBackdrop` en `alice_xv`** si se desea (hoy solo está en `boda_jorge_macarena` y sin commitear).
+- [x] ~~Reproducir `PhotoBackdrop` en `alice_xv`~~ → **descartado**: `alice_xv` **no** usa fondos de foto por sección (decisión del usuario). `PhotoBackdrop.jsx` fue **eliminado** (sustituido por `SectionPhoto.jsx`, solo boda).
 - [ ] **Actualizar `description` de `themes/alice_xv.js`** ("Lavanda y dorado" → rosa pastel + blanco + dorado).
 - [ ] **Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describe el diseño anterior azul noche/dorado).
-- [ ] *(Rendimiento)* Evaluar el coste de `backdrop-blur` en la invitación pública.
-- [ ] *(Inconsistencia)* El `shared/Rsvp.jsx` compartido **no** muestra las fotos de fondo (`PhotoBackdrop`), a diferencia de las demás secciones de las plantillas especiales.
+- [x] ~~*(Rendimiento)* Evaluar el coste de `backdrop-blur`~~ → **ya no aplica**: las tarjetas no usan `backdrop-blur` (fondo opaco + foto en capas `absolute`).
+- [ ] *(Ajuste estético)* El **scrim del `SectionPhoto` es fuerte** (~94%/80%), así que la foto B&N se ve **sutil**; subir/disminuir opacidades si se quiere más/menos protagonismo (por legibilidad de la tinta verde).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
 - [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`.
 - [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice).
@@ -264,16 +268,15 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 10. Estado actual del working tree (SIN commitear)
 
-Cambios pendientes (verificados con `git status`, 2026-09-11). Todo pertenece al trabajo de **`PhotoBackdrop`** en `boda_jorge_macarena`:
+Cambios pendientes (verificados con `git status`, 2026-09-11). Todo pertenece a la **paridad de `alice_xv`** con boda (**mapa en Ubicaciones** + **secciones en `flow`**):
 
 | Archivo | Cambio |
 | ------- | ------ |
-| `client/src/invitation/boda_jorge_macarena/PhotoBackdrop.jsx` | **Nuevo**: fondo de fotos determinista por tarjeta. |
-| `client/src/invitation/boda_jorge_macarena/BodaJorgeMacarenaLayout.jsx` | Integra `PhotoBackdrop` en `StackCard` (capas: fondo opaco + fotos + contenido). |
-| `.../DressCode.jsx`, `.../Footer.jsx`, `.../Gallery.jsx`, `.../Gifts.jsx`, `.../Itinerary.jsx`, `.../Locations.jsx`, `.../Message.jsx`, `.../RegistryNote.jsx` | Quitan el fondo `bg-inv-bg*` de la `<section>` interna: ahora el fondo opaco + `PhotoBackdrop` viven en el wrapper `StackCard`. |
-| `client/src/invitation/boda_jorge_macarena/SectionNav.jsx` | Ajuste asociado al fondo (skip de hermanos fuera de flujo en `flowTop`). |
+| `client/src/invitation/alice_xv/Locations.jsx` | Añade `mapSrc(it)` + `<iframe>` (mapa de Google sin API key) y `gridClass` de layout adaptativo al número de ubicaciones. |
+| `client/src/invitation/alice_xv/AliceXvLayout.jsx` | Pasa a `flow` Carta/Contador, Itinerario, Ubicaciones, Dress Code, Nota de regalos, Mesa de regalos y Padrinos (Hero y Footer siguen `sticky`). |
+| `client/src/invitation/alice_xv/SectionNav.jsx` | `flowTop()` ignora hermanos fuera de flujo (`position: fixed`/`absolute`). |
 
-> `alice_xv` **no** tiene cambios sin commitear; su arquitectura ya está commiteada en `46f7628`.
+> `boda_jorge_macarena` **no** tiene cambios sin commitear: `SectionPhoto`, el mapa y el paso a `flow` ya están commiteados (`8878c88`, `d615457`, `a6447c7`).
 
 ---
 
@@ -290,6 +293,10 @@ Cambios pendientes (verificados con `git status`, 2026-09-11). Todo pertenece al
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `a6447c7` | Invitación: secciones con contenido variable en `flow` (evita recorte en móvil). |
+| `d615457` | Invitación: mapa embebido en Ubicaciones con layout adaptativo. |
+| `e6db010` | Editor: corregir eliminación de fotos de la galería (faltaba el índice en el `.map`). |
+| `8878c88` | Invitación: fondo de foto B&N por sección (`SectionPhoto`; elimina `PhotoBackdrop`). |
 | `6e60836` | RSVP: opción para permitir editar la confirmación. |
 | `46f7628` | Invitación: replicar arquitectura de boda en `alice_xv`. |
 | `1411acb` | Invitación: navegación lateral, scrollbar botánica y margen del contador. |
