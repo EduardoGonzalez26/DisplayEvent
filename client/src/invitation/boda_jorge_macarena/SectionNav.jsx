@@ -48,9 +48,9 @@ function docTop(el) {
    flujo = suma de la altura (`offsetHeight`, que el sticky NO altera) de los
    hermanos anteriores + la posición de flujo del contenedor padre (estático).
    Esto es correcto tanto con la tarjeta clavada (subir) como sin clavar (bajar).
-   Se saltan los hermanos fuera de flujo (`fixed`/`absolute`), p. ej. el fondo
-   fijo de fotos (`PhotoBackdrop`), que no desplazan al resto pero sí tienen
-   `offsetHeight` propio. */
+   Se saltan los hermanos fuera de flujo (`fixed`/`absolute`), que no desplazan
+   al resto aunque tengan `offsetHeight` propio. Las capas de fondo de foto
+   (`SectionPhoto`) viven DENTRO de cada tarjeta, no son hermanos directos. */
 function flowTop(el) {
   let y = 0;
   for (let sib = el.previousElementSibling; sib; sib = sib.previousElementSibling) {
