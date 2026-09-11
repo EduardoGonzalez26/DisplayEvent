@@ -30,6 +30,9 @@ export const COMMON_FIELDS = [
   // edita en una sección propia del editor (no en la grilla genérica) y se
   // normaliza/serializa en `schema/normalize.js` vía `normalizeRegistry`.
   { key: "registry", label: "Mesa de Regalos", type: "registry", required: false },
+  // `rsvp_editable` (boolean) NO se incluye en la grilla genérica: se edita con
+  // un toggle dedicado en el editor (sección "Confirmación de asistencia") y se
+  // normaliza/serializa en `schema/normalize.js` vía `toBool`.
 ];
 
 // Campos específicos por formato. El editor los muestra solo si el template

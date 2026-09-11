@@ -229,6 +229,7 @@ export function normalizeInvitation(raw) {
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
     registry: normalizeRegistry(source.registry),
+    rsvp_editable: toBool(source.rsvp_editable, false),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.
@@ -323,6 +324,7 @@ export function toFormState(raw) {
       suggested_eur: c.registry.suggested_eur.slice(),
       bank: { ...c.registry.bank },
     },
+    rsvp_editable: c.rsvp_editable,
   };
 
   switch (c.template) {

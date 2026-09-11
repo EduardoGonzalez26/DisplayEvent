@@ -274,6 +274,7 @@ const commonFields = {
   contacts: z.array(contactItemSchema).default([]),
   contact_note: z.string().default(""),
   registry: registrySchema.default({}),
+  rsvp_editable: z.boolean().default(false),
 };
 
 const xvSchema = z.object({
@@ -367,6 +368,7 @@ export function normalizeInvitation(raw) {
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
     registry: normalizeRegistry(source.registry),
+    rsvp_editable: toBool(source.rsvp_editable, false),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.

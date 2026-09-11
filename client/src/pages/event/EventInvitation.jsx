@@ -584,6 +584,29 @@ export default function EventInvitation() {
         </section>
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <h2 className="text-base font-semibold text-white mb-1">
+            Confirmación de asistencia
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Controla si los invitados pueden modificar su respuesta una vez enviada.
+          </p>
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!form.rsvp_editable}
+              onChange={(e) => set("rsvp_editable", e.target.checked)}
+              className="h-4 w-4 accent-gold-400"
+            />
+            <span className="text-sm text-gray-300">
+              Permitir que los invitados editen su confirmación
+            </span>
+          </label>
+          <p className="text-xs text-gray-500 mt-2">
+            Si está desactivado, una vez que confirmen ya no podrán cambiarla.
+          </p>
+        </section>
+
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Galería de fotos</h2>
             <Button variant="secondary" type="button" disabled={uploading} onClick={() => galleryInputRef.current?.click()}>

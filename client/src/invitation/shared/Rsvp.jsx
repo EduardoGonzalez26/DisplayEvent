@@ -28,6 +28,7 @@ export default function RsvpSection({
   const contacts = (cfg?.contacts || []).filter((c) => c.name || c.phone);
   const contactNote = (cfg?.contact_note || "").trim();
   const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+  const editable = !!cfg?.rsvp_editable;
   const reduced = useReducedMotion();
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
   const [diet, setDiet] = useState(note || "");
@@ -132,7 +133,7 @@ export default function RsvpSection({
           </div>
         )}
 
-        {!preview && submitted && (
+        {!preview && submitted && !editable && (
           <SubmitConfirmation
             count={attending}
             declining={declining}
@@ -141,10 +142,11 @@ export default function RsvpSection({
             family={family}
             contacts={contacts}
             contactNote={contactNote}
+            editable={editable}
           />
         )}
 
-        {!preview && !submitted && (
+        {!preview && (!submitted || editable) && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -275,11 +277,23 @@ export default function RsvpSection({
                   ¿Confirmar tu asistencia?
                 </h3>
                 <p className="text-sm text-inv-text-soft mb-4 leading-relaxed">
-                  Una vez confirmada,{" "}
-                  <span className="text-inv-text-soft font-semibold">
-                    la selección no podrá ser modificada
-                  </span>
-                  .
+                  {editable ? (
+                    <>
+                      Puedes{" "}
+                      <span className="text-inv-text-soft font-semibold">
+                        actualizar tu respuesta
+                      </span>{" "}
+                      en cualquier momento.
+                    </>
+                  ) : (
+                    <>
+                      Una vez confirmada,{" "}
+                      <span className="text-inv-text-soft font-semibold">
+                        la selección no podrá ser modificada
+                      </span>
+                      .
+                    </>
+                  )}
                 </p>
                 {contacts.length > 0 && (
                   <>
@@ -347,7 +361,7 @@ function AnswerButton({ active, label, selectedClass, onClick, reduced }) {
   );
 }
 
-function SubmitConfirmation({ count, declining, total, note, family, contacts, contactNote }) {
+function SubmitConfirmation({ count, declining, total, note, family, contacts, contactNote, editable }) {
   const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
   return (
     <motion.div
@@ -385,7 +399,7 @@ function SubmitConfirmation({ count, declining, total, note, family, contacts, c
         </p>
       )}
       <p className="text-sm text-inv-text-soft mb-2">
-        La selección ya no puede modificarse.
+        {editable ? "Puedes cambiarla en cualquier momento." : "La selección ya no puede modificarse."}
       </p>
       {contacts.length > 0 && (
         <p className="text-sm text-inv-text-soft">
