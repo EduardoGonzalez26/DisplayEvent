@@ -96,6 +96,26 @@ export default function Locations({ cfg, theme }) {
   };
   const googleUrl = (it) => googleMapsUrl(it);
 
+  /* Mapa embebido sin API key: usa `place` y cae a `label`. Devuelve null
+     si la ubicación no tiene ninguno de los dos (no se renderiza mapa). */
+  const mapSrc = (it) => {
+    const query = it.place || it.label;
+    if (!query) return null;
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
+  };
+  const mapTitle = (it) => `Mapa de ${it.label || it.place}`;
+
+  /* Layout adaptativo según el número de ubicaciones:
+     - 1 → tarjeta centrada a ancho completo (max-w-3xl).
+     - 2 → dos columnas en pantallas medianas+.
+     - 3+ → grid responsive de 1/2/3 columnas (mobile-first). */
+  const gridClass =
+    items.length === 1
+      ? "mx-auto w-full max-w-3xl"
+      : items.length === 2
+        ? "grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8"
+        : "grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3";
+
   return (
     <section className="relative overflow-hidden px-4 py-8 md:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
@@ -111,7 +131,7 @@ export default function Locations({ cfg, theme }) {
         />
         <Reveal>
           <motion.div
-            className="grid gap-6 md:grid-cols-2 md:gap-8 xl:grid-cols-3"
+            className={gridClass}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.1 }}
@@ -146,6 +166,25 @@ export default function Locations({ cfg, theme }) {
                   {it.label || `Ubicación ${i + 1}`}
                 </h3>
                 <p className="mt-1.5 font-light text-inv-text-soft">{it.place}</p>
+
+                {mapSrc(it) && (
+                  <div className="relative mt-5 overflow-hidden rounded-2xl border border-[var(--inv-botanical)]/35 shadow-[0_14px_36px_var(--inv-shadow-card)]">
+                    <iframe
+                      src={mapSrc(it)}
+                      title={mapTitle(it)}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="block aspect-[4/3] w-full border-0 sm:aspect-[16/10]"
+                    />
+                    {/* Filete botánico sobre el mapa (no intercepta clics). */}
+                    <span
+                      className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-[var(--inv-accent-yellow)]/45"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )}
+
                 <div className="mt-auto flex flex-wrap gap-2.5 pt-7">
                   {googleUrl(it) && (
                     <>
