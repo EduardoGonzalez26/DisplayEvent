@@ -47,7 +47,7 @@ export default function Message({ cfg, family, theme }) {
   const cornerBottomY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -14]);
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg px-6 py-6 md:py-12">
+    <section className="relative overflow-hidden px-6 py-6 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-prose">

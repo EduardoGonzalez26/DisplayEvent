@@ -35,7 +35,7 @@ export default function Footer({ event, theme, cfg }) {
     .join(" · ");
 
   return (
-    <footer className="relative overflow-hidden bg-inv-bg-alt px-6 py-10 text-center md:py-14">
+    <footer className="relative overflow-hidden px-6 py-10 text-center md:py-14">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_65%)]" />
 
       <div className="relative mx-auto max-w-3xl">

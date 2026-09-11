@@ -207,7 +207,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const showAmount = stripeReady && Number.isFinite(activeAmount) && activeAmount > 0;
 
   return (
-    <section className="relative overflow-hidden bg-inv-bg-alt2 px-4 py-6 md:py-12">
+    <section className="relative overflow-hidden px-4 py-6 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
 
       <div className="relative mx-auto max-w-3xl">

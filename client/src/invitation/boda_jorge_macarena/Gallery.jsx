@@ -40,7 +40,7 @@ export default function Gallery({ cfg, theme }) {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-inv-bg-alt px-4 py-8 md:py-16"
+      className="relative overflow-hidden px-4 py-8 md:py-16"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_58%)]" />
       <div className="relative mx-auto max-w-4xl">
