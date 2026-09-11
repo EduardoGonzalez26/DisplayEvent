@@ -47,10 +47,14 @@ function docTop(el) {
    Las tarjetas son hermanos directos en su contenedor, así que su posición de
    flujo = suma de la altura (`offsetHeight`, que el sticky NO altera) de los
    hermanos anteriores + la posición de flujo del contenedor padre (estático).
-   Esto es correcto tanto con la tarjeta clavada (subir) como sin clavar (bajar). */
+   Esto es correcto tanto con la tarjeta clavada (subir) como sin clavar (bajar).
+   Se saltan los hermanos fuera de flujo (`fixed`/`absolute`), que no desplazan
+   al resto aunque tengan `offsetHeight` propio. */
 function flowTop(el) {
   let y = 0;
   for (let sib = el.previousElementSibling; sib; sib = sib.previousElementSibling) {
+    const pos = getComputedStyle(sib).position;
+    if (pos === "fixed" || pos === "absolute") continue;
     y += sib.offsetHeight;
   }
   if (el.parentElement) y += docTop(el.parentElement);

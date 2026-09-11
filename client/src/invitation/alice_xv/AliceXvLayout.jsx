@@ -27,9 +27,14 @@ import SectionNav from "./SectionNav.jsx";
    Locations (z-30), Gallery (z-40), DressCode (z-50), RegistryNote
    (z-60), Gifts (z-70), Padrinos (z-75), Rsvp (z-80), Footer (z-90).
 
-   Rsvp NO es sticky: la lista de invitados no tiene cota superior, por
-   lo que fijarla a `100dvh` podría dejar invitados inaccesibles. Fluye
-   normal (mantiene el acabado de tarjeta) y cubre a Padrinos al scrollear.
+   Varias tarjetas NO son sticky (`flow`): su contenido puede exceder
+   `100dvh` en móvil y `sticky top-0` + `min-h-[100dvh]` recortaría la
+   parte inferior. Fluyen normal (mantienen el acabado de tarjeta) y, al
+   cubrir a la anterior, conservan el efecto "carta desplegable" sin
+   quedarse fijas. Son: Carta (z-10), Itinerario (z-20), Ubicaciones
+   (z-30), Galería (z-40), Dress Code (z-50), Nota de regalos (z-60),
+   Mesa de regalos (z-70), Padrinos (z-75) y Rsvp (z-80). El Hero (z-0) y
+   el cierre (z-90) siguen sticky.
 
    Las secciones que devuelven `null` no dejan una tarjeta vacía: el
    layout replica sus condiciones de `return null` y omite el wrapper.
@@ -51,8 +56,8 @@ function CardEdge() {
 }
 
 /* Tarjeta apilable. `flow` = true para contenido que puede exceder el
-   viewport (Gallery/Rsvp): no se fija, fluye normal manteniendo el
-   acabado. */
+   viewport (Carta, Itinerario, Ubicaciones, Gallery, DressCode, regalos,
+   Padrinos y Rsvp): no se fija, fluye normal manteniendo el acabado. */
 function StackCard({ z, bg, flow = false, id, children }) {
   const finish =
     "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
@@ -145,8 +150,8 @@ export default function AliceXvLayout({
         <Hero event={event} family={family} cfg={cfg} theme={theme} reveal={reveal} />
       </div>
 
-      {/* Card 1 — contador + carta (el contador es pequeño) */}
-      <StackCard z="z-10" bg="bg-inv-bg" id="carta">
+      {/* Card 1 — contador + carta (el contador es pequeño) — flow */}
+      <StackCard z="z-10" bg="bg-inv-bg" flow id="carta">
         {hasCountdown && (
           <div className="px-4 pt-6 pb-6 md:pt-8 md:pb-10">
             <Countdown date={event.date} time={event.time} theme={theme} />
@@ -155,16 +160,16 @@ export default function AliceXvLayout({
         <Message cfg={cfg} family={family} theme={theme} />
       </StackCard>
 
-      {/* Card 2 — itinerario */}
+      {/* Card 2 — itinerario — flow */}
       {showItinerary && (
-        <StackCard z="z-20" bg="bg-inv-bg" id="itinerario">
+        <StackCard z="z-20" bg="bg-inv-bg" flow id="itinerario">
           <Itinerary cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 3 — ubicaciones */}
+      {/* Card 3 — ubicaciones — flow */}
       {showLocations && (
-        <StackCard z="z-30" bg="bg-inv-bg-alt2" id="ubicaciones">
+        <StackCard z="z-30" bg="bg-inv-bg-alt2" flow id="ubicaciones">
           <Locations cfg={cfg} theme={theme} />
         </StackCard>
       )}
@@ -176,23 +181,23 @@ export default function AliceXvLayout({
         </StackCard>
       )}
 
-      {/* Card 5 — dress code */}
+      {/* Card 5 — dress code — flow */}
       {showDressCode && (
-        <StackCard z="z-50" bg="bg-inv-bg" id="dresscode">
+        <StackCard z="z-50" bg="bg-inv-bg" flow id="dresscode">
           <DressCode cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 6 — nota de regalos */}
+      {/* Card 6 — nota de regalos — flow */}
       {showRegistryNote && (
-        <StackCard z="z-60" bg="bg-inv-bg" id="regalos">
+        <StackCard z="z-60" bg="bg-inv-bg" flow id="regalos">
           <RegistryNote cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 7 — mesa de regalos */}
+      {/* Card 7 — mesa de regalos — flow */}
       {showGifts && (
-        <StackCard z="z-70" bg="bg-inv-bg-alt2" id="mesa-regalos">
+        <StackCard z="z-70" bg="bg-inv-bg-alt2" flow id="mesa-regalos">
           <Gifts
             cfg={cfg}
             theme={theme}
@@ -202,9 +207,9 @@ export default function AliceXvLayout({
         </StackCard>
       )}
 
-      {/* Card 7.5 — padrinos */}
+      {/* Card 7.5 — padrinos — flow */}
       {showPadrinos && (
-        <StackCard z="z-75" bg="bg-inv-bg" id="padrinos">
+        <StackCard z="z-75" bg="bg-inv-bg" flow id="padrinos">
           <Padrinos cfg={cfg} theme={theme} />
         </StackCard>
       )}
