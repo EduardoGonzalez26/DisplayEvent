@@ -35,9 +35,13 @@ const PHOTO_SECTIONS = ["itinerario", "ubicaciones", "dresscode", "cierre"];
    Itinerary (z-20), Locations (z-30), Gallery (z-40), DressCode (z-50),
    RegistryNote (z-60), Gifts (z-70), Rsvp (z-80), Footer (z-90).
 
-   Rsvp NO es sticky: la lista de invitados no tiene cota superior, por
-   lo que fijarla a `100dvh` podría dejar invitados inaccesibles. Fluye
-   normal (mantiene el acabado de tarjeta) y cubre a Gifts al scrollear.
+   Varias tarjetas NO son sticky (`flow`): su contenido puede exceder
+   `100dvh` en móvil y `sticky top-0` + `min-h-[100dvh]` recortaría la
+   parte inferior. Fluyen normal (mantienen el acabado de tarjeta) y, al
+   cubrir a la anterior, conservan el efecto "carta desplegable" sin
+   quedarse fijas. Son: Carta (z-10), Itinerario (z-20), Dress Code
+   (z-50), Nota de regalos (z-60), Mesa de regalos (z-70) y Rsvp (z-80).
+   El Hero (z-0) y el cierre (z-90) siguen sticky.
 
    Las secciones que devuelven `null` no dejan una tarjeta vacía: el
    layout replica sus condiciones de `return null` y omite el wrapper.
@@ -70,7 +74,8 @@ function CardEdge() {
 }
 
 /* Tarjeta apilable. `flow` = true para contenido que puede exceder el
-   viewport (Rsvp): no se fija, fluye normal manteniendo el acabado.
+   viewport (Carta, Itinerario, Dress Code, Nota de regalos, Mesa de
+   regalos y Rsvp): no se fija, fluye normal manteniendo el acabado.
 
    Estructura por capas (todas ABSOLUTAS dentro del wrapper):
      1. Fondo OPACO de la tarjeta (`bg`) — restaura el efecto
@@ -196,7 +201,7 @@ export default function BodaJorgeMacarenaLayout({
       </div>
 
       {/* Card 1 — contador + carta (el contador es pequeño) — fondo sólido */}
-      <StackCard z="z-10" bg="bg-inv-bg" id="carta">
+      <StackCard z="z-10" bg="bg-inv-bg" flow id="carta">
         {hasCountdown && (
           <div className="px-4 pt-6 pb-6 md:pt-8 md:pb-10">
             <Countdown date={event.date} time={event.time} theme={theme} />
@@ -207,14 +212,14 @@ export default function BodaJorgeMacarenaLayout({
 
       {/* Card 2 — itinerario — FONDO DE FOTO */}
       {showItinerary && (
-        <StackCard z="z-20" bg="bg-inv-bg" id="itinerario" photo={photoFor("itinerario")}>
+        <StackCard z="z-20" bg="bg-inv-bg" id="itinerario" photo={photoFor("itinerario")} flow>
           <Itinerary cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 3 — ubicaciones — FONDO DE FOTO */}
       {showLocations && (
-        <StackCard z="z-30" bg="bg-inv-bg-alt2" id="ubicaciones" photo={photoFor("ubicaciones")}>
+        <StackCard z="z-30" bg="bg-inv-bg-alt2" id="ubicaciones" photo={photoFor("ubicaciones")} flow>
           <Locations cfg={cfg} theme={theme} />
         </StackCard>
       )}
@@ -228,21 +233,21 @@ export default function BodaJorgeMacarenaLayout({
 
       {/* Card 5 — dress code — FONDO DE FOTO */}
       {showDressCode && (
-        <StackCard z="z-50" bg="bg-inv-bg" id="dresscode" photo={photoFor("dresscode")}>
+        <StackCard z="z-50" bg="bg-inv-bg" id="dresscode" photo={photoFor("dresscode")} flow>
           <DressCode cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 6 — nota de regalos — fondo sólido */}
       {showRegistryNote && (
-        <StackCard z="z-60" bg="bg-inv-bg" id="regalos">
+        <StackCard z="z-60" bg="bg-inv-bg" flow id="regalos">
           <RegistryNote cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
       {/* Card 7 — mesa de regalos — fondo sólido */}
       {showGifts && (
-        <StackCard z="z-70" bg="bg-inv-bg-alt2" id="mesa-regalos">
+        <StackCard z="z-70" bg="bg-inv-bg-alt2" flow id="mesa-regalos">
           <Gifts
             cfg={cfg}
             theme={theme}
