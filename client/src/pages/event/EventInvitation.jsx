@@ -618,8 +618,8 @@ export default function EventInvitation() {
             <p className="text-sm text-gray-500">Aún no hay fotos. Sube las que quieras mostrar en la invitación.</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {form.gallery.map((src) => (
-                <div key={src} className="group relative">
+              {form.gallery.map((src, i) => (
+                <div key={`${src}-${i}`} className="group relative">
                   <img src={src} alt="" className="aspect-square w-full rounded-lg border border-zinc-700 object-cover" />
                   <button
                     type="button"
