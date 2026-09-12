@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, NavLink, useLocation, useNavigate } from "react-router-dom";
 import EventsPage from "./pages/EventsPage.jsx";
 import EventPage from "./pages/EventPage.jsx";
@@ -6,13 +6,17 @@ import EventHome from "./pages/event/EventHome.jsx";
 import EventGuests from "./pages/event/EventGuests.jsx";
 import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
-import EventInvitation from "./pages/event/EventInvitation.jsx";
 import InvitationPage from "./invitation/InvitationPage.jsx";
+import LandingPage from "./landing/LandingPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 import { useTheme } from "./theme.jsx";
 import { useAuth } from "./auth.jsx";
+
+// El editor de invitación (schema, plantillas, vista previa) se carga solo al
+// entrar a la pestaña; así el bundle inicial no lo incluye.
+const EventInvitation = lazy(() => import("./pages/event/EventInvitation.jsx"));
 
 export default function App() {
   const location = useLocation();
@@ -24,10 +28,11 @@ export default function App() {
     location.pathname === "/login" ||
     location.pathname === "/registro" ||
     location.pathname.startsWith("/verificar-correo");
+  const isLanding = location.pathname === "/";
 
   useEffect(() => {
-    document.documentElement.dataset.theme = isInvitation ? "dark" : theme;
-  }, [isInvitation, theme]);
+    document.documentElement.dataset.theme = isInvitation ? "dark" : isLanding ? "light" : theme;
+  }, [isInvitation, isLanding, theme]);
 
   const handleLogout = async () => {
     await logout();
@@ -41,10 +46,21 @@ export default function App() {
         : "text-gray-300 hover:bg-gray-800 hover:text-white"
     }`;
 
+  if (isLanding) {
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+    );
+  }
+
   if (isInvitation) {
     return (
       <Routes>
+        {/* Compatibilidad hacia atrás: enlaces antiguos sin slug. */}
         <Route path="/invitacion/:token" element={<InvitationPage />} />
+        {/* URL bonita: /invitacion/<slug>/<token>. */}
+        <Route path="/invitacion/:slug/:token" element={<InvitationPage />} />
       </Routes>
     );
   }
@@ -81,7 +97,7 @@ export default function App() {
 
       <header className="border-b border-gray-800 bg-gray-900/70 sticky top-0 z-20 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <NavLink to="/" className="flex items-center gap-2.5 font-bold text-lg text-gray-50">
+          <NavLink to="/eventos" className="flex items-center gap-2.5 font-bold text-lg text-gray-50">
             <span className="grid place-items-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-md shadow-indigo-900/40">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1Zm2 14H7v-2h7v2Zm3-4H7v-2h10v2Zm0-4H7V7h10v2Z" />
@@ -92,7 +108,7 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             <nav className="flex items-center gap-1">
-              <NavLink to="/" className={linkClass} end>
+              <NavLink to="/eventos" className={linkClass} end>
                 Eventos
               </NavLink>
             </nav>
@@ -135,7 +151,7 @@ export default function App() {
       <main className="relative z-10 max-w-5xl mx-auto px-4 py-8">
         <Routes>
           <Route
-            path="/"
+            path="/eventos"
             element={
               <RequireAuth>
                 <EventsPage />
@@ -154,7 +170,14 @@ export default function App() {
             <Route path="invitados" element={<EventGuests />} />
             <Route path="mesas" element={<EventTables />} />
             <Route path="dashboard" element={<EventDashboard />} />
-            <Route path="invitacion" element={<EventInvitation />} />
+            <Route
+              path="invitacion"
+              element={
+                <Suspense fallback={<p className="text-gray-400">Cargando…</p>}>
+                  <EventInvitation />
+                </Suspense>
+              }
+            />
           </Route>
         </Routes>
       </main>

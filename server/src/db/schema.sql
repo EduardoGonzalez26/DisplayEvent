@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS events (
   time TIME NOT NULL,
   place VARCHAR(255) NOT NULL,
   invitation JSONB,
+  slug VARCHAR(80),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -105,3 +106,11 @@ CREATE INDEX IF NOT EXISTS idx_gifts_event ON gifts(event_id);
 -- El índice único da idempotencia al webhook (ON CONFLICT DO NOTHING) y evita
 -- regalos duplicados cuando Stripe reenvía el mismo evento.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_gifts_payment_intent ON gifts(stripe_payment_intent_id);
+
+-- Slug (URL amigable) de las invitaciones: /invitacion/<slug>/<token>.
+-- ALTER idempotente para bases creadas antes de que existiera la columna.
+ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
+
+-- Índice único parcial: permite varios eventos sin slug (NULL), pero impide
+-- slugs duplicados cuando están definidos.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_slug ON events(slug) WHERE slug IS NOT NULL;

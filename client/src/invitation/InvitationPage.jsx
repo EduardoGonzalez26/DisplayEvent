@@ -5,6 +5,8 @@ import InvitationView from "./InvitationView.jsx";
 import { InvitationLoader, InvitationNotFound } from "./shared/util.jsx";
 
 export default function InvitationPage() {
+  // Funciona con ambas rutas: /invitacion/:token y /invitacion/:slug/:token.
+  // En las dos, el token llega por params y es lo único que resuelve la invitación.
   const { token } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");

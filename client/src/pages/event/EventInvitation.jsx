@@ -15,6 +15,36 @@ import {
   withUid,
 } from "../../invitation/schema/normalize.js";
 
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG_MIN = 3;
+const SLUG_MAX = 60;
+
+// Convierte el nombre del evento en un slug URL-amigable (misma lógica que el
+// backend) para sugerirlo cuando el evento todavía no tiene slug.
+function slugify(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, SLUG_MAX)
+    .replace(/-+$/g, "");
+}
+
+// Devuelve el motivo del error o "" si el slug es válido (vacío = autogenerar).
+function slugFormatError(slug) {
+  if (!slug) return "";
+  if (slug.length < SLUG_MIN) return `debe tener al menos ${SLUG_MIN} caracteres`;
+  if (slug.length > SLUG_MAX) return `no puede superar los ${SLUG_MAX} caracteres`;
+  if (!SLUG_RE.test(slug)) {
+    return "solo puede contener minúsculas, números y guiones (sin guiones dobles ni en los extremos)";
+  }
+  return "";
+}
+
 function ImageUploader({ label, value, onChange }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -125,9 +155,22 @@ export default function EventInvitation() {
   const [tplName, setTplName] = useState("");
   const [tplSaving, setTplSaving] = useState(false);
   const [tplError, setTplError] = useState("");
+  const [slug, setSlug] = useState("");
+  // null | "checking" | "available" | "taken" | "current"
+  const [slugStatus, setSlugStatus] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    api.events.get(id).then(setEvent).catch(() => setEvent(null));
+    setEvent(null);
+    setSlug("");
+    api.events
+      .get(id)
+      .then((ev) => {
+        setEvent(ev);
+        // Si el evento aún no tiene slug (eventos antiguos), sugerimos uno.
+        setSlug(ev?.slug || slugify(ev?.name || ""));
+      })
+      .catch(() => setEvent(null));
     api.templates.list().then(setTemplates).catch(() => setTemplates([]));
     api.groups.list(id).then(setGroups).catch(() => setGroups([]));
     api.events
@@ -137,10 +180,80 @@ export default function EventInvitation() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const slugValue = slug.trim().toLowerCase();
+  const slugError = slugFormatError(slugValue);
+  const slugHint = slugError
+    ? { text: `El slug ${slugError}.`, cls: "text-red-400" }
+    : !slugValue
+      ? {
+          text: "Déjalo vacío para generarlo automáticamente desde el nombre del evento.",
+          cls: "text-gray-500",
+        }
+      : slugStatus === "checking"
+        ? { text: "Comprobando disponibilidad…", cls: "text-gray-500" }
+        : slugStatus === "available" || slugStatus === "current"
+          ? { text: "Disponible.", cls: "text-emerald-400" }
+          : slugStatus === "taken"
+            ? {
+                text: "Ya está en uso; al guardar se usará una variante con sufijo.",
+                cls: "text-amber-400",
+              }
+            : null;
+
+  // Comprueba disponibilidad del slug con un pequeño debounce. Si el endpoint
+  // aún no existe en el backend, se ignora en silencio (sin bloquear el guardado).
+  useEffect(() => {
+    if (!slugValue || slugError) {
+      setSlugStatus(null);
+      return;
+    }
+    if (event?.slug && slugValue === event.slug) {
+      setSlugStatus("current");
+      return;
+    }
+    let cancelled = false;
+    setSlugStatus("checking");
+    const timer = setTimeout(() => {
+      api.events
+        .slugAvailable(slugValue)
+        .then((res) => {
+          if (!cancelled) setSlugStatus(res.available ? "available" : "taken");
+        })
+        .catch(() => {
+          if (!cancelled) setSlugStatus(null);
+        });
+    }, 450);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [slugValue, slugError, event?.slug]);
+
   const invitationToken = groups.find((g) => g.invitation_token)?.invitation_token;
+  const publicPath = invitationToken
+    ? slugValue
+      ? `/invitacion/${slugValue}/${invitationToken}`
+      : `/invitacion/${invitationToken}`
+    : "";
+  const publicUrl = publicPath ? `${window.location.origin}${publicPath}` : "";
+
+  // Para "Ver invitación" usamos el slug ya guardado, no el borrador del formulario.
   const openInvitation = () => {
-    if (invitationToken) {
-      window.open(`/invitacion/${invitationToken}`, "_blank", "noopener");
+    if (!invitationToken) return;
+    const path = event?.slug
+      ? `/invitacion/${event.slug}/${invitationToken}`
+      : `/invitacion/${invitationToken}`;
+    window.open(path, "_blank", "noopener");
+  };
+
+  const copyPublicUrl = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -275,6 +388,10 @@ export default function EventInvitation() {
 
   const save = async (e) => {
     e.preventDefault();
+    if (slugError) {
+      setError(`Slug inválido: ${slugError}.`);
+      return;
+    }
     const missing = templateFields.filter((f) => {
       const value = getField(form, f.key);
       if (f.type === "list") {
@@ -293,8 +410,40 @@ export default function EventInvitation() {
     setError("");
     try {
       const payload = serializeForm(form);
-      await api.events.setInvitation(id, payload);
-      setMessage("Configuración guardada correctamente.");
+      const requests = [api.events.setInvitation(id, payload)];
+      let updatedEvent = null;
+      // El slug vive en el evento (no en la config de invitación): se guarda
+      // con el update del evento, reenviando sus campos actuales.
+      if (event) {
+        requests.push(
+          api.events
+            .update(id, {
+              name: event.name,
+              date: event.date,
+              time: event.time,
+              place: event.place,
+              slug: slugValue,
+            })
+            .then((updated) => {
+              updatedEvent = updated;
+              return updated;
+            }),
+        );
+      }
+      await Promise.all(requests);
+
+      const finalSlug = updatedEvent?.slug || slugValue;
+      if (updatedEvent) setEvent(updatedEvent);
+      if (finalSlug && finalSlug !== slugValue) {
+        setSlug(finalSlug);
+        setMessage(
+          slugValue
+            ? `Configuración guardada. El slug "${slugValue}" ya estaba en uso; se guardó como "${finalSlug}".`
+            : `Configuración guardada. Se asignó el slug "${finalSlug}".`,
+        );
+      } else {
+        setMessage("Configuración guardada correctamente.");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -331,19 +480,96 @@ export default function EventInvitation() {
         </div>
       </div>
       <p className="text-sm text-gray-400 mb-6">
-        Configura el contenido de la landing pública /invitacion/&lt;hash&gt;. Los grupos tienen enlaces únicos activos desde su creación.
+        Configura el contenido de la invitación pública. Cada grupo tiene su propio
+        enlace único (/invitacion/&lt;slug&gt;/&lt;token&gt;) activo desde su creación.
       </p>
       {message && <p className="text-sm text-emerald-400 mb-4">{message}</p>}
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
       <form onSubmit={save} className="space-y-6">
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <h2 className="text-base font-semibold text-white mb-1">Enlace público</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Personaliza la URL bonita de la invitación. El slug debe ser único: si
+            ya está en uso, al guardar se añadirá un sufijo automáticamente.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="block">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <label htmlFor="event-slug" className="text-sm text-gray-400">
+                  Slug del evento
+                </label>
+                {event?.name && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSlug(slugify(event.name));
+                      setCopied(false);
+                    }}
+                    className="text-xs font-normal text-indigo-400 hover:text-indigo-300"
+                  >
+                    Usar sugerencia
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center overflow-hidden rounded-lg border border-gray-700 bg-gray-950 focus-within:border-gold-400">
+                <span aria-hidden="true" className="hidden sm:inline pl-3 text-sm text-gray-500 select-none">
+                  /invitacion/
+                </span>
+                <input
+                  id="event-slug"
+                  className="w-full bg-transparent px-3 sm:pl-1.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlug(e.target.value.toLowerCase());
+                    setCopied(false);
+                  }}
+                  placeholder="mi-evento-2026"
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={80}
+                  aria-invalid={slugError ? "true" : undefined}
+                  aria-describedby={slugHint ? "event-slug-help" : undefined}
+                />
+              </div>
+              {slugHint && (
+                <p id="event-slug-help" className={`text-xs mt-1.5 ${slugHint.cls}`}>
+                  {slugHint.text}
+                </p>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <span className="text-sm text-gray-400 mb-1 block">Vista previa</span>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 min-w-0 truncate rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-300">
+                  {publicUrl || "Aún no hay grupos con enlace"}
+                </code>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={!publicUrl}
+                  onClick={copyPublicUrl}
+                >
+                  {copied ? "Copiado ✓" : "Copiar"}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1.5">
+                La URL se activa al guardar. El token mostrado es el del primer grupo;
+                cada grupo tiene su propio enlace, cópialos desde “Invitados”.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-1">
             Formato de invitación
           </h2>
           <p className="text-sm text-gray-500 mb-4">
             Define el estilo y los datos que pide la invitación. Se aplica a la
-            landing pública /invitacion/&lt;hash&gt;.
+            invitación pública de cada grupo.
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
             {TEMPLATES.map((t) => {

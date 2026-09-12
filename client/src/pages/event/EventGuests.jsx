@@ -327,6 +327,8 @@ function ConfirmModal({ title, message, confirmLabel = "Eliminar", onClose, onCo
 export default function EventGuests() {
   const { id } = useParams();
   const [groups, setGroups] = useState([]);
+  // Se usa solo para construir el enlace bonito con el slug del evento.
+  const [event, setEvent] = useState(null);
   const [guestsByGroup, setGuestsByGroup] = useState({});
   const [loadingGroups, setLoadingGroups] = useState({});
   const [expanded, setExpanded] = useState({});
@@ -362,6 +364,7 @@ export default function EventGuests() {
   useEffect(() => {
     cancelledRef.current = false;
     setGroups([]);
+    setEvent(null);
     setGuestsByGroup({});
     setLoadingGroups({});
     setExpanded({});
@@ -371,6 +374,15 @@ export default function EventGuests() {
     setToast("");
     setConfirm(null);
     load();
+    // El slug es opcional (eventos antiguos): si falla, se usa el enlace clásico.
+    api.events
+      .get(id)
+      .then((ev) => {
+        if (!cancelledRef.current) setEvent(ev);
+      })
+      .catch(() => {
+        if (!cancelledRef.current) setEvent(null);
+      });
     return () => {
       cancelledRef.current = true;
     };
@@ -448,7 +460,10 @@ export default function EventGuests() {
       notify("Este grupo aún no tiene enlace de invitación.");
       return;
     }
-    const url = `${window.location.origin}/invitacion/${group.invitation_token}`;
+    const base = `${window.location.origin}/invitacion`;
+    const url = event?.slug
+      ? `${base}/${event.slug}/${group.invitation_token}`
+      : `${base}/${group.invitation_token}`;
     try {
       await navigator.clipboard.writeText(url);
       notify("Enlace de invitación copiado", "success");

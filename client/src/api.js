@@ -39,6 +39,7 @@ export const api = {
       return request(`/events${q}`);
     },
     get: (id) => request(`/events/${id}`),
+    slugAvailable: (slug) => request(`/events/slug-available?slug=${encodeURIComponent(slug)}`),
     stats: (id) => request(`/events/${id}/stats`),
     invitation: (id) => request(`/events/${id}/invitation`),
     setInvitation: (id, payload) => request(`/events/${id}/invitation`, { method: "PUT", body: JSON.stringify(payload) }),

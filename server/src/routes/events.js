@@ -46,6 +46,25 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// Debe declararse ANTES de GET /:id para que ":id" no capture "slug-available".
+router.get("/slug-available", async (req, res, next) => {
+  try {
+    const raw = req.query.slug;
+    if (typeof raw !== "string" || !raw.trim()) {
+      return res.json({ available: false, reason: "El slug no puede estar vacío" });
+    }
+    const slug = normalizeSlug(raw);
+    const reason = slugFormatError(slug);
+    if (reason) return res.json({ available: false, reason });
+
+    // Unicidad global: el índice único cubre todos los eventos (no solo los del usuario).
+    const rows = await query(`SELECT 1 FROM events WHERE slug = $1 LIMIT 1`, [slug]);
+    res.json({ available: rows.length === 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id/stats", async (req, res, next) => {
   try {
     const eventRow = await query(`SELECT id FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`, [
@@ -170,29 +189,124 @@ function isValidTime(value) {
   return h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
 }
 
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG_MIN_LENGTH = 3;
+const SLUG_MAX_LENGTH = 60;
+
+// Convierte texto libre en slug URL-amigable: minúsculas, sin acentos,
+// espacios/underscores -> "-", solo [a-z0-9-], sin guiones repetidos ni en
+// los extremos y con un máximo de 60 caracteres.
+function slugify(value) {
+  if (typeof value !== "string") return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, SLUG_MAX_LENGTH)
+    .replace(/-+$/g, "");
+}
+
+// Normaliza lo que llega del cliente (trim + lower + slugify). "" si no queda nada.
+function normalizeSlug(value) {
+  if (typeof value !== "string") return "";
+  return slugify(value.trim().toLowerCase());
+}
+
+// Devuelve el motivo del error o "" si el slug normalizado es válido.
+function slugFormatError(slug) {
+  if (!slug) return "El slug no puede estar vacío";
+  if (slug.length < SLUG_MIN_LENGTH) {
+    return `El slug debe tener al menos ${SLUG_MIN_LENGTH} caracteres`;
+  }
+  if (slug.length > SLUG_MAX_LENGTH) {
+    return `El slug no puede superar los ${SLUG_MAX_LENGTH} caracteres`;
+  }
+  if (!SLUG_RE.test(slug)) {
+    return "El slug solo puede contener letras minúsculas, números y guiones (sin guiones consecutivos)";
+  }
+  return "";
+}
+
+// Interpreta el slug opcional del body. Devuelve "" cuando no se envió (o se
+// envió vacío) para que la ruta lo autogenere desde el nombre del evento.
+function parseSlugInput(slug) {
+  if (slug === undefined || slug === null) return { value: "" };
+  if (typeof slug !== "string") return { error: "El slug es inválido" };
+  if (!slug.trim()) return { value: "" };
+  const normalized = normalizeSlug(slug);
+  const error = slugFormatError(normalized);
+  if (error) return { error };
+  return { value: normalized };
+}
+
+// Busca un slug libre. Si `base` ya está tomado prueba `base-2`, `base-3`, ...
+// `excludeId` permite ignorar el propio evento al editarlo. Los slugs generados
+// respetan el máximo de 60 caracteres.
+async function generateUniqueSlug(base, excludeId = null) {
+  let root =
+    typeof base === "string" ? base.slice(0, SLUG_MAX_LENGTH).replace(/-+$/g, "") : "";
+  if (root.length < SLUG_MIN_LENGTH) root = "evento";
+
+  const params = [`${root}%`];
+  let sql = `SELECT slug FROM events WHERE slug LIKE $1`;
+  if (excludeId != null) {
+    params.push(excludeId);
+    sql += ` AND id <> $2`;
+  }
+  const rows = await query(sql, params);
+  const taken = new Set(rows.map((row) => row.slug));
+
+  if (!taken.has(root)) return root;
+
+  for (let n = 2; n <= 999; n += 1) {
+    const suffix = `-${n}`;
+    const candidate = `${root.slice(0, SLUG_MAX_LENGTH - suffix.length).replace(/-+$/g, "")}${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+
+  // Fallback prácticamente inalcanzable.
+  const suffix = `-${Date.now().toString(36)}`;
+  return `${root.slice(0, SLUG_MAX_LENGTH - suffix.length).replace(/-+$/g, "")}${suffix}`;
+}
+
 // Valida y normaliza el payload de un evento (POST/PUT).
-function validateEventPayload({ name, date, time, place }) {
+function validateEventPayload({ name, date, time, place, slug }) {
   const cleanName = cleanRequiredString(name, 255);
   const cleanPlace = cleanRequiredString(place, 255);
   if (!cleanName) return { error: "El nombre del evento es obligatorio" };
   if (!isValidDate(date)) return { error: "La fecha no es válida (formato AAAA-MM-DD)" };
   if (!isValidTime(time)) return { error: "La hora no es válida (formato HH:MM)" };
   if (!cleanPlace) return { error: "El lugar es obligatorio" };
-  return { value: { name: cleanName, date, time, place: cleanPlace } };
+
+  const parsedSlug = parseSlugInput(slug);
+  if (parsedSlug.error) return { error: parsedSlug.error };
+
+  return {
+    value: { name: cleanName, date, time, place: cleanPlace, slug: parsedSlug.value },
+  };
 }
 
 router.post("/", async (req, res, next) => {
   const validated = validateEventPayload(req.body || {});
   if (validated.error) return res.status(400).json({ error: validated.error });
-  const { name, date, time, place } = validated.value;
+  const { name, date, time, place, slug: requestedSlug } = validated.value;
   try {
+    // Slug explícito si es válido; si no, se autogenera desde el nombre.
+    const slug = await generateUniqueSlug(requestedSlug || slugify(name));
     const result = await pool.query(
-      `INSERT INTO events (user_id, name, date, time, place)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [req.user.id, name, date, time, place]
+      `INSERT INTO events (user_id, name, date, time, place, slug)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.user.id, name, date, time, place, slug]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    if (err.code === "23505" && err.constraint === "idx_events_slug") {
+      return res.status(409).json({ error: "El slug ya está en uso" });
+    }
     next(err);
   }
 });
@@ -200,16 +314,22 @@ router.post("/", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   const validated = validateEventPayload(req.body || {});
   if (validated.error) return res.status(400).json({ error: validated.error });
-  const { name, date, time, place } = validated.value;
+  const { name, date, time, place, slug: requestedSlug } = validated.value;
   try {
+    // Excluye el propio evento: si el slug no cambia se conserva tal cual y,
+    // si está tomado por otro, se añade sufijo (-2, -3, ...).
+    const slug = await generateUniqueSlug(requestedSlug || slugify(name), req.params.id);
     const result = await pool.query(
-      `UPDATE events SET name = $1, date = $2, time = $3, place = $4
-       WHERE id = $5 AND user_id = $6 RETURNING *`,
-      [name, date, time, place, req.params.id, req.user.id]
+      `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5
+       WHERE id = $6 AND user_id = $7 RETURNING *`,
+      [name, date, time, place, slug, req.params.id, req.user.id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(result.rows[0]);
   } catch (err) {
+    if (err.code === "23505" && err.constraint === "idx_events_slug") {
+      return res.status(409).json({ error: "El slug ya está en uso" });
+    }
     next(err);
   }
 });
