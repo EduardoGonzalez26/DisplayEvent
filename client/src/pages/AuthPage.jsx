@@ -41,7 +41,7 @@ export default function AuthPage({ mode }) {
         setResendEmail(form.email);
       } else {
         await login({ username: form.username, password: form.password });
-        const from = location.state?.from?.pathname || "/";
+        const from = location.state?.from?.pathname || "/eventos";
         navigate(from, { replace: true });
       }
     } catch (err) {
@@ -65,7 +65,7 @@ export default function AuthPage({ mode }) {
   };
 
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/eventos" replace />;
 
   // Pantalla posterior al registro: el correo debe verificarse antes de entrar.
   if (pendingEmail) {

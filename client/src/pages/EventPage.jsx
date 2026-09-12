@@ -43,7 +43,7 @@ export default function EventPage() {
   return (
     <div className="flex flex-col md:flex-row gap-8 animate-page-in">
       <aside className="md:w-56 shrink-0">
-        <Link to="/" className="text-sm text-gray-400 hover:text-indigo-300 inline-block mb-4 transition-colors">
+        <Link to="/eventos" className="text-sm text-gray-400 hover:text-indigo-300 inline-block mb-4 transition-colors">
           ← Volver a eventos
         </Link>
 

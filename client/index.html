@@ -3,16 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DisplayEvent</title>
+    <title>DisplayEvent — Invitaciones digitales y organizador de eventos</title>
+    <meta
+      name="description"
+      content="Invitaciones digitales para XV años, bodas, cumpleaños y baby showers. Confirma asistencias por grupo, acomoda mesas y recibe regalos desde un solo panel."
+    />
+    <meta name="theme-color" content="#fcfbf7" />
+    <link rel="canonical" href="https://displayevent.online/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://displayevent.online/" />
+    <meta
+      property="og:title"
+      content="DisplayEvent — Invitaciones digitales y organizador de eventos"
+    />
+    <meta
+      property="og:description"
+      content="Invitaciones digitales para XV años, bodas, cumpleaños y baby showers. Confirma asistencias por grupo, acomoda mesas y recibe regalos desde un solo panel."
+    />
+    <meta property="og:image" content="https://displayevent.online/og-image.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="DisplayEvent — Invitaciones digitales y organizador de eventos"
+    />
+    <meta
+      name="twitter:description"
+      content="Invitaciones digitales para XV años, bodas, cumpleaños y baby showers. Confirma asistencias por grupo, acomoda mesas y recibe regalos desde un solo panel."
+    />
+    <meta name="twitter:image" content="https://displayevent.online/og-image.png" />
+
     <script>
       (function () {
         try {
           var t = localStorage.getItem("de-theme");
-          document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+          var theme = t === "light" ? "light" : "dark";
+          if (window.location.pathname === "/") theme = "light";
+          document.documentElement.dataset.theme = theme;
         } catch (e) {}
       })();
     </script>
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
