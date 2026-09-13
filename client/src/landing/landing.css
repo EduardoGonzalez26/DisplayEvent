@@ -276,20 +276,11 @@ html:has(.de-landing) {
   gap: 10px;
 }
 
-.de-nav__monogram {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(171, 146, 104, 0.6);
-  border-radius: 12px;
-  background: linear-gradient(160deg, #fffdf8, #f1ebdc);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  font-family: var(--de-font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--de-gold-ink);
+.de-nav__logo {
+  display: block;
+  height: 26px;
+  width: auto;
+  flex: none;
 }
 
 .de-nav__wordmark {

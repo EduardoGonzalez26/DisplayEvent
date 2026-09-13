@@ -24,9 +24,14 @@ export default function Nav() {
     <header className={`de-nav${scrolled ? " de-nav--scrolled" : ""}`}>
       <div className="de-nav__inner">
         <a href="#inicio" className="de-nav__brand" aria-label="DisplayEvent, ir al inicio">
-          <span className="de-nav__monogram" aria-hidden="true">
-            DE
-          </span>
+          <img
+            src="/logo.svg"
+            alt=""
+            className="de-nav__logo"
+            width="30"
+            height="25"
+            decoding="async"
+          />
           <span className="de-nav__wordmark">DisplayEvent</span>
         </a>
 

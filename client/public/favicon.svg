@@ -1,14 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="DisplayEvent">
   <rect x="3" y="3" width="58" height="58" rx="14" fill="#fcfbf7" stroke="#ab9268" stroke-width="2.5" />
   <path d="M32 9.5v3M32 51.5v3M9.5 32h3M51.5 32h3" stroke="#ab9268" stroke-width="1.4" stroke-linecap="round" opacity="0.75" />
-  <text
-    x="32"
-    y="41.5"
-    text-anchor="middle"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="27"
-    font-weight="600"
-    fill="#7d3836"
-    letter-spacing="0.5"
-  >DE</text>
+  <g transform="translate(-3.502857 1.274286) scale(0.217143)">
+    <g transform="translate(0.000000,285.000000) scale(0.100000,-0.100000)" fill="#2b2523" stroke="none">
+      <path d="M796 2141 c5 -4 140 -114 299 -243 160 -130 380 -310 490 -401 l200
+-166 150 0 150 0 -26 22 c-14 12 -185 155 -379 317 l-353 295 279 3 c254 2
+285 1 344 -17 83 -25 172 -83 228 -146 49 -56 104 -165 122 -242 15 -66 15
+-193 0 -258 -33 -146 -139 -279 -274 -345 -104 -51 -165 -60 -402 -60 l-191 0
+-39 29 c-21 15 -106 83 -189 150 l-149 121 -148 0 c-82 0 -148 -2 -148 -4 0
+-4 421 -349 528 -434 l54 -42 241 0 c268 1 348 10 467 57 95 37 174 91 271
+184 126 122 188 278 189 470 0 105 -14 184 -47 269 -70 176 -215 324 -389 394
+-130 53 -169 56 -751 56 -300 0 -533 -4 -527 -9z"/>
+      <path d="M785 1670 c11 -10 180 -150 375 -309 l355 -290 143 0 c78 -1 142 1
+142 3 0 4 -517 431 -676 559 l-71 57 -144 0 c-143 0 -143 0 -124 -20z"/>
+    </g>
+  </g>
 </svg>

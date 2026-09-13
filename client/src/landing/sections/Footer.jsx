@@ -13,9 +13,14 @@ export default function Footer() {
       <div className="de-footer__inner">
         <div className="de-footer__brand">
           <span className="de-nav__brand">
-            <span className="de-nav__monogram" aria-hidden="true">
-              DE
-            </span>
+            <img
+              src="/logo.svg"
+              alt=""
+              className="de-nav__logo"
+              width="30"
+              height="25"
+              decoding="async"
+            />
             <span className="de-nav__wordmark">DisplayEvent</span>
           </span>
           <p className="de-footer__tagline">Hecho para celebrar juntos</p>
