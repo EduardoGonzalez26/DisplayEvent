@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-09-11
+> **Última actualización:** 2026-09-13
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -15,8 +15,8 @@
 
 - Crear eventos y administrar invitados por **grupos** (con líder), con marcado de niños y registro de asistencia.
 - Organizar **mesas** con drag & drop (dnd-kit), colores por grupo, acompañantes en bloque y validación de capacidad en servidor.
-- Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<token>`) que muestra una invitación sin requerir sesión.
-- **Panel admin** (protegido con JWT en cookie httpOnly + verificación de correo) y **landing pública** por token.
+- Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<slug>/<token>`, con la ruta legacy `/invitacion/<token>` aún soportada) que muestra una invitación sin requerir sesión.
+- **Landing pública de marketing** en `/` (`client/src/landing/**`, visible con o sin sesión) y **panel admin** en `/eventos` (protegido con JWT en cookie httpOnly + verificación de correo).
 - Editor de invitación dirigido por schema, con vista previa y plantillas reutilizables por usuario.
 - **Mesa de Regalos reutilizable** por invitación: regalos monetarios por **depósito bancario** o **pago con tarjeta vía Stripe** (modo test por ahora).
 
@@ -105,8 +105,8 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **dejaron de u
 Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit `46f7628`):
 
 - **Tarjetas apiladas** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta con **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`), sombra ascendente y `CardEdge` (hairline + rombo). El fondo y (si aplica) la foto viven en **capas `absolute` propias dentro del wrapper**, de modo que el `StackCard` **no** gana `backdrop-filter` y no se convierte en contenedor de posicionamiento para descendientes `fixed` (el modal de datos bancarios de Gifts sigue anclado al viewport). Los `z`: Hero (z-0), Carta/Contador (z-10), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), Padrinos en `alice_xv` (z-75), RSVP (z-80), Footer (z-90).
-- **Solo Hero y Footer quedan `sticky`; el resto pasa a `flow`** (boda: commit `a6447c7`; la paridad de `alice_xv` está **sin commitear**, ver §10): la portada (Hero z-0) sigue `sticky top-0` con `min-h-[100dvh]` —efecto "carta desplegable": el contenido la tapa— y el cierre/Footer (z-90, con `SectionPhoto` en boda) también es sticky. Las secciones con contenido de altura variable pasan a **`flow`** (no sticky) porque `sticky top-0` + `min-h-[100dvh]` recortaba su parte inferior en móvil (sobre todo **Ubicaciones** al añadir los mapas): **Carta/Contador, Itinerario, Ubicaciones, Galería, Dress Code, Nota de regalos, Mesa de regalos y RSVP**; en `alice_xv` también **Padrinos**. Fluyen normal manteniendo el acabado de tarjeta y, al cubrir a la anterior, conservan el efecto de apilado sin quedar clavadas. Resultado: el efecto "carta desplegable" queda **solo para la portada**; ninguna sección se recorta.
-- **Mapa embebido en Ubicaciones** (`Locations.jsx` de ambas especiales; boda: commit `d615457`, `alice_xv`: **sin commitear**, ver §10): cada ubicación embebe un **mapa de Google por `<iframe>` sin API key** (`mapSrc(it)` → `https://maps.google.com/maps?q=<encodeURIComponent(place||label)>&z=15&output=embed`, con `loading="lazy"`, `title`, `allowFullScreen` y `referrerPolicy`). **Layout adaptativo al número de ubicaciones**: 1 → tarjeta centrada a ancho completo (`max-w-3xl`); 2 → 2 columnas (`md:grid-cols-2`); 3+ → grid responsive 1/2/3 (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`). Se conservan los botones Google Maps/Waze (URLs seguras) y el `null` si no hay ubicaciones. El endpoint es un embed público no oficial de Google; con URLs custom el embed se centra por `place`/`label`.
+- **Solo Hero y Footer quedan `sticky`; el resto pasa a `flow`** (boda: commit `a6447c7`; `alice_xv`: commit `ea36bdc`): la portada (Hero z-0) sigue `sticky top-0` con `min-h-[100dvh]` —efecto "carta desplegable": el contenido la tapa— y el cierre/Footer (z-90, con `SectionPhoto` en boda) también es sticky. Las secciones con contenido de altura variable pasan a **`flow`** (no sticky) porque `sticky top-0` + `min-h-[100dvh]` recortaba su parte inferior en móvil (sobre todo **Ubicaciones** al añadir los mapas): **Carta/Contador, Itinerario, Ubicaciones, Galería, Dress Code, Nota de regalos, Mesa de regalos y RSVP**; en `alice_xv` también **Padrinos**. Fluyen normal manteniendo el acabado de tarjeta y, al cubrir a la anterior, conservan el efecto de apilado sin quedar clavadas. Resultado: el efecto "carta desplegable" queda **solo para la portada**; ninguna sección se recorta.
+- **Mapa embebido en Ubicaciones** (`Locations.jsx` de ambas especiales; boda: commit `d615457`; `alice_xv`: commit `ea36bdc`): cada ubicación embebe un **mapa de Google por `<iframe>` sin API key** (`mapSrc(it)` → `https://maps.google.com/maps?q=<encodeURIComponent(place||label)>&z=15&output=embed`, con `loading="lazy"`, `title`, `allowFullScreen` y `referrerPolicy`). **Layout adaptativo al número de ubicaciones**: 1 → tarjeta centrada a ancho completo (`max-w-3xl`); 2 → 2 columnas (`md:grid-cols-2`); 3+ → grid responsive 1/2/3 (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`). Se conservan los botones Google Maps/Waze (URLs seguras) y el `null` si no hay ubicaciones. El endpoint es un embed público no oficial de Google; con URLs custom el embed se centra por `place`/`label`.
 - **Navegación lateral** (`SectionNav.jsx`): dots a la izquierda con scrollspy + tooltip; botón de confirmaciones (sobre) a la derecha que se convierte en "volver arriba" cuando la sección activa es el RSVP. Para saltar una tarjeta sticky **clavada** usa `flowTop()` (suma de alturas de hermanos en flujo) porque `offsetTop` de un sticky clavado devuelve la posición visual, no la de flujo (**bug corregido**). `flowTop()` **ignora hermanos fuera de flujo** (`position: fixed`/`absolute`) al sumar alturas. Escucha `scroll` en fase de captura y respeta `prefers-reduced-motion`.
 - **Portada sticky + parallax** (`Hero.jsx`): `h-dvh`, `useScroll({ target, offset: ["start start", "end start"] })`; al ser tapada, el fondo hace parallax y el contenido hace fade/scale (`contentOpacity`, `contentScale`).
 - **Parallax** en Galería, Mensaje y Footer (`useScroll()` global, porque `useScroll({ target })` no refleja bien el pinning de las tarjetas sticky).
@@ -194,7 +194,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - Paleta **rosa pastel + blanco + dorado**: fondo `#FDF1F5`, dorado `#C9A24B`, rosa `#D98AA4`, texto rosa-marrón `#6B4A57`.
 - Fuentes **Cormorant Garamond** + **Poppins** + **Dancing Script** + **Lato**.
 - **Replicó toda la arquitectura de `boda_jorge_macarena`**: componentes locales propios (`decor.jsx`, `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Padrinos.jsx`, `Footer.jsx`, `SectionNav.jsx`), portada sticky + parallax, parallax, swipe, etc. Solo comparte `shared/Rsvp.jsx`.
-- **Tiene mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky), igual que boda. ⚠️ Ese trabajo está **SIN COMMITEAR** (ver §10).
+- **Tiene mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky), igual que boda (commit `ea36bdc`).
 - ⚠️ **NO tiene fondos de foto por sección** (no existe `SectionPhoto.jsx`): decisión explícita del usuario.
 - Monograma con inicial dinámica de `celebrant_name`, fecha larga y contador propio.
 - ⚠️ **Pendiente:** el `description` de `themes/alice_xv.js` sigue diciendo **"Lavanda y dorado"** (desactualizado tras el cambio a rosa pastel + blanco + dorado).
@@ -227,6 +227,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - Crear tablas: `cd server && npm run init-db` (idempotente).
 - Backfill v2: `npm run backfill-invitation-v2`.
 - **Tabla `gifts`** (regalos confirmados vía Stripe): `event_id`, `group_id`, `amount_minor` (BIGINT), `currency`, `status`, `stripe_payment_intent_id`, `created_at`. Índice único `idx_gifts_payment_intent` para idempotencia del webhook. ⚠️ **Re-ejecutar `npm run init-db`** para aplicar el índice único (el agente de BD lo corrió antes de que SecDevOps añadiera el índice).
+- **Slug de eventos (`events.slug`)**: en BD existentes, `npm run init-db` es **requisito manual** para crear la columna y el índice único parcial (`schema.sql`/`init.js` son idempotentes). Ya aplicado en la BD local del usuario; **verificar al desplegar**.
 
 ### CORS
 `server/src/index.js` rechaza orígenes no permitidos → **403 "Origen no permitido por CORS"**, según `CLIENT_URL` / `ALLOWED_ORIGINS`. Configura `CLIENT_URL` con la URL pública real o el frontend quedará bloqueado.
@@ -240,6 +241,8 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 8. Decisiones / pendientes
 
+- [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; refinamiento de marca/dominio `displayevent.com` aún sin commitear, ver §10).
+- [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
 - [x] ~~Reproducir `PhotoBackdrop` en `alice_xv`~~ → **descartado**: `alice_xv` **no** usa fondos de foto por sección (decisión del usuario). `PhotoBackdrop.jsx` fue **eliminado** (sustituido por `SectionPhoto.jsx`, solo boda).
 - [ ] **Actualizar `description` de `themes/alice_xv.js`** ("Lavanda y dorado" → rosa pastel + blanco + dorado).
 - [ ] **Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describe el diseño anterior azul noche/dorado).
@@ -247,8 +250,9 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Ajuste estético)* El **scrim del `SectionPhoto` es fuerte** (~94%/80%), así que la foto B&N se ve **sutil**; subir/disminuir opacidades si se quiere más/menos protagonismo (por legibilidad de la tinta verde).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
 - [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`.
-- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice).
-- [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js` usa `dotenv.config()` relativo al CWD (mientras `index.js` ya usa ruta absoluta). Convendría cargar `server/.env` con ruta absoluta también en `db/index.js`.
+- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5).
+- [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js:6` y `server/src/middleware/auth.js:4` leen `process.env` **antes** de que `server/src/index.js:23` cargue `server/.env` con ruta absoluta (afecta al arranque local con `npm start`; en Render no, porque las env vars vienen de la plataforma). Fix sugerido: config compartida de dotenv (ver AUDITORIA.md §4.5).
+- [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 
 ---
@@ -268,22 +272,77 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 10. Estado actual del working tree (SIN commitear)
 
-Cambios pendientes (verificados con `git status`, 2026-09-11). Todo pertenece a la **paridad de `alice_xv`** con boda (**mapa en Ubicaciones** + **secciones en `flow`**):
+Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay funcionalidad sin commitear: la paridad de `alice_xv` (`ea36bdc`), la landing (`19a9a4d`) y los slugs (`1b69831`) están commiteados. Lo pendiente es el **refinamiento de marca/SEO de la landing** (logo real + dominio definitivo):
 
 | Archivo | Cambio |
 | ------- | ------ |
-| `client/src/invitation/alice_xv/Locations.jsx` | Añade `mapSrc(it)` + `<iframe>` (mapa de Google sin API key) y `gridClass` de layout adaptativo al número de ubicaciones. |
-| `client/src/invitation/alice_xv/AliceXvLayout.jsx` | Pasa a `flow` Carta/Contador, Itinerario, Ubicaciones, Dress Code, Nota de regalos, Mesa de regalos y Padrinos (Hero y Footer siguen `sticky`). |
-| `client/src/invitation/alice_xv/SectionNav.jsx` | `flowTop()` ignora hermanos fuera de flujo (`position: fixed`/`absolute`). |
+| `client/index.html` | canonical/OG/Twitter pasan de `displayevent.online` a `displayevent.com`. |
+| `client/public/logo.svg` | Normalizado: `viewBox` recortado a `76 70 175 143` (dibujo idéntico). |
+| `client/public/favicon.svg` | Reconstruido con los paths reales del logo. |
+| `client/public/og-image.png` | Regenerado con el logo. |
+| `client/public/sitemap.xml` | Dominio `displayevent.com`; queda solo la home (se quitaron `/login` y `/registro`). |
+| `client/src/landing/landing.css` | `.de-nav__monogram` (monograma "DE") → `.de-nav__logo` (altura 26 px). |
+| `client/src/landing/sections/Nav.jsx` | Monograma "DE" → logo real (`<img src="/logo.svg">`). |
+| `client/src/landing/sections/Footer.jsx` | Ídem en el footer. |
 
-> `boda_jorge_macarena` **no** tiene cambios sin commitear: `SectionPhoto`, el mapa y el paso a `flow` ya están commiteados (`8878c88`, `d615457`, `a6447c7`).
+> Además de esos 8 archivos (código/assets), `git status` solo muestra `MEMORIA.md` y `AUDITORIA.md` por esta actualización documental; no hay más cambios pendientes.
 
 ---
 
-## 11. Referencias y documentación del repo
+## 11. Landing pública, rutas y SEO (2026-09-11)
+
+### 11.1 Rutas (`client/src/App.jsx`)
+
+- `/` → **landing pública de marketing** (`client/src/landing/**`). Se renderiza con una **rama temprana** (`isLanding`, antes de auth/panel) y está **siempre visible** (con o sin sesión). Fuerza `data-theme="light"` (el script inline de `index.html` también lo hace en `/`).
+- `/eventos` → **panel admin** (antes `/`), protegido con `RequireAuth`. Las rutas internas del panel siguen igual (`/events/:id/...`).
+- `/invitacion/:slug/:token` → invitación pública con **URL bonita** (commit `1b69831`); `/invitacion/:token` → ruta **legacy** que se mantiene. `InvitationPage` resuelve por el token en ambos casos y fuerza `data-theme="dark"`.
+- `/login`, `/registro` y `/verificar-correo` no cambian.
+
+### 11.2 Landing (`client/src/landing/**`)
+
+- **20 archivos**: `LandingPage.jsx`, `landing.css`, `useLandingMeta.js`, 12 secciones (`sections/`) y 5 componentes mock (`components/`).
+- Secciones: `Nav`, `Hero`, `FormatsMarquee`, `FeatureInvitations`, `FeatureRsvp`, `FeatureTables`, `FeatureGifts`, `HowItWorks`, `FormatShowcase`, `Faq`, `FinalCta`, `Footer`.
+- Mocks SVG/CSS propios (`InvitationCardMock`, `GiftCardMock`, `RsvpCardMock`, `TableMock`, `Ornament`), sin imágenes externas.
+- Animaciones con `motion/react`, reutilizando el helper `Reveal` de `invitation/motion.jsx`; la FAQ usa `AnimatePresence` y respeta `prefers-reduced-motion`.
+- **CTA adaptativo con `useAuth()`**: con sesión muestra "Ir a mis eventos" → `/eventos`; sin sesión, "Iniciar sesión" / "Crear mi evento".
+- Diseño **"papelería editorial"**: marfil/dorado/salvia + tipografía serif; CSS scopeado bajo `.de-landing` (tokens `--de-*`).
+- `useLandingMeta()` fija `title`/`description` de marketing mientras la landing está montada y los restaura al desmontar.
+
+### 11.3 Marca / logo
+
+- El **logo real** `client/public/logo.svg` se usa en Nav y Footer (`<img src="/logo.svg">` + wordmark "DisplayEvent").
+- `favicon.svg` **reconstruido** con los paths reales del logo; `og-image.png` **regenerado** con el logo.
+- `logo.svg` **normalizado**: `viewBox` recortado a `76 70 175 143` (dibujo idéntico).
+- ⚠️ Este bloque de marca/SEO está en el working tree **sin commitear** (ver §10).
+
+### 11.4 SEO
+
+- `client/index.html`: `title`, `description`, `theme-color`, `canonical`, OG y Twitter (card `summary_large_image`).
+- Dominio en canonical/OG/sitemap: **`https://displayevent.com/`** (edición local del usuario; ya coherente en todos los meta).
+- `client/public/robots.txt`: `Allow: /` y `Disallow: /api/`, `/uploads/`; `client/public/sitemap.xml` con la home.
+- Pendiente: `robots.txt` sin línea `Sitemap:` (ver AUDITORIA.md §4.5).
+
+### 11.5 Slugs de evento
+
+- Backend: `events.slug VARCHAR(80)`, **único** con índice parcial `idx_events_slug ... WHERE slug IS NOT NULL`, **autogenerado** desde el nombre (normaliza acentos) y con sufijos `-2`, `-3`… si está tomado; formato `^[a-z0-9]+(?:-[a-z0-9]+)*$`, longitud 3–60.
+- `GET /api/events/slug-available` (declarado antes de `GET /:id`): comprueba unicidad global y devuelve `{ available, reason? }`.
+- Editor `EventInvitation.jsx`: sección **"Enlace público"** (slug manual, sugerencia desde el nombre, vista previa y copiar; usa el token del primer grupo).
+- ⚠️ En BD existentes, `npm run init-db` es **requisito manual** para crear la columna/índice; `schema.sql`/`init.js` son idempotentes. Ya aplicado en la BD local del usuario; **verificar al desplegar**.
+
+### 11.6 QA (2026-09-11)
+
+- Matriz de rutas OK: landing / panel / auth / invitación / deep links.
+- `npm run build` (raíz) **exit 0**, tras detener dev servers que bloqueaban `lightningcss` en Windows.
+- Smoke test Express: **200** de SPA y assets; sin secretos en `client/dist`.
+- Único endpoint que consume la landing: `GET /api/auth/me`; sin overflow en 360/768/1280 en la landing; FAQ accesible y `prefers-reduced-motion` respetado.
+- **No ejecutado**: login real end-to-end (sin credenciales; se cubrió con sesión forjada y redirects) ni pruebas de Stripe contra la API real.
+
+---
+
+## 12. Referencias y documentación del repo
 
 - `README.md` — guía general (setup, scripts, API completa).
-- `AUDITORIA.md` — auditoría de bugs del panel y su estado (resueltos/abiertos).
+- `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
 - `PLAN_INVITACIONES_MULTIFORMATO.md` — plan de la reestructuración multiformato.
 - `INVITACION_BODA_JORGE_MACARENA.md` — doc de datos dinámicos de la plantilla (⚠️ describe el diseño anterior azul noche/dorado).
 - `FORMATO LISTA DE INVITADOS 2026.xlsx` — archivo de cliente (git-ignored por patrón `*.xlsx`).
@@ -293,6 +352,10 @@ Cambios pendientes (verificados con `git status`, 2026-09-11). Todo pertenece a 
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `1b69831` | Invitación: slug por evento y URLs bonitas (`/invitacion/<slug>/<token>`). |
+| `19a9a4d` | Landing: página pública y SEO (dominio inicial `displayevent.online`; edición local a `displayevent.com` sin commitear, ver §10). |
+| `6f16a19` | Docs: actualizar MEMORIA (mapas, fondos de foto, secciones en flow, fix galería). |
+| `ea36bdc` | Invitación: mapa en Ubicaciones y secciones en `flow` en `alice_xv`. |
 | `a6447c7` | Invitación: secciones con contenido variable en `flow` (evita recorte en móvil). |
 | `d615457` | Invitación: mapa embebido en Ubicaciones con layout adaptativo. |
 | `e6db010` | Editor: corregir eliminación de fotos de la galería (faltaba el índice en el `.map`). |

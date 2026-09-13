@@ -2,6 +2,8 @@
 
 > **Actualización (post-auditoría, septiembre 2026):** la sección de invitaciones fue reestructurada. Se resolvió la duplicación 4× unificando las secciones en `client/src/invitation/shared/` (Gallery/DressCode/Message/etc. dejaron de vivir copiadas por formato), se añadió un contrato de datos formal (zod en `server/src/schemas/invitation.js` + espejo en `client/src/invitation/schema/`, con validación en `events.js`/`invitations.js` y backfill `backfill-invitation-v2`) y el editor quedó schema-driven. Se retiraron los ornamentos WebGL 3D (perlas XV / anillos boda), que permanecen inertes en `client/src/invitation/3d/`. Lo señalado en las secciones siguientes es el estado **previo** a esta reestructuración.
 
+> **Actualización (2026-09-11):** se añadió la **landing pública de marketing** en `/` (el panel pasó a `/eventos`), **URLs bonitas** de invitación (`/invitacion/<slug>/<token>`) y **SEO** (canonical/OG/robots/sitemap). Nueva revisión de la landing con hallazgos abiertos en §4.5. La deuda de §6.1 (multiformato sin commitear) quedó **resuelta** (`9387c15` y siguientes).
+
 > Fecha: 20 de agosto de 2026
 > Alcance: repositorio completo (backend Express + PostgreSQL, frontend React/Vite, invitación multiformato).
 > Método: lectura de código fuente, revisión de esquema, `git status/log`, ejecución local verificada (API :4000, frontend :5173).
@@ -18,7 +20,7 @@
 | Arquitectura | 5/10 | Monolito Express sencillo y coherente, pero sin capa de dominio, sin migraciones versionadas, sin tests |
 | Calidad de código | 4/10 | Duplicación masiva en `client/src/invitation/` (~33 % del código), `alert()`/`confirm()` por doquier, código muerto |
 | Rendimiento | 6/10 | Lazy loading y pausa del 3D bien resueltos; sin paginación y con consultas N+1 agrupadas |
-| Estado del repo | ⚠️ | El grueso de la funcionalidad nueva está **sin commitear**; `README` desactualizado (dice MySQL, es Postgres) |
+| Estado del repo | ✅ | Funcionalidad **commiteada** (multiformato, landing y slugs); pendiente solo el refinamiento de marca/SEO de la landing en el working tree; `README` desactualizado (dice MySQL, es Postgres) |
 
 **El problema nº 1 para ir a producción con más de un usuario es la ausencia de `user_id` en `events`.** Todo lo demás se puede arreglar con refactores graduales.
 
@@ -154,6 +156,21 @@
 - `util.jsx:3` re-exporta `Reveal` redundante.
 - `EventTables.jsx:695-700` duplica el mapa `guestById` que ya recibe por prop.
 
+### 4.5 Landing pública, slugs y SEO (2026-09-11)
+
+> **Estado:** hallazgos **abiertos** de la revisión de la landing pública y las URLs bonitas. Ninguno bloquea el build; el de Stripe afecta a la promesa de producto de la landing.
+
+| Severidad | Hallazgo | Evidencia | Estado / acción |
+|---|---|---|---|
+| 🟠 Mayor | **Stripe no configurado vs copy de la landing**: el copy promete "pago con tarjeta vía Stripe", pero no hay claves `STRIPE_*` en `server/.env` ni en `render.yaml`; `POST /api/invitations/:token/payment` responde 503 y la invitación deja el pago sin salida (CTA "Pagar con tarjeta" deshabilitado con aviso; si el evento no activó Stripe, el bloque ni se renderiza) | `client/src/landing/sections/FeatureGifts.jsx:6,19`; `client/src/landing/sections/Faq.jsx:24`; `server/src/routes/invitations.js:175`; `client/src/invitation/shared/Gifts.jsx:97,353-368` | Abierto — configurar claves (test/prod) o matizar el copy |
+| 🟢 Menor | **`npm start` local no carga `server/.env` en el orden correcto**: módulos leen `process.env` antes del `dotenv.config` con ruta absoluta de `index.js`. En Render no afecta (env vars de plataforma) | `server/src/db/index.js:6`; `server/src/middleware/auth.js:4`; `server/src/index.js:23` | Abierto — fix sugerido: config compartida de dotenv |
+| 🟢 Menor | **Overflow horizontal de 16 px en el header del panel a 360 px**; la landing no tiene overflow | `client/src/App.jsx:99-148` | Abierto |
+| ℹ️ Informativo | **El slug de la URL no se valida contra el token** (`InvitationPage` usa solo `token`): cualquier slug con un token válido abre la invitación. El token es el secreto | `client/src/invitation/InvitationPage.jsx:10` | Abierto — considerarlo si se quiere anti-phishing/SEO |
+| ℹ️ Informativo | **El bundle inicial comparte landing + panel + `InvitationPage`** (solo `EventInvitation` es `lazy`) | `client/src/App.jsx:9-10,19` | Abierto — optimización futura (code-splitting) |
+| ℹ️ Informativo | **`robots.txt` sin línea `Sitemap:`** | `client/public/robots.txt` | Añadir `Sitemap: https://displayevent.com/sitemap.xml` |
+
+> **Cobertura QA (2026-09-11):** matriz de rutas OK (landing/panel/auth/invitación/deep links), `npm run build` raíz exit 0, smoke test Express 200 (SPA + assets), sin secretos en `client/dist`, único endpoint de la landing `GET /api/auth/me`, sin overflow 360/768/1280 en la landing, FAQ accesible y `prefers-reduced-motion` respetado. **No se ejecutó** la verificación de login real end-to-end (faltaban credenciales; se cubrió con sesión forjada y redirects) ni pruebas de Stripe contra la API real.
+
 ---
 
 ## 5. Rendimiento y experiencia
@@ -173,13 +190,8 @@
 
 ## 6. Lo pendiente
 
-### 6.1 Trabajo sin commitear (mayor riesgo de pérdida)
-`git status` muestra la **práctica totalidad de la funcionalidad multiformato sin commitear**:
-- Nuevos: `invitation/3d/`, `invitation/baby_shower/`, `invitation/boda/`, `invitation/cumpleanos/`, `invitation/envelope/`, `invitation/shared/`, `invitation/xv/`, `themes/{boda,cumpleanos,baby_shower,fields}.js`, `InvitationView.jsx`, `motion.jsx`.
-- Servidor: `routes/templates.js`, `routes/uploads.js`, `middleware/rateLimit.js`, `scripts/backfill-template.js`, y modificaciones en `auth.js`, `events.js`, `guests.js`, `db/*`, `index.js`, `token.js`.
-- `package-lock.json` de la raíz también sin commitear.
-
-> **Recomendación inmediata:** commitear este bloque ya. Está en working tree y cualquier `git reset --hard` / `git clean` lo destruye.
+### 6.1 Trabajo sin commitear (mayor riesgo de pérdida) — ✅ resuelto (2026-09-11)
+Todo el bloque multiformato señalado en la auditoría original quedó **commiteado** (`9387c15` y siguientes). El working tree actual solo contiene el refinamiento de marca/SEO de la landing (logo real, `favicon.svg`, `og-image.png`, dominio `displayevent.com`), documentado en `MEMORIA.md` §10.
 
 ### 6.2 Deuda que bloquea producción
 1. Resolver la **multitenencia** (columna `user_id` en `events` + filtro en todas las rutas) o declarar explícitamente que la app es de un solo usuario y eliminar el registro multiusuario.
