@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-09-13
+> **Última actualización:** 2026-09-14
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -241,7 +241,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 8. Decisiones / pendientes
 
-- [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; refinamiento de marca/dominio `displayevent.com` aún sin commitear, ver §10).
+- [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; marca/dominio `displayevent.com` commiteados en `c657c81`/`c7a3146`; rediseño posterior sin commitear, ver §10 y §11.2).
 - [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
 - [x] ~~Reproducir `PhotoBackdrop` en `alice_xv`~~ → **descartado**: `alice_xv` **no** usa fondos de foto por sección (decisión del usuario). `PhotoBackdrop.jsx` fue **eliminado** (sustituido por `SectionPhoto.jsx`, solo boda).
 - [ ] **Actualizar `description` de `themes/alice_xv.js`** ("Lavanda y dorado" → rosa pastel + blanco + dorado).
@@ -250,10 +250,13 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Ajuste estético)* El **scrim del `SectionPhoto` es fuerte** (~94%/80%), así que la foto B&N se ve **sutil**; subir/disminuir opacidades si se quiere más/menos protagonismo (por legibilidad de la tinta verde).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
 - [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`.
-- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5).
+- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5). Incluye las columnas de WhatsApp (`leader_phone`, `whatsapp_sent_at`, `whatsapp_message`, ver §12).
 - [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js:6` y `server/src/middleware/auth.js:4` leen `process.env` **antes** de que `server/src/index.js:23` cargue `server/.env` con ruta absoluta (afecta al arranque local con `npm start`; en Render no, porque las env vars vienen de la plataforma). Fix sugerido: config compartida de dotenv (ver AUDITORIA.md §4.5).
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
+- [ ] **Envío por WhatsApp (sin commitear, ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
+- [x] ~~**Corregir el error de sintaxis de `server/src/db/init.js:1`**~~ → corregido 2026-09-14 por el agente de BD; `node --check` OK, `init-db` re-ejecutado con éxito y las 3 columnas re-verificadas en `information_schema.columns`.
+- [ ] **Commitear** el rediseño de la landing y el envío por WhatsApp: **nada** de estos dos bloques está commiteado (ver §10).
 
 ---
 
@@ -272,20 +275,58 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 10. Estado actual del working tree (SIN commitear)
 
-Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay funcionalidad sin commitear: la paridad de `alice_xv` (`ea36bdc`), la landing (`19a9a4d`) y los slugs (`1b69831`) están commiteados. Lo pendiente es el **refinamiento de marca/SEO de la landing** (logo real + dominio definitivo):
+Cambios pendientes (verificados con `git status`, 2026-09-14): **29 archivos** — 6 nuevos, 21 modificados y 2 eliminados. **Nada de esto está commiteado.** El bloque de marca/SEO de la sesión anterior (logo real, `favicon.svg`, `og-image.png`, dominio `displayevent.com`) ya quedó en `c657c81`/`c7a3146`. Lo pendiente son dos bloques: el **rediseño de la landing** ("imprenta de atelier", §11.2) y el **envío de invitaciones por WhatsApp** (§12).
+
+**Nuevos (6):**
 
 | Archivo | Cambio |
 | ------- | ------ |
-| `client/index.html` | canonical/OG/Twitter pasan de `displayevent.online` a `displayevent.com`. |
-| `client/public/logo.svg` | Normalizado: `viewBox` recortado a `76 70 175 143` (dibujo idéntico). |
-| `client/public/favicon.svg` | Reconstruido con los paths reales del logo. |
-| `client/public/og-image.png` | Regenerado con el logo. |
-| `client/public/sitemap.xml` | Dominio `displayevent.com`; queda solo la home (se quitaron `/login` y `/registro`). |
-| `client/src/landing/landing.css` | `.de-nav__monogram` (monograma "DE") → `.de-nav__logo` (altura 26 px). |
-| `client/src/landing/sections/Nav.jsx` | Monograma "DE" → logo real (`<img src="/logo.svg">`). |
-| `client/src/landing/sections/Footer.jsx` | Ídem en el footer. |
+| `client/src/components/WhatsAppSendModal.jsx` | Modal de envío en 4 pasos (resumen → mensaje → confirmación → resultados; `wa.me` manual o Cloud API con reintento de fallidas). |
+| `client/src/landing/components/FeaturePlate.jsx` | Lámina editorial de función (N.º + rótulo, copia + `figure` con pie `Fig. NN`); sustituye al eliminado `Ornament.jsx`. |
+| `client/src/landing/sections/Index.jsx` | Índice tipográfico de funciones sobre banda de tinta; sustituye a la eliminada `FormatsMarquee.jsx`. |
+| `server/src/routes/whatsapp.js` | Endpoints de estado/mensaje/envío/marcado (montados con `requireAuth` + `eventAccess`). |
+| `server/src/utils/phone.js` | Normalización de teléfonos a E.164 (México `+52` por defecto). |
+| `server/src/utils/whatsapp.js` | Presets de mensaje, render de placeholders, URL `wa.me` y `sendViaCloudApi`. |
 
-> Además de esos 8 archivos (código/assets), `git status` solo muestra `MEMORIA.md` y `AUDITORIA.md` por esta actualización documental; no hay más cambios pendientes.
+**Modificados — envío por WhatsApp (7):**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/pages/event/EventGuests.jsx` | Campo "WhatsApp del líder", badges "Invitación enviada"/"Sin WhatsApp" y botón "Enviar invitaciones". |
+| `client/src/api.js` | Cliente `api.whatsapp` (`get`, `saveMessage`, `send`, `mark`). |
+| `server/src/routes/groups.js` | POST/PUT aceptan `leader_phone` (en PUT se conserva si la clave no viene; vacío = `NULL`). |
+| `server/src/index.js` | Monta `whatsappRouter` en `/api/events/:eventId/whatsapp`. |
+| `server/src/db/schema.sql` | Columnas `"groups".leader_phone`, `"groups".whatsapp_sent_at` y `events.whatsapp_message`. |
+| `server/src/db/init.js` | Migraciones idempotentes de esas columnas. |
+| `server/.env.example` | Bloque opcional `WHATSAPP_*` (Cloud API de Meta + plantilla Utility aprobada). |
+
+**Modificados — rediseño de la landing (14):**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/landing/LandingPage.jsx` | `Index` sustituye a `FormatsMarquee`; las `Feature*` pasan a nivel de `main`. |
+| `client/src/landing/landing.css` | Rediseño "imprenta de atelier" (~1543 líneas cambiadas). |
+| `client/src/landing/useLandingMeta.js` | Título/descripción nuevos e inyección de Source Serif 4 + JetBrains Mono mientras la landing está montada. |
+| `client/src/landing/sections/Hero.jsx` | Dateline, placa `Fig. 01` (sobre), lista de facts y CTA "Ver los formatos". |
+| `client/src/landing/sections/Nav.jsx` | Logo 34×28 y "Crear cuenta". |
+| `client/src/landing/sections/Faq.jsx` | Título "Lo que nos preguntan seguido", numeración y copy; regalo con tarjeta matizado. |
+| `client/src/landing/sections/FeatureInvitations.jsx` | `FeaturePlate` (Fig. 02). |
+| `client/src/landing/sections/FeatureRsvp.jsx` | `FeaturePlate` (Fig. 03). |
+| `client/src/landing/sections/FeatureTables.jsx` | `FeaturePlate` (Fig. 04). |
+| `client/src/landing/sections/FeatureGifts.jsx` | `FeaturePlate` (Fig. 05) y "Pago con tarjeta cuando lo activas". |
+| `client/src/landing/sections/HowItWorks.jsx` | "Cómo funciona" como ledger de 3 pasos. |
+| `client/src/landing/sections/FormatShowcase.jsx` | Formatos como especímenes numerados (`N.º NN`). |
+| `client/src/landing/sections/FinalCta.jsx` | CTA final en tinta con el logo invertido (`filter: invert(1)`). |
+| `client/src/landing/sections/Footer.jsx` | Footer tipo colofón con anclas del índice. |
+
+**Eliminados (2):**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/landing/sections/FormatsMarquee.jsx` | Sustituido por `Index.jsx`. |
+| `client/src/landing/components/Ornament.jsx` | Sustituido por `FeaturePlate.jsx`. |
+
+> `MEMORIA.md`, `README.md` y `AUDITORIA.md` se actualizan en esta misma sesión documental.
 
 ---
 
@@ -300,12 +341,15 @@ Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay fun
 
 ### 11.2 Landing (`client/src/landing/**`)
 
-- **20 archivos**: `LandingPage.jsx`, `landing.css`, `useLandingMeta.js`, 12 secciones (`sections/`) y 5 componentes mock (`components/`).
-- Secciones: `Nav`, `Hero`, `FormatsMarquee`, `FeatureInvitations`, `FeatureRsvp`, `FeatureTables`, `FeatureGifts`, `HowItWorks`, `FormatShowcase`, `Faq`, `FinalCta`, `Footer`.
-- Mocks SVG/CSS propios (`InvitationCardMock`, `GiftCardMock`, `RsvpCardMock`, `TableMock`, `Ornament`), sin imágenes externas.
+- **20 archivos**: `LandingPage.jsx`, `landing.css`, `useLandingMeta.js`, 12 secciones (`sections/`) y 5 componentes (`components/`: `FeaturePlate` + 4 mocks). Se **eliminaron** `sections/FormatsMarquee.jsx` (sustituida por `sections/Index.jsx`) y `components/Ornament.jsx` (sustituido por `components/FeaturePlate.jsx`).
+- Secciones: `Nav`, `Hero`, `Index`, `FeatureInvitations`, `FeatureRsvp`, `FeatureTables`, `FeatureGifts`, `HowItWorks`, `FormatShowcase`, `Faq`, `FinalCta`, `Footer`.
+- **Dirección "imprenta de atelier"** (rediseño 2026-09-14, sin commitear): tinta `#17130e` sobre papel cálido `#f6f3ec`, hairlines, láminas con pie de figura (`Fig. 01`–`Fig. 05`), marcas de corte y una sola tinta de acento (vino `#7d3836`; quedan usos residuales de los tokens `--de-gold`/`--de-sage`). CSS scopeado bajo `.de-landing` (tokens `--de-*`).
+- **Tipografías**: Playfair Display (display; ya viene del `<link>` global de `client/index.html`), Source Serif 4 (texto) y JetBrains Mono (rótulos). Las dos últimas se inyectan **solo con la landing montada** desde `useLandingMeta.js` (con `preconnect` a `fonts.gstatic.com`) y se retiran al desmontar.
+- **Estructura**: portada con **dateline** y placa `Fig. 01`; `Index.jsx` (índice tipográfico sobre banda de tinta) sustituye a la marquesina; funciones como **láminas numeradas** (`FeaturePlate`, con anclas `#invitaciones`, `#rsvp`, `#mesas`, `#regalos`); "cómo funciona" como **ledger** de 3 pasos; formatos como **especímenes** numerados; FAQ "Lo que nos preguntan seguido" con numeración; CTA final en tinta con el logo invertido; footer tipo **colofón**.
+- Copy humanizado en toda la landing; el matiz de la mesa de regalos queda alineado con AUDITORIA §4.5 ("Pago con tarjeta cuando lo activas", ya no promete Stripe incondicionalmente).
+- Mocks SVG/CSS propios (`InvitationCardMock`, `GiftCardMock`, `RsvpCardMock`, `TableMock`), sin imágenes externas.
 - Animaciones con `motion/react`, reutilizando el helper `Reveal` de `invitation/motion.jsx`; la FAQ usa `AnimatePresence` y respeta `prefers-reduced-motion`.
-- **CTA adaptativo con `useAuth()`**: con sesión muestra "Ir a mis eventos" → `/eventos`; sin sesión, "Iniciar sesión" / "Crear mi evento".
-- Diseño **"papelería editorial"**: marfil/dorado/salvia + tipografía serif; CSS scopeado bajo `.de-landing` (tokens `--de-*`).
+- **CTA adaptativo con `useAuth()`**: con sesión muestra "Ir a mis eventos" → `/eventos`; sin sesión, "Iniciar sesión" / "Crear mi evento" ("Crear cuenta" en el nav).
 - `useLandingMeta()` fija `title`/`description` de marketing mientras la landing está montada y los restaura al desmontar.
 
 ### 11.3 Marca / logo
@@ -313,7 +357,7 @@ Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay fun
 - El **logo real** `client/public/logo.svg` se usa en Nav y Footer (`<img src="/logo.svg">` + wordmark "DisplayEvent").
 - `favicon.svg` **reconstruido** con los paths reales del logo; `og-image.png` **regenerado** con el logo.
 - `logo.svg` **normalizado**: `viewBox` recortado a `76 70 175 143` (dibujo idéntico).
-- ⚠️ Este bloque de marca/SEO está en el working tree **sin commitear** (ver §10).
+- Bloque de marca/SEO **commiteado** (`c657c81` logo real en nav/footer/favicon/OG; `c7a3146` dominio `displayevent.com`).
 
 ### 11.4 SEO
 
@@ -336,10 +380,60 @@ Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay fun
 - Smoke test Express: **200** de SPA y assets; sin secretos en `client/dist`.
 - Único endpoint que consume la landing: `GET /api/auth/me`; sin overflow en 360/768/1280 en la landing; FAQ accesible y `prefers-reduced-motion` respetado.
 - **No ejecutado**: login real end-to-end (sin credenciales; se cubrió con sesión forjada y redirects) ni pruebas de Stripe contra la API real.
+- ⚠️ El rediseño de la landing (2026-09-14, §11.2) **no** repitió esta matriz de QA (solo `npm run build` del client exit 0, reportado por el agente; ver §12).
 
 ---
 
-## 12. Referencias y documentación del repo
+## 12. Envío de invitaciones por WhatsApp (2026-09-14)
+
+Feature **sin commitear** (ver §10): el panel puede enviar la invitación a los líderes de grupo por WhatsApp, en dos modos.
+
+**Flujo en el panel (Invitados):**
+
+- El formulario de grupo incluye **"WhatsApp del líder"** (el servidor lo normaliza a E.164).
+- La tarjeta del grupo muestra el teléfono, el badge **"Invitación enviada"** (si `whatsapp_sent_at`) y **"Sin WhatsApp"** si falta.
+- Botón **"Enviar invitaciones"** junto a "+ Nuevo grupo" → `WhatsAppSendModal` en 4 pasos: Resumen (grupos enviables/sin teléfono e invitados cubiertos) → Mensaje (3 presets + textarea ≤800 con vista previa) → Confirmación → Envío/Resultados.
+
+**Modos (decisión híbrida):**
+
+| Modo | Activación | Comportamiento | Costo |
+| ---- | ---------- | -------------- | ----- |
+| `link` (default) | sin configurar nada | Genera un enlace `wa.me` por grupo; el organizador abre cada chat y confirma, y luego marca las enviadas (`/mark`). | $0 |
+| `cloud` | `WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID` + `WHATSAPP_TEMPLATE_NAME` | El servidor envía secuencialmente con la **Cloud API de Meta** (pausa 350 ms entre envíos, timeout 10 s) y marca `whatsapp_sent_at`; un fallo aislado no aborta el resto y el modal permite reintentar fallidas. | Por mensaje (Meta) |
+
+`WHATSAPP_TEMPLATE_LANG` (default `es_MX`) y `WHATSAPP_API_VERSION` (default `v21.0`) completan el bloque `.env.example`.
+
+**BD (migración manual en BD existentes):**
+
+- `"groups".leader_phone VARCHAR(20)` (E.164), `"groups".whatsapp_sent_at TIMESTAMPTZ`, `events.whatsapp_message TEXT`.
+- Migraciones idempotentes (`ADD COLUMN IF NOT EXISTS`) en `server/src/db/init.js` y `server/src/db/schema.sql`. `npm run init-db` es **requisito manual** en BD existentes; ya re-ejecutado con éxito (2026-09-14) tras corregir `init.js`, y las 3 columnas re-verificadas en `information_schema.columns` (ver §8).
+
+**Backend (sin dependencias nuevas):**
+
+- `server/src/utils/phone.js`: normalización E.164 (México `+52` por defecto; acepta `+52…`, `521…` legado, `1`+10 legado, `00…` e internacionales de 8–15 dígitos); `toWaDigits()` para `wa.me`/Cloud API.
+- `server/src/utils/whatsapp.js`: 3 presets ("Cercano"/"Formal"/"Breve"), placeholders `{{lider}}`/`{{evento}}`/`{{fecha}}`/`{{lugar}}`/`{{enlace}}` (si falta `{{enlace}}` se agrega al final), fecha larga es-MX calculada en UTC, URL `wa.me` y `sendViaCloudApi` (plantilla Utility con 4 parámetros de body: líder, evento, fecha·lugar, enlace).
+- `server/src/routes/whatsapp.js` (montado con `requireAuth` + `eventAccess` en `server/src/index.js`); `routes/groups.js` acepta `leader_phone` en POST/PUT (en PUT se conserva si la clave no viene; vacío lo borra); cliente `api.whatsapp` en `client/src/api.js`.
+
+**Endpoints:**
+
+| Método | Ruta | Descripción |
+| ------ | ---- | ----------- |
+| GET | `/api/events/:id/whatsapp` | Modo activo, presets, preset por defecto y mensaje guardado. |
+| PUT | `/api/events/:id/whatsapp/message` | Guarda el mensaje del evento (≤800 caracteres; garantiza `{{enlace}}`). |
+| POST | `/api/events/:id/whatsapp/send` | Prepara (`link`) o envía (`cloud`) a los líderes con teléfono válido; rate limit **10/10 min por usuario**; filtros opcionales `groupIds` (≤500) y `onlyPending`. |
+| POST | `/api/events/:id/whatsapp/mark` | Marca como enviadas (1–500 ids) las confirmadas manualmente en modo `link`. |
+
+**Límites y limitaciones:**
+
+- El teléfono debe ser válido (10 dígitos MX o formato internacional); sin teléfono o sin token el grupo se omite (`sin_telefono`/`sin_enlace`).
+- La Cloud API requiere **plantilla Utility aprobada** con los 4 parámetros en orden, y tiene **costo por mensaje** y límite de destinatarios según el tier de Meta.
+- En modo `link` cada apertura la hace el organizador desde su equipo; el rate limit del endpoint protege ante reintentos/automatizaciones accidentales.
+
+**Estado de verificación (2026-09-14, reportado por el agente):** `npm run build` del client exit 0 y smoke en puerto alterno OK (`/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403). `node --check` OK en los JS de servidor (`routes/whatsapp.js`, `utils/whatsapp.js`, `utils/phone.js`, `routes/groups.js` e `index.js`; `db/init.js` corregido y verificado 2026-09-14). Revisión profunda de SecDevOps **cancelada**. Nada commiteado.
+
+---
+
+## 13. Referencias y documentación del repo
 
 - `README.md` — guía general (setup, scripts, API completa).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
@@ -352,8 +446,11 @@ Cambios pendientes (verificados con `git status`, 2026-09-13). Ya **no** hay fun
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `55e405d` | Docs: documentar landing en `/`, slugs y hallazgos de QA. |
+| `c7a3146` | SEO: dominio `displayevent.com` en canonical, OG y sitemap. |
+| `c657c81` | Landing: integrar logo real en nav, footer, favicon y OG. |
 | `1b69831` | Invitación: slug por evento y URLs bonitas (`/invitacion/<slug>/<token>`). |
-| `19a9a4d` | Landing: página pública y SEO (dominio inicial `displayevent.online`; edición local a `displayevent.com` sin commitear, ver §10). |
+| `19a9a4d` | Landing: página pública y SEO (dominio inicial `displayevent.online`, luego unificado a `displayevent.com` en `c7a3146`). |
 | `6f16a19` | Docs: actualizar MEMORIA (mapas, fondos de foto, secciones en flow, fix galería). |
 | `ea36bdc` | Invitación: mapa en Ubicaciones y secciones en `flow` en `alice_xv`. |
 | `a6447c7` | Invitación: secciones con contenido variable en `flow` (evita recorte en móvil). |

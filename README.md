@@ -52,6 +52,11 @@ DisplayEvent/
    como alternativa local puede usarse SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
    `SMTP_PASS`; ver `.env.example`). Pruébalo con `npm run test:smtp`.
 
+   El envío de invitaciones por WhatsApp funciona sin configuración con enlaces
+   `wa.me`; para el envío automático, completa el bloque opcional `WHATSAPP_*` de
+   `.env.example` (Cloud API de Meta: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
+   `WHATSAPP_TEMPLATE_NAME` y una plantilla Utility aprobada).
+
 2. Crea el esquema (tablas, índices y backfills; es idempotente) y normaliza las
    invitaciones existentes al contrato v2:
 
@@ -92,6 +97,7 @@ Abre http://localhost:5173
   - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo.
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas — `xv`, `boda`, `cumpleanos`, `baby_shower` — compuestos por un `Layout` + `Hero` por formato y secciones compartidas (RSVP, cuenta regresiva, galería, itinerario, etc.).
 - **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables.
+- **Envío de invitaciones por WhatsApp**: desde **Invitados**, el botón "Enviar invitaciones" resume grupos enviables e invitados cubiertos, permite editar el mensaje (3 plantillas y vista previa) y pide confirmación antes de enviar. Por defecto usa enlaces `wa.me` (el organizador abre cada chat y puede marcarlas como enviadas); con la **WhatsApp Cloud API** configurada el envío es automático desde el servidor.
 - **Subida de imágenes**: subida de imágenes para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
 
 ## API
@@ -124,6 +130,10 @@ Abre http://localhost:5173
 | POST | `/api/events/:id/groups/:groupId/token` | Regenera el token de invitación (revoca el anterior) |
 | GET/POST | `/api/events/:id/guests(/:groupId)` | Listar invitados / crear en grupo |
 | PUT/DELETE | `/api/events/:id/guests/:groupId/:guestId` | Editar (niño/registro) / eliminar invitado |
+| GET | `/api/events/:id/whatsapp` | Estado del envío por WhatsApp (modo, plantillas y mensaje guardado) |
+| PUT | `/api/events/:id/whatsapp/message` | Guarda el mensaje de invitación por WhatsApp (≤800 caracteres) |
+| POST | `/api/events/:id/whatsapp/send` | Prepara (enlaces `wa.me`) o envía (Cloud API) las invitaciones a los líderes |
+| POST | `/api/events/:id/whatsapp/mark` | Marca como enviadas las invitaciones confirmadas manualmente |
 | GET/POST | `/api/templates` | Listar / crear plantillas de invitación del usuario |
 | GET | `/api/templates/:id` | Detalle de una plantilla |
 | PUT/DELETE | `/api/templates/:id` | Editar / eliminar plantilla |

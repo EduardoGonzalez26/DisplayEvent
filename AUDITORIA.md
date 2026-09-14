@@ -162,7 +162,7 @@
 
 | Severidad | Hallazgo | Evidencia | Estado / acción |
 |---|---|---|---|
-| 🟠 Mayor | **Stripe no configurado vs copy de la landing**: el copy promete "pago con tarjeta vía Stripe", pero no hay claves `STRIPE_*` en `server/.env` ni en `render.yaml`; `POST /api/invitations/:token/payment` responde 503 y la invitación deja el pago sin salida (CTA "Pagar con tarjeta" deshabilitado con aviso; si el evento no activó Stripe, el bloque ni se renderiza) | `client/src/landing/sections/FeatureGifts.jsx:6,19`; `client/src/landing/sections/Faq.jsx:24`; `server/src/routes/invitations.js:175`; `client/src/invitation/shared/Gifts.jsx:97,353-368` | Abierto — configurar claves (test/prod) o matizar el copy |
+| 🟠 Mayor | **Stripe no configurado vs copy de la landing**: no hay claves `STRIPE_*` en `server/.env` ni en `render.yaml`; `POST /api/invitations/:token/payment` responde 503 y la invitación deja el pago sin salida (CTA "Pagar con tarjeta" deshabilitado con aviso; si el evento no activó Stripe, el bloque ni se renderiza). El copy prometía "pago con tarjeta vía Stripe"; el rediseño de la landing (2026-09-14) ya lo matiza ("Pago con tarjeta cuando lo activas") | `client/src/landing/sections/FeatureGifts.jsx:6,18`; `client/src/landing/sections/Faq.jsx:24`; `server/src/routes/invitations.js:175`; `client/src/invitation/shared/Gifts.jsx:97,353-368` | Copy **matizado** (2026-09-14); sigue abierto **configurar claves** (test/prod) para que el pago funcione |
 | 🟢 Menor | **`npm start` local no carga `server/.env` en el orden correcto**: módulos leen `process.env` antes del `dotenv.config` con ruta absoluta de `index.js`. En Render no afecta (env vars de plataforma) | `server/src/db/index.js:6`; `server/src/middleware/auth.js:4`; `server/src/index.js:23` | Abierto — fix sugerido: config compartida de dotenv |
 | 🟢 Menor | **Overflow horizontal de 16 px en el header del panel a 360 px**; la landing no tiene overflow | `client/src/App.jsx:99-148` | Abierto |
 | ℹ️ Informativo | **El slug de la URL no se valida contra el token** (`InvitationPage` usa solo `token`): cualquier slug con un token válido abre la invitación. El token es el secreto | `client/src/invitation/InvitationPage.jsx:10` | Abierto — considerarlo si se quiere anti-phishing/SEO |
@@ -191,7 +191,7 @@
 ## 6. Lo pendiente
 
 ### 6.1 Trabajo sin commitear (mayor riesgo de pérdida) — ✅ resuelto (2026-09-11)
-Todo el bloque multiformato señalado en la auditoría original quedó **commiteado** (`9387c15` y siguientes). El working tree actual solo contiene el refinamiento de marca/SEO de la landing (logo real, `favicon.svg`, `og-image.png`, dominio `displayevent.com`), documentado en `MEMORIA.md` §10.
+Todo el bloque multiformato señalado en la auditoría original quedó **commiteado** (`9387c15` y siguientes); el refinamiento de marca/SEO de la landing quedó en `c657c81`/`c7a3146`. El working tree actual (2026-09-14, **sin commitear**) contiene el rediseño de la landing y el envío de invitaciones por WhatsApp, documentados en `MEMORIA.md` §10, §11.2 y §12.
 
 ### 6.2 Deuda que bloquea producción
 1. Resolver la **multitenencia** (columna `user_id` en `events` + filtro en todas las rutas) o declarar explícitamente que la app es de un solo usuario y eliminar el registro multiusuario.
