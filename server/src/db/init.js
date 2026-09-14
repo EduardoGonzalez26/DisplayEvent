@@ -43,6 +43,9 @@ async function main() {
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255)`,
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ`,
+    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS leader_phone VARCHAR(20)`,
+    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT`,
   ];
   for (const statement of migrations) {
     await client.query(statement);

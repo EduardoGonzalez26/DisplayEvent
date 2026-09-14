@@ -68,6 +68,24 @@ export const api = {
     update: (eventId, tableId, payload) => request(`/events/${eventId}/tables/${tableId}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (eventId, tableId) => request(`/events/${eventId}/tables/${tableId}`, { method: "DELETE" }),
   },
+  whatsapp: {
+    get: (eventId) => request(`/events/${eventId}/whatsapp`),
+    saveMessage: (eventId, message) =>
+      request(`/events/${eventId}/whatsapp/message`, {
+        method: "PUT",
+        body: JSON.stringify({ message }),
+      }),
+    send: (eventId, payload = {}) =>
+      request(`/events/${eventId}/whatsapp/send`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    mark: (eventId, groupIds) =>
+      request(`/events/${eventId}/whatsapp/mark`, {
+        method: "POST",
+        body: JSON.stringify({ groupIds }),
+      }),
+  },
   templates: {
     list: () => request("/templates"),
     get: (id) => request(`/templates/${id}`),

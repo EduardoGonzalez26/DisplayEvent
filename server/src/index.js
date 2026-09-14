@@ -12,6 +12,7 @@ import groupsRouter from "./routes/groups.js";
 import guestsRouter from "./routes/guests.js";
 import tablesRouter from "./routes/tables.js";
 import templatesRouter from "./routes/templates.js";
+import whatsappRouter from "./routes/whatsapp.js";
 import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
 import authRouter from "./routes/auth.js";
@@ -71,6 +72,7 @@ app.use("/api/events", requireAuth, eventsRouter);
 app.use("/api/events/:eventId/groups", requireAuth, eventAccess, groupsRouter);
 app.use("/api/events/:eventId/guests", requireAuth, eventAccess, guestsRouter);
 app.use("/api/events/:eventId/tables", requireAuth, eventAccess, tablesRouter);
+app.use("/api/events/:eventId/whatsapp", requireAuth, eventAccess, whatsappRouter);
 app.use("/api/templates", requireAuth, templatesRouter);
 app.use("/api/uploads", requireAuth, uploadsRouter);
 

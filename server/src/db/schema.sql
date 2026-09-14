@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS events (
   place VARCHAR(255) NOT NULL,
   invitation JSONB,
   slug VARCHAR(80),
+  -- Mensaje editable de la invitación por WhatsApp. Placeholders admitidos:
+  -- {{lider}}, {{evento}}, {{fecha}}, {{lugar}}, {{enlace}}. NULL = preset por defecto.
+  whatsapp_message TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -35,6 +38,10 @@ CREATE TABLE IF NOT EXISTS "groups" (
   rsvp_note VARCHAR(500),
   high_chairs BOOLEAN NOT NULL DEFAULT FALSE,
   high_chairs_count INT NOT NULL DEFAULT 0,
+  -- Teléfono E.164 del líder (+52...), usado para enviar la invitación por WhatsApp.
+  leader_phone VARCHAR(20),
+  -- Última vez que se confirmó el envío de la invitación al líder.
+  whatsapp_sent_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { Modal, Field, inputClass, Button } from "../../components/ui.jsx";
+import WhatsAppSendModal from "../../components/WhatsAppSendModal.jsx";
 
 function GroupForm({ initial, onSubmit, onCancel }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [leaderName, setLeaderName] = useState(initial?.leader_name ?? "");
+  const [leaderPhone, setLeaderPhone] = useState(initial?.leader_phone ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -14,7 +16,7 @@ function GroupForm({ initial, onSubmit, onCancel }) {
     setSaving(true);
     setError("");
     try {
-      await onSubmit({ name, leader_name: leaderName });
+      await onSubmit({ name, leader_name: leaderName, leader_phone: leaderPhone });
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -39,6 +41,20 @@ function GroupForm({ initial, onSubmit, onCancel }) {
           onChange={(e) => setLeaderName(e.target.value)}
           placeholder="Nombre del líder (cuenta como invitado)"
         />
+      </Field>
+      <Field label="WhatsApp del líder">
+        <input
+          className={inputClass}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          value={leaderPhone}
+          onChange={(e) => setLeaderPhone(e.target.value)}
+          placeholder="Ej. 5512345678"
+        />
+        <span className="block text-xs text-gray-500 mt-1">
+          Se usa para enviar la invitación por WhatsApp. 10 dígitos o con lada internacional.
+        </span>
       </Field>
       {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
       <div className="flex justify-end gap-2">
@@ -167,6 +183,35 @@ function GroupCard({
           {group.leader_name && (
             <p className="text-sm text-gray-400 mt-0.5 ml-7">Líder: {group.leader_name}</p>
           )}
+          <div className="flex items-center gap-2 flex-wrap mt-1 ml-7">
+            {group.leader_phone ? (
+              <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-3.5 h-3.5 text-emerald-400"
+                  aria-hidden="true"
+                >
+                  <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z" />
+                </svg>
+                {group.leader_phone}
+              </span>
+            ) : null}
+            {group.whatsapp_sent_at ? (
+              <span className="text-[10px] uppercase tracking-wide text-emerald-300 bg-emerald-900/40 rounded-full px-2 py-0.5">
+                Invitación enviada
+              </span>
+            ) : null}
+            {!group.leader_phone ? (
+              <span className="text-[10px] uppercase tracking-wide text-gray-400 bg-gray-800 rounded-full px-2 py-0.5">
+                Sin WhatsApp
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-gray-400">
@@ -520,12 +565,22 @@ export default function EventGuests() {
       await api.groups.update(id, group.id, {
         name: group.name,
         leader_name: group.leader_name,
+        // Se reenvía para que la actualización de periqueras no borre el teléfono.
+        leader_phone: group.leader_phone ?? null,
         ...payload,
       });
       await refreshGroups();
     } catch (err) {
       notify(err.message);
     }
+  };
+
+  const handleOpenWhatsApp = () => {
+    if (groups.length === 0) {
+      notify("Crea grupos para enviar invitaciones");
+      return;
+    }
+    setModal({ mode: "whatsapp" });
   };
 
   return (
@@ -535,7 +590,24 @@ export default function EventGuests() {
           Invitados
           <span className="text-sm font-normal text-gray-400 ml-2">({groups.length} grupos)</span>
         </h1>
-        <Button onClick={() => setModal({ mode: "create-group" })}>+ Nuevo grupo</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleOpenWhatsApp}
+            className="inline-flex items-center gap-2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-4 h-4 text-emerald-400"
+              aria-hidden="true"
+            >
+              <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Zm0 2a7 7 0 1 1-3.6 13l-.4-.2-2.2.6.6-2.1-.2-.4A7 7 0 0 1 12 5Zm-2.7 3.2c-.2 0-.5.1-.7.4-.2.3-.8 1-.8 2s.6 2 .8 2.2c.3.4 1.5 2.3 3.7 3.1 1.8.7 2.2.6 2.6.6.5 0 1.4-.5 1.6-1.1.2-.6.2-1 .2-1.1-.1-.2-.3-.2-.6-.3l-1.4-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.1-.2.2-.4.1a5.7 5.7 0 0 1-1.7-1 6.4 6.4 0 0 1-1.2-1.5c-.1-.2 0-.3.1-.4l.5-.6c.1-.2.2-.3.1-.5l-.6-1.5c-.2-.4-.3-.4-.5-.4h-.5Z" />
+            </svg>
+            Enviar invitaciones
+          </Button>
+          <Button onClick={() => setModal({ mode: "create-group" })}>+ Nuevo grupo</Button>
+        </div>
       </div>
 
       <div className="flex items-start gap-2.5 text-sm text-gray-400 mb-5 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3.5">
@@ -590,6 +662,19 @@ export default function EventGuests() {
             onCancel={() => setModal(null)}
           />
         </Modal>
+      )}
+      {modal?.mode === "whatsapp" && (
+        <WhatsAppSendModal
+          eventId={id}
+          event={event}
+          groups={groups}
+          onClose={() => setModal(null)}
+          onDone={(message, type) => {
+            setModal(null);
+            refreshGroups();
+            notify(message || "Invitaciones actualizadas", type || "success");
+          }}
+        />
       )}
 
       {confirm && (

@@ -1,12 +1,24 @@
 import { Router } from "express";
 import { query, pool, transaction } from "../db/index.js";
 import { generateToken } from "../utils/token.js";
+import { normalizePhone } from "../utils/phone.js";
 
 const router = Router({ mergeParams: true });
 
 async function eventExists(eventId) {
   const rows = await query(`SELECT id FROM events WHERE id = $1`, [eventId]);
   return rows.length > 0;
+}
+
+// Interpreta `leader_phone` de un crear/editar de grupo. Vacío/null/"" => null.
+// Devuelve { error } cuando el formato no es válido.
+function parseLeaderPhone(raw) {
+  const isEmpty =
+    raw === undefined || raw === null || (typeof raw === "string" && !raw.trim());
+  if (isEmpty) return { value: null };
+  const parsed = normalizePhone(raw);
+  if (!parsed.ok) return { error: parsed.error };
+  return { value: parsed.e164 };
 }
 
 function insertLeader(client, groupId, leaderName) {
@@ -48,6 +60,8 @@ router.get("/", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   const { name, leader_name } = req.body;
   if (!name) return res.status(400).json({ error: "El nombre del grupo es obligatorio" });
+  const phone = parseLeaderPhone(req.body.leader_phone);
+  if (phone.error) return res.status(400).json({ error: phone.error });
   try {
     if (!(await eventExists(req.params.eventId))) {
       return res.status(404).json({ error: "Evento no encontrado" });
@@ -55,9 +69,9 @@ router.post("/", async (req, res, next) => {
 
     const group = await transaction(async (client) => {
       const { rows } = await client.query(
-        `INSERT INTO "groups" (event_id, name, leader_name, invitation_token)
-         VALUES ($1, $2, $3, $4) RETURNING id`,
-        [req.params.eventId, name, leader_name || null, generateToken()]
+        `INSERT INTO "groups" (event_id, name, leader_name, leader_phone, invitation_token)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [req.params.eventId, name, leader_name || null, phone.value, generateToken()]
       );
       const groupId = rows[0].id;
       if (leader_name) await insertLeader(client, groupId, leader_name);
@@ -107,12 +121,24 @@ router.post("/:groupId/token", async (req, res, next) => {
 router.put("/:groupId", async (req, res, next) => {
   const { name, leader_name, high_chairs, high_chairs_count } = req.body;
   if (!name) return res.status(400).json({ error: "El nombre del grupo es obligatorio" });
+
+  // Hay clientes que envían PUT parciales: si `leader_phone` no viene en el
+  // body se conserva el valor actual; si viene vacío/null se borra (NULL).
+  const hasLeaderPhone = Object.prototype.hasOwnProperty.call(req.body, "leader_phone");
+  let leaderPhone = null;
+  if (hasLeaderPhone) {
+    const phone = parseLeaderPhone(req.body.leader_phone);
+    if (phone.error) return res.status(400).json({ error: phone.error });
+    leaderPhone = phone.value;
+  }
+
   try {
     const group = await transaction(async (client) => {
       const count = Number(high_chairs_count);
       const result = await client.query(
         `UPDATE "groups"
-         SET name = $1, leader_name = $2, high_chairs = $3, high_chairs_count = $4
+         SET name = $1, leader_name = $2, high_chairs = $3, high_chairs_count = $4,
+             leader_phone = CASE WHEN $7::boolean THEN $8::varchar ELSE leader_phone END
          WHERE id = $5 AND event_id = $6
          RETURNING *`,
         [
@@ -122,6 +148,8 @@ router.put("/:groupId", async (req, res, next) => {
           high_chairs && Number.isInteger(count) && count > 0 ? count : 0,
           req.params.groupId,
           req.params.eventId,
+          hasLeaderPhone,
+          leaderPhone,
         ]
       );
       if (result.rowCount === 0) {
