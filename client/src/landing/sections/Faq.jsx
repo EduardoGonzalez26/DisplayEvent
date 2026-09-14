@@ -4,24 +4,24 @@ import { EASE } from "../../invitation/motion.jsx";
 
 const FAQS = [
   {
-    q: "¿Los invitados necesitan crear una cuenta?",
-    a: "No: cada grupo recibe un enlace que abre la invitación directo.",
+    q: "¿Mis invitados necesitan crear una cuenta?",
+    a: "No. Cada grupo recibe un enlace que abre la invitación directo.",
   },
   {
     q: "¿Puedo personalizar la invitación?",
-    a: "Sí: 6 formatos con portada, mensaje, itinerario, ubicaciones, dress code, galería, RSVP y mesa de regalos.",
+    a: "Sí: formato, portada, mensaje, itinerario, ubicaciones, dress code, galería, confirmación y mesa de regalos.",
   },
   {
     q: "¿Puedo editar después de compartir?",
-    a: "Sí; los enlaces siguen activos (y puedes regenerar el enlace de un grupo para revocarlo).",
+    a: "Sí. Los enlaces siguen activos y puedes regenerar el de un grupo para revocarlo.",
   },
   {
     q: "¿Cómo funciona el acomodo de mesas?",
-    a: "Arrastra invitados confirmados a las mesas; el sistema valida la capacidad; hay mesas de niños y exportación para imprimir.",
+    a: "Arrastra invitados confirmados a las mesas; el sistema valida la capacidad. Hay mesas de niños y exportación para imprimir.",
   },
   {
-    q: "¿Cómo reciben los regalos?",
-    a: "Depósito/transferencia bancaria o pago con tarjeta; montos en MXN o EUR.",
+    q: "¿Cómo llegan los regalos?",
+    a: "Por depósito o transferencia bancaria; el pago con tarjeta se activa desde tu cuenta. Montos en pesos o euros.",
   },
   {
     q: "¿Puedo reutilizar un diseño en otro evento?",
@@ -38,7 +38,7 @@ export default function Faq() {
       <div className="de-faq__inner">
         <div className="de-faq__head">
           <p className="de-eyebrow">Preguntas</p>
-          <h2 className="de-section-title">Preguntas frecuentes</h2>
+          <h2 className="de-section-title">Lo que nos preguntan seguido</h2>
         </div>
 
         <div className="de-faq__list">
@@ -58,6 +58,9 @@ export default function Faq() {
                     aria-controls={panelId}
                     onClick={() => setOpenIndex(isOpen ? -1 : i)}
                   >
+                    <span className="de-faq__num" aria-hidden="true">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                     <span>{item.q}</span>
                     <svg
                       className="de-faq__icon"

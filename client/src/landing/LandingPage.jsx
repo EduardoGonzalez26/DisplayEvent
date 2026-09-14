@@ -1,7 +1,7 @@
 import useLandingMeta from "./useLandingMeta.js";
 import Nav from "./sections/Nav.jsx";
 import Hero from "./sections/Hero.jsx";
-import FormatsMarquee from "./sections/FormatsMarquee.jsx";
+import Index from "./sections/Index.jsx";
 import FeatureInvitations from "./sections/FeatureInvitations.jsx";
 import FeatureRsvp from "./sections/FeatureRsvp.jsx";
 import FeatureTables from "./sections/FeatureTables.jsx";
@@ -24,13 +24,11 @@ export default function LandingPage() {
       <Nav />
       <main id="contenido" className="de-main">
         <Hero />
-        <FormatsMarquee />
-        <section id="funciones" className="de-features" aria-label="Funciones de DisplayEvent">
-          <FeatureInvitations />
-          <FeatureRsvp />
-          <FeatureTables />
-          <FeatureGifts />
-        </section>
+        <Index />
+        <FeatureInvitations />
+        <FeatureRsvp />
+        <FeatureTables />
+        <FeatureGifts />
         <HowItWorks />
         <FormatShowcase />
         <Faq />

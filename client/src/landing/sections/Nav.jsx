@@ -28,8 +28,8 @@ export default function Nav() {
             src="/logo.svg"
             alt=""
             className="de-nav__logo"
-            width="30"
-            height="25"
+            width="34"
+            height="28"
             decoding="async"
           />
           <span className="de-nav__wordmark">DisplayEvent</span>
@@ -56,7 +56,7 @@ export default function Nav() {
                 Iniciar sesión
               </Link>
               <Link to="/registro" className="de-btn de-btn--primary de-btn--sm">
-                Crear mi evento
+                Crear cuenta
               </Link>
             </>
           )}

@@ -12,13 +12,18 @@ export default function Hero() {
       <span className="de-grain" aria-hidden="true" />
       <div className="de-hero__inner">
         <div className="de-hero__copy">
-          <p className="de-eyebrow">Invitaciones digitales y organización de eventos</p>
+          <p className="de-hero__dateline">XV años · Bodas · Cumpleaños · Baby showers</p>
           <h1 className="de-hero__title">
-            Organiza tu evento. <em>Enamora con tu invitación.</em>
+            <span className="de-hero__title-line">
+              Una invitación que <em>se guarda</em>.
+            </span>
+            <span className="de-hero__title-line">
+              Una lista que por fin <em>cuadra</em>.
+            </span>
           </h1>
-          <p className="de-hero__subtitle">
-            Invitaciones para XV años, bodas, cumpleaños y baby showers. Confirma asistencias por
-            grupo, acomoda mesas y recibe regalos desde un solo panel.
+          <p className="de-hero__lead">
+            Diseña y comparte la invitación de tu celebración, reúne las confirmaciones por grupo y
+            acomoda cada mesa sin hojas de cálculo.
           </p>
           <div className="de-hero__ctas">
             {loading ? (
@@ -33,50 +38,54 @@ export default function Hero() {
               </Link>
             )}
             <a href="#formatos" className="de-btn de-btn--ghost de-btn--lg">
-              Ver formatos
+              Ver los formatos
             </a>
           </div>
         </div>
 
-        <div
-          className="de-hero__visual"
-          role="img"
-          aria-label="Ilustración de una invitación digital que sale de un sobre abierto"
-        >
-          <motion.div
-            className="de-envelope"
-            animate={reduced ? undefined : { y: [0, -9, 0] }}
-            transition={reduced ? undefined : { duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <span className="de-envelope__body" aria-hidden="true" />
-            <motion.span
-              className="de-envelope__card"
-              aria-hidden="true"
-              initial={reduced ? false : { y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1, ease: EASE, delay: 0.3 }}
-            >
-              <span className="de-envelope__monogram">XV</span>
-              <span className="de-envelope__title">Celebración</span>
-              <span className="de-envelope__date">12 · Septiembre · 2026</span>
-            </motion.span>
-            <span className="de-envelope__pocket" aria-hidden="true" />
-            <motion.span
-              className="de-envelope__flap"
-              aria-hidden="true"
-              initial={reduced ? false : { rotateX: 0 }}
-              animate={{ rotateX: reduced ? 0 : -60 }}
-              transition={{ duration: 1.2, ease: EASE, delay: 0.15 }}
-            />
-          </motion.div>
+        <figure className="de-hero__plate">
+          <div className="de-plate">
+            <div className="de-plate__frame">
+              <div
+                className="de-envelope"
+                role="img"
+                aria-label="Invitación digital que sale de un sobre abierto"
+              >
+                <span className="de-envelope__body" aria-hidden="true" />
+                <motion.span
+                  className="de-envelope__card"
+                  aria-hidden="true"
+                  initial={reduced ? false : { y: 26, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: 0.9, ease: EASE, delay: 0.25 }}
+                >
+                  <span className="de-envelope__monogram">XV</span>
+                  <span className="de-envelope__title">Celebración</span>
+                  <span className="de-envelope__date">12 · Septiembre · 2026</span>
+                </motion.span>
+                <span className="de-envelope__pocket" aria-hidden="true" />
+                <motion.span
+                  className="de-envelope__flap"
+                  aria-hidden="true"
+                  initial={reduced ? false : { rotateX: 0 }}
+                  whileInView={{ rotateX: reduced ? 0 : -58 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: 1.1, ease: EASE, delay: 0.1 }}
+                />
+              </div>
+            </div>
+            <figcaption className="de-plate__caption">
+              Fig. 01 — Invitación con sobre de apertura, cuenta regresiva y RSVP.
+            </figcaption>
+          </div>
+        </figure>
 
-          <span className="de-hero__chip de-hero__chip--a" aria-hidden="true">
-            RSVP por pase
-          </span>
-          <span className="de-hero__chip de-hero__chip--b" aria-hidden="true">
-            Mesas con capacidad
-          </span>
-        </div>
+        <ul className="de-hero__facts">
+          <li className="de-hero__fact">Invitados sin cuenta</li>
+          <li className="de-hero__fact">Un enlace por grupo</li>
+          <li className="de-hero__fact">Capacidad validada en mesas</li>
+        </ul>
       </div>
     </section>
   );

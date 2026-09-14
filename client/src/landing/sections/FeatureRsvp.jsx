@@ -1,43 +1,29 @@
-import { Reveal } from "../../invitation/motion.jsx";
+import FeaturePlate from "../components/FeaturePlate.jsx";
 import RsvpCardMock from "../components/RsvpCardMock.jsx";
 
 const BULLETS = [
   "Un enlace único por grupo",
-  "Líder del grupo",
-  "Confirmación por pase",
-  "Restricciones alimenticias",
-  "Periqueras",
-  "Conteo en vivo",
-  "Sin cuenta para invitados",
+  "Confirmación pase por pase",
+  "Líder de grupo designado",
+  "Restricciones alimenticias y periqueras",
+  "Conteo de confirmaciones en vivo",
+  "Sin cuentas para tus invitados",
 ];
 
 export default function FeatureRsvp() {
   return (
-    <section className="de-feature de-feature--alt de-feature--flip">
-      <div className="de-feature__inner">
-        <Reveal className="de-feature__copy">
-          <p className="de-eyebrow">Grupos y RSVP</p>
-          <h2 className="de-feature__title">Cada grupo, su propio enlace</h2>
-          <p className="de-feature__text">
-            Comparte un enlace único por grupo: tus invitados no necesitan crear cuenta. El líder
-            confirma por pase, registra restricciones alimenticias y periqueras, y tú ves el conteo
-            en vivo.
-          </p>
-          <ul className="de-feature__list">
-            {BULLETS.map((bullet) => (
-              <li key={bullet} className="de-feature__item">
-                {bullet}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-
-        <Reveal className="de-feature__media" delay={0.1}>
-          <div className="de-mock-wrap">
-            <RsvpCardMock />
-          </div>
-        </Reveal>
-      </div>
-    </section>
+    <FeaturePlate
+      id="rsvp"
+      index="02"
+      label="RSVP por grupo"
+      title="Cada grupo, su propio enlace."
+      lead="Comparte un enlace por grupo; nadie necesita crear cuenta. El líder confirma pase por pase, anota restricciones alimenticias y periqueras, y tú ves el conteo al instante."
+      bullets={BULLETS}
+      caption="Fig. 03 — Confirmación de la familia Herrera, grupo de cuatro pases."
+      flip
+      alt
+    >
+      <RsvpCardMock />
+    </FeaturePlate>
   );
 }

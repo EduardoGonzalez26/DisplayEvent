@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 
 const ANCHORS = [
-  { href: "#formatos", label: "Formatos" },
-  { href: "#funciones", label: "Funciones" },
-  { href: "#como-funciona", label: "Cómo funciona" },
+  { href: "#invitaciones", label: "Invitaciones" },
+  { href: "#rsvp", label: "RSVP por grupo" },
+  { href: "#mesas", label: "Mesas" },
+  { href: "#regalos", label: "Mesa de regalos" },
   { href: "#preguntas", label: "Preguntas" },
 ];
 
@@ -17,20 +18,20 @@ export default function Footer() {
               src="/logo.svg"
               alt=""
               className="de-nav__logo"
-              width="30"
-              height="25"
+              width="34"
+              height="28"
               decoding="async"
             />
             <span className="de-nav__wordmark">DisplayEvent</span>
           </span>
-          <p className="de-footer__tagline">Hecho para celebrar juntos</p>
+          <p className="de-footer__tagline">Papelería digital y logística de celebración.</p>
           <p className="de-footer__note">
-            Invitaciones digitales y organización de eventos en un solo panel.
+            Invitaciones, confirmaciones y mesas en un solo panel.
           </p>
         </div>
 
-        <nav className="de-footer__col" aria-label="Enlaces del producto">
-          <span className="de-footer__title">Producto</span>
+        <nav className="de-footer__col" aria-label="Secciones de la landing">
+          <span className="de-footer__title">Índice</span>
           {ANCHORS.map((anchor) => (
             <a key={anchor.href} href={anchor.href} className="de-footer__link">
               {anchor.label}
@@ -51,6 +52,7 @@ export default function Footer() {
 
       <div className="de-footer__bottom">
         <span>© {new Date().getFullYear()} DisplayEvent</span>
+        <span>Invitaciones digitales · Organización de eventos</span>
       </div>
     </footer>
   );

@@ -1,16 +1,27 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../auth.jsx";
-import Ornament from "../components/Ornament.jsx";
 
 export default function FinalCta() {
   const { user, loading } = useAuth();
 
   return (
-    <section className="de-cta-final">
-      <div className="de-cta-final__inner">
-        <Ornament className="de-cta-final__ornament" />
-        <h2 className="de-cta-final__title">¿Listo para organizar tu próxima celebración?</h2>
-        <div className="de-cta-final__actions">
+    <section className="de-cta">
+      <div className="de-cta__inner">
+        <img
+          src="/logo.svg"
+          alt=""
+          className="de-cta__logo"
+          width="56"
+          height="46"
+          decoding="async"
+          aria-hidden="true"
+        />
+        <h2 className="de-cta__title">Publica tu primera invitación esta tarde</h2>
+        <p className="de-cta__lead">
+          Crea tu cuenta, elige un formato y comparte el primer enlace. Las confirmaciones empiezan
+          a llegar solas.
+        </p>
+        <div className="de-cta__actions">
           {loading ? (
             <span className="de-cta-placeholder" aria-hidden="true" />
           ) : user ? (
@@ -23,6 +34,9 @@ export default function FinalCta() {
             </Link>
           )}
         </div>
+        <p className="de-cta__meta">
+          Tus invitados no necesitan cuenta · Puedes editar después de compartir
+        </p>
       </div>
     </section>
   );
