@@ -197,7 +197,7 @@ export default function AliceXvHero({ event, family, cfg, theme, reveal = true }
         <motion.div variants={entrance(0)}>
           <span
             aria-hidden="true"
-            className="monogram-gold font-inv-serif inline-block select-none leading-none"
+            className="monogram-gold font-script inline-block select-none leading-none"
             style={{ fontSize: "clamp(4.5rem, 20vw, 10rem)" }}
           >
             {monogram}

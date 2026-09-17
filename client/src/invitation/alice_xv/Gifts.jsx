@@ -42,7 +42,6 @@ import { WeddingSectionTitle } from "./decor.jsx";
    incompleta del theme de alice_xv). */
 const FALLBACK = {
   eyebrow: "Regalos",
-  title: "Mesa de Regalos",
   intro:
     "El mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:",
   surprise: "Regalo sorpresa",
@@ -278,8 +277,7 @@ export default function Gifts({ cfg, theme }) {
       <div className="relative mx-auto max-w-3xl">
         <WeddingSectionTitle
           eyebrow={labels.registryEyebrow || FALLBACK.eyebrow}
-          title={labels.registryTitle || FALLBACK.title}
-          titleClassName="text-gold-gradient-deep"
+          largeEyebrow
           subtitle={intro}
         />
 

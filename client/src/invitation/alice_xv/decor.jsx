@@ -217,9 +217,12 @@ export function Flourish({ className = "" }) {
    Título de sección propio: eyebrow con filetes, título en serif (o
    script rosa con `script`) y separador botánico. Paleta rosa/dorado:
    eyebrow rosa, título en tinta profunda, orla botánica dorada.
-   `titleClassName` añade clases extra al <h2> (p. ej.
-   `text-gold-gradient` en la Mesa de Regalos); su default "" conserva
-   el look original.
+   `titleClassName` añade clases extra al <h2>; su default "" conserva
+   el look original. `title` es opcional: si falta, el eyebrow pasa a
+   ser el <h2> de la sección (conserva el encabezado semántico) y el
+   separador sube para equilibrar. `largeEyebrow` agranda el eyebrow
+   para titulares que lo usan como único encabezado (p. ej. la Mesa de
+   Regalos).
 ------------------------------------------------------------------ */
 export function WeddingSectionTitle({
   eyebrow,
@@ -228,30 +231,48 @@ export function WeddingSectionTitle({
   script = false,
   className = "",
   titleClassName = "",
+  largeEyebrow = false,
 }) {
   const titleColor = script
     ? "text-[var(--inv-accent-pink)]"
     : "text-[var(--inv-text)]";
 
+  const eyebrowClass = largeEyebrow
+    ? "text-sm uppercase tracking-[0.4em] text-[var(--inv-accent-pink)] md:text-base"
+    : "text-[0.62rem] uppercase tracking-[0.5em] text-[var(--inv-accent-pink)] md:text-xs";
+  const lineClass = largeEyebrow ? "h-px w-12" : "h-px w-10";
+
   return (
     <Reveal className={`text-center ${className}`}>
       <div className="mb-5 flex items-center justify-center gap-4">
-        <span className="h-px w-10 bg-gradient-to-r from-transparent to-[var(--inv-accent-yellow)]" />
-        <span className="text-[0.62rem] uppercase tracking-[0.5em] text-[var(--inv-accent-pink)] md:text-xs">
-          {eyebrow}
-        </span>
-        <span className="h-px w-10 bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]" />
+        <span
+          className={`${lineClass} bg-gradient-to-r from-transparent to-[var(--inv-accent-yellow)]`}
+        />
+        {title ? (
+          <span className={eyebrowClass}>{eyebrow}</span>
+        ) : (
+          <h2 className={eyebrowClass}>{eyebrow}</h2>
+        )}
+        <span
+          className={`${lineClass} bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]`}
+        />
       </div>
-      <h2
-        className={`text-balance ${
-          script
-            ? "font-inv-script text-5xl leading-[1.35] md:text-6xl"
-            : "font-inv-heading text-3xl md:text-5xl"
-        } ${titleColor} ${titleClassName}`}
-      >
-        {title}
-      </h2>
-      <BotanicalDivider className="mx-auto mt-7 h-10 w-64 text-[var(--inv-botanical)] md:h-12 opacity-90" />
+      {title && (
+        <h2
+          className={`text-balance ${
+            script
+              ? "font-inv-script text-5xl leading-[1.35] md:text-6xl"
+              : "font-inv-heading text-3xl md:text-5xl"
+          } ${titleColor} ${titleClassName}`}
+        >
+          {title}
+        </h2>
+      )}
+      <BotanicalDivider
+        className={`mx-auto ${
+          title ? "mt-7" : "mt-3"
+        } h-10 w-64 text-[var(--inv-botanical)] md:h-12 opacity-90`}
+      />
       {subtitle && (
         <p className="mx-auto mt-5 max-w-xl whitespace-pre-line text-base font-light md:text-lg text-inv-text-soft">
           {subtitle}
