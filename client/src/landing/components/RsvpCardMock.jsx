@@ -1,10 +1,10 @@
-// Mock visual del RSVP de un grupo: pases, confirmaciones y restricciones.
+// Mock visual del RSVP de un grupo: pases y confirmaciones.
 export default function RsvpCardMock() {
   return (
     <div
       className="de-rsvp"
       role="img"
-      aria-label="Vista previa del control de asistencia de un grupo: pases, líder, confirmaciones y restricciones alimenticias"
+      aria-label="Vista previa del control de asistencia de un grupo: pases, líder y confirmaciones"
     >
       <div className="de-rsvp__card" aria-hidden="true">
         <div className="de-rsvp__head">
@@ -40,11 +40,6 @@ export default function RsvpCardMock() {
             Sofía · Pendiente
           </li>
         </ul>
-
-        <div className="de-rsvp__tags">
-          <span className="de-rsvp__tag">Sin gluten</span>
-          <span className="de-rsvp__tag">2 periqueras</span>
-        </div>
       </div>
     </div>
   );

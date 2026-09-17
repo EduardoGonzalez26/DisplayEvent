@@ -5,7 +5,6 @@ const BULLETS = [
   "Un enlace único por grupo",
   "Confirmación pase por pase",
   "Líder de grupo designado",
-  "Restricciones alimenticias y periqueras",
   "Conteo de confirmaciones en vivo",
   "Sin cuentas para tus invitados",
 ];
@@ -17,7 +16,7 @@ export default function FeatureRsvp() {
       index="02"
       label="RSVP por grupo"
       title="Cada grupo, su propio enlace."
-      lead="Comparte un enlace por grupo; nadie necesita crear cuenta. El líder confirma pase por pase, anota restricciones alimenticias y periqueras, y tú ves el conteo al instante."
+      lead="Comparte un enlace por grupo; nadie necesita crear cuenta. El líder confirma pase por pase y tú ves el conteo al instante."
       bullets={BULLETS}
       caption="Fig. 03 — Confirmación de la familia Herrera, grupo de cuatro pases."
       flip
