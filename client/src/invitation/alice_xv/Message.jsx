@@ -5,10 +5,10 @@ import { BotanicalCorner, Flourish } from "./decor.jsx";
 
 /* ------------------------------------------------------------------
    Carta editorial (XV de Alice): texto directo sobre fondo rosa pastel
-   con orla botánica fina, resaltado limpio de la familia (un solo
-   color, sin gradiente) y firma en Dancing Script rosa. Sin capitular
-   (look editorial más limpio y estable; `float` + `text-balance` +
-   itálica podían romper la alineación). Mismas props y fallbacks que
+   con orla botánica fina y resaltado limpio de la familia (un solo
+   color, sin gradiente). Sin capitular (look editorial más limpio y
+   estable; `float` + `text-balance` + itálica podían romper la
+   alineación) y sin firma al pie. Mismas props y fallbacks que
    shared/Message; siempre se renderiza.
 ------------------------------------------------------------------ */
 
@@ -35,7 +35,6 @@ export default function Message({ cfg, family, theme }) {
     theme?.labels?.defaultMessage?.(family) ||
     `${family}, la alegría de contar con ustedes es inmensa. Nos encantaría compartir este día tan especial.`;
 
-  const signature = theme?.resolvers?.signature?.(cfg) || cfg.celebrants || null;
   const reduced = useReducedMotion();
 
   // Drift sutil de los ornamentos de esquina. La tarjeta es sticky, por lo
@@ -84,23 +83,6 @@ export default function Message({ cfg, family, theme }) {
           </p>
           <Flourish className="mx-auto mt-10 h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
         </Reveal>
-
-        {signature && (
-          <motion.div
-            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
-            whileInView={reduced ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.6 }}
-            transition={{ type: "spring", stiffness: 180, damping: 20 }}
-            className="mt-10 text-center"
-          >
-            <p className="mb-3 text-[0.62rem] uppercase tracking-[0.5em] text-inv-text-soft">
-              {theme?.labels?.withLove ?? "Con cariño"}
-            </p>
-            <p className="font-inv-script text-5xl leading-[1.3] text-[var(--inv-accent-pink)] md:text-7xl">
-              {signature}
-            </p>
-          </motion.div>
-        )}
       </div>
     </section>
   );

@@ -31,21 +31,16 @@ export default function RsvpSection({
   const editable = !!cfg?.rsvp_editable;
   const reduced = useReducedMotion();
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
-  const [diet, setDiet] = useState(note || "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
   const [showModal, setShowModal] = useState(false);
 
   // Sincroniza el estado local con las props (p.ej. al editar en preview):
-  // respuestas iniciales, nota y estado "enviado" se recalculan si cambian.
+  // respuestas iniciales y estado "enviado" se recalculan si cambian.
   useEffect(() => {
     setAnswers(buildAnswers(guests));
   }, [guests]);
-
-  useEffect(() => {
-    setDiet(note || "");
-  }, [note]);
 
   useEffect(() => {
     setSubmitted(attending > 0 || declining > 0);
@@ -66,7 +61,7 @@ export default function RsvpSection({
         declining_ids: guests
           .filter((g) => answers[g.id] === "no")
           .map((g) => g.id),
-        note: diet,
+        note,
       });
       setSubmitted(true);
       onDone(updated);
@@ -138,7 +133,6 @@ export default function RsvpSection({
             count={attending}
             declining={declining}
             total={guests.length}
-            note={note}
             family={family}
             contacts={contacts}
             contactNote={contactNote}
@@ -213,19 +207,6 @@ export default function RsvpSection({
                 </motion.li>
               ))}
             </motion.ul>
-
-            <label className="block mb-5">
-              <span className="block text-sm text-inv-text-soft mb-1.5">
-                Detalles / restricciones alimenticias
-              </span>
-              <textarea
-                value={diet}
-                onChange={(e) => setDiet(e.target.value)}
-                rows={3}
-                placeholder="Ej. Soy alérgico al marisco…"
-                className="w-full rounded-xl bg-inv-bg border border-inv-accent-border px-4 py-3 text-sm text-inv-text placeholder-inv-text-muted/50 focus:outline-none focus:border-inv-primary/70 focus:ring-1 focus:ring-inv-primary/40 transition-all"
-              />
-            </label>
 
             {message && <p className="text-sm text-red-400 mb-4">{message}</p>}
 
@@ -361,7 +342,7 @@ function AnswerButton({ active, label, selectedClass, onClick, reduced }) {
   );
 }
 
-function SubmitConfirmation({ count, declining, total, note, family, contacts, contactNote, editable }) {
+function SubmitConfirmation({ count, declining, total, family, contacts, contactNote, editable }) {
   const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
   return (
     <motion.div
@@ -393,11 +374,6 @@ function SubmitConfirmation({ count, declining, total, note, family, contacts, c
           </span>
         )}
       </p>
-      {note && (
-        <p className="text-sm text-inv-text-soft italic mb-5">
-          Detalles recibidos: “{note}”
-        </p>
-      )}
       <p className="text-sm text-inv-text-soft mb-2">
         {editable ? "Puedes cambiarla en cualquier momento." : "La selección ya no puede modificarse."}
       </p>
