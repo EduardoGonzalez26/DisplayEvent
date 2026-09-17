@@ -72,6 +72,12 @@ export const alice_xv = {
     "--inv-gold-gradient":
       "linear-gradient(180deg, #E9CF8F 0%, #D6B263 45%, #C9A24B 70%, #A9822E 100%)",
 
+    // Variante PROFUNDA del gradiente dorado, legible sobre blanco
+    // (contraste AA ~5:1). Se usa en el título de la Mesa de Regalos
+    // vía la clase aditiva `.text-gold-gradient-deep` (Gifts.jsx).
+    "--inv-gold-gradient-deep":
+      "linear-gradient(180deg, #B08A33 0%, #9C7727 50%, #8C6A22 100%)",
+
     // Portada clara: degradado rosa/blanco suave como fallback sin foto.
     "--inv-hero-fallback": "linear-gradient(160deg, #FDF1F5 0%, #F7DCE4 100%)",
   },
@@ -107,10 +113,24 @@ export const alice_xv = {
     withLove: "Con cariño",
     registryEyebrow: "Regalos",
     registryTitle: "Mesa de Regalos",
-    padrinosEyebrow: "Honor",
-    padrinosTitle: "Nuestros Padrinos",
+    registryIntro:
+      "Para la Señorita su mayor deleite es su presencia en tan importante evento. Pero si gusta darle un detalle, puede obsequiarle:",
+    registryOptionSurprise: "Regalo sorpresa",
+    registryOptionEnvelopes: "Lluvia de sobres",
+    registryOptionTransfer: "Transferencia",
+    registryTransferNote:
+      "También dejamos aquí los datos para una transferencia",
+    registryBankLabels: {
+      bank: "Banco",
+      card: "TARJETA",
+      holder: "Beneficiaria",
+    },
+    padrinosEyebrow: "Con amor",
+    padrinosTitle: "Mis Padres y Padrinos",
     padrinosSubtitle:
-      "Quienes nos acompañan en este camino, con todo su cariño y apoyo.",
+      "Quienes me acompañan en este camino, con todo su cariño y apoyo.",
+    parentsGroupTitle: "Mis Padres",
+    padrinosGroupTitle: "Mis Padrinos",
     defaultKicker: "Invitación a mis XV años",
     heroInvite: "Te Invitamos a Mis XV Años",
     parentsLine: (parents) =>

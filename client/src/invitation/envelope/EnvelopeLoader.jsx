@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { EASE } from "../motion.jsx";
 import { Corner } from "../shared/util.jsx";
@@ -112,6 +112,46 @@ export default function EnvelopeLoader({ monogram = "&", seal = "&", family, onO
   const [opening, setOpening] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [done, setDone] = useState(false);
+
+  /* ------------------------------------------------------------------
+     Bloqueo del scroll de la página mientras el sobre está montado
+     (visible o animándose). Su ciclo de vida coincide exactamente con el
+     estado bloqueado: montado = bloqueado; desmontado tras onOpen =
+     desbloqueado. No se toca touchmove: el gesto de arrastre táctil queda
+     intacto; el bloqueo táctil lo hacen overflow: hidden,
+     overscroll-behavior: none y touch-action: none desde index.css.
+  ------------------------------------------------------------------ */
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
+    // Medir el ancho de la barra de scroll ANTES de ocultarla y compensar
+    // con padding para no provocar un salto horizontal del layout.
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+    const prevPaddingRight = body.style.paddingRight;
+
+    root.classList.add("de-envelope-lock");
+    if (scrollbarWidth > 0) {
+      const current = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
+      body.style.paddingRight = `${current + scrollbarWidth}px`;
+    }
+
+    // Empezar en la portada (también cubre la restauración de scroll del
+    // navegador al recargar). overflow: hidden sigue permitiendo scrollTo.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    // Rueda de ratón en escritorio: cancelar explícitamente. No se
+    // intercepta el teclado (Enter/Espacio abren el sobre por onKeyDown).
+    const onWheel = (e) => e.preventDefault();
+    window.addEventListener("wheel", onWheel, { passive: false });
+
+    // Cleanup exacto e idempotente (StrictMode monta/desmonta dos veces en dev).
+    return () => {
+      root.classList.remove("de-envelope-lock");
+      body.style.paddingRight = prevPaddingRight;
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, []);
 
   const open = () => {
     if (started.current) return;

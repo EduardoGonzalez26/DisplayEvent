@@ -275,6 +275,24 @@ html.de-invitation {
   scrollbar-width: thin;
 }
 
+/* Bloqueo de scroll mientras el sobre digital está presente (la clase
+   `de-envelope-lock` la añade/retira EnvelopeLoader en <html>; al
+   desmontarse tras la apertura, el scroll vuelve a la normalidad).
+   Aditiva: no afecta al resto de vistas. */
+html.de-envelope-lock,
+html.de-envelope-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Refuerzo iOS: bajo el sobre no hay gestos nativos de scroll/zoom.
+   El sobre arrastrable conserva el touch-action inline que aplica motion
+   (pan-x) y detecta el gesto por pointer events, por lo que tap y
+   deslizamiento siguen funcionando; no se intercepta touchmove. */
+html.de-envelope-lock {
+  touch-action: none;
+}
+
 ::selection {
   background: rgba(99, 102, 241, 0.35);
 }
@@ -435,6 +453,20 @@ html.de-invitation {
   background: var(
     --inv-gold-gradient,
     linear-gradient(180deg, #f9efd0 0%, #ecd39f 35%, #d3a95c 68%, #b8873a 100%)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Variante PROFUNDA y legible del dorado (contraste AA sobre blanco),
+   para el título de la Mesa de Regalos. Aditiva: no altera a
+   `.text-gold-gradient`. */
+.text-gold-gradient-deep {
+  background-image: var(
+    --inv-gold-gradient-deep,
+    linear-gradient(180deg, #b08a33 0%, #9c7727 50%, #8c6a22 100%)
   );
   -webkit-background-clip: text;
   background-clip: text;

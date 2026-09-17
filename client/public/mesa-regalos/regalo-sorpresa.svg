@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Grupo centrado: el conjunto tapa + caja se balancea respecto al
+       centro del lienzo (márgenes interiores >= 12) -->
+  <g transform="translate(17 0)">
+  <!-- Sombra de piso -->
+  <ellipse cx="100" cy="180" rx="52" ry="5.5" fill="#FBF3E4" fill-opacity="0.35" stroke="#C9A24B" stroke-opacity="0.28" stroke-width="1.1"/>
+
+  <!-- Signo de interrogación caligráfico saliendo de la caja -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M87 52 C 85.5 41, 92 31.5, 102 31 C 111 30.6, 117.5 37, 116.5 45.5 C 115.6 53.5, 106.5 56, 102.5 62 C 100.8 64.6, 100.4 68.5, 100.8 72" stroke="#C9A24B" stroke-width="1.8"/>
+    <path d="M91.5 55.5 C 89 44, 94.5 35, 102 34.6" stroke="#A9822E" stroke-width="1.1" stroke-opacity="0.35"/>
+    <path d="M126 40 C 131 36, 137 34, 142 34.5" stroke="#C9A24B" stroke-width="1.1" stroke-opacity="0.35"/>
+    <path d="M128 54.5 C 134 50.5, 140 49.5, 146 50.5" stroke="#C9A24B" stroke-width="1.1" stroke-opacity="0.3"/>
+    <circle cx="100.8" cy="80.5" r="2.3" fill="#C9A24B"/>
+  </g>
+
+  <!-- Caja abierta, aristas ligeramente curvas -->
+  <g stroke="#C9A24B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M58.5 106 C 72 99.5, 87 95, 101.5 92"/>
+    <path d="M101.5 92 C 116 96.5, 132 100.5, 147.5 104"/>
+    <path d="M58.5 106 C 72 113, 88 118, 101.5 122"/>
+    <path d="M101.5 122 C 116 116.5, 132 110.5, 147.5 104"/>
+    <path d="M58.5 106 C 57.4 128, 57.7 146, 58.5 162"/>
+    <path d="M58.5 162 C 76 167.5, 90 172, 101.5 176"/>
+    <path d="M101.5 176 C 102.6 158, 102.2 140, 101.5 122"/>
+    <path d="M147.5 104 C 148.6 122, 148.2 140, 147.5 158"/>
+    <path d="M147.5 158 C 132 164.5, 116 170.5, 101.5 176"/>
+  </g>
+  <!-- Fondo interior visible -->
+  <path d="M101.5 92 C 102.3 102, 102 112, 101.5 122" stroke="#A9822E" stroke-width="1.1" stroke-linecap="round" stroke-opacity="0.4"/>
+
+  <!-- Rayado de sombra en el lateral derecho -->
+  <g stroke="#A9822E" stroke-width="1.1" stroke-linecap="round" stroke-opacity="0.3">
+    <path d="M106 130 L114 135.5"/>
+    <path d="M106 139 L116 146"/>
+    <path d="M106 148 L118 156"/>
+    <path d="M106 157 L116 164"/>
+    <path d="M112 165 L120 169.5"/>
+  </g>
+
+  <!-- Tapa levantada e inclinada, con listón rosa -->
+  <g transform="translate(40 116) rotate(-48)">
+    <path d="M-29.5 -8.5 C -10 -9.4, 10 -9.2, 29.5 -8.2 C 30.4 -3, 30.5 3, 29.8 8.4 C 10 9.3, -10 9.2, -29.7 8.3 C -30.4 3, -30.3 -3, -29.5 -8.5 Z" stroke="#C9A24B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="#FBF3E4" fill-opacity="0.3"/>
+    <path d="M-3 -8.6 L-3.4 8.6" stroke="#D98AA4" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+    <path d="M5 -8.6 L4.6 8.6" stroke="#D98AA4" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+  </g>
+
+  <!-- Moño rosa -->
+  <g stroke="#D98AA4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 116 C 31.5 107.5, 23.5 110, 28 117 C 31 121.5, 36 119.5, 40 116 Z" fill="#D98AA4" fill-opacity="0.12"/>
+    <path d="M40 116 C 48.5 107.5, 56.5 110, 52 117 C 49 121.5, 44 119.5, 40 116 Z" fill="#D98AA4" fill-opacity="0.12"/>
+    <path d="M40 116.5 C 39 123, 34.5 127, 28.5 127.5"/>
+    <path d="M40 116.5 C 41.5 123, 45.5 127.5, 51 129"/>
+    <circle cx="40" cy="116.5" r="2" fill="#D98AA4" stroke-width="1.2"/>
+  </g>
+
+  <!-- Brote con hojas y perlas doradas en la base -->
+  <path d="M36.5 175 C 33.5 165, 34.5 154, 40 145" stroke="#A9822E" stroke-width="1.1" stroke-linecap="round" stroke-opacity="0.45"/>
+  <path d="M34 158.5 C 30 155, 26.5 155, 23.5 157 C 27 160, 30.5 160.3, 34 158.5 Z" fill="#C9A24B" fill-opacity="0.5"/>
+  <path d="M42.5 150.5 C 46 147.5, 49.5 147, 52.5 148.5 C 49.5 151.8, 45.5 152.2, 42.5 150.5 Z" fill="#C9A24B" fill-opacity="0.45"/>
+  <g transform="translate(37 166) scale(1.2)">
+    <path d="M0 -9 C 4 -7, 5 -2, 0 0 C -5 -2, -4 -7, 0 -9 Z" fill="#D98AA4" fill-opacity="0.85"/>
+    <path d="M0 -9 C 4 -7, 5 -2, 0 0 C -5 -2, -4 -7, 0 -9 Z" fill="#D98AA4" fill-opacity="0.85" transform="rotate(120)"/>
+    <path d="M0 -9 C 4 -7, 5 -2, 0 0 C -5 -2, -4 -7, 0 -9 Z" fill="#D98AA4" fill-opacity="0.85" transform="rotate(240)"/>
+    <circle r="1.6" fill="#C9A24B"/>
+  </g>
+  <g>
+    <circle cx="52" cy="181" r="3.2" fill="#C9A24B" fill-opacity="0.9"/>
+    <circle cx="52" cy="181" r="3.2" stroke="#A9822E" stroke-width="0.9" stroke-opacity="0.5"/>
+    <circle cx="50.8" cy="179.8" r="1.1" fill="#FFFFFF" fill-opacity="0.55"/>
+    <circle cx="64" cy="184" r="2.4" fill="#C9A24B" fill-opacity="0.9"/>
+    <circle cx="64" cy="184" r="2.4" stroke="#A9822E" stroke-width="0.8" stroke-opacity="0.5"/>
+    <circle cx="63.2" cy="183.2" r="0.8" fill="#FFFFFF" fill-opacity="0.55"/>
+    <circle cx="77" cy="182" r="2.8" fill="#C9A24B" fill-opacity="0.9"/>
+    <circle cx="77" cy="182" r="2.8" stroke="#A9822E" stroke-width="0.8" stroke-opacity="0.5"/>
+    <circle cx="76" cy="181" r="0.9" fill="#FFFFFF" fill-opacity="0.55"/>
+  </g>
+  </g>
+</svg>

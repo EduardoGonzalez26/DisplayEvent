@@ -217,6 +217,9 @@ export function Flourish({ className = "" }) {
    Título de sección propio: eyebrow con filetes, título en serif (o
    script rosa con `script`) y separador botánico. Paleta rosa/dorado:
    eyebrow rosa, título en tinta profunda, orla botánica dorada.
+   `titleClassName` añade clases extra al <h2> (p. ej.
+   `text-gold-gradient` en la Mesa de Regalos); su default "" conserva
+   el look original.
 ------------------------------------------------------------------ */
 export function WeddingSectionTitle({
   eyebrow,
@@ -224,6 +227,7 @@ export function WeddingSectionTitle({
   subtitle,
   script = false,
   className = "",
+  titleClassName = "",
 }) {
   const titleColor = script
     ? "text-[var(--inv-accent-pink)]"
@@ -243,7 +247,7 @@ export function WeddingSectionTitle({
           script
             ? "font-inv-script text-5xl leading-[1.35] md:text-6xl"
             : "font-inv-heading text-3xl md:text-5xl"
-        } ${titleColor}`}
+        } ${titleColor} ${titleClassName}`}
       >
         {title}
       </h2>

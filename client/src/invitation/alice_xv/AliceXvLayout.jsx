@@ -8,7 +8,7 @@ import DressCode from "./DressCode.jsx";
 import RegistryNote from "./RegistryNote.jsx";
 import Footer from "./Footer.jsx";
 import Gifts from "./Gifts.jsx";
-import Padrinos from "./Padrinos.jsx";
+import Padrinos, { nameList } from "./Padrinos.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
 import SectionNav from "./SectionNav.jsx";
 
@@ -23,18 +23,19 @@ import SectionNav from "./SectionNav.jsx";
       5. Lleva acabado de tarjeta: esquinas superiores redondeadas,
          hairline botánico superior y sombra suave ascendente.
 
-   Orden: Hero (z-0), Countdown+Message (z-10), Itinerary (z-20),
-   Locations (z-30), Gallery (z-40), DressCode (z-50), RegistryNote
-   (z-60), Gifts (z-70), Padrinos (z-75), Rsvp (z-80), Footer (z-90).
+   Orden: Hero (z-0), Carta con contador (z-10), Padres y Padrinos
+   (z-15), Itinerario (z-20), Locations (z-30), Gallery (z-40),
+   DressCode (z-50), RegistryNote (z-60), Gifts (z-70), Rsvp (z-80),
+   Footer (z-90).
 
    Varias tarjetas NO son sticky (`flow`): su contenido puede exceder
    `100dvh` en móvil y `sticky top-0` + `min-h-[100dvh]` recortaría la
    parte inferior. Fluyen normal (mantienen el acabado de tarjeta) y, al
    cubrir a la anterior, conservan el efecto "carta desplegable" sin
-   quedarse fijas. Son: Carta (z-10), Itinerario (z-20), Ubicaciones
-   (z-30), Galería (z-40), Dress Code (z-50), Nota de regalos (z-60),
-   Mesa de regalos (z-70), Padrinos (z-75) y Rsvp (z-80). El Hero (z-0) y
-   el cierre (z-90) siguen sticky.
+   quedarse fijas. Son: Carta (z-10), Padres y Padrinos (z-15),
+   Itinerario (z-20), Ubicaciones (z-30), Galería (z-40), Dress Code
+   (z-50), Nota de regalos (z-60), Mesa de regalos (z-70) y Rsvp (z-80).
+   El Hero (z-0) y el cierre (z-90) siguen sticky.
 
    Las secciones que devuelven `null` no dejan una tarjeta vacía: el
    layout replica sus condiciones de `return null` y omite el wrapper.
@@ -56,8 +57,9 @@ function CardEdge() {
 }
 
 /* Tarjeta apilable. `flow` = true para contenido que puede exceder el
-   viewport (Carta, Itinerario, Ubicaciones, Gallery, DressCode, regalos,
-   Padrinos y Rsvp): no se fija, fluye normal manteniendo el acabado. */
+   viewport (Carta, Padres y Padrinos, Itinerario, Ubicaciones, Gallery,
+   DressCode, regalos y Rsvp): no se fija, fluye normal manteniendo el
+   acabado. */
 function StackCard({ z, bg, flow = false, id, children }) {
   const finish =
     "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
@@ -118,19 +120,18 @@ export default function AliceXvLayout({
   })();
   const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
   const showGifts = !!(cfg.registry && cfg.registry.enabled);
-  const showPadrinos = (() => {
-    const padrinos = (Array.isArray(cfg.padrinos) ? cfg.padrinos : [])
-      .map((p) => (p && typeof p === "object" ? p.name : p) || "")
-      .map((p) => (p || "").trim())
-      .filter(Boolean);
-    return padrinos.length > 0;
-  })();
+  // Padrinos.jsx devuelve null si ni `parents` ni `padrinos` tienen algún
+  // nombre; se replica con `nameList` (mismo saneo, exportado por el
+  // componente) para no renderizar una tarjeta vacía.
+  const showFamily =
+    nameList(cfg.parents).length > 0 || nameList(cfg.padrinos).length > 0;
 
   // Puntos de la navegación lateral: una entrada por sección VISIBLE
   // (mismas condiciones que arriba). "Regalos" apunta a la nota si existe,
   // si no a la Mesa de Regalos (`mesa-regalos`).
   const sections = [
     { id: "carta", label: "Carta" },
+    showFamily && { id: "padrinos", label: "Familia" },
     showItinerary && { id: "itinerario", label: "Itinerario" },
     showLocations && { id: "ubicaciones", label: "Ubicaciones" },
     showGallery && { id: "galeria", label: "Galería" },
@@ -139,7 +140,6 @@ export default function AliceXvLayout({
       id: showRegistryNote ? "regalos" : "mesa-regalos",
       label: "Regalos",
     },
-    showPadrinos && { id: "padrinos", label: "Padrinos" },
     { id: "confirmaciones", label: "Confirmaciones" },
   ].filter(Boolean);
 
@@ -159,6 +159,13 @@ export default function AliceXvLayout({
         )}
         <Message cfg={cfg} family={family} theme={theme} />
       </StackCard>
+
+      {/* Card 1.5 — padres y padrinos — flow */}
+      {showFamily && (
+        <StackCard z="z-15" bg="bg-inv-bg" flow id="padrinos">
+          <Padrinos cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
 
       {/* Card 2 — itinerario — flow */}
       {showItinerary && (
@@ -197,20 +204,13 @@ export default function AliceXvLayout({
 
       {/* Card 7 — mesa de regalos — flow */}
       {showGifts && (
-        <StackCard z="z-70" bg="bg-inv-bg-alt2" flow id="mesa-regalos">
+        <StackCard z="z-70" bg="bg-inv-bg" flow id="mesa-regalos">
           <Gifts
             cfg={cfg}
             theme={theme}
             token={token}
             publishableKey={publishableKey}
           />
-        </StackCard>
-      )}
-
-      {/* Card 7.5 — padrinos — flow */}
-      {showPadrinos && (
-        <StackCard z="z-75" bg="bg-inv-bg" flow id="padrinos">
-          <Padrinos cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
