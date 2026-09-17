@@ -114,7 +114,7 @@ export const alice_xv = {
     registryEyebrow: "Regalos",
     registryIntro: (name) =>
       `Para ${name || "la quinceañera"}, el mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:`,
-    registryOptionSurprise: "Regalo sorpresa",
+    registryOptionSurprise: "Regalo",
     registryOptionEnvelopes: "Lluvia de sobres",
     padrinosEyebrow: "Con amor",
     padrinosTitle: "Mis Padres y Padrinos",

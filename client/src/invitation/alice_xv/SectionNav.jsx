@@ -183,7 +183,7 @@ export default function SectionNav({
         onClick={() => (atRsvp ? scrollToId(topId) : scrollToId(rsvpId))}
         aria-label={atRsvp ? "Volver arriba" : "Ir a confirmaciones"}
         title={atRsvp ? "Volver arriba" : "Ir a confirmaciones"}
-        className="fixed right-3 top-1/2 z-[100] grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-[var(--inv-accent-yellow)]/60 bg-[var(--inv-primary)] text-[var(--inv-on-accent)] shadow-[0_12px_30px_var(--inv-shadow-ring)] transition-colors duration-200 hover:bg-[var(--inv-primary-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent-yellow)] focus-visible:ring-offset-2 md:right-5 md:h-12 md:w-12"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4 z-[100] grid h-11 w-11 place-items-center rounded-full border border-[var(--inv-accent-yellow)]/60 bg-[var(--inv-primary)] text-[var(--inv-on-accent)] shadow-[0_12px_30px_var(--inv-shadow-ring)] transition-colors duration-200 hover:bg-[var(--inv-primary-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent-yellow)] focus-visible:ring-offset-2 md:bottom-auto md:right-5 md:top-1/2 md:h-12 md:w-12 md:-translate-y-1/2"
       >
         {atRsvp ? (
           <UpIcon className="h-5 w-5" />

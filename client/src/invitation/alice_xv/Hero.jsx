@@ -87,9 +87,9 @@ const entrance = (i = 0, delayBase = 0) => ({
 /* ------------------------------------------------------------------
    Portada (XV de Alice): `hero_image` etérea con overlay rosa/blanco, o
    degradado rosa pastel como fallback. Flora de esquina (rosas/perlas),
-   pétalos flotantes, monograma "AR" en oro pulido, nombre en serif +
-   script, línea de invitación, fecha/hora separadas por filetes dorados
-   y scroll cue. Sin contador (es una tarjeta aparte).
+   pétalos flotantes, monograma "AR" en oro pulido, nombre completo en
+   script con acabado dorado, línea de invitación, fecha/hora separadas
+   por filetes dorados y scroll cue. Sin contador (es una tarjeta aparte).
 ------------------------------------------------------------------ */
 export default function AliceXvHero({ event, family, cfg, theme, reveal = true }) {
   const date = new Date(`${event.date}T00:00:00`);
@@ -118,12 +118,6 @@ export default function AliceXvHero({ event, family, cfg, theme, reveal = true }
   const monogram = initialsOf(celebrantName);
   const inviteLine = theme?.labels?.heroInvite || "Te Invitamos a Mis XV Años";
   const bgImage = safeCssUrl(cfg.hero_image);
-
-  // Nombre: primera palabra en serif (Cormorant Garamond), el resto en
-  // script (Dancing Script) con acabado dorado.
-  const nameParts = celebrantName.split(/\s+/).filter(Boolean);
-  const firstName = nameParts[0] || "";
-  const lastName = nameParts.slice(1).join(" ");
 
   return (
     <header
@@ -204,23 +198,15 @@ export default function AliceXvHero({ event, family, cfg, theme, reveal = true }
           </span>
         </motion.div>
 
-        {/* Nombre: serif + script */}
+        {/* Nombre completo en script con acabado dorado */}
         <motion.h1
           variants={entrance(1, 0.25)}
           aria-label={celebrantName}
           className="mt-4 leading-[1.1] text-balance md:mt-6"
         >
-          <span className="font-inv-serif text-5xl text-[var(--inv-text)] md:text-7xl">
-            {firstName}
+          <span className="font-inv-script text-6xl text-gold-gradient md:text-8xl">
+            {celebrantName}
           </span>
-          {lastName && (
-            <>
-              {" "}
-              <span className="font-inv-script text-6xl text-gold-gradient md:text-8xl">
-                {lastName}
-              </span>
-            </>
-          )}
         </motion.h1>
 
         <motion.div variants={entrance(2)}>

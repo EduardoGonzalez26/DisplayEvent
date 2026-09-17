@@ -8,7 +8,7 @@ IMÁGENES INCLUIDAS POR DEFECTO (2)
   El diseño YA incluye estas 2 ilustraciones en formato SVG (line art
   dorado/rosa, fondo transparente). No hay que hacer nada para que se
   vean: son el valor por defecto de la sección.
-    1. regalo-sorpresa.svg   -> tarjeta "Regalo sorpresa"
+    1. regalo-sorpresa.svg   -> tarjeta "Regalo"
     2. lluvia-de-sobres.svg  -> tarjeta "Lluvia de sobres"
 
 REEMPLAZAR UNA ILUSTRACIÓN (OPCIONAL)

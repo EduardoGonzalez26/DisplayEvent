@@ -9,7 +9,7 @@ import { WeddingSectionTitle } from "./decor.jsx";
    Sección informativa: sin pago en línea, sin modal y sin interacción.
    Solo un bloque dentro de la sección:
 
-     OPCIONES DE REGALO — 2 tarjetas premium ("Regalo sorpresa" y
+     OPCIONES DE REGALO — 2 tarjetas premium ("Regalo" y
      "Lluvia de sobres") con el mismo lenguaje de tarjeta de
      Padrinos.jsx: borde dorado, filete interior, hairline superior
      con diamante y hover con elevación (respeta reduced-motion).
@@ -44,7 +44,7 @@ const FALLBACK = {
   eyebrow: "Regalos",
   intro:
     "El mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:",
-  surprise: "Regalo sorpresa",
+  surprise: "Regalo",
   envelopes: "Lluvia de sobres",
 };
 
