@@ -1,43 +1,41 @@
 import { useState } from "react";
-import { motion, useReducedMotion, EASE, Reveal } from "../motion.jsx";
-import { GoldFrame, WeddingSectionTitle } from "./decor.jsx";
+import { motion, useReducedMotion, EASE } from "../motion.jsx";
+import { WeddingSectionTitle } from "./decor.jsx";
 
 /* ------------------------------------------------------------------
    Mesa de Regalos (registry) — versión LOCAL de la plantilla
    "XV de Alice".
 
    Sección informativa: sin pago en línea, sin modal y sin interacción.
-   Dos bloques dentro de la misma sección:
+   Solo un bloque dentro de la sección:
 
-     1. OPCIONES DE REGALO — 2 tarjetas premium ("Regalo sorpresa" y
-        "Lluvia de sobres") con el mismo lenguaje de tarjeta de
-        Padrinos.jsx: borde dorado, filete interior, hairline superior
-        con diamante y hover con elevación (respeta reduced-motion).
-        La ilustración va centrada en un MEDALLÓN EN ARCO (motivo
-        clásico de invitación) con doble filete fino y fondo radial
-        rosa; debajo, un divisor fino y el título.
-     2. TRANSFERENCIA / DEPÓSITO — card INDEPENDIENTE debajo (pedido
-        explícito del cliente: "la tarjeta del depósito, déjala
-        aparte"): marco GoldFrame accent con el mismo medallón en arco
-        (versión menor), la nota serif y los datos bancarios con
-        jerarquía etiqueta/valor en dorado profundo (legible AA).
+     OPCIONES DE REGALO — 2 tarjetas premium ("Regalo sorpresa" y
+     "Lluvia de sobres") con el mismo lenguaje de tarjeta de
+     Padrinos.jsx: borde dorado, filete interior, hairline superior
+     con diamante y hover con elevación (respeta reduced-motion).
+     La ilustración va centrada en un MEDALLÓN EN ARCO (motivo
+     clásico de invitación) con doble filete fino y fondo radial
+     rosa; debajo, un divisor fino y el título.
+
+   El mensaje de introducción es dinámico: `labels.registryIntro` es
+   una función que recibe el nombre de la quinceañera
+   (`cfg.celebrant_name`) y devuelve dos párrafos separados por una
+   línea en blanco (`\n\n`), que `WeddingSectionTitle` renderiza
+   gracias a `whitespace-pre-line`.
 
    Ilustraciones: YA vienen incluidas como SVG por defecto en
    `client/public/mesa-regalos/` (regalo-sorpresa.svg,
-   lluvia-de-sobres.svg, transferencia.svg). Si el cliente quiere
-   reemplazarlas, basta copiar un archivo con el mismo nombre base y
-   extensión raster (.png/.webp/.jpg/.jpeg): el raster SIEMPRE tiene
-   prioridad sobre nuestro SVG (ver README.txt de esa carpeta).
+   lluvia-de-sobres.svg). Si el cliente quiere reemplazarlas, basta
+   copiar un archivo con el mismo nombre base y extensión raster
+   (.png/.webp/.jpg/.jpeg): el raster SIEMPRE tiene prioridad sobre
+   nuestro SVG (ver README.txt de esa carpeta).
 
    `GiftImage` prueba las extensiones en orden por `onError` y, en el
    caso extremo de que no exista ni SVG ni raster, muestra un
    ornamento dorado dentro del medallón (nunca una imagen rota).
 
-   Contrato de datos (cfg.registry, ya existente):
-     { enabled, bank: { enabled, bank_name, holder, account_number,
-       concept } }
-   Mapeo del diseño: Banco → bank_name · TARJETA → account_number ·
-   Beneficiaria → holder. `concept` no se muestra.
+   Contrato de datos (cfg.registry, ya existente): solo se usa
+   `enabled`; si es falso, la sección no se renderiza.
    ------------------------------------------------------------------ */
 
 /* Textos de respaldo si el theme no los aporta (p. ej. una copia
@@ -46,14 +44,9 @@ const FALLBACK = {
   eyebrow: "Regalos",
   title: "Mesa de Regalos",
   intro:
-    "Para la Señorita su mayor deleite es su presencia en tan importante evento. Pero si gusta darle un detalle, puede obsequiarle:",
+    "El mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:",
   surprise: "Regalo sorpresa",
   envelopes: "Lluvia de sobres",
-  transfer: "Transferencia",
-  transferNote: "También dejamos aquí los datos para una transferencia",
-  bank: "Banco",
-  card: "TARJETA",
-  holder: "Beneficiaria",
 };
 
 /* ------------------------------------------------------------------
@@ -75,7 +68,6 @@ function imageCandidates(name) {
 const IMAGES = {
   surprise: imageCandidates("regalo-sorpresa"),
   envelopes: imageCandidates("lluvia-de-sobres"),
-  transfer: imageCandidates("transferencia"),
 };
 
 /* Clase de la imagen dentro del medallón: ocupa todo el arco con un
@@ -269,32 +261,15 @@ export default function Gifts({ cfg, theme }) {
   if (!registry?.enabled) return null;
 
   const labels = theme?.labels || {};
-  const bank = registry.bank || {};
-  const bankLabels = labels.registryBankLabels || {};
 
-  // Datos bancarios del diseño: Banco / TARJETA / Beneficiaria.
-  // `concept` se ignora a propósito. Solo se muestran los campos llenos.
-  const bankRows = [
-    {
-      key: "bank_name",
-      label: bankLabels.bank || FALLBACK.bank,
-      value: bank.bank_name,
-    },
-    {
-      key: "account_number",
-      label: bankLabels.card || FALLBACK.card,
-      value: bank.account_number,
-    },
-    {
-      key: "holder",
-      label: bankLabels.holder || FALLBACK.holder,
-      value: bank.holder,
-    },
-  ]
-    .map((row) => ({ ...row, value: String(row.value ?? "").trim() }))
-    .filter((row) => row.value !== "");
-
-  const showBank = !!bank.enabled && bankRows.length > 0;
+  // Intro dinámica: el theme aporta una función que recibe el nombre
+  // de la quinceañera (o "la quinceañera" si viene vacío).
+  const celebrant = (cfg.celebrant_name || "").trim();
+  const introRaw = labels.registryIntro;
+  const intro =
+    typeof introRaw === "function"
+      ? introRaw(celebrant)
+      : introRaw || FALLBACK.intro;
 
   return (
     <section className="relative overflow-hidden bg-inv-bg px-4 py-6 md:py-12">
@@ -305,10 +280,10 @@ export default function Gifts({ cfg, theme }) {
           eyebrow={labels.registryEyebrow || FALLBACK.eyebrow}
           title={labels.registryTitle || FALLBACK.title}
           titleClassName="text-gold-gradient-deep"
-          subtitle={labels.registryIntro || FALLBACK.intro}
+          subtitle={intro}
         />
 
-        {/* Bloque 1 — opciones de regalo (2 tarjetas premium) */}
+        {/* Opciones de regalo (2 tarjetas premium) */}
         <motion.ul
           initial="hidden"
           whileInView="show"
@@ -330,67 +305,6 @@ export default function Gifts({ cfg, theme }) {
             reduced={reduced}
           />
         </motion.ul>
-
-        {/* Bloque 2 — Transferencia / Depósito: card INDEPENDIENTE,
-            separada de las opciones de regalo y con datos bancarios
-            visibles solo si bank.enabled y hay campos. */}
-        <Reveal delay={0.15}>
-          <GoldFrame
-            accent
-            className="mx-auto mt-12 max-w-md rounded-[1.6rem] bg-[var(--inv-surface)] shadow-[0_18px_45px_var(--inv-shadow-card)] md:mt-16"
-          >
-            <div className="px-7 py-9 text-center md:px-9 md:py-11">
-              {/* Mismo medallón en arco, versión menor */}
-              <ArchMedallion urls={IMAGES.transfer} size="w-32 md:w-36" />
-
-              <h3 className="mt-5 font-inv-heading text-lg leading-snug text-[var(--inv-text)] md:text-xl">
-                {labels.registryOptionTransfer || FALLBACK.transfer}
-              </h3>
-
-              {showBank && (
-                <>
-                  <p className="mx-auto mt-3 max-w-xs font-inv-serif text-sm italic leading-relaxed text-[var(--inv-text-soft)] md:text-base">
-                    {labels.registryTransferNote || FALLBACK.transferNote}
-                  </p>
-
-                  {/* Divisor ornamental fino (hairline + diamante) */}
-                  <div
-                    className="mx-auto my-5 flex items-center justify-center gap-2.5"
-                    aria-hidden="true"
-                  >
-                    <span className="h-px w-14 bg-gradient-to-r from-transparent to-[var(--inv-accent-yellow)]/70 md:w-16" />
-                    <span className="h-1.5 w-1.5 rotate-45 bg-[var(--inv-accent-yellow)]/80" />
-                    <span className="h-px w-14 bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]/70 md:w-16" />
-                  </div>
-
-                  {/* Datos bancarios: etiqueta + valor en dorado
-                      profundo (contraste AA sobre blanco). Filas
-                      separadas por hairlines; valores con
-                      `break-words` para cadenas largas. */}
-                  <dl className="mx-auto max-w-xs text-center">
-                    {bankRows.map((row, i) => (
-                      <div
-                        key={row.key}
-                        className={
-                          i > 0
-                            ? "border-t border-[var(--inv-accent-yellow)]/30 py-2.5"
-                            : "py-2.5"
-                        }
-                      >
-                        <dt className="font-inv-heading text-[0.62rem] uppercase tracking-[0.3em] text-[var(--inv-primary-deep)]">
-                          {row.label}
-                        </dt>
-                        <dd className="mt-1 break-words font-inv-heading text-base font-medium text-[var(--inv-primary-deep)]">
-                          {row.value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </>
-              )}
-            </div>
-          </GoldFrame>
-        </Reveal>
       </div>
     </section>
   );

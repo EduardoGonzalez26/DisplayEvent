@@ -253,7 +253,7 @@ export function WeddingSectionTitle({
       </h2>
       <BotanicalDivider className="mx-auto mt-7 h-10 w-64 text-[var(--inv-botanical)] md:h-12 opacity-90" />
       {subtitle && (
-        <p className="mx-auto mt-5 max-w-xl text-base font-light md:text-lg text-inv-text-soft">
+        <p className="mx-auto mt-5 max-w-xl whitespace-pre-line text-base font-light md:text-lg text-inv-text-soft">
           {subtitle}
         </p>
       )}

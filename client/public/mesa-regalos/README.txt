@@ -2,15 +2,14 @@ IMÁGENES DE LA MESA DE REGALOS
 ==============================
 
 Esta carpeta alimenta la sección "Mesa de Regalos" de la invitación
-(tarjetas de regalo sorpresa, lluvia de sobres y transferencia).
+(tarjetas de regalo sorpresa y lluvia de sobres).
 
-IMÁGENES INCLUIDAS POR DEFECTO (3)
-  El diseño YA incluye estas 3 ilustraciones en formato SVG (line art
+IMÁGENES INCLUIDAS POR DEFECTO (2)
+  El diseño YA incluye estas 2 ilustraciones en formato SVG (line art
   dorado/rosa, fondo transparente). No hay que hacer nada para que se
   vean: son el valor por defecto de la sección.
     1. regalo-sorpresa.svg   -> tarjeta "Regalo sorpresa"
     2. lluvia-de-sobres.svg  -> tarjeta "Lluvia de sobres"
-    3. transferencia.svg     -> bloque "Transferencia"
 
 REEMPLAZAR UNA ILUSTRACIÓN (OPCIONAL)
   Basta con copiar en esta carpeta una imagen propia con el MISMO
@@ -18,7 +17,6 @@ REEMPLAZAR UNA ILUSTRACIÓN (OPCIONAL)
   .jpeg. Ejemplos:
       regalo-sorpresa.png
       lluvia-de-sobres.webp
-      transferencia.jpg
   IMPORTANTE: si existe un archivo raster con el mismo nombre base,
   TIENE PRIORIDAD sobre nuestro SVG (la sección intenta en este orden:
   .png -> .webp -> .jpg -> .jpeg -> .svg). Para volver a la ilustración

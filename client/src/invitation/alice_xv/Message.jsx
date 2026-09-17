@@ -33,7 +33,7 @@ export default function Message({ cfg, family, theme }) {
   const message =
     cfg.message ||
     theme?.labels?.defaultMessage?.(family) ||
-    `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría compartir este día tan especial.`;
+    `${family}, la alegría de contar con ustedes es inmensa. Nos encantaría compartir este día tan especial.`;
 
   const signature = theme?.resolvers?.signature?.(cfg) || cfg.celebrants || null;
   const reduced = useReducedMotion();

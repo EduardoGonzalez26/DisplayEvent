@@ -264,7 +264,6 @@ export default function AliceXvHero({ event, family, cfg, theme, reveal = true }
           variants={entrance(4)}
           className="mt-7 text-[0.62rem] uppercase tracking-[0.4em] text-[var(--inv-text-muted)] md:text-xs"
         >
-          Invitación para&nbsp;la{" "}
           <span className="font-semibold capitalize text-[var(--inv-accent-pink)]">
             {family}
           </span>

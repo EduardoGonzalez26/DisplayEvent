@@ -106,25 +106,17 @@ export const alice_xv = {
     locationsEyebrow: "Ubicaciones",
     locationsSubtitle:
       "Encuentra cada recinto de la celebración y navega directo con tu app favorita.",
-    gallery: "Nuestros Mejores Recuerdos",
+    gallery: "Mis Mejores Recuerdos",
     galleryEyebrow: "Galería",
     dressCode: "Código de Vestimenta",
     dressCodeEyebrow: "Dress Code",
     withLove: "Con cariño",
     registryEyebrow: "Regalos",
     registryTitle: "Mesa de Regalos",
-    registryIntro:
-      "Para la Señorita su mayor deleite es su presencia en tan importante evento. Pero si gusta darle un detalle, puede obsequiarle:",
+    registryIntro: (name) =>
+      `Para ${name || "la quinceañera"}, el mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:`,
     registryOptionSurprise: "Regalo sorpresa",
     registryOptionEnvelopes: "Lluvia de sobres",
-    registryOptionTransfer: "Transferencia",
-    registryTransferNote:
-      "También dejamos aquí los datos para una transferencia",
-    registryBankLabels: {
-      bank: "Banco",
-      card: "TARJETA",
-      holder: "Beneficiaria",
-    },
     padrinosEyebrow: "Con amor",
     padrinosTitle: "Mis Padres y Padrinos",
     padrinosSubtitle:
@@ -136,9 +128,9 @@ export const alice_xv = {
     parentsLine: (parents) =>
       `Con el amor de sus padres · ${parents.join(" y ")}`,
     familyGreeting: (family) =>
-      `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`,
+      `${family}, cuéntanos quiénes podrán acompañarnos.`,
     defaultMessage: (family) =>
-      `Familia ${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`,
+      `${family}, la alegría de contar con ustedes es inmensa. Nos encantaría acompañarlos en este día tan especial.`,
   },
   resolvers: {
     // Firma al pie del mensaje: nombre de la quinceañera, si no papás
