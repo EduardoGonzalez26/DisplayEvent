@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-09-16
+> **Última actualización:** 2026-09-18
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -212,6 +212,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - Ornamentos SVG de línea fina (granada, bugambilia, cempasúchil) en `decor.jsx`; sobre de apertura con paleta botánica.
 - **Mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky).
 - **Fondos de foto por sección** (`SectionPhoto.jsx`, solo boda): una foto B&N full-bleed + scrim en Itinerario, Ubicaciones, Dress Code y Cierre. Sustituyó al antiguo `PhotoBackdrop`.
+- **Badge publicitario "Powered by Webi" en el cierre** (`Footer.jsx`, último elemento tras "DisplayEvent"): enlace a https://webi.mx en pestaña nueva (`target="_blank" rel="noopener noreferrer"`) + logo `client/public/webi/logo-dark.svg` (24px de alto). Contenido de marca **FIJO**: no es dato configurable, no vive en `theme.labels` ni en el schema; **solo** esta plantilla lo muestra (`logo-light.svg` queda reservado para fondos oscuros).
 - ✅ Diseño botánico **completado** (ya no es la "base azul noche").
 - ⚠️ **Pendiente:** el doc `INVITACION_BODA_JORGE_MACARENA.md` describe el diseño **anterior** (azul noche/dorado).
 

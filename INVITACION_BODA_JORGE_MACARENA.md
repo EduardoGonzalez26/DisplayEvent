@@ -11,6 +11,7 @@
 > - Hero (portada) de este formato: `client/src/invitation/boda_jorge_macarena/Hero.jsx`.
 > - Tema (textos, paleta, funciones): `client/src/invitation/themes/boda_jorge_macarena.js`.
 > - Secciones compartidas (reutilizadas por todos los formatos): `client/src/invitation/shared/`.
+> - Assets fijos del cierre (badge "Powered by Webi"): `client/public/webi/` (`logo-dark.svg`; `logo-light.svg` reservado para fondos oscuros).
 > - Contrato de datos (qué campos existen): `client/src/invitation/schema/fields.js` y `server/src/schemas/invitation.js`.
 
 ---
@@ -126,7 +127,7 @@ El layout `BodaJorgeMacarenaLayout` arma la página en este orden, y **cada secc
 9. **RegistryNote** — `cfg.registry_note` (nota de regalos).
 10. **Gifts / Mesa de regalos** — `cfg.registry` (solo si `enabled`): montos sugeridos, depósito bancario y pago con tarjeta.
 11. **RSVP** — formulario de confirmación por invitado (`guests[]`), contactos (`cfg.contacts`) y nota (`rsvpNote`).
-12. **Footer** — `event.place`.
+12. **Footer** — `event.place`. Como último elemento del cierre, el badge **"Powered by Webi"**: enlace a https://webi.mx en pestaña nueva + logo `client/public/webi/logo-dark.svg` (24px de alto). Es contenido de marca **fijo** (no configurable, no vive en `theme.labels` ni en el schema) y **solo lo muestra esta plantilla**.
 
 ---
 
