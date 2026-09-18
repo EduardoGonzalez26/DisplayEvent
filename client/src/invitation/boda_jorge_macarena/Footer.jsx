@@ -10,6 +10,15 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
    en script rosa, fecha larga + hora + recinto en verde y la línea
    discreta "DisplayEvent". Acepta `cfg` opcional para firmar con los
    nombres de la pareja (el layout lo pasa; sin él degrada a event.name).
+
+   Badge publicitario "Powered by Webi" (SOLO esta plantilla): último
+   elemento del cierre, enlace sin subrayado a https://webi.mx en
+   pestaña nueva. Usa `client/public/webi/logo-dark.svg` (wordmark oscuro)
+   porque el fondo efectivo del cierre siempre es claro: la tarjeta tiene
+   `bg-inv-bg-alt` (marfil) y, si lleva foto, va en B&N con scrim marfil.
+   La URL se construye con `import.meta.env.BASE_URL` (convención de
+   assets en `public/`). El texto "Powered by" es contenido de marca
+   fijo: NO vive en `theme.labels` ni en el schema.
 ------------------------------------------------------------------ */
 export default function Footer({ event, theme, cfg }) {
   const reduced = useReducedMotion();
@@ -64,6 +73,28 @@ export default function Footer({ event, theme, cfg }) {
           <p className="mt-4 text-[0.6rem] uppercase tracking-[0.45em] text-[var(--inv-text-muted)]">
             DisplayEvent
           </p>
+          {/* Badge publicitario (solo esta plantilla): nombre accesible
+              "Powered by Webi" (texto visible + alt). Sin aria-label. */}
+          <a
+            href="https://webi.mx"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-7 inline-flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-bg-alt)]"
+          >
+            <span className="text-[0.55rem] uppercase tracking-[0.35em] text-[var(--inv-text-muted)]">
+              Powered by
+            </span>
+            <img
+              src={`${import.meta.env.BASE_URL}webi/logo-dark.svg`}
+              alt="Webi"
+              width={58}
+              height={24}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              className="h-6 w-auto"
+            />
+          </a>
         </Reveal>
       </div>
     </footer>
