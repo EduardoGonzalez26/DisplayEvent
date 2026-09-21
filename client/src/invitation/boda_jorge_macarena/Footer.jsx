@@ -5,19 +5,20 @@ import { BotanicalDivider, Flourish } from "./decor.jsx";
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 /* ------------------------------------------------------------------
-   Cierre botánico (Boda Jorge & Macarena): tarjeta final sobre marfil
-   con divisor botánico, "Con todo nuestro cariño", nombres de la pareja
-   en script rosa, fecha larga + hora + recinto en verde y la línea
-   discreta "DisplayEvent". Acepta `cfg` opcional para firmar con los
-   nombres de la pareja (el layout lo pasa; sin él degrada a event.name).
+   Cierre botánico (Boda Jorge & Macarena): tarjeta final sobre verde
+   noche con divisor botánico, "Con todo nuestro cariño", nombres de la
+   pareja en script rosa, fecha larga + hora + recinto en marfil y la
+   línea discreta "DisplayEvent". Acepta `cfg` opcional para firmar con
+   los nombres de la pareja (el layout lo pasa; sin él degrada a
+   event.name).
 
    Badge publicitario "Powered by Webi" (SOLO esta plantilla): último
    elemento del cierre, enlace sin subrayado a https://webi.mx en
-   pestaña nueva. Usa `client/public/webi/logo-dark.svg` (wordmark oscuro)
-   porque el fondo efectivo del cierre siempre es claro: la tarjeta tiene
-   `bg-inv-bg-alt` (marfil) y, si lleva foto, va en B&N con scrim marfil.
-   La URL se construye con `import.meta.env.BASE_URL` (convención de
-   assets en `public/`). El texto "Powered by" es contenido de marca
+   pestaña nueva. Usa `client/public/webi/logo-light.svg` (wordmark claro)
+   porque el fondo efectivo del cierre ahora es oscuro: la tarjeta tiene
+   `bg-inv-bg-alt` (verde noche) y, si lleva foto, va en B&N con scrim
+   oscuro. La URL se construye con `import.meta.env.BASE_URL` (convención
+   de assets en `public/`). El texto "Powered by" es contenido de marca
    fijo: NO vive en `theme.labels` ni en el schema.
 ------------------------------------------------------------------ */
 export default function Footer({ event, theme, cfg }) {
@@ -85,7 +86,7 @@ export default function Footer({ event, theme, cfg }) {
               Powered by
             </span>
             <img
-              src={`${import.meta.env.BASE_URL}webi/logo-dark.svg`}
+              src={`${import.meta.env.BASE_URL}webi/logo-light.svg`}
               alt="Webi"
               width={58}
               height={24}

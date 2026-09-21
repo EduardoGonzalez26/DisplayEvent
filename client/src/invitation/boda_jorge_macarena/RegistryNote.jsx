@@ -2,9 +2,10 @@ import { Reveal } from "../motion.jsx";
 import { BotanicalCorner, Flourish } from "./decor.jsx";
 
 /* ------------------------------------------------------------------
-   "Nota manuscrita" (Boda Jorge & Macarena): tarjeta blanca #FFFFFF con
-   esquinas botánicas y sombra suave verde, sobre fondo marfil. Texto
-   serif itálico grande en verde. Misma paridad de null que
+   "Nota manuscrita" (Boda Jorge & Macarena): tarjeta oscura
+   (`--inv-card`, verde-carbón) con esquinas botánicas y sombra negra
+   suave, sobre fondo verde noche o foto B&N con scrim. Texto serif
+   itálico grande en marfil. Misma paridad de null que
    shared/RegistryNote (sin título propio: el título de "Mesa de
    Regalos" lo aporta la sección Gifts que le sigue).
 ------------------------------------------------------------------ */

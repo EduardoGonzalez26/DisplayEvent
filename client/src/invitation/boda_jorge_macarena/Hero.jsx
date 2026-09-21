@@ -93,10 +93,11 @@ const entrance = (i = 0, delayBase = 0) => ({
 });
 
 /* ------------------------------------------------------------------
-   Portada botánica: `hero_image` etérea con overlay marfil al 60%, o
-   degradado marfil como fallback. Flora de esquina (granada/bugambilia),
-   hojas flotantes, nombres INMENSOS en Great Vibes rosa, fecha/hora en
-   Playfair verde separadas por líneas finas amarillas, y scroll cue.
+   Portada nocturna: `hero_image` (o la primera foto de `cfg.gallery` si
+   no hay) con VELO OSCURO del tema, o degradado verde-noche como
+   fallback. Flora de esquina (granada/bugambilia), hojas flotantes,
+   nombres INMENSOS en Great Vibes rosa, fecha/hora en Playfair marfil
+   separadas por líneas finas doradas, y scroll cue.
 ------------------------------------------------------------------ */
 export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = true }) {
   const date = new Date(`${event.date}T00:00:00`);
@@ -128,7 +129,13 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
   const monogram = initialsOf(nameA, nameB);
   const kicker = String(cfg.kicker || "").trim();
   const tagline = String(cfg.tagline || "").trim();
-  const bgImage = safeCssUrl(cfg.hero_image);
+  // `hero_image` manda; si no existe (o no es una URL válida), la portada
+  // usa la primera foto de `cfg.gallery`. El layout compensa ese consumo
+  // desplazando el índice de las fotos de las tarjetas.
+  const gallery = (cfg.gallery || []).filter(
+    (s) => typeof s === "string" && s.trim()
+  );
+  const bgImage = safeCssUrl(cfg.hero_image) || safeCssUrl(gallery[0]) || "";
   const heroTitle = mainNames || event.name;
 
   return (
@@ -137,7 +144,8 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
       className="relative flex h-dvh items-center justify-center overflow-hidden"
       style={{ background: "var(--inv-hero-fallback)" }}
     >
-      {/* Fondo con parallax: foto etérea con overlay marfil o degradado claro */}
+      {/* Fondo con parallax: foto con VELO OSCURO del tema o degradado
+          verde-noche cuando no hay imagen */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div className="absolute inset-0" style={{ y: bgY }}>
           {bgImage ? (
@@ -146,9 +154,24 @@ export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = tru
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url('${bgImage}')` }}
               />
-              {/* Overlay marfil al 60%: imagen etérea de fondo */}
-              <div className="absolute inset-0 bg-[#FDFBF7]/60" />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#FDFBF7]/30 via-[#FDFBF7]/40 to-[#FDFBF7]/70" />
+              {/* Velo oscuro (~64%) + gradiente que refuerza bordes: la foto
+                  de portada se intuye y el texto marfil conserva contraste
+                  AA sobre el peor caso. Se compone con `color-mix` para
+                  tomar el color de fondo del tema sin fringe oscuro. */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "color-mix(in srgb, var(--inv-bg) 64%, transparent)",
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(180deg, color-mix(in srgb, var(--inv-bg) 30%, transparent) 0%, color-mix(in srgb, var(--inv-bg) 46%, transparent) 50%, color-mix(in srgb, var(--inv-bg) 78%, transparent) 100%)",
+                }}
+              />
             </>
           ) : (
             <>

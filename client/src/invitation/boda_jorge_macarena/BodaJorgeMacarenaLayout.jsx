@@ -4,20 +4,34 @@ import SectionPhoto from "./SectionPhoto.jsx";
 import Message from "./Message.jsx";
 import Itinerary from "./Itinerary.jsx";
 import Locations from "./Locations.jsx";
-import Gallery from "./Gallery.jsx";
 import DressCode from "./DressCode.jsx";
 import RegistryNote from "./RegistryNote.jsx";
 import Footer from "./Footer.jsx";
 import Gifts from "./Gifts.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
 import SectionNav from "./SectionNav.jsx";
+import { safeCssUrl } from "../shared/util.jsx";
 
 /* ------------------------------------------------------------------
-   Secciones que usan FONDO DE FOTO a pantalla completa (B&N + scrim).
-   Una foto de `cfg.gallery` por sección, rotando por posición. Las demás
-   secciones mantienen su fondo sólido de tema. Reasignar aquí.
+   Orden FIJO de las tarjetas con fondo de foto. La POSICIÓN en esta
+   lista decide qué foto de `cfg.gallery` le toca a cada id:
+   `gallery[(i + offset) % length]`. Al ser un orden por id (y no por
+   secciones renderizadas), una sección condicional oculta NO le roba la
+   foto a las demás: cada tarjeta recibe SIEMPRE la misma imagen. Si la
+   portada consume `gallery[0]`, `offset` vale 1 para no repetir la foto
+   de portada en la primera tarjeta. Mover/añadir/quitar ids aquí para
+   reasignar secciones sin tocar el JSX de abajo.
 ------------------------------------------------------------------ */
-const PHOTO_SECTIONS = ["itinerario", "ubicaciones", "dresscode", "cierre"];
+const PHOTO_ORDER = [
+  "carta",
+  "itinerario",
+  "ubicaciones",
+  "dresscode",
+  "regalos",
+  "mesa-regalos",
+  "confirmaciones",
+  "cierre",
+];
 
 /* ------------------------------------------------------------------
    Boda de Jorge & Macarena — composición "carta panel por panel"
@@ -32,7 +46,7 @@ const PHOTO_SECTIONS = ["itinerario", "ubicaciones", "dresscode", "cierre"];
          hairline botánico superior y sombra suave ascendente.
 
    Orden: Hero (z-0, ya existente), Countdown+Message (z-10),
-   Itinerary (z-20), Locations (z-30), Gallery (z-40), DressCode (z-50),
+   Itinerary (z-20), Locations (z-30), DressCode (z-50),
    RegistryNote (z-60), Gifts (z-70), Rsvp (z-80), Footer (z-90).
 
    Varias tarjetas NO son sticky (`flow`): su contenido puede exceder
@@ -46,16 +60,13 @@ const PHOTO_SECTIONS = ["itinerario", "ubicaciones", "dresscode", "cierre"];
    Las secciones que devuelven `null` no dejan una tarjeta vacía: el
    layout replica sus condiciones de `return null` y omite el wrapper.
 
-   Fondo de foto: ALGUNAS tarjetas llevan, sobre su fondo opaco, una capa
-   `absolute` con UNA foto de `cfg.gallery` a pantalla completa (B&N +
-   scrim de degradado) vía `SectionPhoto`. Las demás conservan su fondo
-   sólido (`bg-inv-bg`/`-alt`/`-alt2`). El fondo sigue siendo opaco, así
-   que el efecto "carta desplegable" se mantiene sin multiplicar
-   translucidez entre tarjetas.
-
-   La lista `PHOTO_SECTIONS` decide QUÉ secciones llevan foto (y en qué
-   orden rotan por `cfg.gallery`). Es el único punto a tocar para
-   reasignarlas.
+   Fondo de foto: TODAS las tarjetas llevan, sobre su fondo opaco, una
+   capa `absolute` con UNA foto de `cfg.gallery` a pantalla completa
+   (B&N + scrim oscuro del tema) vía `SectionPhoto`. La correspondencia
+   id → foto la fija `PHOTO_ORDER` por índice (con `offset` si la portada
+   ya consumió `gallery[0]`). El fondo sigue siendo opaco, así que el
+   efecto "carta desplegable" se mantiene sin multiplicar translucidez
+   entre tarjetas. Sin galería, todas caen a sus fondos sólidos.
 ------------------------------------------------------------------ */
 
 /* Canto superior botánico fino (hairline + rombo amarillo) que marca el
@@ -82,7 +93,7 @@ function CardEdge() {
         "carta desplegable" (sin translucidez ni backdrop-blur). Queda
         como base incluso con foto (la foto lo cubre por completo).
      2. `SectionPhoto` (solo si `photo`) — UNA foto a pantalla completa en
-        B&N con scrim de degradado, entre el fondo opaco y el contenido.
+        B&N con scrim oscuro del tema, entre el fondo opaco y el contenido.
      3. `CardEdge` y el contenido, envueltos en `relative` para quedar
         por encima de la foto.
 
@@ -91,16 +102,30 @@ function CardEdge() {
    contenedor de posicionamiento para descendientes `fixed` (p. ej. el modal
    de datos bancarios de Gifts), que siguen anclándose al viewport.
 
-   `photo`: URL opcional. Sin ella (o con galería vacía) la tarjeta se
-   comporta como antes: solo fondo sólido. */
-function StackCard({ z, bg, flow = false, id, photo, children }) {
+   `photo`: URL opcional. `photoPriority` fuerza la carga eager SOLO en la
+   primera tarjeta visible (las demás van `loading="lazy"`).
+   `contentClassName`: clases extra para el wrapper del contenido (p. ej.
+   neutralizar el fondo opaco de secciones compartidas).
+
+   Sin foto (o con galería vacía) la tarjeta se comporta como antes: solo
+   fondo sólido. */
+function StackCard({
+  z,
+  bg,
+  flow = false,
+  id,
+  photo,
+  photoPriority = false,
+  contentClassName = "",
+  children,
+}) {
   const finish =
     "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
 
   const layers = (
     <>
       <div aria-hidden="true" className={`absolute inset-0 ${bg}`} />
-      {photo ? <SectionPhoto src={photo} /> : null}
+      {photo ? <SectionPhoto src={photo} priority={photoPriority} /> : null}
     </>
   );
 
@@ -109,7 +134,7 @@ function StackCard({ z, bg, flow = false, id, photo, children }) {
       <div id={id} className={`${finish} ${z}`}>
         {layers}
         <CardEdge />
-        <div className="relative">{children}</div>
+        <div className={`relative ${contentClassName}`}>{children}</div>
       </div>
     );
   }
@@ -121,7 +146,7 @@ function StackCard({ z, bg, flow = false, id, photo, children }) {
     >
       {layers}
       <CardEdge />
-      <div className="relative">{children}</div>
+      <div className={`relative ${contentClassName}`}>{children}</div>
     </div>
   );
 }
@@ -149,7 +174,6 @@ export default function BodaJorgeMacarenaLayout({
   const showLocations = (cfg.locations || []).some(
     (it) => it && (it.place || it.label)
   );
-  const showGallery = (cfg.gallery || []).length > 0;
   const showDressCode = (() => {
     const raw = cfg.dress_code || [];
     if (Array.isArray(raw)) return raw.length > 0;
@@ -163,18 +187,22 @@ export default function BodaJorgeMacarenaLayout({
   const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
   const showGifts = !!(cfg.registry && cfg.registry.enabled);
 
-  // Secciones con fondo de foto full-bleed en B&N (una foto de `cfg.gallery`
-  // por sección). La POSICIÓN en esta lista decide qué foto le toca
-  // (`gallery[i % length]`), rotando. Mover/añadir/quitar ids aquí para
-  // reasignar secciones sin tocar el JSX de abajo. Si la galería está vacía,
-  // `photoFor` devuelve `undefined` y TODAS las tarjetas quedan sólidas.
+  // Fotos de `cfg.gallery` como fondo de todas las tarjetas. La POSICIÓN en
+  // `PHOTO_ORDER` decide qué foto le toca (`gallery[(i + offset) % length]`).
+  // `offset` = 1 cuando la portada ya consume `gallery[0]` (no hay
+  // `hero_image` válida), para no repetir de inmediato la foto de portada;
+  // con una sola foto la repetición es inevitable y aceptable. Galería
+  // vacía → `photoFor` devuelve `undefined` y todas las tarjetas quedan
+  // sólidas (comportamiento de siempre).
   const gallery = (cfg.gallery || []).filter(
     (s) => typeof s === "string" && s.trim()
   );
+  const photoOffset =
+    !safeCssUrl(cfg.hero_image) && gallery.length > 0 ? 1 : 0;
   const photoFor = (id) => {
-    const i = PHOTO_SECTIONS.indexOf(id);
+    const i = PHOTO_ORDER.indexOf(id);
     if (i === -1 || gallery.length === 0) return undefined;
-    return gallery[i % gallery.length];
+    return gallery[(i + photoOffset) % gallery.length];
   };
 
   // Puntos de la navegación lateral: una entrada por sección VISIBLE
@@ -184,7 +212,6 @@ export default function BodaJorgeMacarenaLayout({
     { id: "carta", label: "Carta" },
     showItinerary && { id: "itinerario", label: "Itinerario" },
     showLocations && { id: "ubicaciones", label: "Ubicaciones" },
-    showGallery && { id: "galeria", label: "Galería" },
     showDressCode && { id: "dresscode", label: "Dress Code" },
     (showRegistryNote || showGifts) && {
       id: showRegistryNote ? "regalos" : "mesa-regalos",
@@ -200,8 +227,16 @@ export default function BodaJorgeMacarenaLayout({
         <Hero event={event} family={family} cfg={cfg} reveal={reveal} />
       </div>
 
-      {/* Card 1 — contador + carta (el contador es pequeño) — fondo sólido */}
-      <StackCard z="z-10" bg="bg-inv-bg" flow id="carta">
+      {/* Card 1 — contador + carta (el contador es pequeño) — FONDO DE FOTO.
+          Primera tarjeta visible: su foto carga eager (`photoPriority`). */}
+      <StackCard
+        z="z-10"
+        bg="bg-inv-bg"
+        flow
+        id="carta"
+        photo={photoFor("carta")}
+        photoPriority
+      >
         {hasCountdown && (
           <div className="px-4 pt-6 pb-6 md:pt-8 md:pb-10">
             <Countdown date={event.date} time={event.time} theme={theme} />
@@ -224,13 +259,6 @@ export default function BodaJorgeMacarenaLayout({
         </StackCard>
       )}
 
-      {/* Card 4 — galería — fondo sólido (ya muestra las fotos) */}
-      {showGallery && (
-        <StackCard z="z-40" bg="bg-inv-bg-alt" flow id="galeria">
-          <Gallery cfg={cfg} theme={theme} />
-        </StackCard>
-      )}
-
       {/* Card 5 — dress code — FONDO DE FOTO */}
       {showDressCode && (
         <StackCard z="z-50" bg="bg-inv-bg" id="dresscode" photo={photoFor("dresscode")} flow>
@@ -238,16 +266,22 @@ export default function BodaJorgeMacarenaLayout({
         </StackCard>
       )}
 
-      {/* Card 6 — nota de regalos — fondo sólido */}
+      {/* Card 6 — nota de regalos — FONDO DE FOTO */}
       {showRegistryNote && (
-        <StackCard z="z-60" bg="bg-inv-bg" flow id="regalos">
+        <StackCard z="z-60" bg="bg-inv-bg" flow id="regalos" photo={photoFor("regalos")}>
           <RegistryNote cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 7 — mesa de regalos — fondo sólido */}
+      {/* Card 7 — mesa de regalos — FONDO DE FOTO */}
       {showGifts && (
-        <StackCard z="z-70" bg="bg-inv-bg-alt2" flow id="mesa-regalos">
+        <StackCard
+          z="z-70"
+          bg="bg-inv-bg-alt2"
+          flow
+          id="mesa-regalos"
+          photo={photoFor("mesa-regalos")}
+        >
           <Gifts
             cfg={cfg}
             theme={theme}
@@ -257,8 +291,19 @@ export default function BodaJorgeMacarenaLayout({
         </StackCard>
       )}
 
-      {/* Card 8 — RSVP (compartido): fluye normal, no sticky — fondo sólido */}
-      <StackCard z="z-80" bg="bg-inv-bg-alt" flow id="confirmaciones">
+      {/* Card 8 — RSVP (compartido): fluye normal, no sticky — FONDO DE FOTO.
+          shared/Rsvp pinta su <section> raíz con `bg-inv-bg-alt` opaco, lo que
+          taparía la foto de la tarjeta; se neutraliza SOLO ese fondo desde el
+          wrapper local (sin tocar el componente compartido). Los paneles
+          internos del formulario conservan su superficie propia. */}
+      <StackCard
+        z="z-80"
+        bg="bg-inv-bg-alt"
+        flow
+        id="confirmaciones"
+        photo={photoFor("confirmaciones")}
+        contentClassName="[&>section]:bg-transparent"
+      >
         <Rsvp {...rsvp} />
       </StackCard>
 
