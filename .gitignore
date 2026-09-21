@@ -153,3 +153,6 @@ graphify-out/
 *.xlsx
 *.xls
 *.csv
+
+# Config local de opencode (agentes/plugins locales, no se versiona)
+.opencode/
