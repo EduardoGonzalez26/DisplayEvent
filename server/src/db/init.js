@@ -29,30 +29,12 @@ async function main() {
   const client = new pg.Client(connection);
   await client.connect();
 
-  // Esquema base (idempotente: CREATE TABLE / INDEX IF NOT EXISTS).
+  // Esquema canónico completo (tablas, índices y migraciones de esquema).
+  // Idempotente: CREATE ... IF NOT EXISTS + ALTERs seguros.
   const schema = await readFile(join(__dirname, "schema.sql"), "utf8");
   await client.query(schema);
 
-  // Migraciones para bases que ya existían antes de las últimas columnas.
-  const migrations = [
-    `ALTER TABLE "groups" ALTER COLUMN invitation_token TYPE VARCHAR(64)`,
-    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs BOOLEAN NOT NULL DEFAULT FALSE`,
-    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs_count INT NOT NULL DEFAULT 0`,
-    `ALTER TABLE "tables" ADD COLUMN IF NOT EXISTS is_kids BOOLEAN NOT NULL DEFAULT FALSE`,
-    `ALTER TABLE events ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id) ON DELETE CASCADE`,
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`,
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255)`,
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ`,
-    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS leader_phone VARCHAR(20)`,
-    `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ`,
-    `ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT`,
-    `ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_events_custom_domain ON events(custom_domain) WHERE custom_domain IS NOT NULL`,
-  ];
-  for (const statement of migrations) {
-    await client.query(statement);
-  }
-
+  // Backfills de datos (no tocan el esquema).
   // Backfill multitenencia: los eventos huérfanos (sin user_id) se asignan al
   // primer usuario. Antes de esto eran visibles para todos los usuarios.
   await client.query(`

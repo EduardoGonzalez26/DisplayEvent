@@ -1,5 +1,14 @@
--- Esquema PostgreSQL de DisplayEvent.
+-- Esquema canónico PostgreSQL de DisplayEvent (fuente única de verdad).
 -- Destinado a Supabase (Postgres). No usa CREATE DATABASE: se ejecuta sobre la base ya creada.
+--
+-- IDEMPOTENTE Y NO DESTRUCTIVO: seguro en BD nuevas y existentes, y se puede pegar
+-- completo en el SQL Editor de Supabase las veces que haga falta sin errores.
+-- Las migraciones de ESQUEMA (antes en src/db/init.js) están consolidadas aquí;
+-- los backfills de DATOS siguen en src/db/init.js.
+
+-- ===========================================================================
+-- 1) Tablas
+-- ===========================================================================
 
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
@@ -117,18 +126,81 @@ CREATE INDEX IF NOT EXISTS idx_gifts_event ON gifts(event_id);
 -- regalos duplicados cuando Stripe reenvía el mismo evento.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_gifts_payment_intent ON gifts(stripe_payment_intent_id);
 
--- Slug (URL amigable) de las invitaciones: /invitacion/<slug>/<token>.
--- ALTER idempotente para bases creadas antes de que existiera la columna.
+-- ===========================================================================
+-- 2) Migraciones idempotentes para BD creadas antes de las últimas columnas.
+--    Antes vivían en src/db/init.js; consolidadas aquí como fuente única.
+-- ===========================================================================
+
+-- 2.1) groups.invitation_token pasó a VARCHAR(64) (en BD viejas era más corto).
+ALTER TABLE "groups" ALTER COLUMN invitation_token TYPE VARCHAR(64);
+
+-- 2.2) Columnas añadidas después de la creación inicial de cada tabla.
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS high_chairs_count INT NOT NULL DEFAULT 0;
+ALTER TABLE "tables" ADD COLUMN IF NOT EXISTS is_kids BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires_at TIMESTAMPTZ;
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS leader_phone VARCHAR(20);
+ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
-
--- Índice único parcial: permite varios eventos sin slug (NULL), pero impide
--- slugs duplicados cuando están definidos.
-CREATE UNIQUE INDEX IF NOT EXISTS idx_events_slug ON events(slug) WHERE slug IS NOT NULL;
-
--- Dominio personalizado por evento: ALTER idempotente para bases creadas antes
--- de que existiera la columna (instalaciones nuevas ya la traen en el CREATE).
+ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
 
--- Índice único parcial: permite varios eventos sin dominio (NULL), pero un
--- mismo dominio solo puede asignarse a un evento.
+-- 2.3) events.user_id: columna (BD legacy) + FK garantizada. La FK se añade solo
+--      si no existe ya una FK sobre esa misma columna (sin importar su nombre).
+ALTER TABLE events ADD COLUMN IF NOT EXISTS user_id INT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'events'::regclass
+      AND c.contype = 'f'
+      AND c.conkey = ARRAY[
+        (SELECT a.attnum
+           FROM pg_attribute a
+          WHERE a.attrelid = 'events'::regclass
+            AND a.attname = 'user_id'
+            AND NOT a.attisdropped)
+      ]::smallint[]
+  ) THEN
+    ALTER TABLE events ADD CONSTRAINT events_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
+-- 2.4) events.user_id NOT NULL, igual que en BD nuevas. Solo se aplica cuando ya
+--      no quedan huérfanos (el backfill de init.js los asigna en cada ejecución),
+--      de modo que nunca falla ni fuerza cambios sobre datos existentes.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'events'
+      AND column_name = 'user_id'
+      AND is_nullable = 'YES'
+  ) AND NOT EXISTS (SELECT 1 FROM events WHERE user_id IS NULL) THEN
+    ALTER TABLE events ALTER COLUMN user_id SET NOT NULL;
+  END IF;
+END $$;
+
+-- 2.5) Índices únicos parciales: permiten varios NULL, impiden duplicados.
+--      slug: /invitacion/<slug>/<token>; custom_domain: dominio propio del evento.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_slug ON events(slug) WHERE slug IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_events_custom_domain ON events(custom_domain) WHERE custom_domain IS NOT NULL;
+
+-- 2.6) Row Level Security (Supabase): activada en todas las tablas, sin políticas.
+--      La app conecta como owner (bypass de RLS), así que no le afecta; es defensa
+--      en profundidad para los roles anon/authenticated de Supabase. Idempotente.
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "groups" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE revoked_invitation_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "tables" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitation_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gifts ENABLE ROW LEVEL SECURITY;
