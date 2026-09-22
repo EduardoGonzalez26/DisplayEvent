@@ -14,7 +14,7 @@ import Hero from "./Hero.jsx";
    Boda — flujo propio: sobre de apertura + hero 3D + scrollytelling.
    Comparte Countdown, Itinerary, Locations, Rsvp y Footer.
 ------------------------------------------------------------------ */
-export default function BodaLayout({ event, family, cfg, theme, rsvp, token, publishableKey }) {
+export default function BodaLayout({ event, family, cfg, theme, rsvp, token, publishableKey, hideBrand = false }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} />
@@ -29,7 +29,7 @@ export default function BodaLayout({ event, family, cfg, theme, rsvp, token, pub
       <RegistryNote cfg={cfg} theme={theme} />
       <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
       <Rsvp {...rsvp} />
-      <Footer event={event} theme={theme} />
+      <Footer event={event} theme={theme} hideBrand={hideBrand} />
     </div>
   );
 }

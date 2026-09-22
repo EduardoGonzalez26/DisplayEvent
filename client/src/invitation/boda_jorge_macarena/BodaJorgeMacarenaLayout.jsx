@@ -160,6 +160,7 @@ export default function BodaJorgeMacarenaLayout({
   reveal = true,
   token,
   publishableKey,
+  hideBrand = false,
 }) {
   // Evita un hueco con el contador cuando no hay fecha (o es inválida).
   const hasCountdown = (() => {
@@ -309,7 +310,7 @@ export default function BodaJorgeMacarenaLayout({
 
       {/* Card 9 — cierre — FONDO DE FOTO */}
       <StackCard z="z-90" bg="bg-inv-bg-alt" id="cierre" photo={photoFor("cierre")}>
-        <Footer event={event} theme={theme} cfg={cfg} />
+        <Footer event={event} theme={theme} cfg={cfg} hideBrand={hideBrand} />
       </StackCard>
 
       {/* Navegación lateral flotante (solo tras abrir el sobre) */}

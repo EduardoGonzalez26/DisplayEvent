@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
+import { buildInviteUrl, normalizeDomain } from "../../lib/publicDomain.js";
 import { Button } from "../../components/ui.jsx";
 import { TEMPLATES } from "../../invitation/themes/index.js";
 import InvitationView from "../../invitation/InvitationView.jsx";
@@ -41,6 +42,21 @@ function slugFormatError(slug) {
   if (slug.length > SLUG_MAX) return `no puede superar los ${SLUG_MAX} caracteres`;
   if (!SLUG_RE.test(slug)) {
     return "solo puede contener minúsculas, números y guiones (sin guiones dobles ni en los extremos)";
+  }
+  return "";
+}
+
+// Mismo formato y longitud que valida el backend para `custom_domain`:
+// hostname con al menos un punto (ej. macarenayjorge.com), sin protocolo.
+const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+const DOMAIN_MAX = 255;
+
+// Devuelve el motivo del error o "" si el dominio es válido (vacío = sin dominio).
+function domainFormatError(domain) {
+  if (!domain) return "";
+  if (domain.length > DOMAIN_MAX) return `no puede superar los ${DOMAIN_MAX} caracteres`;
+  if (!DOMAIN_RE.test(domain)) {
+    return "debe ser un hostname válido, por ejemplo macarenayjorge.com (sin protocolo ni ruta)";
   }
   return "";
 }
@@ -156,6 +172,8 @@ export default function EventInvitation() {
   const [tplSaving, setTplSaving] = useState(false);
   const [tplError, setTplError] = useState("");
   const [slug, setSlug] = useState("");
+  // Dominio personalizado del evento (hostname sin protocolo; "" = sin dominio).
+  const [customDomain, setCustomDomain] = useState("");
   // null | "checking" | "available" | "taken" | "current"
   const [slugStatus, setSlugStatus] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -163,12 +181,14 @@ export default function EventInvitation() {
   useEffect(() => {
     setEvent(null);
     setSlug("");
+    setCustomDomain("");
     api.events
       .get(id)
       .then((ev) => {
         setEvent(ev);
         // Si el evento aún no tiene slug (eventos antiguos), sugerimos uno.
         setSlug(ev?.slug || slugify(ev?.name || ""));
+        setCustomDomain(ev?.custom_domain || "");
       })
       .catch(() => setEvent(null));
     api.templates.list().then(setTemplates).catch(() => setTemplates([]));
@@ -230,12 +250,15 @@ export default function EventInvitation() {
   }, [slugValue, slugError, event?.slug]);
 
   const invitationToken = groups.find((g) => g.invitation_token)?.invitation_token;
-  const publicPath = invitationToken
-    ? slugValue
-      ? `/invitacion/${slugValue}/${invitationToken}`
-      : `/invitacion/${invitationToken}`
-    : "";
-  const publicUrl = publicPath ? `${window.location.origin}${publicPath}` : "";
+  const domainValue = normalizeDomain(customDomain);
+  const domainError = domainFormatError(domainValue);
+  // Con dominio propio el enlace no lleva slug: https://<dominio>/invitacion/<token>.
+  // Sin dominio se conserva el formato actual (origen + slug + token).
+  const publicUrl = buildInviteUrl({
+    domain: domainValue,
+    slug: slugValue,
+    token: invitationToken,
+  });
 
   // Para "Ver invitación" usamos el slug ya guardado, no el borrador del formulario.
   const openInvitation = () => {
@@ -392,6 +415,10 @@ export default function EventInvitation() {
       setError(`Slug inválido: ${slugError}.`);
       return;
     }
+    if (domainError) {
+      setError(`El dominio personalizado ${domainError}.`);
+      return;
+    }
     const missing = templateFields.filter((f) => {
       const value = getField(form, f.key);
       if (f.type === "list") {
@@ -412,8 +439,9 @@ export default function EventInvitation() {
       const payload = serializeForm(form);
       const requests = [api.events.setInvitation(id, payload)];
       let updatedEvent = null;
-      // El slug vive en el evento (no en la config de invitación): se guarda
-      // con el update del evento, reenviando sus campos actuales.
+      // El slug y el dominio personalizado viven en el evento (no en la config
+      // de invitación): se guardan con el update del evento, reenviando sus
+      // campos actuales. `custom_domain: ""` borra el dominio.
       if (event) {
         requests.push(
           api.events
@@ -423,6 +451,7 @@ export default function EventInvitation() {
               time: event.time,
               place: event.place,
               slug: slugValue,
+              custom_domain: domainValue,
             })
             .then((updated) => {
               updatedEvent = updated;
@@ -433,7 +462,13 @@ export default function EventInvitation() {
       await Promise.all(requests);
 
       const finalSlug = updatedEvent?.slug || slugValue;
-      if (updatedEvent) setEvent(updatedEvent);
+      if (updatedEvent) {
+        setEvent(updatedEvent);
+        // El backend normaliza el dominio (minúsculas, sin www): refleja lo guardado.
+        if (typeof updatedEvent.custom_domain === "string") {
+          setCustomDomain(updatedEvent.custom_domain);
+        }
+      }
       if (finalSlug && finalSlug !== slugValue) {
         setSlug(finalSlug);
         setMessage(
@@ -540,26 +575,64 @@ export default function EventInvitation() {
               )}
             </div>
 
-            <div className="min-w-0">
-              <span className="text-sm text-gray-400 mb-1 block">Vista previa</span>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 min-w-0 truncate rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-300">
-                  {publicUrl || "Aún no hay grupos con enlace"}
-                </code>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={!publicUrl}
-                  onClick={copyPublicUrl}
-                >
-                  {copied ? "Copiado ✓" : "Copiar"}
-                </Button>
+            <div className="block">
+              <label htmlFor="event-custom-domain" className="text-sm text-gray-400 mb-1 block">
+                Dominio personalizado
+              </label>
+              <div className="flex items-center overflow-hidden rounded-lg border border-gray-700 bg-gray-950 focus-within:border-gold-400">
+                <span aria-hidden="true" className="hidden sm:inline pl-3 text-sm text-gray-500 select-none">
+                  https://
+                </span>
+                <input
+                  id="event-custom-domain"
+                  className="w-full bg-transparent px-3 sm:pl-1.5 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
+                  value={customDomain}
+                  onChange={(e) => {
+                    setCustomDomain(e.target.value);
+                    setCopied(false);
+                  }}
+                  onBlur={() => setCustomDomain((v) => normalizeDomain(v))}
+                  placeholder="macarenayjorge.com"
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={DOMAIN_MAX}
+                  aria-invalid={domainError ? "true" : undefined}
+                  aria-describedby="event-custom-domain-help"
+                />
               </div>
-              <p className="text-xs text-gray-500 mt-1.5">
-                La URL se activa al guardar. El token mostrado es el del primer grupo;
-                cada grupo tiene su propio enlace, cópialos desde “Invitados”.
+              <p
+                id="event-custom-domain-help"
+                className={`text-xs mt-1.5 ${domainError ? "text-red-400" : "text-gray-500"}`}
+              >
+                {domainError
+                  ? `El dominio ${domainError}.`
+                  : "Sin protocolo (ej. macarenayjorge.com). Con dominio, el enlace será https://{dominio}/invitacion/{token} y se oculta la marca DisplayEvent."}
               </p>
             </div>
+          </div>
+
+          <div className="min-w-0 mt-4">
+            <span className="text-sm text-gray-400 mb-1 block">Vista previa</span>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 min-w-0 truncate rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-xs text-gray-300">
+                {publicUrl || "Aún no hay grupos con enlace"}
+              </code>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!publicUrl}
+                onClick={copyPublicUrl}
+              >
+                {copied ? "Copiado ✓" : "Copiar"}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1.5">
+              La URL se activa al guardar. El token mostrado es el del primer grupo;
+              cada grupo tiene su propio enlace, cópialos desde “Invitados”.
+              {domainValue
+                ? " Con dominio propio, el enlace no incluye el slug."
+                : ""}
+            </p>
           </div>
         </section>
 
@@ -937,6 +1010,27 @@ export default function EventInvitation() {
                 />
                 <span className="text-sm text-gray-300">Habilitar pago con tarjeta (Stripe)</span>
               </label>
+
+              {form.registry?.stripe_enabled && (
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">
+                    Link de pago de Stripe (opcional)
+                  </span>
+                  <input
+                    className={inputCls}
+                    value={form.registry?.payment_link_url || ""}
+                    onChange={(e) => setReg("payment_link_url", e.target.value)}
+                    placeholder="https://buy.stripe.com/…"
+                    inputMode="url"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <span className="block text-xs text-gray-500 mt-1.5">
+                    Si lo defines, el botón de tarjeta abre este link y el invitado elige
+                    el monto en Stripe; si lo dejas vacío, se usa el pago integrado.
+                  </span>
+                </label>
+              )}
 
               <div className="rounded-xl border border-gray-800 p-4 space-y-4">
                 <label className="flex items-center gap-3 cursor-pointer select-none">

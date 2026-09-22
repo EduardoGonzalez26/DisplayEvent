@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api.js";
+import { isCustomDomainActive } from "../lib/publicDomain.js";
 import InvitationView from "./InvitationView.jsx";
 import { InvitationLoader, InvitationNotFound } from "./shared/util.jsx";
 
@@ -25,6 +26,20 @@ export default function InvitationPage() {
     return () => document.documentElement.classList.remove("de-invitation");
   }, []);
 
+  // White-label: si el dominio propio del evento coincide con el host actual
+  // (tolerando `www.` en cualquiera de los dos), se oculta la marca
+  // "DisplayEvent" en el footer y se añade `noindex` a la página.
+  const hideBrand = isCustomDomainActive(data?.public_config?.custom_domain);
+
+  useEffect(() => {
+    if (!hideBrand) return undefined;
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "robots");
+    meta.setAttribute("content", "noindex");
+    document.head.appendChild(meta);
+    return () => meta.remove();
+  }, [hideBrand]);
+
   if (loading) return <InvitationLoader />;
   if (error || !data) return <InvitationNotFound />;
 
@@ -37,6 +52,7 @@ export default function InvitationPage() {
       cfg={event.invitation || {}}
       guests={guests}
       token={token}
+      hideBrand={hideBrand}
       rsvpNote={group.rsvp_note}
       publishableKey={public_config?.stripe_publishable_key || null}
       onRsvpDone={(updated) =>

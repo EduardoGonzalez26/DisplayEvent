@@ -143,6 +143,10 @@ export const DEFAULT_SUGGESTED_EUR = [
   100, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000, 1250, 1500,
 ];
 
+// Tope del Payment Link externo de Stripe (u otro procesador): una URL larga
+// no aporta valor y evita payloads abusivos en el JSONB.
+export const PAYMENT_LINK_MAX_LENGTH = 500;
+
 // Booleano tolerante. null/undefined -> default. Strings "true"/"false"/"0"/"1".
 function toBool(v, dflt) {
   if (typeof v === "boolean") return v;
@@ -206,6 +210,7 @@ export function normalizeRegistry(raw) {
     suggested_mxn: toIntArray(source.suggested_mxn, DEFAULT_SUGGESTED_MXN),
     suggested_eur: toIntArray(source.suggested_eur, DEFAULT_SUGGESTED_EUR),
     stripe_enabled: toBool(source.stripe_enabled, false),
+    payment_link_url: str(source.payment_link_url).slice(0, PAYMENT_LINK_MAX_LENGTH),
     bank: normalizeBank(source.bank),
   };
 }
@@ -256,6 +261,7 @@ const registrySchema = z.object({
   suggested_mxn: z.array(z.number().int().nonnegative()).default(DEFAULT_SUGGESTED_MXN),
   suggested_eur: z.array(z.number().int().nonnegative()).default(DEFAULT_SUGGESTED_EUR),
   stripe_enabled: z.boolean().default(false),
+  payment_link_url: z.string().max(PAYMENT_LINK_MAX_LENGTH).default(""),
   bank: bankSchema.default({}),
 });
 
@@ -444,6 +450,9 @@ export function normalizeForRead(raw) {
   } else {
     if (!Array.isArray(out.registry.suggested_mxn)) out.registry.suggested_mxn = DEFAULT_SUGGESTED_MXN.slice();
     if (!Array.isArray(out.registry.suggested_eur)) out.registry.suggested_eur = DEFAULT_SUGGESTED_EUR.slice();
+    if (typeof out.registry.payment_link_url !== "string") {
+      out.registry.payment_link_url = str(out.registry.payment_link_url).slice(0, PAYMENT_LINK_MAX_LENGTH);
+    }
     if (!out.registry.bank || typeof out.registry.bank !== "object" || Array.isArray(out.registry.bank)) {
       out.registry.bank = normalizeBank(null);
     }

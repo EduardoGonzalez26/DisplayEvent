@@ -35,7 +35,7 @@
 | BD en la nube | **Supabase** (PostgreSQL) |
 | Correo | **Brevo** (API HTTPS; alternativa SMTP local) |
 | Imágenes | **Cloudinary** (opcional) o guardado local en `server/uploads/` |
-| Pagos | **Stripe** (`stripe` 22.x en server, `@stripe/stripe-js` 5.x en client; modo test por ahora) |
+| Pagos | **Stripe** (`stripe` 22.x en server, `@stripe/stripe-js` 5.x en client; modo test por ahora) + **Payment Link externo por evento** (`registry.payment_link_url`; ver §13) |
 
 ---
 
@@ -118,6 +118,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 
 - **Frontend genérico** `client/src/invitation/shared/Gifts.jsx`: sección pública reutilizable (render condicional si `registry.enabled`). Detecta moneda (`navigator.language` + `timeZone` → `mxn`/`eur`) con selector manual MXN|EUR, chips de montos sugeridos + monto libre, depósito bancario con botones "copiar" y pago vía `@stripe/stripe-js` (`loadStripe(publishableKey)` + `redirectToCheckout`). Maneja `?payment=success|cancelled` al volver de Stripe.
 - **Frontend especial** `client/src/invitation/boda_jorge_macarena/Gifts.jsx`: versión local con dropdowns/CTA Stripe/modal de depósito (ver §3.2). `client/src/invitation/alice_xv/Gifts.jsx`: versión local **informativa y sin Stripe** (2 tarjetas de opciones con medallón en arco; ver §6).
+- **Payment Link externo (por evento):** en `shared/Gifts.jsx` y `boda_jorge_macarena/Gifts.jsx`, con `stripe_enabled` + `registry.payment_link_url` el CTA de tarjeta es un `<a>` externo (pestaña nueva) y se ocultan los selectores de moneda/monto; el depósito bancario no cambia (ver §13.3).
 - **Propagación de clave pública:** `InvitationPage` lee `public_config.stripe_publishable_key` del GET y la propaga (nunca hardcodeada) por `InvitationView` → layouts → `<Gifts>`.
 - **Editor** `client/src/pages/event/EventInvitation.jsx`: sección "Mesa de Regalos" con `AmountListEditor` (mínimo/sugeridos/cuenta/stripe).
 - **Backend** `server/src/utils/stripe.js`: cliente **lazy** `getStripe()` (null si no hay `STRIPE_SECRET_KEY`), `stripePublishableKey()` (defensa en profundidad: solo expone claves `pk_`, omite `sk_`/`rk_`), `stripeWebhookSecret()`, `verifyStripeWebhook()` (`Stripe.webhooks.constructEvent`), `apiVersion: "2024-06-20"`.
@@ -156,7 +157,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 **Nota del RSVP (`rsvp_note`, columna de `groups`)** — el formulario público (`shared/Rsvp.jsx`, compartido por las 6 plantillas) **ya no captura "Detalles / restricciones alimenticias"**: se retiraron el `textarea`, el estado `diet`/`setDiet` y su efecto de sincronización, y `SubmitConfirmation` ya no recibe `note` ni muestra la línea "Detalles recibidos: …". El payload del `PUT /:token/rsvp` **sigue enviando `note`** (prop que llega desde `group.rsvp_note` vía `InvitationPage` → `InvitationView` → `RsvpSection`) para **preservar las notas ya guardadas**; el backend guarda `NULL` si `note` no llega (`server/src/routes/invitations.js`). Enfoque intermedio descartado: `theme.rsvp.showDiet` (se revirtió sin commitear; el tema `alice_xv` volvió a su estado base).
 
 **Mesa de regalos (`registry`)** — campo común, presente en todos los templates:
-- `enabled:false`, `allow_custom:true`, `stripe_enabled:false`.
+- `enabled:false`, `allow_custom:true`, `stripe_enabled:false`, `payment_link_url:""` (URL del Payment Link externo; tope `PAYMENT_LINK_MAX_LENGTH = 500`; vacío = pago integrado; ver §13.2).
 - Mínimos: `min_mxn:2000`, `min_eur:100`.
 - Sugeridos: `suggested_mxn:[2000,4000,5000,6000,7000,8000,9000,10000,12000,15000,20000,25000,30000]`, `suggested_eur:[100,200,250,300,350,400,450,500,600,750,1000,1250,1500]`.
 - `bank:{enabled:false,bank_name:"",holder:"",account_number:"",concept:""}`.
@@ -262,11 +263,16 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Ajuste estético)* El **scrim del `SectionPhoto` es fuerte** (~88%/72% sobre `--inv-bg-alt2`), así que la foto B&N se ve **sutil**; subir/disminuir opacidades si se quiere más/menos protagonismo (por legibilidad del texto marfil).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
 - [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`.
-- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5). Incluye las columnas de WhatsApp (`leader_phone`, `whatsapp_sent_at`, `whatsapp_message`, ver §12).
+- [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5). Incluye las columnas de WhatsApp (`leader_phone`, `whatsapp_sent_at`, `whatsapp_message`, ver §12) y la columna/índice de `custom_domain` (aplicados y verificados el 2026-09-21 en la BD local; **verificar en la BD desplegada**; ver §13).
 - [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js:6` y `server/src/middleware/auth.js:4` leen `process.env` **antes** de que `server/src/index.js:23` cargue `server/.env` con ruta absoluta (afecta al arranque local con `npm start`; en Render no, porque las env vars vienen de la plataforma). Fix sugerido: config compartida de dotenv (ver AUDITORIA.md §4.5).
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
+- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS).
+- [ ] **Badge "Powered by Webi"** (solo `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3).
+- [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
+- [ ] *(Menor)* **`X-Robots-Tag` en `/` raíz** del dominio propio: hoy solo lo añade el fallback SPA; `/` lo sirve `express.static` sin header (ver §13.2).
+- [ ] *(Menor)* **Documentar `ALLOWED_ORIGINS` en `server/.env.example`**: hoy la variable solo se lee del entorno y no aparece en el template (ver §13.4).
 - [x] ~~**Corregir el error de sintaxis de `server/src/db/init.js:1`**~~ → corregido 2026-09-14 por el agente de BD; `node --check` OK, `init-db` re-ejecutado con éxito y las 3 columnas re-verificadas en `information_schema.columns`.
 - [x] ~~**Commitear** el rediseño de la landing y el envío por WhatsApp~~ → hecho: landing `32cb71e` y WhatsApp `8fd76c1` (docs en `91b407d`; ver §10 y §12).
 
@@ -445,7 +451,72 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ---
 
-## 13. Referencias y documentación del repo
+## 13. Dominio personalizado por evento + pago con Stripe vía Payment Link externo (2026-09-21)
+
+**Estado:** implementado en el working tree **sin commitear** al cierre de la sesión (25 archivos modificados + `client/src/lib/` sin seguimiento). La feature permite dos cosas independientes: (a) que un evento tenga **dominio propio** en su invitación y (b) que la mesa de regalos cobre con un **Payment Link externo de Stripe** (cuenta del organizador), sin tocar el pago integrado de la plataforma.
+
+**Decisiones del usuario:**
+
+| # | Decisión | Detalle |
+| - | -------- | ------- |
+| **1A** | El dinero de la boda va a la **cuenta Stripe propia de la pareja** vía **Payment Link externo** | **Sin Stripe Connect** y **sin webhooks nuevos**: el webhook de plataforma (`server/src/routes/webhooks.js`) **no cambia**. El pago integrado sigue disponible para el resto de eventos. |
+| **2A** | La **raíz** del dominio personalizado **no** tendrá portada especial | Se acepta la landing de DisplayEvent en `https://<dominio>/`. La marca "DisplayEvent" se oculta **solo** en el host que coincide con el dominio del evento (en la práctica, solo esta invitación). |
+
+### 13.1 Base de datos
+
+| Objeto | Definición |
+| ------ | ---------- |
+| `events.custom_domain` | `VARCHAR(255)` NULL (NULL = dominio por defecto de la plataforma). |
+| `idx_events_custom_domain` | Índice **único parcial** (`... ON events(custom_domain) WHERE custom_domain IS NOT NULL`). |
+
+- `npm run init-db` **ya aplicado y verificado** (columna + índice + prueba de unicidad con `ROLLBACK`).
+- ⚠️ El índice es **case-sensitive**; la app normaliza a minúsculas antes de persistir.
+- Archivos: `server/src/db/schema.sql` (columna en el `CREATE` + `ALTER` idempotente + índice) y `server/src/db/init.js` (migraciones idempotentes).
+
+### 13.2 Backend (`server/src/`)
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `schemas/invitation.js` | `registry.payment_link_url`: string con `trim()` y tope `PAYMENT_LINK_MAX_LENGTH = 500`; presente en `normalizeRegistry`, `registrySchema` y saneado en `normalizeForRead` (siempre string). |
+| `routes/events.js` | `custom_domain` en POST/PUT con semántica **`undefined` = conservar** / **`""`/`null` = borrar** / **string = normalizar** (minúsculas, sin protocolo, sin `www.` inicial ni barra final), vía `normalizeCustomDomain` / `parseCustomDomainInput` (`DOMAIN_RE`, `DOMAIN_MAX_LENGTH = 255`). `409 "El dominio ya está en uso"` cuando Postgres devuelve `23505` en `idx_events_custom_domain`. `400` para reservados (`displayevent.com` y subdominios, `localhost`, IPs literales, `railway.app` y `*.railway.app`) y para formato inválido. |
+| `utils/whatsapp.js` → `buildInvitationUrl` | Con dominio: `https://<custom_domain>/invitacion/<token>` (**sin slug**). Sin dominio: comportamiento actual (`CLIENT_URL` + `[slug/]token`). |
+| `routes/whatsapp.js` | El `SELECT` del evento en `POST /send` incluye `custom_domain`. |
+| `routes/invitations.js` | `GET /:token` expone `public_config.custom_domain` (aditivo). `POST /:token/payment` usa `https://<custom_domain>` en `success_url`/`cancel_url` (fallback `CLIENT_URL`). |
+| `index.js` | CORS: wrapper previo al middleware `cors` que acepta **mismo host** (`new URL(Origin).host === req.get("host")`), además de `ALLOWED_ORIGINS`. `X-Robots-Tag: noindex, nofollow` en el fallback SPA cuando el host ≠ host de `CLIENT_URL`. |
+
+**Evidencia (reportada por el agente):** `node --check` OK; E2E CRUD **25/25** (normalización, conservar/borrar, 409, reservados) y **8/8** de invitación pública + WhatsApp (enlaces con dominio, `public_config`); `Origin: evil.example` sigue respondiendo 403; datos de prueba limpiados.
+
+⚠️ **Nota conocida:** la raíz `/` del dominio propio la sirve `express.static` (no el fallback SPA), así que **no** lleva `X-Robots-Tag` (pendiente menor, ver §8).
+
+### 13.3 Frontend (`client/src/`)
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `lib/publicDomain.js` (**nuevo**) | `normalizeDomain` (misma semántica que el backend), `buildInviteUrl` (con dominio `https://<dominio>/invitacion/<token>`; sin dominio, origen + slug opcional + token) e `isCustomDomainActive` (tolera `www.` en ambos lados). |
+| `pages/event/EventInvitation.jsx` | Campo **"Dominio personalizado"** (misma `DOMAIN_RE`/`DOMAIN_MAX = 255` que el backend, normaliza en `onBlur`) que se guarda en el mismo `api.events.update` del slug (`custom_domain: domainValue`; `""` borra). Input **"Link de pago de Stripe"** (`setReg("payment_link_url", …)`), visible solo con `stripe_enabled`. |
+| `invitation/schema/normalize.js` | `payment_link_url` en `normalizeRegistry` (round-trip garantizado). |
+| `invitation/shared/Gifts.jsx` y `invitation/boda_jorge_macarena/Gifts.jsx` | Modo link (`stripe_enabled && payment_link_url`): el CTA "Pagar con tarjeta" es un `<a>` al Payment Link externo (`target="_blank"`, `rel="noopener noreferrer"`), se **ocultan** los selectores de moneda/monto (bloque `!linkMode`) y se muestra "Elegirás el monto en la pasarela segura de Stripe."; el depósito bancario **no cambia**. `alice_xv/Gifts.jsx` **sin tocar** (sigue siendo informativo, sin Stripe). |
+| `pages/event/EventGuests.jsx` | `handleCopyInvite` usa `buildInviteUrl` (enlace con dominio sin slug). |
+| `components/WhatsAppSendModal.jsx` | `inviteLink(event, token)` usa `buildInviteUrl`. |
+| `invitation/InvitationPage.jsx` | White-label: `hideBrand = isCustomDomainActive(public_config.custom_domain)` + `<meta name="robots" content="noindex">`; `hideBrand` viaja por `InvitationView` → **6 layouts** → **3 footers** (`shared`, `alice_xv`, `boda_jorge_macarena`), donde se oculta solo la línea "DisplayEvent". El **badge "Powered by Webi"** (solo boda) **no** se oculta hoy (decisión pendiente, ver §8). |
+
+**Evidencia (reportada por el agente):** `npm run build` exit 0; 20 asserts unitarios; E2E con backend real (footer con marca en host normal / sin marca + `noindex` con `custom_domain='localhost'` temporal y revertido; Payment Link ocultando selectores y abriendo anchor externo; `alice_xv` intacta).
+
+### 13.4 Operaciones / SecDevOps (bloqueado por la compra del dominio)
+
+| Tema | Estado / runbook |
+| ---- | ---------------- |
+| `macarenayjorge.com` | **No registrado** al 2026-09-21 (NXDOMAIN; RDAP Verisign 404) → **disponible**. **Bloqueo #1: comprarlo ya** (riesgo de squatting). |
+| `displayevent.com` | Registrado en **Namecheap** y apuntando a **Railway** (A `69.46.46.0`); `www.displayevent.com` NXDOMAIN. |
+| Railway | Sin CLI/token en el entorno → runbook **manual**: añadir custom domain (recomendación: **solo apex**, por límites de plan — Trial 1 / Hobby 2 / Pro 20, y `displayevent.com` ya ocupa 1 slot), registros **CNAME + TXT**, TLS automático. `www` → apex **no existe** en Railway (Cloudflare Bulk Redirect o 301 del backend). |
+| Variable `ALLOWED_ORIGINS` | Valor exacto: `https://displayevent.com,https://macarenayjorge.com,https://www.macarenayjorge.com`. Reemplaza a `CLIENT_URL` en CORS y los POST same-origin también envían `Origin` (de ahí el wrapper de mismo host). ⚠️ Hoy **no está en `server/.env.example`** (solo se lee del entorno). |
+| Stripe de la pareja | Cuenta propia MX (RFC/entidad), sitio web `https://macarenayjorge.com`, Payment Link **"el cliente elige el importe"** (MXN, tarjeta); la URL `https://buy.stripe.com/...` se pega en el campo del editor. **Sin webhooks ni claves en la plataforma.** |
+
+**Riesgos y pendientes asociados** (detalle operativo en §8): compra del dominio + commit/deploy/smoke (el trabajo está sin commitear); badge **"Powered by Webi"** visible en dominio propio (hoy `hideBrand` solo oculta "DisplayEvent"); decisión `www` → apex; `X-Robots-Tag` en `/` raíz; OG/título genéricos en white-label (el HTML compartido mantiene los meta de DisplayEvent).
+
+---
+
+## 14. Referencias y documentación del repo
 
 - `README.md` — guía general (setup, scripts, API completa).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).

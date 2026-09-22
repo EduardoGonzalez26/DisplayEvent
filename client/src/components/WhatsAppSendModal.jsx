@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Button, Field, inputClass } from "./ui.jsx";
 import { api } from "../api.js";
+import { buildInviteUrl } from "../lib/publicDomain.js";
 
 const STEPS = ["Resumen", "Mensaje", "Confirmación", "Envío"];
 
 // Mismo criterio de enlace que el botón "Invitación" de EventGuests.
+// Con dominio propio: https://<dominio>/invitacion/<token> (sin slug).
 function inviteLink(event, token) {
-  const base = `${window.location.origin}/invitacion`;
-  return event?.slug ? `${base}/${event.slug}/${token}` : `${base}/${token}`;
+  return buildInviteUrl({ domain: event?.custom_domain, slug: event?.slug, token });
 }
 
 // Mismo formato que renderiza el servidor: "sábado 12 de septiembre de 2026 · 17:00".

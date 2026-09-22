@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { isIP } from "node:net";
 import { query, pool } from "../db/index.js";
 import { parseInvitation, normalizeForRead } from "../schemas/invitation.js";
 
@@ -243,6 +244,61 @@ function parseSlugInput(slug) {
   return { value: normalized };
 }
 
+/* ------------------------------------------------------------------
+   Dominio personalizado por evento (`events.custom_domain`).
+   Hostname normalizado: minúsculas, sin protocolo, sin `www.` ni barra
+   final. El enlace público queda https://<custom_domain>/invitacion/<token>.
+------------------------------------------------------------------ */
+
+const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+const DOMAIN_MAX_LENGTH = 255;
+// Dominios propios del servicio o no enroutables públicamente.
+const RESERVED_DOMAINS = new Set(["displayevent.com", "localhost", "railway.app"]);
+
+// Normaliza lo que llega del cliente (trim, lower, sin protocolo/www/barra
+// final). "" si no queda nada.
+function normalizeCustomDomain(value) {
+  if (typeof value !== "string") return "";
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/+$/, "");
+}
+
+// Reservados: nuestro propio dominio (con subdominios), localhost, IPs
+// literales (v4/v6) y cualquier host de Railway.
+function isReservedCustomDomain(domain) {
+  if (RESERVED_DOMAINS.has(domain)) return true;
+  if (domain.endsWith(".displayevent.com")) return true;
+  if (domain.endsWith(".railway.app")) return true;
+  if (isIP(domain) !== 0) return true;
+  return false;
+}
+
+// Interpreta `custom_domain` del body con semántica de "conservar si ausente":
+//   undefined        -> { keep: true }  (no se toca el valor almacenado)
+//   null / ""        -> { value: null } (borrar)
+//   string           -> { value } normalizado, o { error } si es inválido.
+function parseCustomDomainInput(value) {
+  if (value === undefined) return { keep: true };
+  if (value === null) return { value: null };
+  if (typeof value !== "string") return { error: "El dominio personalizado es inválido" };
+  const domain = normalizeCustomDomain(value);
+  if (!domain) return { value: null };
+  if (domain.length > DOMAIN_MAX_LENGTH) {
+    return { error: `El dominio no puede superar los ${DOMAIN_MAX_LENGTH} caracteres` };
+  }
+  if (!DOMAIN_RE.test(domain)) {
+    return { error: "El dominio personalizado no es válido (ej. misitio.com)" };
+  }
+  if (isReservedCustomDomain(domain)) {
+    return { error: "El dominio no está disponible" };
+  }
+  return { value: domain };
+}
+
 // Busca un slug libre. Si `base` ya está tomado prueba `base-2`, `base-3`, ...
 // `excludeId` permite ignorar el propio evento al editarlo. Los slugs generados
 // respetan el máximo de 60 caracteres.
@@ -274,7 +330,8 @@ async function generateUniqueSlug(base, excludeId = null) {
 }
 
 // Valida y normaliza el payload de un evento (POST/PUT).
-function validateEventPayload({ name, date, time, place, slug }) {
+function validateEventPayload(body) {
+  const { name, date, time, place, slug, custom_domain } = body || {};
   const cleanName = cleanRequiredString(name, 255);
   const cleanPlace = cleanRequiredString(place, 255);
   if (!cleanName) return { error: "El nombre del evento es obligatorio" };
@@ -285,27 +342,49 @@ function validateEventPayload({ name, date, time, place, slug }) {
   const parsedSlug = parseSlugInput(slug);
   if (parsedSlug.error) return { error: parsedSlug.error };
 
+  const parsedDomain = parseCustomDomainInput(custom_domain);
+  if (parsedDomain.error) return { error: parsedDomain.error };
+
   return {
-    value: { name: cleanName, date, time, place: cleanPlace, slug: parsedSlug.value },
+    value: {
+      name: cleanName,
+      date,
+      time,
+      place: cleanPlace,
+      slug: parsedSlug.value,
+      custom_domain: parsedDomain,
+    },
   };
 }
 
 router.post("/", async (req, res, next) => {
   const validated = validateEventPayload(req.body || {});
   if (validated.error) return res.status(400).json({ error: validated.error });
-  const { name, date, time, place, slug: requestedSlug } = validated.value;
+  const {
+    name,
+    date,
+    time,
+    place,
+    slug: requestedSlug,
+    custom_domain: domainInput,
+  } = validated.value;
+  // En POST no hay valor previo que conservar: clave ausente = sin dominio.
+  const customDomain = domainInput.value ?? null;
   try {
     // Slug explícito si es válido; si no, se autogenera desde el nombre.
     const slug = await generateUniqueSlug(requestedSlug || slugify(name));
     const result = await pool.query(
-      `INSERT INTO events (user_id, name, date, time, place, slug)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [req.user.id, name, date, time, place, slug]
+      `INSERT INTO events (user_id, name, date, time, place, slug, custom_domain)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [req.user.id, name, date, time, place, slug, customDomain]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === "23505" && err.constraint === "idx_events_slug") {
       return res.status(409).json({ error: "El slug ya está en uso" });
+    }
+    if (err.code === "23505" && err.constraint === "idx_events_custom_domain") {
+      return res.status(409).json({ error: "El dominio ya está en uso" });
     }
     next(err);
   }
@@ -314,21 +393,40 @@ router.post("/", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   const validated = validateEventPayload(req.body || {});
   if (validated.error) return res.status(400).json({ error: validated.error });
-  const { name, date, time, place, slug: requestedSlug } = validated.value;
+  const {
+    name,
+    date,
+    time,
+    place,
+    slug: requestedSlug,
+    custom_domain: domainInput,
+  } = validated.value;
   try {
     // Excluye el propio evento: si el slug no cambia se conserva tal cual y,
     // si está tomado por otro, se añade sufijo (-2, -3, ...).
     const slug = await generateUniqueSlug(requestedSlug || slugify(name), req.params.id);
-    const result = await pool.query(
-      `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5
-       WHERE id = $6 AND user_id = $7 RETURNING *`,
-      [name, date, time, place, slug, req.params.id, req.user.id]
-    );
+    // `custom_domain` ausente => se conserva el valor almacenado (otras
+    // pantallas guardan el evento sin enviarlo). Presente => se escribe
+    // (null cuando se envía "" o null para borrarlo).
+    const result = domainInput.keep
+      ? await pool.query(
+          `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5
+           WHERE id = $6 AND user_id = $7 RETURNING *`,
+          [name, date, time, place, slug, req.params.id, req.user.id]
+        )
+      : await pool.query(
+          `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5, custom_domain = $6
+           WHERE id = $7 AND user_id = $8 RETURNING *`,
+          [name, date, time, place, slug, domainInput.value ?? null, req.params.id, req.user.id]
+        );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(result.rows[0]);
   } catch (err) {
     if (err.code === "23505" && err.constraint === "idx_events_slug") {
       return res.status(409).json({ error: "El slug ya está en uso" });
+    }
+    if (err.code === "23505" && err.constraint === "idx_events_custom_domain") {
+      return res.status(409).json({ error: "El dominio ya está en uso" });
     }
     next(err);
   }

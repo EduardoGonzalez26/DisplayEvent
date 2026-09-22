@@ -14,7 +14,7 @@ import Hero from "./Hero.jsx";
    XV años — monograma madreperla, seda, perlas 3D, padrinos y mesa de
    regalos. El contador de cristal vive dentro del hero.
 ------------------------------------------------------------------ */
-export default function XvLayout({ event, family, cfg, theme, rsvp, reveal = true, token, publishableKey }) {
+export default function XvLayout({ event, family, cfg, theme, rsvp, reveal = true, token, publishableKey, hideBrand = false }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} theme={theme} reveal={reveal} />
@@ -27,7 +27,7 @@ export default function XvLayout({ event, family, cfg, theme, rsvp, reveal = tru
       <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
       <Padrinos cfg={cfg} theme={theme} />
       <Rsvp {...rsvp} />
-      <Footer event={event} theme={theme} />
+      <Footer event={event} theme={theme} hideBrand={hideBrand} />
     </div>
   );
 }

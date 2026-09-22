@@ -102,7 +102,7 @@ router.post("/send", sendLimiter, async (req, res, next) => {
 
   try {
     const events = await query(
-      `SELECT id, name, date, time, place, slug, whatsapp_message
+      `SELECT id, name, date, time, place, slug, custom_domain, whatsapp_message
        FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`,
       [req.params.eventId, req.user.id]
     );

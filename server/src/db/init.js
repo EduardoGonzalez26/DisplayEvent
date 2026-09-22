@@ -46,6 +46,8 @@ async function main() {
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS leader_phone VARCHAR(20)`,
     `ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ`,
     `ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_events_custom_domain ON events(custom_domain) WHERE custom_domain IS NOT NULL`,
   ];
   for (const statement of migrations) {
     await client.query(statement);

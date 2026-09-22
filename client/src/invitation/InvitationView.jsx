@@ -19,6 +19,7 @@ export default function InvitationView({
   token,
   rsvpNote,
   preview = false,
+  hideBrand = false,
   onRsvpDone,
   publishableKey,
 }) {
@@ -53,6 +54,7 @@ export default function InvitationView({
           theme={theme}
           reveal={reveal}
           token={token}
+          hideBrand={hideBrand}
           publishableKey={publishableKey}
           rsvp={{
             token,

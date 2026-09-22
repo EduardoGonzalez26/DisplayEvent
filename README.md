@@ -57,6 +57,11 @@ DisplayEvent/
    `.env.example` (Cloud API de Meta: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
    `WHATSAPP_TEMPLATE_NAME` y una plantilla Utility aprobada).
 
+   Para servir invitaciones en **dominios personalizados**, añade el dominio como
+   *custom domain* en Railway y agrégalo a `ALLOWED_ORIGINS` (lista separada por
+   comas; cuando se define, sustituye a `CLIENT_URL` como lista de CORS). La columna
+   `events.custom_domain` se crea al ejecutar `init-db`.
+
 2. Crea el esquema (tablas, índices y backfills; es idempotente) y normaliza las
    invitaciones existentes al contrato v2:
 
@@ -96,7 +101,9 @@ Abre http://localhost:5173
   - **Mesas**: organizador visual con **drag & drop** (dnd-kit), búsqueda y filtro de sin asignar, mesas redondas/cuadradas/rectangulares con porcentaje de ocupación, colores por grupo, acompañantes que se mueven en bloque y validación de capacidad en el servidor. Solo invitados confirmados pueden sentarse. Exportación a lista imprimible y CSV.
   - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo.
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas — `xv`, `boda`, `cumpleanos`, `baby_shower` — compuestos por un `Layout` + `Hero` por formato y secciones compartidas (RSVP, cuenta regresiva, galería, itinerario, etc.).
+- **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`); el enlace público pasa a `https://<dominio>/invitacion/<token>` (sin slug), la marca "DisplayEvent" se oculta en ese host y la página se marca `noindex`.
 - **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables.
+- **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado de la plataforma (requiere las claves `STRIPE_*`).
 - **Envío de invitaciones por WhatsApp**: desde **Invitados**, el botón "Enviar invitaciones" resume grupos enviables e invitados cubiertos, permite editar el mensaje (3 plantillas y vista previa) y pide confirmación antes de enviar. Por defecto usa enlaces `wa.me` (el organizador abre cada chat y puede marcarlas como enviadas); con la **WhatsApp Cloud API** configurada el envío es automático desde el servidor.
 - **Subida de imágenes**: subida de imágenes para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
 

@@ -107,6 +107,10 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const allowCustom = !!registry.allow_custom;
   const bank = registry.bank || {};
   const stripeReady = !!registry.stripe_enabled && !!publishableKey && !!token;
+  // Payment Link externo: si está definido, el CTA de tarjeta abre ese link
+  // (el invitado elige el monto en Stripe) y no se usan los selectores.
+  const paymentLink = String(registry.payment_link_url || "").trim();
+  const linkMode = !!registry.stripe_enabled && !!paymentLink;
 
   const activeAmount = custom !== "" ? Number(custom) : chipAmount;
 
@@ -268,74 +272,80 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
           )}
         </AnimatePresence>
 
-        {/* Selectores despejados: moneda y monto como dropdowns */}
-        <Reveal>
-          <div className="mx-auto grid max-w-lg grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
-            <FieldSelect
-              id="gift-currency"
-              label="Moneda"
-              value={currency}
-              onChange={(e) => {
-                selectCurrency(e.target.value);
-                setCustomMode(false);
-              }}
-            >
-              {Object.entries(CURRENCIES).map(([code, c]) => (
-                <option key={code} value={code}>
-                  {c.label}
-                </option>
-              ))}
-            </FieldSelect>
+        {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
+            el invitado elige el monto en la pasarela segura de Stripe. */}
+        {!linkMode && (
+          <>
+            {/* Selectores despejados: moneda y monto como dropdowns */}
+            <Reveal>
+              <div className="mx-auto grid max-w-lg grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+                <FieldSelect
+                  id="gift-currency"
+                  label="Moneda"
+                  value={currency}
+                  onChange={(e) => {
+                    selectCurrency(e.target.value);
+                    setCustomMode(false);
+                  }}
+                >
+                  {Object.entries(CURRENCIES).map(([code, c]) => (
+                    <option key={code} value={code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </FieldSelect>
 
-            {(suggested.length > 0 || allowCustom) && (
-              <FieldSelect
-                id="gift-amount"
-                label="Monto"
-                value={amountValue}
-                onChange={(e) => onAmountChange(e.target.value)}
-              >
-                <option value="">Selecciona un monto</option>
-                {suggested.map((v) => (
-                  <option key={v} value={String(v)}>
-                    {formatAmount(currency, v)}
-                  </option>
-                ))}
-                {allowCustom && <option value={CUSTOM_AMOUNT}>Monto libre</option>}
-              </FieldSelect>
-            )}
+                {(suggested.length > 0 || allowCustom) && (
+                  <FieldSelect
+                    id="gift-amount"
+                    label="Monto"
+                    value={amountValue}
+                    onChange={(e) => onAmountChange(e.target.value)}
+                  >
+                    <option value="">Selecciona un monto</option>
+                    {suggested.map((v) => (
+                      <option key={v} value={String(v)}>
+                        {formatAmount(currency, v)}
+                      </option>
+                    ))}
+                    {allowCustom && <option value={CUSTOM_AMOUNT}>Monto libre</option>}
+                  </FieldSelect>
+                )}
 
-            {/* Monto libre (solo al elegirlo en el dropdown) */}
-            {customMode && allowCustom && (
-              <div className="flex justify-center sm:col-span-2">
-                <label className="flex flex-col items-center gap-3">
-                  <span className="text-xs uppercase tracking-[0.3em] text-[var(--inv-accent-pink)]">
-                    Monto libre
-                  </span>
-                  <div className="flex items-end gap-2 border-b-2 border-[var(--inv-accent-yellow)] pb-1 transition-colors duration-300 focus-within:border-[var(--inv-primary)]">
-                    <span className="font-inv-heading text-2xl text-[var(--inv-text-soft)]">
-                      {CURRENCIES[currency].symbol}
-                    </span>
-                    <input
-                      type="number"
-                      min={min}
-                      step={1}
-                      inputMode="numeric"
-                      value={custom}
-                      onChange={(e) => onCustomChange(e.target.value)}
-                      placeholder="0"
-                      className="w-32 bg-transparent text-center font-inv-heading text-2xl text-[var(--inv-text)] placeholder-[var(--inv-text-dim)]/50 focus:outline-none"
-                    />
+                {/* Monto libre (solo al elegirlo en el dropdown) */}
+                {customMode && allowCustom && (
+                  <div className="flex justify-center sm:col-span-2">
+                    <label className="flex flex-col items-center gap-3">
+                      <span className="text-xs uppercase tracking-[0.3em] text-[var(--inv-accent-pink)]">
+                        Monto libre
+                      </span>
+                      <div className="flex items-end gap-2 border-b-2 border-[var(--inv-accent-yellow)] pb-1 transition-colors duration-300 focus-within:border-[var(--inv-primary)]">
+                        <span className="font-inv-heading text-2xl text-[var(--inv-text-soft)]">
+                          {CURRENCIES[currency].symbol}
+                        </span>
+                        <input
+                          type="number"
+                          min={min}
+                          step={1}
+                          inputMode="numeric"
+                          value={custom}
+                          onChange={(e) => onCustomChange(e.target.value)}
+                          placeholder="0"
+                          className="w-32 bg-transparent text-center font-inv-heading text-2xl text-[var(--inv-text)] placeholder-[var(--inv-text-dim)]/50 focus:outline-none"
+                        />
+                      </div>
+                    </label>
                   </div>
-                </label>
+                )}
               </div>
-            )}
-          </div>
-        </Reveal>
+            </Reveal>
 
-        {min > 0 && (
-          <p className="mt-5 text-center text-xs uppercase tracking-[0.25em] text-[var(--inv-text-muted)]">
-            Monto mínimo {formatAmount(currency, min)}
-          </p>
+            {min > 0 && (
+              <p className="mt-5 text-center text-xs uppercase tracking-[0.25em] text-[var(--inv-text-muted)]">
+                Monto mínimo {formatAmount(currency, min)}
+              </p>
+            )}
+          </>
         )}
 
         {error && (
@@ -349,29 +359,49 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
           {hasCard && (
             <Reveal>
               <div className="w-full max-w-md">
-                <motion.button
-                  type="button"
-                  onClick={payWithCard}
-                  disabled={paying || !stripeReady}
-                  whileTap={reduced ? undefined : { scale: 0.98 }}
-                  whileHover={reduced ? undefined : { scale: 1.01 }}
-                  className="w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-5 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] hover:shadow-[0_18px_44px_var(--inv-shadow-mid)] active:scale-[.99] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
-                >
-                  <span className="flex items-center justify-center gap-3">
-                    <CardIcon className="h-5 w-5" />
-                    <span>{paying ? "Abriendo pago…" : "Pagar con tarjeta"}</span>
-                    {showAmount && !paying && (
-                      <span className="rounded-full bg-[var(--inv-on-accent)]/15 px-3 py-0.5 text-sm tabular-nums">
-                        {formatAmount(currency, activeAmount)}
-                      </span>
-                    )}
-                  </span>
-                </motion.button>
-                {!stripeReady && (
+                {linkMode ? (
+                  <motion.a
+                    href={paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileTap={reduced ? undefined : { scale: 0.98 }}
+                    whileHover={reduced ? undefined : { scale: 1.01 }}
+                    className="block w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-5 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] hover:shadow-[0_18px_44px_var(--inv-shadow-mid)] active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+                  >
+                    <span className="flex items-center justify-center gap-3">
+                      <CardIcon className="h-5 w-5" />
+                      <span>Pagar con tarjeta</span>
+                    </span>
+                  </motion.a>
+                ) : (
+                  <motion.button
+                    type="button"
+                    onClick={payWithCard}
+                    disabled={paying || !stripeReady}
+                    whileTap={reduced ? undefined : { scale: 0.98 }}
+                    whileHover={reduced ? undefined : { scale: 1.01 }}
+                    className="w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-5 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] hover:shadow-[0_18px_44px_var(--inv-shadow-mid)] active:scale-[.99] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+                  >
+                    <span className="flex items-center justify-center gap-3">
+                      <CardIcon className="h-5 w-5" />
+                      <span>{paying ? "Abriendo pago…" : "Pagar con tarjeta"}</span>
+                      {showAmount && !paying && (
+                        <span className="rounded-full bg-[var(--inv-on-accent)]/15 px-3 py-0.5 text-sm tabular-nums">
+                          {formatAmount(currency, activeAmount)}
+                        </span>
+                      )}
+                    </span>
+                  </motion.button>
+                )}
+                {linkMode ? (
+                  <p className="mt-2 text-center text-xs text-[var(--inv-text-muted)]">
+                    Elegirás el monto en la pasarela segura de Stripe.
+                  </p>
+                ) : !stripeReady ? (
                   <p className="mt-2 text-center text-xs text-[var(--inv-text-muted)]">
                     El pago con tarjeta no está disponible en este momento.
                   </p>
-                )}
+                ) : null}
               </div>
             </Reveal>
           )}

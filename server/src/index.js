@@ -39,17 +39,46 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL |
   .map((o) => o.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, cb) {
-      if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
-        return cb(null, true);
-      }
-      return cb(new Error("Origen no permitido por CORS"));
-    },
-    credentials: true,
-  })
-);
+const corsMiddleware = cors({
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
+      return cb(null, true);
+    }
+    return cb(new Error("Origen no permitido por CORS"));
+  },
+  credentials: true,
+});
+
+// El paquete `cors` no recibe `req` en su opción `origin`, así que resolvemos
+// aquí el caso "mismo host que el servidor" (p. ej. la invitación servida
+// desde el dominio personalizado del evento, donde Origin coincide con Host)
+// con el mismo criterio que `csrfProtection`. El resto se delega al
+// middleware estándar, conservando el comportamiento actual.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  let sameHost = false;
+  if (origin) {
+    try {
+      sameHost = new URL(origin).host === req.get("host");
+    } catch {
+      sameHost = false;
+    }
+  }
+  if (!sameHost) return corsMiddleware(req, res, next);
+
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
+    const requestedHeaders = req.headers["access-control-request-headers"];
+    if (requestedHeaders) res.setHeader("Access-Control-Allow-Headers", requestedHeaders);
+    res.statusCode = 204;
+    res.setHeader("Content-Length", "0");
+    return res.end();
+  }
+  next();
+});
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -80,8 +109,20 @@ app.use("/api/uploads", requireAuth, uploadsRouter);
 // (permite hostear frontend + backend en un solo servicio, p. ej. Render).
 const CLIENT_DIST = join(__dirname, "..", "..", "client", "dist");
 if (existsSync(CLIENT_DIST)) {
+  // Host canónico de la SPA (CLIENT_URL). El HTML servido desde otro host
+  // (p. ej. el dominio personalizado de un evento) no debe indexarse.
+  let canonicalHost = "";
+  try {
+    canonicalHost = new URL(process.env.CLIENT_URL || "http://localhost:5173").host;
+  } catch {
+    canonicalHost = "";
+  }
+
   app.use(express.static(CLIENT_DIST));
-  app.get(/^\/(?!api|uploads).*/, function (_req, res) {
+  app.get(/^\/(?!api|uploads).*/, function (req, res) {
+    if (canonicalHost && req.get("host") !== canonicalHost) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    }
     res.sendFile(join(CLIENT_DIST, "index.html"));
   });
 }

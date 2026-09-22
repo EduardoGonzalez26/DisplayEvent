@@ -93,6 +93,7 @@ export default function AliceXvLayout({
   reveal = true,
   token,
   publishableKey,
+  hideBrand = false,
 }) {
   // Evita un hueco con el contador cuando no hay fecha (o es inválida).
   const hasCountdown = (() => {
@@ -221,7 +222,7 @@ export default function AliceXvLayout({
 
       {/* Card 9 — cierre */}
       <StackCard z="z-90" bg="bg-inv-bg-alt">
-        <Footer event={event} theme={theme} cfg={cfg} />
+        <Footer event={event} theme={theme} cfg={cfg} hideBrand={hideBrand} />
       </StackCard>
 
       {/* Navegación lateral flotante (solo tras abrir el sobre) */}

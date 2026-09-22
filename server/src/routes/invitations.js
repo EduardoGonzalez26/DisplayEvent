@@ -25,7 +25,8 @@ async function findInvitationByToken(token) {
   const rows = await query(
     `SELECT g.id AS group_id, g.event_id, g.name AS name,
             g.leader_name, g.rsvp_note,
-            e.name AS event_name, e.date, e.time, e.place, e.invitation
+            e.name AS event_name, e.date, e.time, e.place, e.invitation,
+            e.custom_domain
      FROM "groups" g
      JOIN events e ON e.id = g.event_id
      WHERE g.invitation_token = $1
@@ -64,7 +65,10 @@ router.get("/:token", invitationViewLimiter, async (req, res, next) => {
       },
       group: { name: inv.name, leader_name: inv.leader_name, rsvp_note: inv.rsvp_note },
       guests,
-      public_config: { stripe_publishable_key: stripePublishableKey() },
+      public_config: {
+        stripe_publishable_key: stripePublishableKey(),
+        custom_domain: inv.custom_domain || null,
+      },
     });
   } catch (err) {
     next(err);
@@ -175,7 +179,13 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       return res.status(503).json({ error: "El pago en línea no está disponible en este momento" });
     }
 
-    const base = clientUrl().replace(/\/+$/, "");
+    // Con dominio propio, el regreso del checkout vive en el dominio del
+    // evento; sin él se conserva el comportamiento actual (CLIENT_URL).
+    const customDomain =
+      typeof inv.custom_domain === "string" ? inv.custom_domain.trim() : "";
+    const base = customDomain
+      ? `https://${customDomain}`
+      : clientUrl().replace(/\/+$/, "");
     const eventName = inv.event_name || "Regalo";
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

@@ -199,6 +199,8 @@ export function normalizeRegistry(raw) {
     suggested_mxn: toIntArray(source.suggested_mxn, DEFAULT_SUGGESTED_MXN),
     suggested_eur: toIntArray(source.suggested_eur, DEFAULT_SUGGESTED_EUR),
     stripe_enabled: toBool(source.stripe_enabled, false),
+    // Link de pago externo de Stripe (Payment Link). Vacío = pago integrado.
+    payment_link_url: str(source.payment_link_url),
     bank: normalizeBank(source.bank),
   };
 }

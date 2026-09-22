@@ -95,11 +95,16 @@ export function formatEventDate(event) {
   return dateText ? `${dateText} · ${time}` : time;
 }
 
-// URL pública de la invitación del grupo: /invitacion/<slug>/<token> o
-// /invitacion/<token> cuando el evento aún no tiene slug. null sin token.
+// URL pública de la invitación del grupo:
+//   - con dominio propio:  https://<custom_domain>/invitacion/<token>
+//   - sin dominio:         /invitacion/<slug>/<token> (o /invitacion/<token> sin slug)
+// null sin token.
 export function buildInvitationUrl(event, group) {
   const token = group?.invitation_token;
   if (!token) return null;
+  const customDomain =
+    typeof event?.custom_domain === "string" ? event.custom_domain.trim() : "";
+  if (customDomain) return `https://${customDomain}/invitacion/${token}`;
   const base = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
   const slug = event?.slug;
   return slug ? `${base}/invitacion/${slug}/${token}` : `${base}/invitacion/${token}`;

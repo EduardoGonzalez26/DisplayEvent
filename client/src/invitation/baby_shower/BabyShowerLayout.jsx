@@ -13,7 +13,7 @@ import Hero from "./Hero.jsx";
 /* ------------------------------------------------------------------
    Baby shower — flujo con presentación de papás y nota de regalos.
 ------------------------------------------------------------------ */
-export default function BabyShowerLayout({ event, family, cfg, theme, rsvp, token, publishableKey }) {
+export default function BabyShowerLayout({ event, family, cfg, theme, rsvp, token, publishableKey, hideBrand = false }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} theme={theme} />
@@ -28,7 +28,7 @@ export default function BabyShowerLayout({ event, family, cfg, theme, rsvp, toke
       <RegistryNote cfg={cfg} theme={theme} />
       <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
       <Rsvp {...rsvp} />
-      <Footer event={event} theme={theme} />
+      <Footer event={event} theme={theme} hideBrand={hideBrand} />
     </div>
   );
 }

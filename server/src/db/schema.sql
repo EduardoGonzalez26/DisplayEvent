@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS events (
   place VARCHAR(255) NOT NULL,
   invitation JSONB,
   slug VARCHAR(80),
+  -- Dominio personalizado de la invitación del evento (ej. "fiesta.midominio.com").
+  -- NULL = se usa el dominio por defecto de la plataforma.
+  custom_domain VARCHAR(255),
   -- Mensaje editable de la invitación por WhatsApp. Placeholders admitidos:
   -- {{lider}}, {{evento}}, {{fecha}}, {{lugar}}, {{enlace}}. NULL = preset por defecto.
   whatsapp_message TEXT,
@@ -121,3 +124,11 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 -- Índice único parcial: permite varios eventos sin slug (NULL), pero impide
 -- slugs duplicados cuando están definidos.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_events_slug ON events(slug) WHERE slug IS NOT NULL;
+
+-- Dominio personalizado por evento: ALTER idempotente para bases creadas antes
+-- de que existiera la columna (instalaciones nuevas ya la traen en el CREATE).
+ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
+
+-- Índice único parcial: permite varios eventos sin dominio (NULL), pero un
+-- mismo dominio solo puede asignarse a un evento.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_custom_domain ON events(custom_domain) WHERE custom_domain IS NOT NULL;

@@ -21,7 +21,7 @@ const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
    de assets en `public/`). El texto "Powered by" es contenido de marca
    fijo: NO vive en `theme.labels` ni en el schema.
 ------------------------------------------------------------------ */
-export default function Footer({ event, theme, cfg }) {
+export default function Footer({ event, theme, cfg, hideBrand = false }) {
   const reduced = useReducedMotion();
   // Drift sutil del divisor botánico. La tarjeta final es sticky, así que
   // no usamos `useScroll({ target })` (offsetTop no refleja el pinning) y
@@ -71,9 +71,11 @@ export default function Footer({ event, theme, cfg }) {
           <p className="mx-auto mt-8 max-w-xl font-inv-serif text-lg text-[var(--inv-text-soft)] md:text-xl">
             {details}
           </p>
-          <p className="mt-4 text-[0.6rem] uppercase tracking-[0.45em] text-[var(--inv-text-muted)]">
-            DisplayEvent
-          </p>
+          {!hideBrand && (
+            <p className="mt-4 text-[0.6rem] uppercase tracking-[0.45em] text-[var(--inv-text-muted)]">
+              DisplayEvent
+            </p>
+          )}
           {/* Badge publicitario (solo esta plantilla): nombre accesible
               "Powered by Webi" (texto visible + alt). Sin aria-label. */}
           <a

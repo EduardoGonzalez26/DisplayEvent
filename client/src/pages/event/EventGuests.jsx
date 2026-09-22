@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
+import { buildInviteUrl } from "../../lib/publicDomain.js";
 import { Modal, Field, inputClass, Button } from "../../components/ui.jsx";
 import WhatsAppSendModal from "../../components/WhatsAppSendModal.jsx";
 
@@ -505,10 +506,13 @@ export default function EventGuests() {
       notify("Este grupo aún no tiene enlace de invitación.");
       return;
     }
-    const base = `${window.location.origin}/invitacion`;
-    const url = event?.slug
-      ? `${base}/${event.slug}/${group.invitation_token}`
-      : `${base}/${group.invitation_token}`;
+    // Con dominio propio: https://<dominio>/invitacion/<token> (sin slug).
+    // Sin dominio se conserva el enlace actual (origen + slug + token).
+    const url = buildInviteUrl({
+      domain: event?.custom_domain,
+      slug: event?.slug,
+      token: group.invitation_token,
+    });
     try {
       await navigator.clipboard.writeText(url);
       notify("Enlace de invitación copiado", "success");
