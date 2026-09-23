@@ -139,7 +139,7 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
   }
 });
 
-// Crea una Checkout Session de Stripe para el regalo monetario.
+// Crea una Checkout Session embebida de Stripe para el regalo monetario.
 router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
   const { currency, amount } = req.body ?? {};
   try {
@@ -187,8 +187,20 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       ? `https://${customDomain}`
       : clientUrl().replace(/\/+$/, "");
     const eventName = inv.event_name || "Regalo";
+
+    // Checkout embebido:
+    // - `ui_mode: "embedded"`: el cliente monta el formulario con `client_secret`.
+    // - `redirect_on_completion: "if_required"`: los pagos con tarjeta terminan
+    //   sin navegación y el cliente resuelve el estado con `onComplete`; solo los
+    //   métodos que exigen redirección (p. ej. OXXO/3DS) vuelven al `return_url`.
+    // - `return_url` conserva la MISMA `base` (dominio propio o CLIENT_URL) y el
+    //   parámetro `payment=success`; se añade `session_id={CHECKOUT_SESSION_ID}`
+    //   para que, tras una redirección, el cliente pueda correlacionar/verificar
+    //   la sesión (Stripe sustituye el placeholder).
     const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
       mode: "payment",
+      redirect_on_completion: "if_required",
       line_items: [
         {
           price_data: {
@@ -199,15 +211,23 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
           quantity: 1,
         },
       ],
-      success_url: `${base}/invitacion/${req.params.token}?payment=success`,
-      cancel_url: `${base}/invitacion/${req.params.token}?payment=cancelled`,
+      return_url: `${base}/invitacion/${req.params.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         event_id: String(inv.event_id),
         group_id: String(inv.group_id),
       },
     });
 
-    res.json({ session_id: session.id });
+    // En modo embebido el cliente necesita el `client_secret` para montar el
+    // checkout. Nunca se expone nada más de la sesión (ni id ni URLs).
+    if (!session.client_secret) {
+      console.error("[stripe] Checkout Session embebida creada sin client_secret", {
+        session_id: session.id,
+      });
+      return res.status(500).json({ error: "No se pudo iniciar el pago en línea" });
+    }
+
+    res.json({ client_secret: session.client_secret });
   } catch (err) {
     next(err);
   }

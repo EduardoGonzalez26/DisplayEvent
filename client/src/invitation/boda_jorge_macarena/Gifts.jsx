@@ -10,13 +10,14 @@ import { Flourish, WeddingSectionTitle } from "./decor.jsx";
    "Boda de Jorge & Macarena".
 
    Replica EXACTAMENTE la lógica de shared/Gifts.jsx (moneda, montos,
-   depósito con copiado y pago con tarjeta vía Stripe Checkout) pero
-   con un diseño botánico propio: cabecera `WeddingSectionTitle` local,
+   depósito con copiado y pago con tarjeta vía Stripe Checkout EMBEBIDO)
+   pero con un diseño botánico propio: cabecera `WeddingSectionTitle` local,
    selectores de moneda y monto como dropdowns nativos estilizados (con
    etiqueta, borde fino y chevron botánico), input underline para el
    monto libre, banner de estado con floritura botánica y pago con
-   tarjeta como CTA principal (botón naranja alargado con ícono) con el
-   depósito bancario relegado a un modal compacto accesible.
+   tarjeta como CTA principal (botón naranja alargado con ícono) que abre
+   un modal propio con el formulario embebido de Stripe; el depósito
+   bancario queda relegado a un modal compacto accesible.
    ------------------------------------------------------------------ */
 
 const CURRENCIES = {
@@ -79,6 +80,25 @@ async function copyToClipboard(text) {
   return legacyCopy(text);
 }
 
+/* Devuelve el inicializador del Checkout embebido de Stripe.js.
+   Firma verificada en @stripe/stripe-js v5.10:
+     stripe.initEmbeddedCheckout({ fetchClientSecret, onComplete })
+   `fetchClientSecret: () => Promise<string>` recibe el client_secret de la
+   Checkout Session (ui_mode: "embedded"). `appearance` NO forma parte de
+   esta API: el esquema del runtime solo acepta `clientSecret`,
+   `fetchClientSecret`, `onComplete`, `onLineItemsChange`,
+   `onShippingDetailsChange` y `onAnalyticsEvent` (el tema del iframe se
+   define en el Dashboard de Stripe); el diseño propio vive en el marco del
+   modal. Stripe renombró el método a `createEmbeddedCheckoutPage` con la
+   MISMA firma, así que se prefiere si el runtime ya lo expone. */
+function resolveEmbeddedCheckoutInit(stripe) {
+  const init = stripe.createEmbeddedCheckoutPage || stripe.initEmbeddedCheckout;
+  if (typeof init !== "function") {
+    throw new Error("No se pudo inicializar el pago.");
+  }
+  return init.bind(stripe);
+}
+
 export default function Gifts({ cfg, theme, token, publishableKey }) {
   const registry = cfg?.registry;
   const reduced = useReducedMotion();
@@ -92,6 +112,14 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const [status, setStatus] = useState(null); // "success" | "cancelled"
   const [copiedKey, setCopiedKey] = useState(null);
   const [bankOpen, setBankOpen] = useState(false);
+  // Checkout embebido: modal propio montado sobre el iframe de Stripe.
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [checkoutReady, setCheckoutReady] = useState(false); // iframe montado
+  const [checkoutError, setCheckoutError] = useState("");
+  const [paid, setPaid] = useState(false); // éxito embebido (sin recargar)
+  const checkoutRef = useRef(null);
+  const mountRef = useRef(null);
 
   // Lee `?payment=success` / `?payment=cancelled` al volver de Stripe.
   useEffect(() => {
@@ -99,6 +127,60 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     if (p === "success") setStatus("success");
     else if (p === "cancelled") setStatus("cancelled");
   }, []);
+
+  // Inicializa y monta el Checkout embebido cuando ya hay client_secret.
+  // El cleanup destruye la instancia (no es re-montable) al cerrar el modal
+  // o desmontar la sección.
+  useEffect(() => {
+    if (!checkoutOpen || !clientSecret) return undefined;
+    let disposed = false;
+
+    const destroyInstance = () => {
+      if (!checkoutRef.current) return;
+      try {
+        checkoutRef.current.destroy();
+      } catch {
+        /* noop */
+      }
+      checkoutRef.current = null;
+    };
+
+    (async () => {
+      try {
+        const stripe = await loadStripe(publishableKey);
+        if (!stripe) throw new Error("No se pudo inicializar el pago.");
+        const checkout = await resolveEmbeddedCheckoutInit(stripe)({
+          fetchClientSecret: async () => clientSecret,
+          onComplete: () => {
+            // Tarjeta completada sin redirección: cerramos la pasarela y
+            // mostramos el estado de éxito propio dentro de la invitación.
+            destroyInstance();
+            setCheckoutReady(false);
+            setPaying(false);
+            setPaid(true);
+          },
+        });
+        if (disposed) {
+          checkout.destroy();
+          return;
+        }
+        checkoutRef.current = checkout;
+        checkout.mount(mountRef.current);
+        setCheckoutReady(true);
+        setPaying(false);
+      } catch (err) {
+        if (disposed) return;
+        destroyInstance();
+        setCheckoutError(err?.message || "No se pudo iniciar el pago.");
+        setPaying(false); // el botón vuelve a habilitarse (reintento posible)
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      destroyInstance();
+    };
+  }, [checkoutOpen, clientSecret, publishableKey]);
 
   if (!registry?.enabled) return null;
 
@@ -182,21 +264,40 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
       return;
     }
     setPaying(true);
+    setCheckoutError("");
+    setPaid(false);
     try {
-      const { session_id } = await api.invitations.payment(token, {
+      // El backend crea la Checkout Session embebida y devuelve su client_secret.
+      const { client_secret } = await api.invitations.payment(token, {
         currency,
         amount: Math.round(activeAmount),
       });
-      const stripe = await loadStripe(publishableKey);
-      if (!stripe) throw new Error("No se pudo inicializar el pago.");
-      const { error: redirectError } = await stripe.redirectToCheckout({
-        sessionId: session_id,
-      });
-      if (redirectError) throw new Error(redirectError.message || "Error al abrir el pago");
+      if (!client_secret) throw new Error("No se pudo iniciar el pago.");
+      setClientSecret(client_secret);
+      setCheckoutOpen(true);
     } catch (err) {
       setError(err.message || "No se pudo iniciar el pago.");
       setPaying(false);
     }
+  };
+
+  // Cierra el modal: desmonta/destruye el Checkout y deja el botón listo.
+  const closeCheckout = () => {
+    setCheckoutOpen(false);
+    setClientSecret(null);
+    setCheckoutError("");
+    setCheckoutReady(false);
+    setPaying(false);
+    if (paid) setStatus("success"); // el banner persistente confirma el pago
+    setPaid(false);
+  };
+
+  // Reintento tras fallo de init/mount: descarta la sesión y arranca de cero.
+  const retryCheckout = () => {
+    setCheckoutError("");
+    setCheckoutOpen(false);
+    setClientSecret(null);
+    payWithCard();
   };
 
   const bankFields = [
@@ -209,6 +310,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const hasCard = !!registry.stripe_enabled;
   const hasBank = !!bank.enabled && bankFields.length > 0;
   const showAmount = stripeReady && Number.isFinite(activeAmount) && activeAmount > 0;
+  const payAmountLabel = showAmount ? formatAmount(currency, activeAmount) : "";
 
   return (
     <section className="relative overflow-hidden px-4 py-6 md:py-12">
@@ -465,6 +567,23 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
           />
         )}
       </AnimatePresence>
+
+      {/* Modal del Checkout embebido: el marco botánico mantiene el diseño
+          de la invitación y el formulario interno lo renderiza Stripe. */}
+      <AnimatePresence>
+        {checkoutOpen && (
+          <CheckoutModal
+            paid={paid}
+            initError={checkoutError}
+            ready={checkoutReady}
+            amountLabel={payAmountLabel}
+            onClose={closeCheckout}
+            onRetry={retryCheckout}
+            mountRef={mountRef}
+            reduced={reduced}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -712,6 +831,205 @@ function BankModal({ bank, bankFields, copiedKey, doCopy, reduced, onClose }) {
             />
           ))}
         </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* Modal del Checkout embebido de Stripe, con el diseño botánico de la
+   invitación. Ciclo de vida: abrir (init + mount) → pagar → onComplete
+   (estado de éxito propio) o error de init/mount con reintento. Cierra
+   con ✕, clic en el backdrop o Escape; atrapa el foco y lo devuelve al
+   disparador al cerrar. Respeta prefers-reduced-motion. */
+function CheckoutModal({
+  paid,
+  initError,
+  ready,
+  amountLabel,
+  onClose,
+  onRetry,
+  mountRef,
+  reduced,
+}) {
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const prevFocus = document.activeElement;
+    closeRef.current?.focus();
+
+    function onKeyDown(e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== "Tab" || !dialog) return;
+      const focusables = Array.from(
+        dialog.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.disabled && el.offsetParent !== null);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const activeInside = dialog.contains(document.activeElement);
+      if (e.shiftKey) {
+        if (!activeInside || document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (!activeInside || document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      if (prevFocus && typeof prevFocus.focus === "function") prevFocus.focus();
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        aria-hidden="true"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-[var(--inv-overlay)] backdrop-blur-sm"
+      />
+
+      <motion.div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={paid ? "Pago completado" : "Pago con tarjeta"}
+        initial={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[1.8rem] border border-[var(--inv-accent-yellow)]/40 bg-[var(--inv-surface)] p-6 shadow-[0_30px_80px_var(--inv-shadow-card)]"
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[var(--inv-botanical)]/60 text-[var(--inv-botanical)]">
+              <CardIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="font-inv-heading text-lg text-[var(--inv-text)]">
+                {paid ? "Pago completado" : "Pago con tarjeta"}
+              </h3>
+              <p className="text-xs font-light text-[var(--inv-text-muted)]">
+                {paid
+                  ? "Gracias por tu regalo."
+                  : "Completa tus datos en la pasarela segura de Stripe."}
+              </p>
+            </div>
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--inv-accent-border)] text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
+          >
+            ✕
+          </button>
+        </div>
+
+        {paid ? (
+          <div className="py-2 text-center">
+            <Flourish className="mx-auto h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
+            <motion.div
+              className="mx-auto mt-6 mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--inv-botanical)] text-2xl text-[var(--inv-on-accent)] shadow-[0_10px_24px_var(--inv-shadow-mid)]"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.08 }}
+            >
+              ✓
+            </motion.div>
+            <p className="font-inv-heading text-xl text-[var(--inv-text)]">
+              ¡Gracias! Tu regalo se registró correctamente.
+            </p>
+            <p className="mt-2 text-sm font-light text-inv-text-soft">
+              Tu aportación fue recibida. Nos vemos en la celebración.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-4 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+            >
+              Cerrar
+            </button>
+          </div>
+        ) : initError ? (
+          <div className="py-2 text-center">
+            <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--inv-accent-pink)]/15 text-xl text-[var(--inv-accent-pink)]">
+              ✕
+            </div>
+            <p className="font-inv-heading text-lg text-[var(--inv-text)]">
+              No se pudo abrir el pago
+            </p>
+            <p className="mt-1 text-sm font-light text-[var(--inv-text-soft)]">{initError}</p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-xl border border-[var(--inv-accent-border-strong)] px-4 py-3 text-sm text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="flex-1 rounded-xl bg-[var(--inv-primary)] px-4 py-3 text-sm font-semibold text-[var(--inv-on-accent)] transition-colors hover:bg-[var(--inv-accent)] active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {amountLabel && (
+              <p className="mb-4 text-center text-sm text-[var(--inv-text-soft)]">
+                Monto a pagar:{" "}
+                <span className="font-semibold text-[var(--inv-text)]">{amountLabel}</span>
+              </p>
+            )}
+            {!ready && (
+              <div
+                role="status"
+                className="flex items-center justify-center gap-3 py-10 text-[var(--inv-text-soft)]"
+              >
+                <motion.span
+                  aria-hidden="true"
+                  className="h-5 w-5 rounded-full border-2 border-[var(--inv-accent-yellow)]/60 border-t-[var(--inv-primary)]"
+                  animate={reduced ? undefined : { rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                />
+                <span className="text-sm font-light">Cargando pasarela segura…</span>
+              </div>
+            )}
+            <div ref={mountRef} />
+            <p className="mt-4 text-center text-[0.65rem] uppercase tracking-[0.25em] text-[var(--inv-text-muted)]">
+              Pago seguro procesado por Stripe
+            </p>
+          </>
+        )}
       </motion.div>
     </div>
   );
