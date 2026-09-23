@@ -27,3 +27,11 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # Stripe (opcional): sin valores en el blueprint; se configuran en el
+      # dashboard de Render. Sin STRIPE_SECRET_KEY los pagos degradan a 503.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
