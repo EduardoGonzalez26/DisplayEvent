@@ -159,6 +159,16 @@ export default function RsvpSection({
             {theme?.labels?.familyGreeting?.(family) ||
               `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`}
           </motion.p>
+          <motion.p
+            variants={{
+              hidden: { opacity: 0, y: 16 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
+            }}
+            className="mt-3 text-sm text-inv-text-soft"
+          >
+            {theme?.labels?.rsvpHelp ||
+              "Ayúdanos a confirmar tu asistencia para la organización en el salón."}
+          </motion.p>
           {!preview && editable && hasDeadline && !expired && (
             <motion.p
               variants={{
@@ -167,7 +177,7 @@ export default function RsvpSection({
               }}
               className="mt-3 text-sm text-inv-text-soft"
             >
-              Podrás confirmar o modificar tu respuesta hasta el {deadlineLabel}.
+              Podrás confirmar o modificar tu respuesta antes del {deadlineLabel}.
             </motion.p>
           )}
         </motion.div>
@@ -212,7 +222,7 @@ export default function RsvpSection({
             </p>
             {editingOpen && hasDeadline && (
               <p className="-mt-3 mb-5 text-xs text-inv-text-soft/80">
-                Recuerda que podrás confirmar o modificar tu respuesta hasta el{" "}
+                Recuerda que podrás confirmar o modificar tu respuesta antes del{" "}
                 {deadlineLabel}.
               </p>
             )}
@@ -329,7 +339,7 @@ export default function RsvpSection({
                       <span className="text-inv-text-soft font-semibold">
                         actualizar tu respuesta
                       </span>{" "}
-                      hasta el {deadlineLabel}.
+                      antes del {deadlineLabel}.
                     </>
                   ) : editable ? (
                     <>
@@ -460,7 +470,7 @@ function SubmitConfirmation({
         {expired
           ? "El plazo para modificar la confirmación terminó."
           : editable && deadlineLabel
-            ? `Puedes cambiarla hasta el ${deadlineLabel}.`
+            ? `Puedes cambiarla antes del ${deadlineLabel}.`
             : editable
               ? "Puedes cambiarla en cualquier momento."
               : "La selección ya no puede modificarse."}
