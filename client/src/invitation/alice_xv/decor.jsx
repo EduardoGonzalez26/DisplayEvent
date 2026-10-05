@@ -222,7 +222,8 @@ export function Flourish({ className = "" }) {
    ser el <h2> de la sección (conserva el encabezado semántico) y el
    separador sube para equilibrar. `largeEyebrow` agranda el eyebrow
    para titulares que lo usan como único encabezado (p. ej. la Mesa de
-   Regalos).
+   Regalos). El eyebrow es opcional: si no llega, se omite por completo
+   la fila ornamental (filetes + span) y el resto se mantiene igual.
 ------------------------------------------------------------------ */
 export function WeddingSectionTitle({
   eyebrow,
@@ -244,19 +245,21 @@ export function WeddingSectionTitle({
 
   return (
     <Reveal className={`text-center ${className}`}>
-      <div className="mb-5 flex items-center justify-center gap-4">
-        <span
-          className={`${lineClass} bg-gradient-to-r from-transparent to-[var(--inv-accent-yellow)]`}
-        />
-        {title ? (
-          <span className={eyebrowClass}>{eyebrow}</span>
-        ) : (
-          <h2 className={eyebrowClass}>{eyebrow}</h2>
-        )}
-        <span
-          className={`${lineClass} bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]`}
-        />
-      </div>
+      {eyebrow && (
+        <div className="mb-5 flex items-center justify-center gap-4">
+          <span
+            className={`${lineClass} bg-gradient-to-r from-transparent to-[var(--inv-accent-yellow)]`}
+          />
+          {title ? (
+            <span className={eyebrowClass}>{eyebrow}</span>
+          ) : (
+            <h2 className={eyebrowClass}>{eyebrow}</h2>
+          )}
+          <span
+            className={`${lineClass} bg-gradient-to-l from-transparent to-[var(--inv-accent-yellow)]`}
+          />
+        </div>
+      )}
       {title && (
         <h2
           className={`text-balance ${

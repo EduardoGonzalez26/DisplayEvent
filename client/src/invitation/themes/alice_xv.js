@@ -118,7 +118,6 @@ export const alice_xv = {
     registryOptionEnvelopes: "Lluvia de sobres",
     registryOptionEnvelopesInfo:
       "Consiste en una aportación económica voluntaria; tendremos sobres y un buzón a tu llegada.",
-    padrinosEyebrow: "Con amor",
     padrinosTitle: "Mis Padres y Padrinos",
     padrinosSubtitle:
       "Quienes me acompañan en este camino, con todo su cariño y apoyo.",

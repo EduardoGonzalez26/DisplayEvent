@@ -135,7 +135,6 @@ export default function Padrinos({ cfg, theme }) {
 
       <div className="relative mx-auto max-w-4xl">
         <WeddingSectionTitle
-          eyebrow={theme?.labels?.padrinosEyebrow || "Con amor"}
           title={theme?.labels?.padrinosTitle || "Mis Padres y Padrinos"}
           subtitle={
             theme?.labels?.padrinosSubtitle ||

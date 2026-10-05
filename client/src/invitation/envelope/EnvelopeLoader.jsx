@@ -418,7 +418,7 @@ export default function EnvelopeLoader({ monogram = "&", seal = "&", family, onO
           animate={{ opacity: moving ? 0 : 1, y: moving ? 8 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          Toca o desliza hacia arriba para abrir
+          Toca para abrir
         </motion.p>
       </motion.div>
     </motion.div>
