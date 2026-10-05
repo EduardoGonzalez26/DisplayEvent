@@ -184,14 +184,22 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     };
   }, [eventId]);
 
+  // Grupos pendientes de invitación: los ya marcados como enviados quedan fuera
+  // de todo el flujo del modal (contadores, vista previa, envío y marcado).
+  const pendingGroups = useMemo(() => groups.filter((g) => !g.whatsapp_sent_at), [groups]);
+  // Grupos que ya recibieron su invitación; solo se usan para el aviso del paso 1.
+  const sentGroups = useMemo(() => groups.filter((g) => g.whatsapp_sent_at), [groups]);
   const sendableGroups = useMemo(
-    () => groups.filter((g) => g.leader_phone && g.invitation_token),
-    [groups]
+    () => pendingGroups.filter((g) => g.leader_phone && g.invitation_token),
+    [pendingGroups]
   );
-  const missingPhone = useMemo(() => groups.filter((g) => !g.leader_phone), [groups]);
+  const missingPhone = useMemo(
+    () => pendingGroups.filter((g) => !g.leader_phone),
+    [pendingGroups]
+  );
   const missingToken = useMemo(
-    () => groups.filter((g) => g.leader_phone && !g.invitation_token),
-    [groups]
+    () => pendingGroups.filter((g) => g.leader_phone && !g.invitation_token),
+    [pendingGroups]
   );
   const coveredGuests = useMemo(
     () => sendableGroups.reduce((sum, g) => sum + (Number(g.guests_count) || 0), 0),
@@ -223,7 +231,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     setStep(4);
     try {
       await api.whatsapp.saveMessage(eventId, message);
-      const res = await api.whatsapp.send(eventId, {});
+      const res = await api.whatsapp.send(eventId, { onlyPending: true });
       if (res?.mode) setMode(res.mode);
       setResult(res);
       setOpenedIds(new Set());
@@ -285,7 +293,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     setRetrying(true);
     setError("");
     try {
-      const res = await api.whatsapp.send(eventId, { groupIds: failedIds });
+      const res = await api.whatsapp.send(eventId, { groupIds: failedIds, onlyPending: true });
       if (res?.mode) setMode(res.mode);
       setResult((prev) => ({
         ...res,
@@ -329,7 +337,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     body = (
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-2.5">
-          <SummaryTile label="Grupos" value={groups.length} />
+          <SummaryTile label="Grupos" value={pendingGroups.length} />
           <SummaryTile
             label="Enviables"
             value={sendableGroups.length}
@@ -344,10 +352,22 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
               Se enviará la invitación a <b className="text-gray-100">{sendableGroups.length} líderes</b> de
               grupo y cubrirá a <b className="text-gray-100">{coveredGuests} invitados</b>.
             </>
+          ) : sentGroups.length > 0 ? (
+            <>No hay invitaciones pendientes: los grupos ya marcados como enviados no se vuelven a incluir en este envío.</>
           ) : (
             <>Ningún grupo es enviable todavía: agrega el WhatsApp de los líderes para poder enviarles la invitación.</>
           )}
         </div>
+
+        {sentGroups.length > 0 && (
+          <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
+            <p className="text-sm font-medium text-emerald-300">
+              {sentGroups.length === 1
+                ? "1 grupo ya recibió su invitación y no se incluye en este envío."
+                : `${sentGroups.length} grupos ya recibieron su invitación y no se incluyen en este envío.`}
+            </p>
+          </div>
+        )}
 
         {missingPhone.length > 0 && (
           <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
