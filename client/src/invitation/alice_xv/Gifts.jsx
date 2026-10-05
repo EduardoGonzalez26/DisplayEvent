@@ -1,13 +1,20 @@
-import { useState } from "react";
-import { motion, useReducedMotion, EASE } from "../motion.jsx";
+import { useEffect, useId, useRef, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion, EASE } from "../motion.jsx";
 import { WeddingSectionTitle } from "./decor.jsx";
 
 /* ------------------------------------------------------------------
    Mesa de Regalos (registry) — versión LOCAL de la plantilla
    "XV de Alice".
 
-   Sección informativa: sin pago en línea, sin modal y sin interacción.
-   Solo un bloque dentro de la sección:
+   Sección informativa: sin pago en línea ni modal. Interacción única:
+   el botón "?" de la tarjeta "Lluvia de sobres" abre un popover con
+   `labels.registryOptionEnvelopesInfo` (si el theme no lo aporta, se
+   usa `FALLBACK.envelopesInfo`). Se abre/cierra con clic (táctil y
+   ratón), con hover SOLO en punteros de ratón (`pointerType ===
+   "mouse"`, para no duplicar el toggle táctil) y se cierra con Escape
+   o clic fuera. El panel respeta `useReducedMotion` y no se recorta
+   (la tarjeta NO usa `overflow-hidden`). El resto de la sección es un
+   bloque con:
 
      OPCIONES DE REGALO — 2 tarjetas premium ("Regalo" y
      "Lluvia de sobres") con el mismo lenguaje de tarjeta de
@@ -46,6 +53,8 @@ const FALLBACK = {
     "El mejor regalo será contar con su presencia en este día tan especial.\n\nSi desea obsequiarle algún detalle, puede elegir alguna de las siguientes opciones:",
   surprise: "Regalo",
   envelopes: "Lluvia de sobres",
+  envelopesInfo:
+    "Consiste en una aportación económica voluntaria; tendremos sobres y un buzón a tu llegada.",
 };
 
 /* ------------------------------------------------------------------
@@ -183,8 +192,49 @@ function GiftImage({ urls, className = "" }) {
    de Padrinos.jsx (borde dorado, filete interior, hairline + diamante
    superior y hover con elevación). La ilustración va en medallón en
    arco; debajo, divisor fino (hairline + diamante pequeño) y título.
+
+   Si recibe `info`, añade abajo a la derecha el botón "?" con su
+   popover explicativo accesible (aria-expanded/aria-controls, cierre
+   con Escape y clic fuera, hover solo con ratón y animación que
+   respeta reduced-motion).
 ------------------------------------------------------------------ */
-function GiftOptionCard({ title, urls, reduced }) {
+function GiftOptionCard({ title, urls, reduced, info }) {
+  const [open, setOpen] = useState(false);
+  const popRef = useRef(null);
+  const buttonRef = useRef(null);
+  const panelId = useId();
+
+  // Cierra con clic fuera, solo mientras el popover está abierto.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (e) => {
+      if (popRef.current && !popRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  // Escape cierra y devuelve el foco al botón (teclado).
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Hover solo en punteros con hover real (mouse): en táctil el
+  // pointerType es "touch" y el clic hace el toggle una sola vez.
+  const hoverOpen = (e) => {
+    if (e.pointerType === "mouse") setOpen(true);
+  };
+  const hoverClose = (e) => {
+    if (e.pointerType === "mouse") setOpen(false);
+  };
+
   const variants = reduced
     ? {
         hidden: { opacity: 0 },
@@ -247,6 +297,42 @@ function GiftOptionCard({ title, urls, reduced }) {
       <h3 className="mt-4 font-inv-heading text-lg leading-snug text-[var(--inv-text)] md:text-xl">
         {title}
       </h3>
+
+      {info && (
+        <div
+          ref={popRef}
+          onPointerEnter={hoverOpen}
+          onPointerLeave={hoverClose}
+          className="absolute bottom-3 right-3 z-20"
+        >
+          <button
+            ref={buttonRef}
+            type="button"
+            aria-label="¿Qué es la lluvia de sobres?"
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={() => setOpen((v) => !v)}
+            className="grid h-7 w-7 place-items-center rounded-full border border-[var(--inv-primary)] bg-[var(--inv-surface)] font-inv-heading text-xs font-semibold text-[var(--inv-primary)] shadow-[0_4px_12px_var(--inv-shadow-soft)] transition-colors hover:bg-[var(--inv-primary)] hover:text-[var(--inv-on-accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-surface)]"
+          >
+            ?
+          </button>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                id={panelId}
+                role="note"
+                initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.96 }}
+                transition={{ duration: reduced ? 0 : 0.18, ease: EASE }}
+                className="absolute bottom-9 right-0 z-20 w-56 rounded-xl border border-[var(--inv-primary)] bg-[var(--inv-surface)] px-3.5 py-3 text-left font-inv-body text-xs leading-relaxed text-[var(--inv-text-soft)] shadow-[0_12px_30px_var(--inv-shadow-mid)]"
+              >
+                {info}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </motion.li>
   );
 }
@@ -301,6 +387,7 @@ export default function Gifts({ cfg, theme }) {
             title={labels.registryOptionEnvelopes || FALLBACK.envelopes}
             urls={IMAGES.envelopes}
             reduced={reduced}
+            info={labels.registryOptionEnvelopesInfo || FALLBACK.envelopesInfo}
           />
         </motion.ul>
       </div>
