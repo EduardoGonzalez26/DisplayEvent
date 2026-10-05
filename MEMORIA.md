@@ -182,6 +182,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 - `server/src/routes/events.js` `GET /:id/stats`: añade `declined_count` y redefine `unregistered_count` = **pendientes** (ni confirmados ni declinados). Partición: confirmados + no asistirán + sin responder = total.
 - `server/src/routes/groups.js` `GET /`: cada grupo añade `declined_count`.
 - `client/src/pages/event/EventDashboard.jsx`: tarjeta **"No asistirán"** (rosa) + chip por grupo; "Sin confirmar" pasó a **"Sin responder"**.
+- **Buscador y filtros de grupos (2026-10-04, `f2a179a`):** compartidos entre Invitados y Dashboard con semántica única (`client/src/lib/groupFilters.js`); detalle en §14.
 
 ---
 
@@ -286,6 +287,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS).
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
+- [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
 - [ ] **Corregir `CLIENT_URL` en Render a una sola URL (`https://displayevent.com`):** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
 - [ ] **Badge "Powered by Webi"** (solo `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3).
 - [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
@@ -534,7 +536,37 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ---
 
-## 14. Referencias y documentación del repo
+## 14. Buscador y filtros en el panel de grupos (2026-10-04)
+
+**Estado:** feature **commiteada en `main`** (`f2a179a`, "Invitados y Dashboard: buscador y filtros por WhatsApp y RSVP"; 4 archivos, +421/−30). Aplica a **Invitados** (`/events/:id/invitados`) y **Dashboard** (`/events/:id/dashboard`) con semántica de filtrado única.
+
+**Archivos:**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/lib/groupFilters.js` (**nuevo**) | Semántica única: `DEFAULT_GROUP_FILTERS`, opciones de WhatsApp/RSVP, `normalizeSearchText` (NFD), `indexGuestsByGroup`, `hasActiveGroupFilters`, `formatGuestMatches` y `applyGroupFilters`. |
+| `client/src/components/GroupFiltersBar.jsx` (**nuevo**) | Barra reutilizable **controlada** (el estado vive en la página): input `type="search"`, chips `aria-pressed`, contador y "Limpiar filtros". |
+| `client/src/pages/event/EventGuests.jsx` | Integra la barra + índice de invitados + refresco (`reloadGuests`). |
+| `client/src/pages/event/EventDashboard.jsx` | Integra la barra sobre sus grupos. |
+
+**Buscador:** por nombre de grupo, **líder**, **teléfono** y **nombre de invitado** (también los de grupos colapsados); `normalizeSearchText` normaliza con el patrón **NFD** del repo (sin acentos y minúsculas) y exige **todos** los tokens (multi-palabra = AND). Cuando un grupo coincide **solo por invitados**, la tarjeta muestra el hint **"Coinciden: …"** con hasta **3 nombres** (`formatGuestMatches`; `+N` si hay más). El índice `{ groupId: invitado[] }` se construye desde `api.guests.list(id)` (**una carga**); en Invitados se refresca **reutilizando las recargas existentes** (`reloadGuests` sincroniza con la misma respuesta, **sin fetch extra**).
+
+**Filtros (chips con `aria-pressed`):**
+
+| Filtro | Opciones |
+| ------ | -------- |
+| WhatsApp | **Todos** / **Enviada** (`whatsapp_sent_at`) / **Sin enviar** (`leader_phone && !whatsapp_sent_at`) / **Sin WhatsApp** (`!leader_phone`). |
+| RSVP | **Todos** / **Sin responder** (`total>0 && reg===0 && dec===0`) / **Pendientes** (`reg+dec>0 && pending>0`) / **Completos** (`total>0 && pending===0`), con `pending = max(0, total - reg - dec)`; los grupos con `total===0` solo aparecen con RSVP **"Todos"**. |
+
+**UI:** contador **"Mostrando X de Y grupos"**, botón **"Limpiar filtros"** (solo con filtros activos), estados vacíos diferenciados, `role="search"` + `aria-label` + `aria-live`; la barra se **oculta si no hay grupos**. Filtrado local sin debounce (instantáneo).
+
+**Invariantes:** el modal de WhatsApp sigue recibiendo **TODOS** los grupos (no los filtrados) y las StatCards del Dashboard siguen siendo **globales**.
+
+**Verificación (reportada por el agente):** `npm run build` OK (**544 módulos**); **36+ aserciones** del helper `groupFilters` y render SSR de la barra con ARIA correcto. **Pendiente:** solo la pasada visual en navegador (ver §8).
+
+---
+
+## 15. Referencias y documentación del repo
 
 - `README.md` — guía general (setup, scripts, API completa).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
@@ -547,6 +579,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `f2a179a` | Invitados y Dashboard: buscador y filtros por WhatsApp y RSVP; ver §14. |
 | `9d4bf71` | RSVP: copy de motivación y "antes del" en el límite de edición; ver §4. |
 | `be5e9c6` | Servidor: `CLIENT_URL` tolerante a listas separadas por comas (enlaces de invitación); ver §7. |
 | `1241bfd` | XV de Alice: sobre con "Toca para abrir" y Padres y Padrinos sin eyebrow; ver §6. |
