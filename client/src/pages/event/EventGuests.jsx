@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { buildInviteUrl } from "../../lib/publicDomain.js";
+import {
+  DEFAULT_GROUP_FILTERS,
+  applyGroupFilters,
+  formatGuestMatches,
+  indexGuestsByGroup,
+} from "../../lib/groupFilters.js";
 import { Modal, Field, inputClass, Button } from "../../components/ui.jsx";
+import GroupFiltersBar from "../../components/GroupFiltersBar.jsx";
 import WhatsAppSendModal from "../../components/WhatsAppSendModal.jsx";
 
 function GroupForm({ initial, onSubmit, onCancel }) {
@@ -143,6 +150,7 @@ function GroupCard({
   onDelete,
   onCopyInvite,
   onUpdatePeriqueras,
+  matchedGuests = [],
 }) {
   const [guestName, setGuestName] = useState("");
   const [isChild, setIsChild] = useState(false);
@@ -183,6 +191,11 @@ function GroupCard({
           </div>
           {group.leader_name && (
             <p className="text-sm text-gray-400 mt-0.5 ml-7">Líder: {group.leader_name}</p>
+          )}
+          {matchedGuests.length > 0 && (
+            <p className="text-xs text-indigo-300/80 mt-0.5 ml-7">
+              Coinciden: {formatGuestMatches(matchedGuests)}
+            </p>
           )}
           <div className="flex items-center gap-2 flex-wrap mt-1 ml-7">
             {group.leader_phone ? (
@@ -376,6 +389,10 @@ export default function EventGuests() {
   // Se usa solo para construir el enlace bonito con el slug del evento.
   const [event, setEvent] = useState(null);
   const [guestsByGroup, setGuestsByGroup] = useState({});
+  // Índice completo de invitados (api.guests.list) para buscar por nombre en
+  // grupos colapsados; se refresca tras cada mutación sin fetch duplicado.
+  const [allGuests, setAllGuests] = useState([]);
+  const [filters, setFilters] = useState(DEFAULT_GROUP_FILTERS);
   const [loadingGroups, setLoadingGroups] = useState({});
   const [expanded, setExpanded] = useState({});
   const [loading, setLoading] = useState(true);
@@ -396,9 +413,10 @@ export default function EventGuests() {
 
   const load = async () => {
     try {
-      const g = await api.groups.list(id);
+      const [g, guests] = await Promise.all([api.groups.list(id), api.guests.list(id)]);
       if (cancelledRef.current) return;
       setGroups(g);
+      setAllGuests(guests);
       setError("");
     } catch (err) {
       if (!cancelledRef.current) setError(err.message);
@@ -412,6 +430,8 @@ export default function EventGuests() {
     setGroups([]);
     setEvent(null);
     setGuestsByGroup({});
+    setAllGuests([]);
+    setFilters(DEFAULT_GROUP_FILTERS);
     setLoadingGroups({});
     setExpanded({});
     setLoading(true);
@@ -463,6 +483,9 @@ export default function EventGuests() {
     try {
       const guests = await api.guests.listByGroup(id, group.id);
       setGuestsByGroup((s) => ({ ...s, [group.id]: guests }));
+      // Sincroniza el índice de búsqueda con la misma respuesta: no se pide
+      // de nuevo api.guests.list tras agregar/eliminar/toggle de invitados.
+      setAllGuests((s) => [...s.filter((g) => g.group_id !== group.id), ...guests]);
     } catch (err) {
       notify(err.message);
     }
@@ -470,15 +493,23 @@ export default function EventGuests() {
   };
 
   const handleCreateGroup = async (form) => {
-    await api.groups.create(id, form);
+    const group = await api.groups.create(id, form);
     setModal(null);
-    await refreshGroups();
+    if (form.leader_name) {
+      // El líder se registra como invitado: reloadGuests refresca el índice
+      // con esa única respuesta (grupos + invitados del grupo nuevo).
+      await reloadGuests(group);
+    } else {
+      await refreshGroups();
+    }
   };
 
   const handleEditGroup = async (form) => {
-    await api.groups.update(id, modal.group.id, form);
+    const group = modal.group;
+    await api.groups.update(id, group.id, form);
     setModal(null);
-    await refreshGroups();
+    // Editar puede agregar, renombrar o eliminar al invitado líder.
+    await reloadGuests(group);
   };
 
   const handleDeleteGroup = (group) => {
@@ -493,6 +524,8 @@ export default function EventGuests() {
             const { [group.id]: _removed, ...rest } = s;
             return rest;
           });
+          // El servidor borra en cascada: limpia también el índice de búsqueda.
+          setAllGuests((s) => s.filter((g) => g.group_id !== group.id));
           await refreshGroups();
         } catch (err) {
           notify(err.message);
@@ -587,6 +620,15 @@ export default function EventGuests() {
     setModal({ mode: "whatsapp" });
   };
 
+  // Índice de invitados por grupo para buscar por nombre (aunque el grupo esté
+  // colapsado). Se reconstruye solo cuando cambia el índice completo.
+  const guestsByGroupId = useMemo(() => indexGuestsByGroup(allGuests), [allGuests]);
+  // Lista visible; el modal de WhatsApp sigue recibiendo `groups` completo.
+  const filteredGroups = useMemo(
+    () => applyGroupFilters(groups, filters, guestsByGroupId),
+    [groups, filters, guestsByGroupId]
+  );
+
   return (
     <div className="animate-page-in">
       <div className="flex items-center justify-between mb-4">
@@ -631,26 +673,49 @@ export default function EventGuests() {
           Aún no hay grupos. Crea uno para empezar a organizar invitados.
         </div>
       ) : (
-        <div className="space-y-3">
-          {groups.map((group) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              expanded={!!expanded[group.id]}
-              onToggle={() => toggleGroup(group)}
-              guests={guestsByGroup[group.id] ?? []}
-              loadingGuests={!!loadingGroups[group.id]}
-              onAddGuest={handleAddGuest}
-              onToggleChild={handleToggleChild}
-              onToggleRegistered={handleToggleRegistered}
-              onDeleteGuest={handleDeleteGuest}
-              onEdit={(g) => setModal({ mode: "edit-group", group: g })}
-              onDelete={handleDeleteGroup}
-              onCopyInvite={handleCopyInvite}
-              onUpdatePeriqueras={handleUpdatePeriqueras}
-            />
-          ))}
-        </div>
+        <>
+          <GroupFiltersBar
+            filters={filters}
+            onChange={setFilters}
+            shown={filteredGroups.length}
+            total={groups.length}
+            className="mb-4"
+          />
+          {filteredGroups.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-700 p-8 text-center text-gray-400">
+              <p>No hay grupos que coincidan con la búsqueda o filtros.</p>
+              <Button
+                variant="secondary"
+                className="mt-3"
+                onClick={() => setFilters({ ...DEFAULT_GROUP_FILTERS })}
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredGroups.map(({ group, matchedGuests, guestOnly }) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  expanded={!!expanded[group.id]}
+                  onToggle={() => toggleGroup(group)}
+                  guests={guestsByGroup[group.id] ?? []}
+                  loadingGuests={!!loadingGroups[group.id]}
+                  onAddGuest={handleAddGuest}
+                  onToggleChild={handleToggleChild}
+                  onToggleRegistered={handleToggleRegistered}
+                  onDeleteGuest={handleDeleteGuest}
+                  onEdit={(g) => setModal({ mode: "edit-group", group: g })}
+                  onDelete={handleDeleteGroup}
+                  onCopyInvite={handleCopyInvite}
+                  onUpdatePeriqueras={handleUpdatePeriqueras}
+                  matchedGuests={guestOnly ? matchedGuests : []}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {modal?.mode === "create-group" && (

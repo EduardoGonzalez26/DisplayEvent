@@ -1,30 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
-import { StatCard } from "../../components/ui.jsx";
+import { StatCard, Button } from "../../components/ui.jsx";
+import GroupFiltersBar from "../../components/GroupFiltersBar.jsx";
+import {
+  DEFAULT_GROUP_FILTERS,
+  applyGroupFilters,
+  formatGuestMatches,
+  indexGuestsByGroup,
+} from "../../lib/groupFilters.js";
 
 export default function EventDashboard() {
   const { id } = useParams();
   const [stats, setStats] = useState(null);
   const [groupStats, setGroupStats] = useState([]);
+  // Índice completo de invitados (api.guests.list) para buscar por nombre.
+  const [allGuests, setAllGuests] = useState([]);
+  const [filters, setFilters] = useState(DEFAULT_GROUP_FILTERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setStats(null);
     setGroupStats([]);
+    setAllGuests([]);
+    setFilters(DEFAULT_GROUP_FILTERS);
     setLoading(true);
     setError("");
     let cancelled = false;
     const load = async () => {
       try {
-        const [s, g] = await Promise.all([
+        const [s, g, guests] = await Promise.all([
           api.events.stats(id),
           api.groups.list(id),
+          api.guests.list(id),
         ]);
         if (cancelled) return;
         setStats(s);
         setGroupStats(g);
+        setAllGuests(guests);
         setError("");
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -37,6 +51,15 @@ export default function EventDashboard() {
       cancelled = true;
     };
   }, [id]);
+
+  // Índice de invitados por grupo para buscar por nombre (aunque el grupo no
+  // se muestre expandido en esta vista).
+  const guestsByGroupId = useMemo(() => indexGuestsByGroup(allGuests), [allGuests]);
+  // Lista visible de "Por grupo"; las StatCards siguen siendo globales.
+  const filteredGroups = useMemo(
+    () => applyGroupFilters(groupStats, filters, guestsByGroupId),
+    [groupStats, filters, guestsByGroupId]
+  );
 
   if (loading) return <p className="text-gray-400 animate-page-in">Cargando…</p>;
   if (error) return <p className="text-red-400">{error}</p>;
@@ -66,12 +89,33 @@ export default function EventDashboard() {
         </div>
       )}
 
+      {groupStats.length > 0 && (
+        <GroupFiltersBar
+          filters={filters}
+          onChange={setFilters}
+          shown={filteredGroups.length}
+          total={groupStats.length}
+          className="mb-6"
+        />
+      )}
+
       <h2 className="text-lg font-semibold text-gray-50 mb-3">Por grupo</h2>
       {groupStats.length === 0 ? (
         <p className="text-gray-500">Este evento no tiene grupos.</p>
+      ) : filteredGroups.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-700 p-8 text-center text-gray-400">
+          <p>No hay grupos que coincidan con la búsqueda o filtros.</p>
+          <Button
+            variant="secondary"
+            className="mt-3"
+            onClick={() => setFilters({ ...DEFAULT_GROUP_FILTERS })}
+          >
+            Limpiar filtros
+          </Button>
+        </div>
       ) : (
         <div className="space-y-3">
-          {groupStats.map((g) => {
+          {filteredGroups.map(({ group: g, matchedGuests, guestOnly }) => {
             const total = g.guests_count ?? 0;
             const reg = g.registered_count ?? 0;
             const pct = total > 0 ? Math.round((reg / total) * 100) : 0;
@@ -85,6 +129,11 @@ export default function EventDashboard() {
                     <div className="font-medium text-gray-50 truncate">{g.name}</div>
                     {g.leader_name && (
                       <div className="text-xs text-gray-400">Líder: {g.leader_name}</div>
+                    )}
+                    {guestOnly && matchedGuests.length > 0 && (
+                      <div className="text-xs text-indigo-300/80">
+                        Coinciden: {formatGuestMatches(matchedGuests)}
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
