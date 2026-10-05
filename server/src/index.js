@@ -19,6 +19,7 @@ import authRouter from "./routes/auth.js";
 import webhooksRouter from "./routes/webhooks.js";
 import { requireAuth, csrfProtection } from "./middleware/auth.js";
 import { eventAccess } from "./middleware/eventAccess.js";
+import { clientUrl } from "./utils/clientUrl.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "..", ".env") });
@@ -113,7 +114,7 @@ if (existsSync(CLIENT_DIST)) {
   // (p. ej. el dominio personalizado de un evento) no debe indexarse.
   let canonicalHost = "";
   try {
-    canonicalHost = new URL(process.env.CLIENT_URL || "http://localhost:5173").host;
+    canonicalHost = new URL(clientUrl()).host;
   } catch {
     canonicalHost = "";
   }

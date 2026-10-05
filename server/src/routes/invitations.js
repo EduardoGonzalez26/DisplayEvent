@@ -3,6 +3,7 @@ import { query, transaction } from "../db/index.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { normalizeForRead } from "../schemas/invitation.js";
 import { getStripe, stripePublishableKey } from "../utils/stripe.js";
+import { clientUrl } from "../utils/clientUrl.js";
 
 const router = Router();
 
@@ -16,10 +17,6 @@ const SUPPORTED_CURRENCIES = ["mxn", "eur"];
 //   1) Evitar overflow/precisión en `amount * 100` (muy por debajo de Number.MAX_SAFE_INTEGER).
 //   2) No superar el límite por cobro de Stripe (999.999,99 en unidades menores).
 const MAX_AMOUNT = 999_999;
-
-function clientUrl() {
-  return process.env.CLIENT_URL || "http://localhost:5173";
-}
 
 async function findInvitationByToken(token) {
   const rows = await query(

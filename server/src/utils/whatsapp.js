@@ -1,4 +1,5 @@
 import { toWaDigits } from "./phone.js";
+import { clientUrl } from "./clientUrl.js";
 
 /* ------------------------------------------------------------------
    WhatsApp: plantillas de mensaje, enlaces wa.me y Cloud API (opcional).
@@ -105,7 +106,7 @@ export function buildInvitationUrl(event, group) {
   const customDomain =
     typeof event?.custom_domain === "string" ? event.custom_domain.trim() : "";
   if (customDomain) return `https://${customDomain}/invitacion/${token}`;
-  const base = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
+  const base = clientUrl();
   const slug = event?.slug;
   return slug ? `${base}/invitacion/${slug}/${token}` : `${base}/invitacion/${token}`;
 }

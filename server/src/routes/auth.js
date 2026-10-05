@@ -5,6 +5,7 @@ import { query, pool } from "../db/index.js";
 import { signToken, requireAuth, COOKIE_NAME, COOKIE_OPTIONS } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { sendVerificationEmail, emailChannel } from "../utils/mailer.js";
+import { clientUrl } from "../utils/clientUrl.js";
 
 const router = Router();
 
@@ -28,7 +29,7 @@ function publicUser(user) {
 }
 
 function verificationUrlFor(token) {
-  const base = process.env.CLIENT_URL || "http://localhost:5173";
+  const base = clientUrl();
   return `${base}/verificar-correo?token=${token}`;
 }
 
