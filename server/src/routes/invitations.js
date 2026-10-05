@@ -81,6 +81,28 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
     const inv = await findInvitationByToken(req.params.token);
     if (!inv) return res.status(404).json({ error: "Invitación no encontrada" });
 
+    const cfg = normalizeForRead(inv.invitation);
+
+    // Lectura única de pases: alimenta ambas guardas y, tras la transacción,
+    // la respuesta (el update es determinista sobre estas mismas filas).
+    const guests = await getGuests(inv.group_id);
+    const hasResponded = guests.some((g) => g.registered || g.declined);
+
+    // GUARDA 1 (plazo): con RSVP editable y deadline configurado, bloquea
+    // confirmar/editar una vez vencido. Deadline vacío o inválido = sin límite.
+    const deadlineMs = Date.parse(cfg.rsvp_edit_deadline || "");
+    if (cfg.rsvp_editable && Number.isFinite(deadlineMs) && Date.now() > deadlineMs) {
+      return res
+        .status(403)
+        .json({ error: "El plazo para confirmar o modificar la asistencia ha terminado." });
+    }
+
+    // GUARDA 2 (congelado): sin RSVP editable, tras la primera respuesta el
+    // grupo ya no puede modificar; la primera confirmación sigue permitida.
+    if (hasResponded && !cfg.rsvp_editable) {
+      return res.status(403).json({ error: "La confirmación ya no puede modificarse." });
+    }
+
     const allowIds = Array.isArray(attending_ids) ? attending_ids.map(Number) : [];
     const declineIds = Array.isArray(declining_ids) ? declining_ids.map(Number) : [];
     const allIds = [...allowIds, ...declineIds];
@@ -125,14 +147,24 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
       return noteStr;
     });
 
-    const guests = await getGuests(inv.group_id);
+    // Refleja en la lectura previa el resultado exacto de la transacción
+    // (reset + marcas enviadas; "no asistirá" gana ante un id duplicado),
+    // sin una segunda consulta.
+    const allowSet = new Set(allowIds);
+    const declineSet = new Set(declineIds);
+    const updatedGuests = guests.map((g) => {
+      const id = Number(g.id);
+      const declined = declineSet.has(id);
+      return { ...g, registered: !declined && allowSet.has(id), declined };
+    });
+
     res.json({
       ok: true,
-      attending: guests.filter((g) => g.registered).length,
-      declining: guests.filter((g) => g.declined).length,
-      responded: guests.filter((g) => g.registered || g.declined).length,
+      attending: updatedGuests.filter((g) => g.registered).length,
+      declining: updatedGuests.filter((g) => g.declined).length,
+      responded: updatedGuests.filter((g) => g.registered || g.declined).length,
       note: cleanNote ?? null,
-      guests,
+      guests: updatedGuests,
     });
   } catch (err) {
     next(err);

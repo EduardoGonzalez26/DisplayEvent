@@ -7,6 +7,11 @@ import { z } from "zod";
    legacy (dress_code como string, itinerario con `place`, parents/
    padrinos como objetos) a su forma canónica y descartamos claves
    desconocidas. NO se renombra ningún campo existente.
+
+   Campos comunes de RSVP:
+   - `rsvp_editable`: si la familia puede confirmar/editar.
+   - `rsvp_edit_deadline`: límite opcional de edición; ISO 8601 UTC con
+     milisegundos o "" (sin límite). Solo aplica si `rsvp_editable` es true.
 ------------------------------------------------------------------ */
 
 export const TEMPLATES = [
@@ -26,6 +31,18 @@ export const TEMPLATES = [
 function str(v) {
   if (v == null) return "";
   return typeof v === "string" ? v.trim() : String(v).trim();
+}
+
+// Fecha ISO 8601 UTC con milisegundos. null/undefined/"" -> "". Acepta
+// cualquier valor parseable por Date.parse (p. ej. "2026-11-01T00:00") y lo
+// re-serializa con toISOString; no parseable -> "". Idempotente y nunca lanza.
+function toIsoDate(v) {
+  if (v == null) return "";
+  const s = typeof v === "string" ? v.trim() : String(v).trim();
+  if (!s) return "";
+  const t = Date.parse(s);
+  if (!Number.isFinite(t)) return "";
+  return new Date(t).toISOString();
 }
 
 // Lista de nombres (parents / padrinos). Acepta:
@@ -281,6 +298,7 @@ const commonFields = {
   contact_note: z.string().default(""),
   registry: registrySchema.default({}),
   rsvp_editable: z.boolean().default(false),
+  rsvp_edit_deadline: z.string().default(""),
 };
 
 const xvSchema = z.object({
@@ -375,6 +393,7 @@ export function normalizeInvitation(raw) {
     contact_note: str(source.contact_note),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
+    rsvp_edit_deadline: toIsoDate(source.rsvp_edit_deadline),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.

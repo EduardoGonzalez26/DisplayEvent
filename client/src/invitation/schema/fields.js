@@ -33,6 +33,9 @@ export const COMMON_FIELDS = [
   // `rsvp_editable` (boolean) NO se incluye en la grilla genérica: se edita con
   // un toggle dedicado en el editor (sección "Confirmación de asistencia") y se
   // normaliza/serializa en `schema/normalize.js` vía `toBool`.
+  // `rsvp_edit_deadline` (string, ISO 8601 UTC; "" = sin límite) tampoco: se
+  // edita en esa misma sección con un `datetime-local` (hora local) y el puente
+  // local <-> ISO vive en `schema/normalize.js` (`toIsoDate`/`isoToLocalInput`).
 ];
 
 // Campos específicos por formato. El editor los muestra solo si el template

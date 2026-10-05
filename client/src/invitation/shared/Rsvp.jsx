@@ -13,6 +13,19 @@ function buildAnswers(guests) {
   return map;
 }
 
+// Fecha y hora LOCAL del invitado (es-MX) para el límite de RSVP.
+// Nunca lanza: sin milisegundos válidos devuelve "".
+function formatDeadline(ms) {
+  if (!Number.isFinite(ms)) return "";
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(ms));
+}
+
 export default function RsvpSection({
   token,
   family,
@@ -29,12 +42,20 @@ export default function RsvpSection({
   const contactNote = (cfg?.contact_note || "").trim();
   const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
   const editable = !!cfg?.rsvp_editable;
+  // Límite opcional (ISO 8601 UTC): solo cuenta si la edición está activa.
+  const deadlineMs = editable ? Date.parse(cfg?.rsvp_edit_deadline || "") : NaN;
+  const hasDeadline = Number.isFinite(deadlineMs);
+  const deadlineLabel = hasDeadline ? formatDeadline(deadlineMs) : "";
   const reduced = useReducedMotion();
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
   const [showModal, setShowModal] = useState(false);
+  // Instante actual (ms): se refresca justo al cruzar el límite (+250 ms)
+  // y al recuperar el foco de la pestaña, para conmutar a "plazo cerrado"
+  // sin recargar.
+  const [now, setNow] = useState(() => Date.now());
 
   // Sincroniza el estado local con las props (p.ej. al editar en preview):
   // respuestas iniciales y estado "enviado" se recalculan si cambian.
@@ -45,6 +66,27 @@ export default function RsvpSection({
   useEffect(() => {
     setSubmitted(attending > 0 || declining > 0);
   }, [attending, declining]);
+
+  useEffect(() => {
+    if (!hasDeadline) return undefined;
+    const remaining = deadlineMs - Date.now();
+    if (remaining <= 0) {
+      setNow(Date.now());
+      return undefined;
+    }
+    const timer = setTimeout(() => setNow(Date.now()), remaining + 250);
+    return () => clearTimeout(timer);
+  }, [hasDeadline, deadlineMs]);
+
+  useEffect(() => {
+    if (!hasDeadline) return undefined;
+    const sync = () => setNow(Date.now());
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, [hasDeadline, deadlineMs]);
+
+  const expired = hasDeadline && now > deadlineMs;
+  const editingOpen = editable && !expired;
 
   const setAnswer = (id, value) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -117,6 +159,17 @@ export default function RsvpSection({
             {theme?.labels?.familyGreeting?.(family) ||
               `Familia ${family}, cuéntanos quiénes podrán acompañarnos.`}
           </motion.p>
+          {!preview && editable && hasDeadline && !expired && (
+            <motion.p
+              variants={{
+                hidden: { opacity: 0, y: 14 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: EASE } },
+              }}
+              className="mt-3 text-sm text-inv-text-soft"
+            >
+              Podrás confirmar o modificar tu respuesta hasta el {deadlineLabel}.
+            </motion.p>
+          )}
         </motion.div>
 
         {preview && (
@@ -128,7 +181,7 @@ export default function RsvpSection({
           </div>
         )}
 
-        {!preview && submitted && !editable && (
+        {!preview && submitted && !editingOpen && (
           <SubmitConfirmation
             count={attending}
             declining={declining}
@@ -136,11 +189,17 @@ export default function RsvpSection({
             family={family}
             contacts={contacts}
             contactNote={contactNote}
-            editable={editable}
+            editable={editingOpen}
+            deadlineLabel={deadlineLabel}
+            expired={expired}
           />
         )}
 
-        {!preview && (!submitted || editable) && (
+        {!preview && expired && !submitted && (
+          <DeadlineClosed contacts={contacts} contactNote={contactNote} />
+        )}
+
+        {!preview && !expired && (!submitted || editingOpen) && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -151,6 +210,12 @@ export default function RsvpSection({
             <p className="text-sm text-inv-text-soft mb-5">
               Marca en cada pase si asistirá o no a la celebración:
             </p>
+            {editingOpen && hasDeadline && (
+              <p className="-mt-3 mb-5 text-xs text-inv-text-soft/80">
+                Recuerda que podrás confirmar o modificar tu respuesta hasta el{" "}
+                {deadlineLabel}.
+              </p>
+            )}
             <motion.ul
               className="space-y-2.5 mb-6"
               initial="hidden"
@@ -258,7 +323,15 @@ export default function RsvpSection({
                   ¿Confirmar tu asistencia?
                 </h3>
                 <p className="text-sm text-inv-text-soft mb-4 leading-relaxed">
-                  {editable ? (
+                  {editable && hasDeadline ? (
+                    <>
+                      Puedes{" "}
+                      <span className="text-inv-text-soft font-semibold">
+                        actualizar tu respuesta
+                      </span>{" "}
+                      hasta el {deadlineLabel}.
+                    </>
+                  ) : editable ? (
                     <>
                       Puedes{" "}
                       <span className="text-inv-text-soft font-semibold">
@@ -342,8 +415,17 @@ function AnswerButton({ active, label, selectedClass, onClick, reduced }) {
   );
 }
 
-function SubmitConfirmation({ count, declining, total, family, contacts, contactNote, editable }) {
-  const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+function SubmitConfirmation({
+  count,
+  declining,
+  total,
+  family,
+  contacts,
+  contactNote,
+  editable,
+  deadlineLabel,
+  expired,
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -375,25 +457,69 @@ function SubmitConfirmation({ count, declining, total, family, contacts, contact
         )}
       </p>
       <p className="text-sm text-inv-text-soft mb-2">
-        {editable ? "Puedes cambiarla en cualquier momento." : "La selección ya no puede modificarse."}
+        {expired
+          ? "El plazo para modificar la confirmación terminó."
+          : editable && deadlineLabel
+            ? `Puedes cambiarla hasta el ${deadlineLabel}.`
+            : editable
+              ? "Puedes cambiarla en cualquier momento."
+              : "La selección ya no puede modificarse."}
       </p>
-      {contacts.length > 0 && (
-        <p className="text-sm text-inv-text-soft">
-          {contactNote ? `${contactNote} ` : "¿Necesitas aclaraciones? "}
-          {contacts.map((c, i) => (
-            <span key={`${c.phone || c.name || i}-${i}`}>
-              {i > 0 && " · "}
-              {c.name && <span>{c.name} </span>}
-              <a
-                href={telHref(c.phone)}
-                className="text-inv-text-soft underline underline-offset-4 hover:text-inv-primary"
-              >
-                {c.phone}
-              </a>
-            </span>
-          ))}
-        </p>
-      )}
+      <ContactsLine contacts={contacts} contactNote={contactNote} />
+    </motion.div>
+  );
+}
+
+// Línea de contactos con enlaces tel: compartida por las tarjetas de
+// confirmación y de plazo cerrado.
+function ContactsLine({ contacts, contactNote }) {
+  if (!contacts.length) return null;
+  const telHref = (phone) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+  return (
+    <p className="text-sm text-inv-text-soft">
+      {contactNote ? `${contactNote} ` : "¿Necesitas aclaraciones? "}
+      {contacts.map((c, i) => (
+        <span key={`${c.phone || c.name || i}-${i}`}>
+          {i > 0 && " · "}
+          {c.name && <span>{c.name} </span>}
+          <a
+            href={telHref(c.phone)}
+            className="text-inv-text-soft underline underline-offset-4 hover:text-inv-primary"
+          >
+            {c.phone}
+          </a>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+// Plazo cumplido y sin respuesta: tarjeta informativa (mismo lenguaje
+// visual que `SubmitConfirmation`) con los contactos, sin formulario.
+function DeadlineClosed({ contacts, contactNote }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 200, damping: 22 }}
+      className="rounded-3xl border border-inv-primary/30 bg-gradient-to-b from-inv-surface to-inv-bg p-8 md:p-10 text-center backdrop-blur shadow-2xl"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: -12 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+        className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-inv-primary-light to-inv-primary-dark text-inv-on-accent grid place-items-center text-3xl shadow-lg"
+      >
+        ✕
+      </motion.div>
+      <Ornament className="mb-7" />
+      <h3 className="font-inv-script text-4xl md:text-5xl text-gold-gradient mb-5 leading-[1.6]">
+        El plazo de confirmación ha terminado
+      </h3>
+      <p className="text-inv-text font-light mb-5">
+        Ya no es posible confirmar ni modificar la asistencia en línea.
+      </p>
+      <ContactsLine contacts={contacts} contactNote={contactNote} />
     </motion.div>
   );
 }

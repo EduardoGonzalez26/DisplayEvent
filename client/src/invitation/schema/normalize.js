@@ -8,7 +8,14 @@
 //   version: 2, template, hero_image, kicker, tagline, message, celebrants,
 //   itinerary[{label,time}], locations[{label,place,url}], gallery[string],
 //   dress_code[{label,icon?}], dress_note, contacts[{name,phone}],
-//   contact_note + campos por formato (xv/boda/cumpleanos/baby_shower).
+//   contact_note, registry{...}, rsvp_editable, rsvp_edit_deadline
+//   + campos por formato (xv/boda/cumpleanos/baby_shower).
+//
+// Contrato del límite de RSVP (`rsvp_edit_deadline`): string. "" = sin
+// límite; con valor: ISO 8601 UTC (ej. "2026-11-01T05:59:00.000Z"). Solo
+// aplica si `rsvp_editable === true`. El editor lo captura en hora LOCAL
+// con `datetime-local` y aquí se guarda ISO UTC (`toIsoDate`); el camino
+// inverso para repintarlo en el editor es `isoToLocalInput`.
 
 const TEMPLATES = [
   "xv",
@@ -175,6 +182,16 @@ function toIntArray(v, dflt) {
   return out;
 }
 
+// Fecha del límite de RSVP -> ISO 8601 UTC. Trim + Date.parse:
+// vacío/ausente/inválido -> "". Válido -> `new Date(t).toISOString()`
+// (idempotente: una cadena ya ISO devuelve el mismo instante canónico).
+function toIsoDate(v) {
+  const s = str(v);
+  if (!s) return "";
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? new Date(t).toISOString() : "";
+}
+
 // Datos bancarios (depósito/transferencia).
 function normalizeBank(v) {
   const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -232,6 +249,8 @@ export function normalizeInvitation(raw) {
     contact_note: str(source.contact_note),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
+    // Límite opcional para confirmar/editar el RSVP (ISO UTC; "" = sin límite).
+    rsvp_edit_deadline: toIsoDate(source.rsvp_edit_deadline),
   };
 
   // Legacy: itinerario con `place` -> ubicaciones, solo si no hay ubicaciones.
@@ -273,6 +292,24 @@ export function normalizeInvitation(raw) {
   }
 
   return out;
+}
+
+/* ------------------------------------------------------------------
+   Editor: puente entre la fecha ISO UTC canónica y el
+   `<input type="datetime-local">` (que trabaja en hora LOCAL).
+------------------------------------------------------------------ */
+
+// ISO 8601 UTC -> valor para `datetime-local` en hora LOCAL del navegador
+// (`YYYY-MM-DDTHH:mm`, con pad de 2 dígitos). ""/inválido -> "".
+// Es el inverso de lo que aplica `toIsoDate` al guardar: el input no lleva
+// zona, el navegador lo interpreta como hora local y `toIsoDate` lo
+// convierte a UTC.
+export function isoToLocalInput(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const d = new Date(t);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /* ------------------------------------------------------------------
@@ -327,6 +364,8 @@ export function toFormState(raw) {
       bank: { ...c.registry.bank },
     },
     rsvp_editable: c.rsvp_editable,
+    // ISO UTC -> hora local del editor (datetime-local).
+    rsvp_edit_deadline: isoToLocalInput(c.rsvp_edit_deadline),
   };
 
   switch (c.template) {

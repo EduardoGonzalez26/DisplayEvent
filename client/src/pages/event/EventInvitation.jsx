@@ -903,6 +903,38 @@ export default function EventInvitation() {
           <p className="text-xs text-gray-500 mt-2">
             Si está desactivado, una vez que confirmen ya no podrán cambiarla.
           </p>
+
+          {form.rsvp_editable && (
+            <div className="mt-4 border-l border-gray-800 pl-6">
+              <label className="block">
+                <span className="text-sm text-gray-400 mb-1 block">
+                  Límite para confirmar o editar (opcional)
+                </span>
+                <input
+                  type="datetime-local"
+                  step={60}
+                  className={inputCls}
+                  value={form.rsvp_edit_deadline || ""}
+                  onChange={(e) => set("rsvp_edit_deadline", e.target.value)}
+                />
+              </label>
+              <p className="text-xs text-gray-500 mt-2">
+                Después de esta fecha y hora, los invitados ya no podrán confirmar
+                ni modificar su respuesta. Déjalo vacío para permitir cambios en
+                cualquier momento.
+              </p>
+              {form.rsvp_edit_deadline ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="mt-2"
+                  onClick={() => set("rsvp_edit_deadline", "")}
+                >
+                  Quitar límite
+                </Button>
+              ) : null}
+            </div>
+          )}
         </section>
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">

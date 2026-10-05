@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-09-21
+> **Última actualización:** 2026-10-04
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -135,7 +135,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 - API pública: `normalizeInvitation(raw)`, `parseInvitation(raw)` (lanza error para 400), `normalizeForRead(raw)` (GET, garantiza arrays, nunca lanza).
 - Esquema: `z.discriminatedUnion("template", [...])` con campos **comunes** + **específicos** por template. Descarta claves desconocidas y normaliza formas legacy.
 
-**Campos comunes:** `hero_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url}]`, `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `registry{...}`, `rsvp_editable`.
+**Campos comunes:** `hero_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url}]`, `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `registry{...}`, `rsvp_editable`, `rsvp_edit_deadline`.
 
 **Campos específicos:**
 
@@ -153,6 +153,15 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 - Semántica: `false` = **bloqueado** tras confirmar (default); `true` = **editable siempre**.
 - Editor: checkbox "Permitir que los invitados editen su confirmación" en la sección **"Confirmación de asistencia"** (`EventInvitation.jsx`).
 - RSVP público (`shared/Rsvp.jsx`): si `cfg.rsvp_editable`, el formulario queda **editable/reutilizable y precargado** (con textos condicionales en el modal y en la confirmación); si no, mantiene el bloqueo actual.
+
+**Límite de edición (`rsvp_edit_deadline`)** — campo común, **nuevo** (string, default `""`; vive en el JSONB `events.invitation` de los 6 templates):
+- **Semántica:** `""` = **sin límite**; con valor, **ISO 8601 UTC con milisegundos** (`new Date(v).toISOString()`, ej. `"2026-11-01T05:59:00.000Z"`). **Solo aplica si `rsvp_editable === true`**; vencido = `Date.now() > Date.parse(...)`.
+- **Puente local↔ISO** en `client/src/invitation/schema/normalize.js`: `toIsoDate` (tolerante: no parseable → `""`; idempotente) e `isoToLocalInput` (exportado); `toFormState` precarga el input en **hora local** y `serializeForm`/`normalizeInvitation` persisten ISO UTC. `server/src/schemas/invitation.js` espeja `toIsoDate` + `z.string().default("")` en `commonFields`.
+- **Editor** (`EventInvitation.jsx`, "Confirmación de asistencia"): input `datetime-local` **visible solo con el toggle `rsvp_editable` activo**, label "Límite para confirmar o editar (opcional)" y botón **"Quitar límite"**; captura hora local y guarda ISO UTC.
+- **RSVP público** (`shared/Rsvp.jsx`, compartido por las 6 plantillas): con deadline vigente muestra la nota "Podrás confirmar o modificar tu respuesta hasta el {fecha}" (flags `expired`/`editingOpen`); **vencido y sin respuesta** → tarjeta "El plazo de confirmación ha terminado" (con contactos, sin formulario); **vencido con respuesta** → resumen con "El plazo para modificar la confirmación terminó."; el modal y `SubmitConfirmation` usan texto condicional; `preview` intacto.
+- **Servidor** (`server/src/routes/invitations.js`, `PUT /:token/rsvp`): **guarda 1** → `403` "El plazo para confirmar o modificar la asistencia ha terminado." si editable + deadline vencido; **guarda 2** → `403` "La confirmación ya no puede modificarse." si el grupo ya respondió y `rsvp_editable === false`; el resto del flujo intacto. La lectura de `guests` pasó a hacerse **antes de la transacción** (la respuesta del grupo se reconstruye desde esa lectura).
+
+> **Estado (2026-10-04):** límite implementado y verificado; **sin commitear** (hash pendiente).
 
 **Nota del RSVP (`rsvp_note`, columna de `groups`)** — el formulario público (`shared/Rsvp.jsx`, compartido por las 6 plantillas) **ya no captura "Detalles / restricciones alimenticias"**: se retiraron el `textarea`, el estado `diet`/`setDiet` y su efecto de sincronización, y `SubmitConfirmation` ya no recibe `note` ni muestra la línea "Detalles recibidos: …". El payload del `PUT /:token/rsvp` **sigue enviando `note`** (prop que llega desde `group.rsvp_note` vía `InvitationPage` → `InvitationView` → `RsvpSection`) para **preservar las notas ya guardadas**; el backend guarda `NULL` si `note` no llega (`server/src/routes/invitations.js`). Enfoque intermedio descartado: `theme.rsvp.showDiet` (se revirtió sin commitear; el tema `alice_xv` volvió a su estado base).
 
@@ -206,6 +215,8 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - ⚠️ **Pendiente:** el `description` de `themes/alice_xv.js` sigue diciendo **"Lavanda y dorado"** (desactualizado tras el cambio a rosa pastel + blanco + dorado).
 
 > **Iteración del 2026-09-16 (commiteada en `3b68ef8`; memoria en `5f51647`):** cabecera de la Mesa de Regalos simplificada —el eyebrow "Regalos" pasa a encabezado con `largeEyebrow` (`title` ahora opcional en `WeddingSectionTitle`); se retiran el título grande, el uso de `.text-gold-gradient-deep` y la label `registryTitle`— y **monograma de la portada en Great Vibes** (clase global `.font-script`). **Cierre del mismo día:** el **nombre completo de la portada** (`alice_xv/Hero.jsx`) pasa a **una sola tipografía** —la script del tema (`font-inv-script`, Dancing Script) con **gradiente dorado** (`text-gold-gradient`), `text-6xl md:text-8xl`, dentro del mismo `motion.h1` con `entrance(1, 0.25)`—; se elimina el split previo (primera palabra en `font-inv-serif`, resto en script) y las constantes `nameParts`/`firstName`/`lastName`. El botón flotante de `alice_xv/SectionNav.jsx` queda **abajo a la derecha en móvil** (`bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4`, sin `translate`) y desde `md` conserva el centrado vertical derecho (`md:bottom-auto md:right-5 md:top-1/2 md:-translate-y-1/2`); tamaño, colores, aria-labels y la columna de dots no cambian. La primera tarjeta de la Mesa de Regalos pasa a **"Regalo"** (antes "Regalo sorpresa": `registryOptionSurprise` en `themes/alice_xv.js`, FALLBACK de `Gifts.jsx` y descripción del `README.txt`; el archivo de imagen sigue siendo `regalo-sorpresa.svg`). Iteraciones previas del mismo día, ya commiteadas: retiro del bloque de transferencia, intro dinámica y textos fijos (`a38d940`; memoria en `bdb245f`), después de Padres/Padrinos + Mesa de Regalos informativa + bloqueo de scroll del sobre (`a241198`, §7; memoria en `61520ef`). **Nueva iteración del mismo día:** el **RSVP pierde los "Detalles / restricciones alimenticias"** en todas las plantillas (`shared/Rsvp.jsx`: se retiran el `textarea`, el estado `diet`/`setDiet` y la línea "Detalles recibidos" de la confirmación, mientras el payload **sigue enviando `note`** para preservar notas existentes, ver §4); la **Carta de `alice_xv` queda sin firma al pie** (bloque "Con cariño" + variable `signature` retirados); y la **landing se alinea**: `FeatureRsvp.jsx` elimina el bullet "Restricciones alimenticias y periqueras" y reescribe el lead, y `RsvpCardMock.jsx` elimina el bloque de tags ("Sin gluten", "2 periqueras") y sus menciones en comentario/`aria-label` —las clases `de-rsvp__tags`/`de-rsvp__tag` de `landing.css` quedan definidas sin uso—.
+
+> **Iteración del 2026-10-04 (implementada y verificada; sin commit):** la Mesa de Regalos de `alice_xv` gana un **popover informativo** en la tarjeta "Lluvia de sobres" (`alice_xv/Gifts.jsx`): `GiftOptionCard` acepta la prop `info` y **solo** esa tarjeta muestra un botón circular **"?"** abajo a la derecha, que abre el texto con **clic/hover de ratón/foco** y lo cierra con **Escape** o clic fuera (accesible: `aria-expanded`/`aria-controls`, `prefers-reduced-motion`); la tarjeta "Regalo" **no cambia**. El texto vive en la label `registryOptionEnvelopesInfo` de `themes/alice_xv.js` ("Consiste en una aportación económica voluntaria; tendremos sobres y un buzón a tu llegada."), con fallback en `FALLBACK.envelopesInfo` de `Gifts.jsx`.
 
 **`boda_jorge_macarena` — Boda de "Jorge & Macarena" (pedido especial):**
 - Paleta **botánica nocturna** (commit `719f2b4`; ya no es "botánica vibrante sobre marfil"): fondos verde noche (`--inv-bg #0F1B15`, `--inv-bg-alt #14231B`, `--inv-bg-alt2 #0A130F`, `--inv-surface #182820`, `--inv-card #1C2E24`), texto marfil `#FDFBF7` (soft `#EAE4D6`, muted `#D0C7B7`) y acentos aclarados para brillar sobre la oscuridad (rosa `#E8799C`, botánico `#A9C3AF`, naranja granada `#E76F51`, amarillo `#E5B15D`); sombras base negra, sobre de apertura y portada nocturnos.
@@ -269,6 +280,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS).
+- [ ] **Commitear las features implementadas el 2026-10-04** (hoy sin commit): límite de edición del RSVP (`rsvp_edit_deadline`, ver §4) y popover informativo en la Mesa de Regalos de `alice_xv` (ver §6).
 - [ ] **Badge "Powered by Webi"** (solo `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3).
 - [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
 - [ ] *(Menor)* **`X-Robots-Tag` en `/` raíz** del dominio propio: hoy solo lo añade el fallback SPA; `/` lo sirve `express.static` sin header (ver §13.2).
@@ -529,6 +541,8 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `pendiente` | RSVP: límite de edición de la confirmación (`rsvp_edit_deadline`); ver §4. |
+| `pendiente` | Invitación: popover informativo en la Mesa de Regalos de `alice_xv`; ver §6. |
 | `55e405d` | Docs: documentar landing en `/`, slugs y hallazgos de QA. |
 | `c7a3146` | SEO: dominio `displayevent.com` en canonical, OG y sitemap. |
 | `c657c81` | Landing: integrar logo real en nav, footer, favicon y OG. |
