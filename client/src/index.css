@@ -433,8 +433,12 @@ html.de-envelope-lock {
     transform: translateY(10px);
   }
   to {
+    /* `none` (no `translateY(0)`): con fill-mode `both` el wrapper quedaría
+       con un transform distinto de `none` para siempre, convirtiéndose en
+       containing block de descendientes `position: fixed` (modales, toasts).
+       La interpolación a `none` es válida y visualmente idéntica. */
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
