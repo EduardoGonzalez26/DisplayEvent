@@ -5,6 +5,8 @@ import { normalizeForRead } from "../schemas/invitation.js";
 import { findInvitationByToken } from "../utils/invitationLookup.js";
 import { getStripe, isStripeConfigured, stripePublishableKey } from "../utils/stripe.js";
 import {
+  buildPaymentIntentData,
+  getPlatformCountry,
   resolveCardAvailability,
   resolveStripeDestination,
 } from "../utils/stripeDestination.js";
@@ -237,6 +239,13 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       });
     }
 
+    // Destination charge cross-región (p. ej. plataforma MX -> cuenta ES):
+    // Stripe exige `on_behalf_of` para liquidar el cargo en la región del
+    // destino. Mismo país no lo lleva (comportamiento previo intacto). El
+    // país de la plataforma se cachea en memoria (`getPlatformCountry`).
+    const platformCountry = await getPlatformCountry();
+    const paymentIntentData = buildPaymentIntentData(destination, platformCountry);
+
     // Con dominio propio, el regreso del checkout vive en el dominio del
     // evento; sin él se conserva el comportamiento actual (CLIENT_URL).
     const customDomain =
@@ -271,10 +280,9 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       ],
       return_url: `${base}/invitacion/${req.params.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       // Destination charge: la transferencia va íntegra a la cuenta Connect
-      // resuelta para la moneda (sin application_fee_amount).
-      payment_intent_data: {
-        transfer_data: { destination: destination.stripe_account_id },
-      },
+      // resuelta para la moneda (sin application_fee_amount), con
+      // `on_behalf_of` solo si el destino está fuera de la región.
+      payment_intent_data: paymentIntentData,
       metadata: {
         event_id: String(inv.event_id),
         group_id: String(inv.group_id),
