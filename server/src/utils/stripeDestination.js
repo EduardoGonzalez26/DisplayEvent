@@ -5,52 +5,85 @@ import { getStripe } from "./stripe.js";
    Resolución del destino del pago (Stripe Connect, destination charges).
 
    El 100% del cobro se transfiere al anfitrión (sin application_fee).
-   El destino se elige POR MONEDA:
-     1) override del evento (`events.stripe_account_mxn`/`_eur`) si la
-        cuenta existe, está habilitada y su `default_currency` coincide;
-     2) cuenta del usuario dueño del evento con esa `default_currency` y
-        `charges_enabled`.
+   El destino se elige POR MONEDA en orden determinista:
+     1) override del evento (`events.stripe_account_mxn`/`_eur`) con la
+        moneda EXACTA y `charges_enabled`;
+     2) cuenta del dueño del evento con la moneda EXACTA y `charges_enabled`;
+     3) fallback (Plan B): override del evento habilitado aunque su moneda
+        no coincida;
+     4) fallback: cuenta del dueño habilitada aunque su moneda no coincida.
+   El fallback permite operar con UNA sola cuenta (p. ej. MX) y deja que
+   Stripe convierta automáticamente los cobros en otra moneda (EUR -> MXN).
+   Entre varias cuentas habilitadas de un mismo nivel se elige la de MENOR
+   `id` (estable e independiente del orden de filas que devuelva Postgres).
 
    `pickStripeDestination` es pura y testeable; `resolveStripeDestination`
-   y `resolveCardAvailability` son los wrappers con una única consulta SQL.
+   y `resolveCardAvailability` son los wrappers con una única consulta SQL
+   y usan EXACTAMENTE esta resolución (disponibilidad y pago no divergen).
 ------------------------------------------------------------------- */
 
-// Fila válida como destino para `currency`.
-function isEligible(row, currency) {
+// Fila habilitada para recibir transferencias.
+function isEnabled(row) {
+  return Boolean(row) && row.charges_enabled === true;
+}
+
+// Fila habilitada con la moneda exacta solicitada.
+function isExact(row, currency) {
   return (
-    row &&
-    row.charges_enabled === true &&
+    isEnabled(row) &&
     typeof row.default_currency === "string" &&
     row.default_currency.toLowerCase() === currency
   );
 }
 
+// Selección determinista: menor `id` (las filas sin id numérico van al final).
+function byIdAsc(a, b) {
+  const ia = Number.isFinite(Number(a?.id)) ? Number(a.id) : Number.MAX_SAFE_INTEGER;
+  const ib = Number.isFinite(Number(b?.id)) ? Number(b.id) : Number.MAX_SAFE_INTEGER;
+  return ia - ib;
+}
+
+function firstById(rows) {
+  return rows.length ? rows.slice().sort(byIdAsc)[0] : null;
+}
+
 // Pura: elige la fila destino dados los candidatos (override + dueño).
 // - `currency`: "mxn" | "eur" (se normaliza a minúsculas).
 // - `overrideAccountId`: `acct_...` del evento para esa moneda (o null).
-// - `ownerUserId`: dueño del evento (fallback cuando no hay override válido).
+// - `ownerUserId`: dueño del evento.
 // - `accounts`: filas candidatas de `stripe_accounts`.
 // Devuelve la fila elegida o null.
 export function pickStripeDestination({ currency, overrideAccountId, ownerUserId, accounts }) {
   const cur = typeof currency === "string" ? currency.trim().toLowerCase() : "";
   if (!cur || !Array.isArray(accounts)) return null;
 
-  if (overrideAccountId) {
-    const override = accounts.find(
-      (row) => row.stripe_account_id === overrideAccountId && isEligible(row, cur)
-    );
-    if (override) return override;
-  }
+  const overrideRow = overrideAccountId
+    ? accounts.find((row) => row && row.stripe_account_id === overrideAccountId) || null
+    : null;
 
-  return (
-    accounts.find((row) => row.user_id === ownerUserId && isEligible(row, cur)) || null
+  // 1) override del evento con moneda exacta.
+  if (overrideRow && isExact(overrideRow, cur)) return overrideRow;
+
+  // 2) cuenta del dueño con moneda exacta (menor id si hay varias).
+  const exactOwner = firstById(
+    accounts.filter((row) => row && row.user_id === ownerUserId && isExact(row, cur))
   );
+  if (exactOwner) return exactOwner;
+
+  // 3) fallback: override habilitado (moneda distinta -> Stripe convierte).
+  if (isEnabled(overrideRow)) return overrideRow;
+
+  // 4) fallback: cuenta del dueño habilitada (moneda distinta), menor id.
+  return firstById(accounts.filter((row) => row && row.user_id === ownerUserId && isEnabled(row)));
 }
 
-const CANDIDATE_COLUMNS = `user_id, stripe_account_id, country, default_currency,
+// `id` es imprescindible: el desempate determinista de `pickStripeDestination`
+// elige la fila de MENOR `id` (sin este campo, la ordenación no tendría datos).
+const CANDIDATE_COLUMNS = `id, user_id, stripe_account_id, country, default_currency,
                            charges_enabled, payouts_enabled, details_submitted`;
 
-// Destino para UNA moneda del pago de un evento (override ?? cuenta del dueño).
+// Destino para UNA moneda del pago de un evento. Aplica el orden completo
+// de `pickStripeDestination` (exacto -> fallback Plan B con conversión).
 export async function resolveStripeDestination({ currency, overrideAccountId, ownerUserId }) {
   const rows = await query(
     `SELECT ${CANDIDATE_COLUMNS}

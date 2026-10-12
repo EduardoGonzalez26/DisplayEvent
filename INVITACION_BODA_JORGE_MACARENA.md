@@ -15,7 +15,7 @@
 > - Sección compartida: `client/src/invitation/shared/Rsvp.jsx` (+ utilidades `shared/util.jsx` y `shared/Countdown.jsx` → `useCountdown`).
 > - Contrato de datos: `client/src/invitation/schema/fields.js`, `client/src/invitation/schema/normalize.js` y `server/src/schemas/invitation.js`.
 > - Metadatos OG por token: `server/src/utils/invitationLookup.js`, `server/src/utils/ogMeta.js` y `server/src/index.js`.
-> - Pagos con tarjeta (opcional): `server/src/routes/stripe.js` (cuentas Connect del organizador), `server/src/utils/stripeDestination.js` (destino por moneda) y `payment_methods` en `server/src/routes/invitations.js`.
+> - Pagos con tarjeta (opcional): `server/src/routes/stripe.js` (cuentas Connect del organizador), `server/src/utils/stripeDestination.js` (destino por moneda con fallback de conversión) y `payment_methods` en `server/src/routes/invitations.js`.
 > - Assets fijos del cierre (badge "Powered by Webi"): `client/public/webi/` (`logo-dark.svg`; `logo-light.svg` reservado para fondos oscuros).
 > - Mock de referencia del diseño: `Invitación Macarena & Jorge/Invitacion Macarena y Jorge v2.dc.html` (+ `Flor.dc.html`, `Ramillete.dc.html`, `support.js`).
 
@@ -31,7 +31,7 @@ La invitación se publica con un token único por grupo de invitados (`/invitaci
 | `group` | El grupo invitado | `{ name, leader_name, rsvp_note }` |
 | `guests` | Los invitados de ese grupo | lista de `{ id, name, is_leader, is_child, registered, declined }` |
 | `public_config` | Config pública | `{ stripe_publishable_key, custom_domain }` |
-| `payment_methods` | Disponibilidad de pago con tarjeta | `{ card: { mxn, eur } }` — la tarjeta se ofrece por moneda solo si el organizador tiene una **cuenta Stripe Connect** con cobros habilitados (ver §2.3 y §5) |
+| `payment_methods` | Disponibilidad de pago con tarjeta | `{ card: { mxn, eur } }` — con una **cuenta Stripe Connect habilitada** la tarjeta se ofrece en cada moneda; si la moneda de la cuenta no coincide, **Stripe convierte automáticamente** al liquidar (p. ej. cuenta MX cobrando EUR; ver §2.3 y §5) |
 
 Internamente, la vista los recibe con estos nombres de prop:
 
@@ -96,7 +96,7 @@ Internamente, la vista los recibe con estos nombres de prop:
 | `allow_custom` | boolean | Permite monto libre |
 | `min_mxn` / `min_eur` | number | Monto mínimo en pesos / euros |
 | `suggested_mxn` / `suggested_eur` | number[] | Montos sugeridos |
-| `stripe_enabled` | boolean | Habilita pago con tarjeta (sujeto a `payment_methods` por moneda) |
+| `stripe_enabled` | boolean | Habilita pago con tarjeta (requiere una cuenta Connect habilitada; sujeto a `payment_methods`; ver §5) |
 | `payment_link_url` | string (URL) | Payment Link externo de Stripe; si tiene valor, el CTA de tarjeta abre ese enlace (el invitado elige el monto allí) |
 | `bank` | `{ enabled, bank_name, holder, account_number, concept }` | Datos de depósito/transferencia |
 
@@ -150,7 +150,7 @@ El layout `BodaJorgeMacarenaLayout` arma la página en este orden, y **cada secc
 4. **Ceremonia / Recepción** (`Locations.jsx`): **una hoja por item de `cfg.locations`** (label → título; place → dirección; `url` → botón "Cómo llegar"; si no hay `url`, se busca por `place`). El eyebrow se elige por palabra clave (`locationEyebrows`: "Ceremonia religiosa" / "Recepción y fiesta") y la flor alterna. Caja "Hora" con `event.time` (oculta si falta o es `00:00`).
 5. **Itinerario** (`Itinerary.jsx`): riel vertical con la hora en Cormorant, nodo de flor y momento en microtexto; si un `label` coincide con una ubicación, debajo aparece su `place`. Las horas `00:00` se ocultan. Se omite la hoja si no hay items.
 6. **Vestimenta** (`DressCode.jsx`): eyebrow + divisor + cada etiqueta de `dress_code` en Cormorant gigante; `dress_note` como cita itálica. Se omite si no hay etiquetas.
-7. **Regalo** (`Gifts.jsx`): se muestra si `registry.enabled` **o** si hay `registry_note`. Eyebrow "Regalo", "Con todo nuestro cariño", párrafo (`registry_note` o `giftIntro` del tema), selectores de moneda/monto (o CTA de Payment Link externo), pago con tarjeta (Checkout embebido) y "Transferencia bancaria" desplegable con los datos de `registry.bank` y botón Copiar. El encabezado del banco alterna "Desde México" / "Desde España" según la moneda elegida. La **tarjeta** se ofrece por moneda solo si `payment_methods.card[moneda]` no es `false` (cuenta Stripe Connect del organizador con cobros habilitados); si no, se muestra el aviso y la transferencia queda intacta.
+7. **Regalo** (`Gifts.jsx`): se muestra si `registry.enabled` **o** si hay `registry_note`. Eyebrow "Regalo", "Con todo nuestro cariño", párrafo (`registry_note` o `giftIntro` del tema), selectores de moneda/monto (o CTA de Payment Link externo), pago con tarjeta (Checkout embebido) y "Transferencia bancaria" desplegable con los datos de `registry.bank` y botón Copiar. El encabezado del banco alterna "Desde México" / "Desde España" según la moneda elegida. La **tarjeta** se ofrece por moneda solo si `payment_methods.card[moneda]` no es `false`: con **una sola cuenta MX habilitada**, tanto MXN como EUR muestran tarjeta (en EUR **Stripe convierte automáticamente** al liquidar); sin ninguna cuenta habilitada se muestra el aviso y la transferencia queda intacta.
 8. **Confirmación (RSVP)**: sección **compartida** `shared/Rsvp.jsx` (misma lógica que en todas las plantillas: invitados, contactos, nota, límite de edición). El layout solo le neutraliza el fondo opaco para que se vea la hoja.
 9. **Hospedaje y viaje** (`Lodging.jsx`): filas de `cfg.lodging` (con enlace "Mapa") + tarjeta de `cfg.travel`. Se omite si no hay contenido.
 10. **Cierre** (`Footer.jsx`): foto B&N con la cita (`closingQuote`), monograma circular flanqueado por ramilletes, línea `event.place · Mes Año`, "DisplayEvent" (salvo `hideBrand`) y el badge **"Powered by Webi"** (fijo, solo esta plantilla).
