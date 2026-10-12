@@ -126,6 +126,25 @@ CREATE INDEX IF NOT EXISTS idx_gifts_event ON gifts(event_id);
 -- regalos duplicados cuando Stripe reenvía el mismo evento.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_gifts_payment_intent ON gifts(stripe_payment_intent_id);
 
+-- Cuentas Connect (Stripe Express) del anfitrión, para cobrar a invitados y
+-- transferir el 100% al anfitrión. Multi-moneda: una fila por cuenta; el
+-- destino del pago se elige por `default_currency` (mxn/eur) y `charges_enabled`.
+-- `stripe_account_id` es el `acct_...`: TEXT en la columna equivalente de events.
+CREATE TABLE IF NOT EXISTS stripe_accounts (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  stripe_account_id VARCHAR(255) NOT NULL UNIQUE,
+  country VARCHAR(2) NOT NULL,
+  default_currency VARCHAR(3) NOT NULL,
+  charges_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  payouts_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  details_submitted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_stripe_accounts_user ON stripe_accounts(user_id);
+
 -- ===========================================================================
 -- 2) Migraciones idempotentes para BD creadas antes de las últimas columnas.
 --    Antes vivían en src/db/init.js; consolidadas aquí como fuente única.
@@ -146,6 +165,12 @@ ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
+
+-- 2.2b) Override por moneda del destino Connect del evento (`acct_...` de
+--       stripe_accounts). TEXT (no FK): el ID es externo a Postgres y Stripe
+--       puede alargar su formato; NULL = usar la cuenta del dueño del evento.
+ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_mxn TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_eur TEXT;
 
 -- 2.3) events.user_id: columna (BD legacy) + FK garantizada. La FK se añade solo
 --      si no existe ya una FK sobre esa misma columna (sin importar su nombre).
@@ -204,3 +229,4 @@ ALTER TABLE "tables" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitation_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gifts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stripe_accounts ENABLE ROW LEVEL SECURITY;

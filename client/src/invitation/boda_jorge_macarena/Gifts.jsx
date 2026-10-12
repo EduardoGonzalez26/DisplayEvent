@@ -133,7 +133,7 @@ function ChevronDown({ className = "" }) {
   );
 }
 
-export default function Gifts({ cfg, theme, token, publishableKey }) {
+export default function Gifts({ cfg, theme, token, publishableKey, paymentMethods = null }) {
   const registry = cfg?.registry || {};
   const reduced = useReducedMotion();
   const labels = theme?.labels || {};
@@ -238,7 +238,21 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     { key: "concept", label: "Concepto" },
   ].filter((f) => String(bank[f.key] ?? "").trim() !== "");
 
-  const hasCard = !!registry.stripe_enabled;
+  // Disponibilidad de tarjeta POR MONEDA (`payment_methods.card.{mxn,eur}`).
+  //   - `null`/ausente (respuesta vieja o vista previa) -> disponible.
+  //   - `true` -> checkout embebido normal para esa moneda.
+  //   - `false` -> sin cuenta Connect destino: se deshabilita/oculta la
+  //     tarjeta en esa moneda y se conserva la transferencia bancaria.
+  const cardConfigured = !!registry.stripe_enabled;
+  const cardAvailableFor = (cur) => paymentMethods?.card?.[cur] !== false;
+  const cardAvailable = cardAvailableFor(currency);
+  const cardAvailableAny = cardAvailableFor("mxn") || cardAvailableFor("eur");
+  const cardUsable = linkMode ? cardAvailableAny : cardAvailable;
+  const cardUnavailableMessage =
+    `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.` +
+    (bank.enabled && bankFields.length > 0 ? " Puedes usar la transferencia bancaria." : "");
+
+  const hasCard = cardConfigured && cardAvailableAny;
   const hasBank = !!bank.enabled && bankFields.length > 0;
 
   // Sin tarjeta, los datos bancarios son el contenido principal: abiertos.
@@ -315,6 +329,12 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     }
     if (!stripeReady) {
       setError("El pago con tarjeta no está disponible en este momento.");
+      return;
+    }
+    if (!cardUsable) {
+      setError(
+        `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.`
+      );
       return;
     }
     setPaying(true);
@@ -399,8 +419,10 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
       </AnimatePresence>
 
       {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
-          el invitado elige el monto en la pasarela segura de Stripe. */}
-      {enabled && !linkMode && (
+          el invitado elige el monto en la pasarela segura de Stripe. Si
+          ninguna moneda tiene tarjeta disponible, también se ocultan y la
+          tarjeta degrada a banco/aviso neutro. */}
+      {enabled && !linkMode && cardAvailableAny && (
         <Reveal className="w-full">
           <div className="mx-auto grid max-w-[400px] grid-cols-1 gap-4 text-left sm:grid-cols-2">
             <FieldSelect
@@ -467,7 +489,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
         </Reveal>
       )}
 
-      {enabled && min > 0 && !linkMode && (
+      {enabled && min > 0 && !linkMode && cardAvailableAny && (
         <p className="m-0 text-xs uppercase tracking-[0.22em] text-[var(--inv-text-muted)]">
           Monto mínimo {formatAmount(currency, min)}
         </p>
@@ -480,7 +502,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
       )}
 
       {/* CTA principal: pago con tarjeta + alternativa de depósito */}
-      {enabled && (hasCard || hasBank) && (
+      {enabled && (hasCard || hasBank || (cardConfigured && !cardAvailableAny)) && (
         <div className="flex w-full max-w-[400px] flex-col gap-3 pt-2">
           {hasCard &&
             (linkMode ? (
@@ -497,7 +519,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
               <button
                 type="button"
                 onClick={payWithCard}
-                disabled={paying || !stripeReady}
+                disabled={paying || !stripeReady || !cardAvailable}
                 className="flex min-h-[56px] flex-wrap items-center justify-center gap-2.5 rounded-[2px] bg-[#1C1B19] px-6 text-[13px] font-medium uppercase tracking-[0.2em] text-[#FAF7F2] transition-colors hover:bg-[#3A3733] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 <span className="flex items-center gap-2.5">
@@ -531,9 +553,22 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
             </button>
           )}
 
-          {enabled && !linkMode && !stripeReady && (
+          {enabled && !linkMode && hasCard && !cardAvailable && (
+            <p className="m-0 text-xs text-[var(--inv-text-muted)]">
+              {cardUnavailableMessage}
+            </p>
+          )}
+
+          {enabled && !linkMode && hasCard && cardAvailable && !stripeReady && (
             <p className="m-0 text-xs text-[var(--inv-text-muted)]">
               El pago con tarjeta no está disponible en este momento.
+            </p>
+          )}
+
+          {enabled && cardConfigured && !cardAvailableAny && (
+            <p className="m-0 text-xs text-[var(--inv-text-muted)]">
+              El pago con tarjeta no está disponible en este momento
+              {hasBank ? " · puedes usar la transferencia bancaria" : ""}.
             </p>
           )}
         </div>

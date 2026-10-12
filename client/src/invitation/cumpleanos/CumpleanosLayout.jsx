@@ -12,7 +12,7 @@ import Hero from "./Hero.jsx";
 /* ------------------------------------------------------------------
    Cumpleaños — flujo festivo sin mesa de regalos ni padrinos.
 ------------------------------------------------------------------ */
-export default function CumpleanosLayout({ event, family, cfg, theme, rsvp, token, publishableKey, hideBrand = false }) {
+export default function CumpleanosLayout({ event, family, cfg, theme, rsvp, token, publishableKey, hideBrand = false, paymentMethods = null }) {
   return (
     <div>
       <Hero event={event} family={family} cfg={cfg} />
@@ -24,7 +24,7 @@ export default function CumpleanosLayout({ event, family, cfg, theme, rsvp, toke
       <Locations cfg={cfg} theme={theme} />
       <Gallery cfg={cfg} theme={theme} />
       <DressCode cfg={cfg} theme={theme} />
-      <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} />
+      <Gifts cfg={cfg} theme={theme} token={token} publishableKey={publishableKey} paymentMethods={paymentMethods} />
       <Rsvp {...rsvp} />
       <Footer event={event} theme={theme} hideBrand={hideBrand} />
     </div>

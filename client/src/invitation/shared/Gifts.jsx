@@ -89,7 +89,7 @@ function resolveEmbeddedCheckoutInit(stripe) {
   return init.bind(stripe);
 }
 
-export default function Gifts({ cfg, theme, token, publishableKey }) {
+export default function Gifts({ cfg, theme, token, publishableKey, paymentMethods = null }) {
   const registry = cfg?.registry;
   const reduced = useReducedMotion();
 
@@ -182,6 +182,21 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   const paymentLink = String(registry.payment_link_url || "").trim();
   const linkMode = !!registry.stripe_enabled && !!paymentLink;
 
+  // Disponibilidad de tarjeta POR MONEDA (`payment_methods.card.{mxn,eur}` de
+  // la respuesta pública). Contrato:
+  //   - `null`/ausente (respuesta vieja o vista previa) -> disponible (igual
+  //     que siempre).
+  //   - `true` -> checkout embebido normal para esa moneda.
+  //   - `false` -> el backend no tiene cuenta Connect destino para esa
+  //     moneda: se deshabilita/oculta la tarjeta y se conserva el banco.
+  const cardConfigured = !!registry.stripe_enabled;
+  const cardAvailableFor = (cur) => paymentMethods?.card?.[cur] !== false;
+  const cardAvailable = cardAvailableFor(currency);
+  const cardAvailableAny = cardAvailableFor("mxn") || cardAvailableFor("eur");
+  // Con Payment Link externo la moneda la elige la pasarela: basta con que
+  // alguna moneda tenga tarjeta.
+  const cardUsable = linkMode ? cardAvailableAny : cardAvailable;
+
   const activeAmount = custom !== "" ? Number(custom) : chipAmount;
 
   const selectCurrency = (c) => {
@@ -222,6 +237,12 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     }
     if (!stripeReady) {
       setError("El pago con tarjeta no está disponible en este momento.");
+      return;
+    }
+    if (!cardUsable) {
+      setError(
+        `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.`
+      );
       return;
     }
     setPaying(true);
@@ -267,6 +288,11 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     { key: "account_number", label: "Cuenta / CLABE" },
     { key: "concept", label: "Concepto" },
   ].filter((f) => String(bank[f.key] ?? "").trim() !== "");
+
+  // Mensaje cuando la moneda seleccionada no tiene tarjeta disponible.
+  const cardUnavailableMessage =
+    `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.` +
+    (bank.enabled && bankFields.length > 0 ? " Puedes usar la transferencia bancaria." : "");
 
   const payAmountLabel =
     Number.isFinite(activeAmount) && activeAmount > 0
@@ -323,8 +349,10 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
         </AnimatePresence>
 
         {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
-            el invitado elige el monto en la pasarela segura de Stripe. */}
-        {!linkMode && (
+            el invitado elige el monto en la pasarela segura de Stripe. Si
+            ninguna moneda tiene tarjeta disponible, también se ocultan y la
+            sección degrada a banco/aviso neutro. */}
+        {!linkMode && cardAvailableAny && (
           <>
             {/* Selector manual de moneda */}
             <Reveal>
@@ -466,7 +494,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
             </Reveal>
           )}
 
-          {registry.stripe_enabled && (
+          {cardConfigured && cardAvailableAny ? (
             <Reveal>
               {linkMode ? (
                 <motion.a
@@ -482,7 +510,7 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
                 <motion.button
                   type="button"
                   onClick={payWithCard}
-                  disabled={paying || !stripeReady}
+                  disabled={paying || !stripeReady || !cardAvailable}
                   whileTap={reduced ? undefined : { scale: 0.98 }}
                   className="w-full rounded-2xl bg-gradient-to-br from-inv-primary-light via-inv-primary to-inv-primary-deep px-6 py-4 font-inv-heading text-lg text-inv-on-accent shadow-xl hover:brightness-110 active:scale-[.99] transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >
@@ -493,13 +521,27 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
                 <p className="mt-2 text-center text-xs text-inv-text-muted">
                   Elegirás el monto en la pasarela segura de Stripe.
                 </p>
+              ) : !cardAvailable ? (
+                <p className="mt-2 text-center text-xs text-inv-text-muted">
+                  {cardUnavailableMessage}
+                </p>
               ) : !stripeReady ? (
                 <p className="mt-2 text-center text-xs text-inv-text-muted">
                   El pago con tarjeta no está disponible en este momento.
                 </p>
               ) : null}
             </Reveal>
-          )}
+          ) : cardConfigured ? (
+            <Reveal>
+              <p className="mt-2 text-center text-xs text-inv-text-muted">
+                El pago con tarjeta no está disponible en este momento
+                {bank.enabled && bankFields.length > 0
+                  ? " · puedes usar la transferencia bancaria"
+                  : ""}
+                .
+              </p>
+            </Reveal>
+          ) : null}
         </div>
       </div>
 

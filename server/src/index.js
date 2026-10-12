@@ -15,6 +15,7 @@ import templatesRouter from "./routes/templates.js";
 import whatsappRouter from "./routes/whatsapp.js";
 import invitationsRouter from "./routes/invitations.js";
 import uploadsRouter from "./routes/uploads.js";
+import stripeRouter from "./routes/stripe.js";
 import authRouter from "./routes/auth.js";
 import webhooksRouter from "./routes/webhooks.js";
 import { requireAuth, csrfProtection } from "./middleware/auth.js";
@@ -111,6 +112,7 @@ app.use("/api/events/:eventId/tables", requireAuth, eventAccess, tablesRouter);
 app.use("/api/events/:eventId/whatsapp", requireAuth, eventAccess, whatsappRouter);
 app.use("/api/templates", requireAuth, templatesRouter);
 app.use("/api/uploads", requireAuth, uploadsRouter);
+app.use("/api/stripe", requireAuth, stripeRouter);
 
 // Si existe el build del cliente, lo servimos igual que la API
 // (permite hostear frontend + backend en un solo servicio, p. ej. Render).

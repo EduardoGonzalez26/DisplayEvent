@@ -34,6 +34,9 @@ export default function InvitationView({
   hideBrand = false,
   onRsvpDone,
   publishableKey,
+  // `payment_methods` de la respuesta pública: { card: { mxn, eur } }.
+  // `null` (respuestas viejas o vista previa del editor) = disponible.
+  paymentMethods = null,
 }) {
   const theme = getTheme(cfg.template);
   const Layout = getThemeLayout(cfg.template);
@@ -72,6 +75,7 @@ export default function InvitationView({
           token={token}
           hideBrand={hideBrand}
           publishableKey={publishableKey}
+          paymentMethods={paymentMethods}
           rsvp={{
             token,
             family,

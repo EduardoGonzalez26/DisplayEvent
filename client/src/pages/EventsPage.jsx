@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { Button } from "../components/ui.jsx";
 import EventFormModal from "../components/EventFormModal.jsx";
@@ -12,6 +12,10 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null); // null | { mode: "create" } | { mode: "edit", event }
+  // Aviso de regreso del onboarding de Stripe: null | "return" | "refresh".
+  const [stripeNotice, setStripeNotice] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const monthAbbr = (d) =>
     d.toLocaleDateString("es-MX", { month: "short" }).replace(".", "");
@@ -36,6 +40,18 @@ export default function EventsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Regreso del onboarding de Stripe: muestra el aviso, lanza una
+  // sincronización de estado (el GET de cuentas refresca los flags desde
+  // Stripe en el backend) y limpia el query param de la URL.
+  useEffect(() => {
+    const stripe = new URLSearchParams(location.search).get("stripe");
+    if (stripe !== "return" && stripe !== "refresh") return;
+    setStripeNotice(stripe);
+    api.stripe.accounts().catch(() => {});
+    navigate("/eventos", { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   const handleDelete = async (event) => {
     if (!confirm(`¿Eliminar el evento "${event.name}"?`)) return;
     try {
@@ -58,6 +74,29 @@ export default function EventsPage() {
         </div>
         <Button onClick={() => setModal({ mode: "create" })}>+ Nuevo evento</Button>
       </div>
+
+      {stripeNotice && (
+        <div className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-indigo-200">
+              {stripeNotice === "return"
+                ? "Volviendo del onboarding de Stripe; el estado puede tardar unos segundos…"
+                : "El enlace de onboarding de Stripe caducó; tu progreso se conserva. Genera uno nuevo desde el editor de la invitación."}
+            </p>
+            <p className="mt-1 text-xs text-gray-400">
+              Revisa el estado en el evento → Invitación → “Pagos / Conectar
+              Stripe” y pulsa “Actualizar estado”.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setStripeNotice(null)}
+            className="shrink-0 text-sm text-indigo-300 hover:text-white"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-gray-400">Cargando…</p>

@@ -105,9 +105,9 @@ Abre http://localhost:5173
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas — `xv`, `boda`, `cumpleanos`, `baby_shower` — compuestos por un `Layout` + `Hero` por formato y secciones compartidas (RSVP, cuenta regresiva, galería, itinerario, etc.).
 - **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`); el enlace público pasa a `https://<dominio>/invitacion/<token>` (sin slug), la marca "DisplayEvent" se oculta en ese host y la página se marca `noindex`.
 - **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables.
-- **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado de la plataforma (requiere las claves `STRIPE_*`).
+- **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado con **Stripe Connect**: el anfitrión conecta su cuenta desde el editor (**Pagos / Conectar Stripe**) y el importe llega directo a su cuenta (requiere las claves `STRIPE_*` y una cuenta Connect con cobros habilitados **por moneda**).
 - **Envío de invitaciones por WhatsApp**: desde **Invitados**, el botón "Enviar invitaciones" resume grupos enviables e invitados cubiertos, permite editar el mensaje (3 plantillas y vista previa) y pide confirmación antes de enviar. Por defecto usa enlaces `wa.me` (el organizador abre cada chat y puede marcarlas como enviadas); con la **WhatsApp Cloud API** configurada el envío es automático desde el servidor.
-- **Subida de imágenes**: subida de imágenes para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
+- **Subida de archivos**: imágenes (8 MB) y audio (15 MB) para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
 
 ## API
 
@@ -120,8 +120,9 @@ Abre http://localhost:5173
 | GET | `/api/auth/me` | Usuario autenticado actual |
 | POST | `/api/auth/verify` | Verifica el correo con el token del enlace |
 | POST | `/api/auth/resend-verification` | Reenvía el correo de verificación |
-| GET | `/api/invitations/:token` | Invitación pública por token (evento, grupo e invitados) |
+| GET | `/api/invitations/:token` | Invitación pública por token (evento, grupo, invitados y `payment_methods` de tarjeta por moneda) |
 | PUT | `/api/invitations/:token/rsvp` | Confirmación pública de asistencia (RSVP) |
+| POST | `/api/invitations/:token/payment` | Crea la Checkout Session embebida del regalo (Stripe Connect: el importe va a la cuenta del anfitrión) |
 | GET | `/api/events` | Lista eventos con conteos |
 | POST | `/api/events` | Crea un evento |
 | GET | `/api/events/:id` | Detalle de un evento |
@@ -146,4 +147,6 @@ Abre http://localhost:5173
 | GET/POST | `/api/templates` | Listar / crear plantillas de invitación del usuario |
 | GET | `/api/templates/:id` | Detalle de una plantilla |
 | PUT/DELETE | `/api/templates/:id` | Editar / eliminar plantilla |
+| GET | `/api/stripe/accounts` | Cuentas Connect del usuario y su estado (sincroniza con Stripe) |
+| POST | `/api/stripe/create-account` | Crea la cuenta Connect (Express) y devuelve la URL de onboarding |
 | POST | `/api/uploads` | Subir imagen (8 MB) o audio (MP3/M4A/OGG, 15 MB) (Cloudinary o `server/uploads/`) |

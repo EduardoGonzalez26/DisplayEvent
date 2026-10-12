@@ -227,6 +227,8 @@ export default function BodaJorgeMacarenaLayout({
   token,
   publishableKey,
   hideBrand = false,
+  // `payment_methods` de la respuesta pública ({ card: { mxn, eur } }).
+  paymentMethods = null,
 }) {
   const containerRef = useStackedSheets();
 
@@ -397,6 +399,7 @@ export default function BodaJorgeMacarenaLayout({
             theme={theme}
             token={token}
             publishableKey={publishableKey}
+            paymentMethods={paymentMethods}
           />
         </StackCard>
       )}

@@ -3,7 +3,11 @@ import { query, transaction } from "../db/index.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { normalizeForRead } from "../schemas/invitation.js";
 import { findInvitationByToken } from "../utils/invitationLookup.js";
-import { getStripe, stripePublishableKey } from "../utils/stripe.js";
+import { getStripe, isStripeConfigured, stripePublishableKey } from "../utils/stripe.js";
+import {
+  resolveCardAvailability,
+  resolveStripeDestination,
+} from "../utils/stripeDestination.js";
 import { clientUrl } from "../utils/clientUrl.js";
 
 const router = Router();
@@ -29,11 +33,35 @@ async function getGuests(groupId) {
   );
 }
 
+// Disponibilidad de pago con tarjeta POR MONEDA (extensión del contrato
+// público `payment_methods.card.{mxn,eur}`). Solo aplica cuando la mesa de
+// regalos tiene el pago en línea habilitado y Stripe está configurado; luego
+// resuelve si hay cuenta Connect destino válida para cada moneda. Nunca lanza:
+// la vista pública no debe caerse por la disponibilidad de pago.
+async function cardPaymentMethods(inv, cfg) {
+  const card = { mxn: false, eur: false };
+  if (!isStripeConfigured()) return { card };
+  if (!(cfg.registry?.enabled && cfg.registry?.stripe_enabled)) return { card };
+  try {
+    return {
+      card: await resolveCardAvailability({
+        ownerUserId: inv.owner_user_id,
+        overrideMxn: inv.stripe_account_mxn,
+        overrideEur: inv.stripe_account_eur,
+      }),
+    };
+  } catch (err) {
+    console.error("[stripe] No se pudo resolver la disponibilidad de tarjeta:", err.message);
+    return { card };
+  }
+}
+
 router.get("/:token", invitationViewLimiter, async (req, res, next) => {
   try {
     const inv = await findInvitationByToken(req.params.token);
     if (!inv) return res.status(404).json({ error: "Invitación no encontrada" });
 
+    const cfg = normalizeForRead(inv.invitation);
     const guests = await getGuests(inv.group_id);
     res.json({
       event: {
@@ -41,7 +69,7 @@ router.get("/:token", invitationViewLimiter, async (req, res, next) => {
         date: inv.date,
         time: inv.time,
         place: inv.place,
-        invitation: normalizeForRead(inv.invitation),
+        invitation: cfg,
       },
       group: { name: inv.name, leader_name: inv.leader_name, rsvp_note: inv.rsvp_note },
       guests,
@@ -49,6 +77,7 @@ router.get("/:token", invitationViewLimiter, async (req, res, next) => {
         stripe_publishable_key: stripePublishableKey(),
         custom_domain: inv.custom_domain || null,
       },
+      payment_methods: await cardPaymentMethods(inv, cfg),
     });
   } catch (err) {
     next(err);
@@ -191,6 +220,23 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       return res.status(503).json({ error: "El pago en línea no está disponible en este momento" });
     }
 
+    // Destination charge (Connect): el 100% va al anfitrión, sin
+    // application_fee. El destino se elige por moneda: override del evento
+    // (`stripe_account_<currency>`) ?? cuenta del dueño habilitada con esa
+    // `default_currency`. Sin destino válido la tarjeta queda deshabilitada.
+    const overrideAccountId =
+      currency === "mxn" ? inv.stripe_account_mxn : inv.stripe_account_eur;
+    const destination = await resolveStripeDestination({
+      currency,
+      overrideAccountId,
+      ownerUserId: inv.owner_user_id,
+    });
+    if (!destination) {
+      return res.status(400).json({
+        error: "El pago con tarjeta no está disponible para esta moneda por el momento",
+      });
+    }
+
     // Con dominio propio, el regreso del checkout vive en el dominio del
     // evento; sin él se conserva el comportamiento actual (CLIENT_URL).
     const customDomain =
@@ -224,6 +270,11 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
         },
       ],
       return_url: `${base}/invitacion/${req.params.token}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      // Destination charge: la transferencia va íntegra a la cuenta Connect
+      // resuelta para la moneda (sin application_fee_amount).
+      payment_intent_data: {
+        transfer_data: { destination: destination.stripe_account_id },
+      },
       metadata: {
         event_id: String(inv.event_id),
         group_id: String(inv.group_id),

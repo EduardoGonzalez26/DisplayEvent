@@ -15,6 +15,7 @@ async function request(path, options = {}) {
   if (!res.ok) {
     const base = data?.error || "Error en la solicitud";
     const err = new Error(data?.detail ? `${base}: ${data.detail}` : base);
+    err.status = res.status;
     err.code = data?.code;
     err.email = data?.email;
     throw err;
@@ -97,6 +98,14 @@ export const api = {
     get: (token) => request(`/invitations/${token}`),
     rsvp: (token, payload) => request(`/invitations/${token}/rsvp`, { method: "PUT", body: JSON.stringify(payload) }),
     payment: (token, payload) => request(`/invitations/${token}/payment`, { method: "POST", body: JSON.stringify(payload) }),
+  },
+  stripe: {
+    // Cuentas Connect del usuario (el GET refresca los flags desde Stripe).
+    accounts: () => request("/stripe/accounts"),
+    // Crea una cuenta Express + link de onboarding. Lanza si la cuenta de
+    // Stripe no tiene habilitado crear cuentas (p. ej. 502 de política).
+    createAccount: (payload = {}) =>
+      request("/stripe/create-account", { method: "POST", body: JSON.stringify(payload) }),
   },
   upload: (file) => {
     const body = new FormData();

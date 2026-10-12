@@ -25,6 +25,55 @@ const SLUG_MAX = 60;
 // del formato editorial `boda_jorge_macarena`.
 const CUSTOM_EXTRA_KEYS = new Set(["story", "music_url", "lodging", "travel"]);
 
+/* ------------------------------------------------------------------
+   Stripe Connect (panel): país de la cuenta y estado legible.
+------------------------------------------------------------------ */
+
+const STRIPE_COUNTRY_OPTIONS = [
+  { value: "MX", label: "México (MXN)" },
+  { value: "ES", label: "España (EUR)" },
+];
+
+function stripeCountryLabel(code) {
+  const found = STRIPE_COUNTRY_OPTIONS.find(
+    (o) => o.value === String(code || "").trim().toUpperCase()
+  );
+  return found ? found.label : String(code || "—");
+}
+
+/* Estado de una cuenta Connect a partir de sus flags:
+   - Activa: cobros y retiros habilitados.
+   - Sin completar: el onboarding no se ha enviado.
+   - Con observaciones: enviado pero con una capability pendiente/limitada.
+   - En revisión: enviado y sin capabilities activas todavía. */
+function stripeAccountStatus(acc) {
+  const charges = !!acc?.charges_enabled;
+  const payouts = !!acc?.payouts_enabled;
+  const submitted = !!acc?.details_submitted;
+  if (charges && payouts) {
+    return {
+      label: "Activa",
+      cls: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+    };
+  }
+  if (!submitted) {
+    return {
+      label: "Sin completar",
+      cls: "border-gray-600/60 bg-gray-800 text-gray-400",
+    };
+  }
+  if (charges || payouts) {
+    return {
+      label: "Con observaciones",
+      cls: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+    };
+  }
+  return {
+    label: "En revisión",
+    cls: "border-sky-500/40 bg-sky-500/10 text-sky-300",
+  };
+}
+
 // Convierte el nombre del evento en un slug URL-amigable (misma lógica que el
 // backend) para sugerirlo cuando el evento todavía no tiene slug.
 function slugify(value) {
@@ -159,7 +208,7 @@ function MusicNoteIcon({ className = "" }) {
   );
 }
 
-function FileUploader({ label, value, onChange, kind = "image" }) {
+function FileUploader({ label, value, onChange, kind = "image", onUploadingChange }) {
   const config = UPLOAD_KINDS[kind] || UPLOAD_KINDS.image;
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -176,6 +225,9 @@ function FileUploader({ label, value, onChange, kind = "image" }) {
       return;
     }
     setUploading(true);
+    // Avisa al editor: mientras haya una subida en curso, "Guardar cambios"
+    // se deshabilita para no persistir el valor anterior del campo.
+    onUploadingChange?.(true);
     try {
       const { url } = await api.upload(safeFile);
       onChange(url);
@@ -183,6 +235,7 @@ function FileUploader({ label, value, onChange, kind = "image" }) {
       setError(err.message);
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
     }
   };
 
@@ -277,6 +330,15 @@ export default function EventInvitation() {
   const [error, setError] = useState("");
   const galleryInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  // Subidas de archivo sueltas (portada / audio). Cuenta las activas para
+  // bloquear "Guardar cambios" mientras alguna esté en curso y evitar que un
+  // guardado a medias persista el valor anterior del campo.
+  const fileUploadsRef = useRef(0);
+  const [fileUploading, setFileUploading] = useState(false);
+  const onFileUploadingChange = (active) => {
+    fileUploadsRef.current = Math.max(0, fileUploadsRef.current + (active ? 1 : -1));
+    setFileUploading(fileUploadsRef.current > 0);
+  };
   const [event, setEvent] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
@@ -291,6 +353,54 @@ export default function EventInvitation() {
   // null | "checking" | "available" | "taken" | "current"
   const [slugStatus, setSlugStatus] = useState(null);
   const [copied, setCopied] = useState(false);
+  // Stripe Connect: cuentas del usuario (para cobrar con tarjeta).
+  const [stripeAccounts, setStripeAccounts] = useState([]);
+  const [stripeLoading, setStripeLoading] = useState(true);
+  const [stripeError, setStripeError] = useState("");
+  const [stripeErrorHint, setStripeErrorHint] = useState("");
+  const [stripeCountry, setStripeCountry] = useState("MX");
+  const [stripeConnecting, setStripeConnecting] = useState(false);
+
+  const loadStripeAccounts = () => {
+    setStripeLoading(true);
+    setStripeError("");
+    setStripeErrorHint("");
+    api.stripe
+      .accounts()
+      .then((list) => setStripeAccounts(Array.isArray(list) ? list : []))
+      .catch((err) => setStripeError(err.message))
+      .finally(() => setStripeLoading(false));
+  };
+
+  // Crea la cuenta Express y redirige al onboarding de Stripe.
+  const connectStripe = async () => {
+    setStripeConnecting(true);
+    setStripeError("");
+    setStripeErrorHint("");
+    try {
+      const { url } = await api.stripe.createAccount({ country: stripeCountry });
+      if (!url) throw new Error("Stripe no devolvió la URL de onboarding.");
+      window.location.href = url; // navega fuera de la SPA
+    } catch (err) {
+      setStripeError(err.message);
+      // El 502 típico es la política de la cuenta de Stripe: requiere
+      // habilitar la creación de cuentas Connect ("Accounts v1").
+      if (err.status === 502) {
+        setStripeErrorHint(
+          "Activa la creación de cuentas Connect en tu dashboard de Stripe " +
+            "(Connect → Accounts v1) y vuelve a intentarlo."
+        );
+      }
+      setStripeConnecting(false);
+    }
+  };
+
+  // Al volver del onboarding (?stripe=return|refresh) el estado puede haber
+  // cambiado: se recargan las cuentas al entrar al editor.
+  useEffect(() => {
+    loadStripeAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setEvent(null);
@@ -671,7 +781,7 @@ export default function EventInvitation() {
           <Button variant="secondary" onClick={() => setTplOpen(true)}>
             Plantillas
           </Button>
-          <Button onClick={save} disabled={saving || uploading}>
+          <Button onClick={save} disabled={saving || uploading || fileUploading}>
             {saving ? "Guardando…" : "Guardar cambios"}
           </Button>
         </div>
@@ -936,7 +1046,12 @@ export default function EventInvitation() {
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-4">Portada (Hero)</h2>
           <div className="grid gap-3">
-            <FileUploader label="Foto de fondo (subida directa)" value={form.hero_image} onChange={(url) => set("hero_image", url)} />
+            <FileUploader
+              label="Foto de fondo (subida directa)"
+              value={form.hero_image}
+              onChange={(url) => set("hero_image", url)}
+              onUploadingChange={onFileUploadingChange}
+            />
             <label className="block">
               <span className="text-sm text-gray-400 mb-1 block">O pega una URL (opcional)</span>
               <input className={inputCls} value={form.hero_image} onChange={(e) => set("hero_image", e.target.value)} placeholder="https://…" />
@@ -1056,6 +1171,7 @@ export default function EventInvitation() {
                     value={form.music_url || ""}
                     onChange={(url) => set("music_url", url)}
                     kind="audio"
+                    onUploadingChange={onFileUploadingChange}
                   />
                 </div>
                 <span className="block text-xs text-gray-500 mt-1.5">
@@ -1473,8 +1589,118 @@ export default function EventInvitation() {
           )}
         </section>
 
+        {/* Pagos con tarjeta: se agrupa junto a la Mesa de Regalos porque
+            Connect es el requisito para que el cobro llegue a la cuenta del
+            anfitrión (sin cuenta destino, la tarjeta queda sin disponibilidad
+            por moneda y la invitación ofrece solo transferencia). */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <h2 className="text-base font-semibold text-white">
+              Pagos / Conectar Stripe
+            </h2>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={stripeLoading}
+              onClick={loadStripeAccounts}
+            >
+              {stripeLoading ? "Actualizando…" : "Actualizar estado"}
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Conecta una cuenta de Stripe para cobrar la mesa de regalos con
+            tarjeta: el importe llega directo a tu cuenta. La transferencia
+            bancaria no necesita Stripe.
+          </p>
+
+          {stripeError && (
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/5 p-3">
+              <p className="text-sm text-red-400">{stripeError}</p>
+              {stripeErrorHint && (
+                <p className="text-xs text-gray-400 mt-1">{stripeErrorHint}</p>
+              )}
+            </div>
+          )}
+
+          {stripeLoading && stripeAccounts.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              Consultando cuentas de Stripe…
+            </p>
+          ) : stripeAccounts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-700 px-4 py-5 text-sm text-gray-500">
+              Aún no tienes una cuenta de Stripe conectada. Elige tu país y
+              pulsa “Conectar Stripe”.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {stripeAccounts.map((acc) => {
+                const st = stripeAccountStatus(acc);
+                return (
+                  <div
+                    key={acc.id}
+                    className="rounded-xl border border-gray-800 p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-white">
+                        {stripeCountryLabel(acc.country)}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${st.cls}`}
+                      >
+                        {st.label}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 truncate font-mono text-xs text-gray-500">
+                      {acc.stripe_account_id}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      Cobros: {acc.charges_enabled ? "activos" : "inactivos"} ·
+                      Retiros: {acc.payouts_enabled ? "activos" : "inactivos"} ·
+                      Datos: {acc.details_submitted ? "enviados" : "pendientes"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-5 border-t border-gray-800 pt-5">
+            <div className="grid items-end gap-3 sm:grid-cols-[1fr_auto]">
+              <label className="block">
+                <span className="text-sm text-gray-400 mb-1 block">
+                  País de tu cuenta de Stripe
+                </span>
+                <select
+                  className={inputCls}
+                  value={stripeCountry}
+                  onChange={(e) => setStripeCountry(e.target.value)}
+                  disabled={stripeConnecting}
+                >
+                  {STRIPE_COUNTRY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                type="button"
+                onClick={connectStripe}
+                disabled={stripeConnecting}
+              >
+                {stripeConnecting ? "Redirigiendo…" : "Conectar Stripe"}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Te llevaremos al formulario seguro de Stripe para verificar tu
+              identidad y tu cuenta bancaria. Al terminar volverás al panel
+              automáticamente.
+            </p>
+          </div>
+        </section>
+
         <footer className="flex justify-end">
-          <Button type="submit" disabled={saving || uploading}>
+          <Button type="submit" disabled={saving || uploading || fileUploading}>
             {saving ? "Guardando…" : "Guardar cambios"}
           </Button>
         </footer>

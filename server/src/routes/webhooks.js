@@ -32,7 +32,34 @@ router.post("/stripe", raw({ type: "application/json" }), async (req, res) => {
     return res.status(400).json({ error: "Firma de webhook inválida" });
   }
 
-  // Solo nos interesan los pagos completados; el resto se ignora con 200.
+  // Solo nos interesan los pagos completados y el estado de las cuentas
+  // Connect; el resto se ignora con 200.
+  if (event.type === "account.updated") {
+    const account = event.data.object;
+    try {
+      // Sincroniza el estado de la cuenta Connect (idempotente: UPDATE por
+      // `stripe_account_id`; 0 filas si la cuenta no es de esta plataforma).
+      await query(
+        `UPDATE stripe_accounts
+            SET charges_enabled = $1,
+                payouts_enabled = $2,
+                details_submitted = $3,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE stripe_account_id = $4`,
+        [
+          Boolean(account.charges_enabled),
+          Boolean(account.payouts_enabled),
+          Boolean(account.details_submitted),
+          account.id,
+        ]
+      );
+    } catch (err) {
+      console.error("[stripe-webhook] Error sincronizando cuenta Connect:", err.message);
+      return res.status(500).json({ error: "Error al sincronizar la cuenta" });
+    }
+    return res.json({ received: true });
+  }
+
   if (event.type !== "checkout.session.completed") {
     return res.json({ received: true });
   }

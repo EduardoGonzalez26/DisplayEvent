@@ -43,7 +43,7 @@ export default function InvitationPage() {
   if (loading) return <InvitationLoader />;
   if (error || !data) return <InvitationNotFound />;
 
-  const { event, group, guests, public_config } = data;
+  const { event, group, guests, public_config, payment_methods } = data;
 
   return (
     <InvitationView
@@ -55,6 +55,9 @@ export default function InvitationPage() {
       hideBrand={hideBrand}
       rsvpNote={group.rsvp_note}
       publishableKey={public_config?.stripe_publishable_key || null}
+      // Disponibilidad de tarjeta por moneda (puede faltar en respuestas
+      // viejas: se trata como "disponible", comportamiento anterior).
+      paymentMethods={payment_methods || null}
       onRsvpDone={(updated) =>
         setData((prev) => ({
           ...prev,
