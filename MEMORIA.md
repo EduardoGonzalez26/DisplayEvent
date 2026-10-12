@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-10-04
+> **Última actualización:** 2026-10-11
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -31,10 +31,10 @@
 | Backend | Node.js + Express 4 (`type: module`) |
 | BD | PostgreSQL vía `pg` 8 |
 | Validación | `zod` 4 |
-| Despliegue | **Railway** (antes Render) |
+| Despliegue | **Railway** — confirmado por el usuario el 2026-10-11 (Railpack detecta `build`/`start` del `package.json` raíz; `render.yaml` es legacy de Render) |
 | BD en la nube | **Supabase** (PostgreSQL) |
 | Correo | **Brevo** (API HTTPS; alternativa SMTP local) |
-| Imágenes | **Cloudinary** (opcional) o guardado local en `server/uploads/` |
+| Imágenes y audio | **Cloudinary** (opcional; el audio sube como recurso `video`) o guardado local en `server/uploads/` |
 | Pagos | **Stripe** (`stripe` 22.x en server, `@stripe/stripe-js` 5.x en client; modo test por ahora) + **Payment Link externo por evento** (`registry.payment_link_url`; ver §13) |
 
 ---
@@ -69,12 +69,15 @@ client/src/invitation/
 │   │   Gallery.jsx, DressCode.jsx, RegistryNote.jsx, Gifts.jsx,
 │   │   Padrinos.jsx, Footer.jsx
 │   └── (solo usa shared/Rsvp.jsx como sección compartida)
-├── boda_jorge_macarena/  # Plantilla ESPECIAL: componentes LOCALES propios
-│   ├── BodaJorgeMacarenaLayout.jsx, decor.jsx (kit de ornamentos), SectionNav.jsx
-│   ├── Hero.jsx, Countdown.jsx, Message.jsx, Itinerary.jsx, Locations.jsx,
-│   │   DressCode.jsx, RegistryNote.jsx, Gifts.jsx, Footer.jsx
-│   ├── SectionPhoto.jsx  # fondo de foto B&N por tarjeta — todas las tarjetas (solo boda)
-│   └── (solo usa shared/Rsvp.jsx como sección compartida)
+├── boda_jorge_macarena/  # Plantilla ESPECIAL — rediseño v2 (2026-10-11; ver §15)
+│   ├── BodaJorgeMacarenaLayout.jsx  # motor de hojas apilables (sticky/tilt/shade)
+│   ├── Hero.jsx, Story.jsx, Locations.jsx, Itinerary.jsx, DressCode.jsx,
+│   │   Gifts.jsx, Lodging.jsx, Footer.jsx   # secciones locales v2
+│   ├── BottomNav.jsx, MusicToggle.jsx       # pill inferior + botón de música
+│   ├── EditorialEnvelope.jsx                # sobre editorial (lazy; envelopeVariant)
+│   ├── flora.jsx, Grain.jsx, helpers.js
+│   ├── SectionPhoto.jsx  # foto B&N por hoja, scrim claro del papel
+│   └── (solo usa shared/Rsvp.jsx + utilidades)
 ├── 3d/                # Escenas WebGL RETIRADAS (inertes; re-agregar a pedido)
 │   └── RingsHero3D.jsx, RingsScene.jsx, XvPearlsHero3D.jsx, XvPearlsScene.jsx
 ├── envelope/          # EnvelopeLoader.jsx — sobre digital de apertura
@@ -94,15 +97,15 @@ client/src/invitation/
 
 ### 3.1 Plantillas "especiales" con componentes propios
 
-Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **dejaron de usar `shared/*` como secciones**: cada una tiene copias locales de `decor.jsx` (kit de ornamentos), `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Footer.jsx` y `SectionNav.jsx`. `alice_xv` incluye además `Gallery.jsx` y `Padrinos.jsx`; `boda_jorge_macarena` **eliminó su `Gallery.jsx` en `719f2b4`** y añade `SectionPhoto.jsx` (fondos de foto B&N en todas las tarjetas). **`alice_xv` NO tiene `SectionPhoto.jsx` ni fondos de foto** (decisión del usuario).
+Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `shared/*` como secciones**: cada una mantiene componentes locales propios y solo comparten `shared/Rsvp.jsx` (más utilidades sueltas: `shared/util.jsx` → `safeCssUrl`/`escapeRegExp`/`InvitationLoader`; `shared/Countdown.jsx` → `useCountdown`).
 
-- `decor.jsx` (ambas) exporta el kit de ornamentos: `BotanicalCorner`, `BotanicalDivider`, `Flourish`, `WeddingSectionTitle`, `GoldFrame`.
-- La **única** sección compartida que consumen es `shared/Rsvp.jsx` (más utilidades sueltas: `shared/util.jsx` → `safeCssUrl`/`escapeRegExp`; `shared/Countdown.jsx` → `useCountdown`).
+- ⚠️ **(2026-10-11) `boda_jorge_macarena` fue rediseñada por completo** al diseño v2 (ver §15): su set local es `BodaJorgeMacarenaLayout.jsx` (motor de hojas apilables), `Hero.jsx`, `Story.jsx`, `Locations.jsx`, `Itinerary.jsx`, `DressCode.jsx`, `Gifts.jsx`, `Lodging.jsx`, `Footer.jsx`, `BottomNav.jsx`, `MusicToggle.jsx`, `EditorialEnvelope.jsx`, `flora.jsx`, `Grain.jsx`, `helpers.js` y `SectionPhoto.jsx`. Se **eliminaron** `decor.jsx`, `SectionNav.jsx`, `Countdown.jsx`, `Message.jsx` y `RegistryNote.jsx` (antes, en `719f2b4`, ya había eliminado su `Gallery.jsx`).
+- `alice_xv` **permanece intacta** (decisión del usuario) y conserva su set histórico: `decor.jsx` (exporta el kit de ornamentos `BotanicalCorner`, `BotanicalDivider`, `Flourish`, `WeddingSectionTitle`, `GoldFrame`), `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Padrinos.jsx`, `Footer.jsx` y `SectionNav.jsx`. ⚠️ **NO tiene `SectionPhoto.jsx` ni fondos de foto**.
 - Los formatos genéricos (`xv`, `boda`, `cumpleanos`, `baby_shower`) siguen usando las secciones de `shared/`.
 
 ### 3.2 Efectos y comportamiento del layout
 
-Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit `46f7628`):
+> ⚠️ **(2026-10-11)** La **boda fue rediseñada** al v2 (ver §15): su layout ya no replica estos mecanismos. Los bullets siguientes describen el sistema vigente de **`alice_xv`**; donde digan «ambas especiales» debe leerse «`alice_xv`» (salvo `shared/Rsvp.jsx`, que sigue compartido). Mecanismos heredados, **replicados en `alice_xv/`** desde `boda_jorge_macarena` (commit `46f7628`):
 
 - **Tarjetas apiladas** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta con **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`), sombra ascendente y `CardEdge` (hairline + rombo). El fondo y (si aplica) la foto viven en **capas `absolute` propias dentro del wrapper**, de modo que el `StackCard` **no** gana `backdrop-filter` y no se convierte en contenedor de posicionamiento para descendientes `fixed` (el modal de datos bancarios de `boda_jorge_macarena/Gifts.jsx` sigue anclado al viewport). Los `z`: Hero (z-0), Carta/Contador (z-10), Padres y Padrinos en `alice_xv` (z-15, justo después de la Carta), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40, solo `alice_xv`), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), RSVP (z-80), Footer (z-90).
 - **Solo Hero y Footer quedan `sticky`; el resto pasa a `flow`** (boda: commit `a6447c7`; `alice_xv`: commit `ea36bdc`): la portada (Hero z-0) sigue `sticky top-0` con `min-h-[100dvh]` —efecto "carta desplegable": el contenido la tapa— y el cierre/Footer (z-90, con `SectionPhoto` en boda) también es sticky. Las secciones con contenido de altura variable pasan a **`flow`** (no sticky) porque `sticky top-0` + `min-h-[100dvh]` recortaba su parte inferior en móvil (sobre todo **Ubicaciones** al añadir los mapas): **Carta/Contador, Itinerario, Ubicaciones, Dress Code, Nota de regalos, Mesa de regalos y RSVP** (y la **Galería**, solo en `alice_xv`); en `alice_xv` también **Padres y Padrinos** (**z-15**, justo después de la Carta, antes del Itinerario). Fluyen normal manteniendo el acabado de tarjeta y, al cubrir a la anterior, conservan el efecto de apilado sin quedar clavadas. Resultado: el efecto "carta desplegable" queda **solo para la portada**; ninguna sección se recorta.
@@ -112,7 +115,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 - **Parallax** en Mensaje y Footer (y en la Galería **solo de `alice_xv`**; boda la eliminó en `719f2b4`) (`useScroll()` global, porque `useScroll({ target })` no refleja bien el pinning de las tarjetas sticky).
 - **Swipe en la Galería** (solo `alice_xv`; boda la eliminó en `719f2b4`): arrastre horizontal (`drag="x"` con umbral) y **wrap-around** entre fotos.
 - **Mesa de regalos local** (`boda_jorge_macarena/Gifts.jsx`): replica la lógica de `shared/Gifts.jsx` pero con **dropdowns nativos** de moneda/monto (opción "Monto libre"), **pago con tarjeta como CTA principal** y **depósito en modal** accesible (`BankModal`). ⚠️ **Ya NO se replica en `alice_xv`**: allí la sección es una versión local **informativa y sin Stripe** (2 opciones con medallón en arco; ver §3.3 y §6).
-- **Fondos de foto en todas las tarjetas — SOLO en `boda_jorge_macarena`** (`SectionPhoto.jsx`, commits `8878c88` y `719f2b4`): **UNA** foto de `cfg.gallery` **full-bleed** como fondo de cada tarjeta, en **blanco y negro** (`grayscale`) + **scrim** de degradado del `--inv-bg-alt2` (88% en bordes / 72% al centro) para legibilidad; `null` si no hay foto → cae a fondo sólido. `StackCard` acepta la prop `photo` (URL); `PHOTO_ORDER` fija la correspondencia id→foto por índice (`gallery[(i + offset) % length]`, con `offset=1` cuando la portada ya consumió `gallery[0]`), de modo que una sección condicional oculta no reasigna las fotos de las demás. La primera tarjeta (`carta`) carga la foto `priority` (eager); el resto, `lazy` + `decoding="async"`. Sustituye al antiguo `PhotoBackdrop.jsx` (fotos dispersas), **eliminado** en `8878c88`. ⚠️ **`alice_xv` NO tiene fondos de foto** (decisión del usuario): no existe `SectionPhoto.jsx` ni la prop `photo` allí.
+- **Fondos de foto en todas las tarjetas — SOLO en `boda_jorge_macarena`** (`SectionPhoto.jsx`, commits `8878c88` y `719f2b4`): **UNA** foto de `cfg.gallery` **full-bleed** como fondo de cada tarjeta, en **blanco y negro** (`grayscale`) + **scrim** de degradado del `--inv-bg-alt2` (88% en bordes / 72% al centro) para legibilidad; `null` si no hay foto → cae a fondo sólido. `StackCard` acepta la prop `photo` (URL); `PHOTO_ORDER` fija la correspondencia id→foto por índice (`gallery[(i + offset) % length]`, con `offset=1` cuando la portada ya consumió `gallery[0]`), de modo que una sección condicional oculta no reasigna las fotos de las demás. La primera tarjeta (`carta`) carga la foto `priority` (eager); el resto, `lazy` + `decoding="async"`. Sustituye al antiguo `PhotoBackdrop.jsx` (fotos dispersas), **eliminado** en `8878c88`. ⚠️ **`alice_xv` NO tiene fondos de foto** (decisión del usuario): no existe `SectionPhoto.jsx` ni la prop `photo` allí. ⚠️ **(2026-10-11)** En la boda rediseñada el scrim ahora es **claro** (`--inv-photo-scrim`, el papel del tema) y `PHOTO_ORDER` cambió a los ids v2 (ver §15).
 
 ### 3.3 Mesa de Regalos (archivos)
 
@@ -135,7 +138,7 @@ Implementados en `boda_jorge_macarena/` y **replicados en `alice_xv/`** (commit 
 - API pública: `normalizeInvitation(raw)`, `parseInvitation(raw)` (lanza error para 400), `normalizeForRead(raw)` (GET, garantiza arrays, nunca lanza).
 - Esquema: `z.discriminatedUnion("template", [...])` con campos **comunes** + **específicos** por template. Descarta claves desconocidas y normaliza formas legacy.
 
-**Campos comunes:** `hero_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url}]`, `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `registry{...}`, `rsvp_editable`, `rsvp_edit_deadline`.
+**Campos comunes:** `hero_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url}]`, `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `story` (≤4000), `music_url`, `lodging[{name,note,url?}]`, `travel{title,airport_note,routes[{label,note}],closing_note}`, `registry{...}`, `rsvp_editable`, `rsvp_edit_deadline` (los 4 campos del rediseño v2 son de 2026-10-11; ver §15).
 
 **Campos específicos:**
 
@@ -223,6 +226,9 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 > **Iteración del 2026-10-04 (commiteada en `1241bfd`):** el sobre de apertura (`envelope/EnvelopeLoader.jsx`) cambia su hint de "Toca o desliza hacia arriba para abrir" a **"Toca para abrir"** en todas las plantillas con sobre (`xv`, `boda`, `alice_xv`, `boda_jorge_macarena`); los gestos quedan intactos (tap, arrastre, teclado, `prefers-reduced-motion`). En `alice_xv`, **Padres y Padrinos pierde el eyebrow "Con amor"**: `Padrinos.jsx` ya no recibe la prop `eyebrow` y la label `padrinosEyebrow` se elimina de `themes/alice_xv.js`; en `alice_xv/decor.jsx`, `WeddingSectionTitle` **omite la fila ornamental (filetes + span) cuando no hay eyebrow** y mantiene el comportamiento con eyebrow, incluido el caso de `title` ausente donde el eyebrow es el `<h2>` (p. ej. la Mesa de Regalos).
 
 **`boda_jorge_macarena` — Boda de "Jorge & Macarena" (pedido especial):**
+
+> ⚠️ **(2026-10-11) Rediseño v2 — ver §15.** Tema y secciones reescritos al diseño editorial sobre papel (Cormorant Garamond + Montserrat, fotos B&N con scrim claro, sobre editorial, hojas apilables, campos nuevos y OG por token). Los bullets siguientes documentan el diseño **nocturno anterior** (`719f2b4`) y se conservan como histórico.
+
 - Paleta **botánica nocturna** (commit `719f2b4`; ya no es "botánica vibrante sobre marfil"): fondos verde noche (`--inv-bg #0F1B15`, `--inv-bg-alt #14231B`, `--inv-bg-alt2 #0A130F`, `--inv-surface #182820`, `--inv-card #1C2E24`), texto marfil `#FDFBF7` (soft `#EAE4D6`, muted `#D0C7B7`) y acentos aclarados para brillar sobre la oscuridad (rosa `#E8799C`, botánico `#A9C3AF`, naranja granada `#E76F51`, amarillo `#E5B15D`); sombras base negra, sobre de apertura y portada nocturnos.
 - Fuentes **Playfair Display** + **Great Vibes** + **Lato**.
 - Ornamentos SVG de línea fina (granada, bugambilia, cempasúchil) en `decor.jsx`; sobre de apertura con paleta nocturna.
@@ -234,7 +240,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - **Tarjeta RSVP sobre la foto:** el layout la envuelve con `contentClassName="[&>section]:bg-transparent"` para neutralizar el fondo opaco que `shared/Rsvp.jsx` pinta en su `<section>` raíz, sin tocar el componente compartido.
 - **Botón flotante de Confirmaciones** (`SectionNav.jsx`; **commiteado en `ef3a63a`**): replica exactamente la `className` de `alice_xv` (commit `3366f44`) — **mismo comportamiento**: en móvil (< `md`) queda **abajo a la derecha** (`bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4`, sin `translate`) y desde `md` conserva el **centrado vertical derecho** (`md:bottom-auto md:right-5 md:top-1/2 md:-translate-y-1/2`), 48×48px. Tamaño/colores del tema, aria-labels ("Ir a confirmaciones" / "Volver arriba"), iconos, columna de dots y lógica de scrollspy **no cambian**.
 - ✅ Diseño botánico **completado** e iterado a **paleta nocturna + fotos de fondo en todas las tarjetas** (`d872a54` botánico → `719f2b4` nocturno).
-- ⚠️ **Pendiente:** el doc `INVITACION_BODA_JORGE_MACARENA.md` describe el diseño **anterior** (azul noche/dorado).
+- ✅ El doc `INVITACION_BODA_JORGE_MACARENA.md` quedó **actualizado al v2** el 2026-10-11 (ver §15); describe este rediseño, no el anterior.
 
 ---
 
@@ -250,7 +256,20 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 ### Variables de entorno (Railway)
 `DATABASE_URL`, `JWT_SECRET`, `CLIENT_URL` (debe ser la URL pública de Railway; **una sola URL**, ver nota abajo), `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, (`CLOUDINARY_*` opcionales), (`ALLOWED_ORIGINS` opcional), **Stripe**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` (opcionales; sin `STRIPE_SECRET_KEY` los pagos degradan a 503). `PORT` lo inyecta Railway (default 4000 local).
 
-> **`CLIENT_URL` tolerante a listas (`be5e9c6`) — blindaje tras el doble enlace en WhatsApp:** en producción `CLIENT_URL` estaba configurada como lista separada por comas (patrón de `ALLOWED_ORIGINS`) y `buildInvitationUrl` concatenaba el valor completo → `https://displayevent.com,https://displayevent.online/invitacion/...`; WhatsApp auto-enlazaba ambos tramos (landing + invitación). Fix: helper `server/src/utils/clientUrl.js` (toma el **primer** valor separado por comas, hace `trim`, quita barras finales y cae a `http://localhost:5173` si queda vacío), usado en `utils/whatsapp.js` (enlaces de invitación), `routes/invitations.js` (Stripe), `routes/auth.js` (verificación por correo) e `index.js` (host canónico); `server/.env.example` aclara que `CLIENT_URL` es **UNA sola URL** y que las listas van en `ALLOWED_ORIGINS`. ⚠️ **Pendiente operativo (ver §8):** corregir `CLIENT_URL` en Render a una sola URL (`https://displayevent.com`); los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
+> **`CLIENT_URL` tolerante a listas (`be5e9c6`) — blindaje tras el doble enlace en WhatsApp:** en producción `CLIENT_URL` estaba configurada como lista separada por comas (patrón de `ALLOWED_ORIGINS`) y `buildInvitationUrl` concatenaba el valor completo → `https://displayevent.com,https://displayevent.online/invitacion/...`; WhatsApp auto-enlazaba ambos tramos (landing + invitación). Fix: helper `server/src/utils/clientUrl.js` (toma el **primer** valor separado por comas, hace `trim`, quita barras finales y cae a `http://localhost:5173` si queda vacío), usado en `utils/whatsapp.js` (enlaces de invitación), `routes/invitations.js` (Stripe), `routes/auth.js` (verificación por correo) e `index.js` (host canónico); `server/.env.example` aclara que `CLIENT_URL` es **UNA sola URL** y que las listas van en `ALLOWED_ORIGINS`. ⚠️ **Pendiente operativo (ver §8):** corregir `CLIENT_URL` en **Railway** a una sola URL (`https://displayevent.com`; el host canónico definitivo está en decisión — ver §15); los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
+
+### Deploy en Railway (2026-10-11)
+- **Plataforma confirmada por el usuario: Railway.** `render.yaml` queda como **legacy** de Render (Railway lo ignora; se conserva o se borra por decisión humana).
+- **Railpack** detecta automáticamente los scripts del `package.json` **raíz**: `build` (`npm ci` de server+client + `vite build`) y `start` (`node server/src/index.js`); `PORT` lo inyecta Railway y `NODE_ENV=production` lo fija Railpack. **No hacen falta** `Procfile`, `railway.json` ni `nixpacks.toml` (no existen en el repo).
+- **Healthcheck:** `GET /api/health` (configurar en Settings → Deploy). **Node:** hoy "lts" automático (local v22); opcional fijar versión con `RAILPACK_NODE_VERSION` o `engines.node`.
+- **Prerrequisito:** Railway despliega desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`); el working tree con todo lo de hoy está **sin commitear** → sin commit+push (pendiente de aprobación del usuario) no se publica nada.
+- **Disco efímero:** igual que en Render → configurar **Cloudinary** para persistir fotos/audio (y para que el OG tenga imagen) o montar un **volumen en `/app/server/uploads`**. **Serverless/sleep** (opt-in) debe quedar **DESACTIVADO** para la boda.
+
+### Dominio personalizado en Railway (runbook 2026-10-11)
+- Settings → Networking → **+ Custom Domain**; el dashboard muestra un **CNAME target tipo `xxxxx.up.railway.app`** y un **TXT de verificación de propiedad**: **ambos obligatorios** (sin el TXT el dominio responde **404**).
+- SSL **Let's Encrypt automático** (≤1 h). Límite de plan: **Trial = 1** dominio personalizado (apex **o** www), **Hobby = 2**.
+- Registradores sin flattening/ALIAS (GoDaddy, Route 53, Hostinger, NameSilo, Azure DNS, SquareSpace…): recomendar mover **nameservers a Cloudflare**; con Cloudflare: **CNAME `@` → target con proxy ON** y SSL **"Full"** (no Strict).
+- `www` → apex no existe en Railway (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
 
 ### BD / esquema
 - `server/.env` está **git-ignored** (contiene secretos). Usa `.env.example` como plantilla.
@@ -275,20 +294,30 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
 - [x] ~~Reproducir `PhotoBackdrop` en `alice_xv`~~ → **descartado**: `alice_xv` **no** usa fondos de foto por sección (decisión del usuario). `PhotoBackdrop.jsx` fue **eliminado** (sustituido por `SectionPhoto.jsx`, solo boda).
 - [ ] **Actualizar `description` de `themes/alice_xv.js`** ("Lavanda y dorado" → rosa pastel + blanco + dorado).
-- [ ] **Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describe el diseño anterior azul noche/dorado).
+- [x] ~~**Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describía el diseño anterior azul noche/dorado)~~ → actualizado al v2 el 2026-10-11 (ver §15).
 - [x] ~~*(Rendimiento)* Evaluar el coste de `backdrop-blur`~~ → **ya no aplica**: las tarjetas no usan `backdrop-blur` (fondo opaco + foto en capas `absolute`).
-- [ ] *(Ajuste estético)* El **scrim del `SectionPhoto` es fuerte** (~88%/72% sobre `--inv-bg-alt2`), así que la foto B&N se ve **sutil**; subir/disminuir opacidades si se quiere más/menos protagonismo (por legibilidad del texto marfil).
+- [ ] *(Ajuste estético)* El **scrim del `SectionPhoto`** de la boda v2 es **claro** (88%/72% de `--inv-photo-scrim`, el papel del tema), así que la foto B&N se ve **sutil pero legible**; subir/disminuir opacidades si se quiere más/menos protagonismo (ver §15).
+- [ ] **Deuda Tailwind `@theme`** (`boda_jorge_macarena` v2; ver §15): `--color-inv-*: var(--inv-*)` declarado en `@theme` de `client/src/index.css` se resuelve una sola vez en `:root`, así que las utilidades `bg-inv-*`/`text-inv-*` ignoran el override anidado de `--inv-*` del tema (**bug preexistente, reproducido también en `alice_xv`**). El tema v2 lo puentea re-declarando `--color-inv-*`/`--font-inv-*` dentro de `theme.vars`; resolver de raíz en Fase B.
+- [ ] **Fase B (planificada; ver §15):** adoptar el diseño v2 (tema + secciones + campos) en `xv`, `cumpleanos` y `baby_shower`; **`alice_xv` intacta** (decisión del usuario). Incluye quitar el gating por template de los bloques "Nuestra historia y música" y "Hospedaje y viaje" del editor.
+- [ ] **Fotos reales de la boda** (hoy placeholders editables desde el editor) + **smoke test del guardado real del editor con sesión** (los bloques nuevos no se han guardado E2E).
+- [ ] **Reemplazar el enlace de YouTube de `music_url`** del evento por un archivo subido desde el panel (la subida de audio ya está habilitada; ver §15).
+- [x] ~~**Confirmar plataforma de despliegue real** (Railway vs Render)~~ → **Railway confirmado por el usuario (2026-10-11)**; `render.yaml` queda como legacy (ver §7 y §15).
+- [ ] **Commit + push pendientes de aprobación:** todo el trabajo de la fase (rediseño v2, OG, subida de audio) está sin commitear y Railway despliega desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`).
+- [ ] **Cloudinary en producción:** activar `CLOUDINARY_*` (el disco de Railway es efímero) para persistir fotos/audio y para la imagen del OG; alternativa: volumen en `/app/server/uploads`; **sleep/serverless desactivado**.
+- [ ] **Verificar el OG con crawler tras el deploy** (User-Agent de WhatsApp/Facebook) en el dominio real.
+- [ ] **Stripe: decisión de titularidad en espera del usuario (parked)**; ver §15.
+- [ ] **Producción de la boda (runbook Railway §7/§15, sin ejecutar):** dominio `macarenayjorge.com` (Settings → Networking; **CNAME target + TXT de verificación**, ambos obligatorios), `custom_domain` del evento en el panel, `npm run init-db` en la BD desplegada y las 3 vars Stripe exactas. **Decisiones abiertas:** host canónico (`CLIENT_URL`) y titularidad/cuenta de las claves Stripe (en espera).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
-- [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`.
+- [ ] **Stripe en modo test** (pendiente de pasar a producción): crear las claves de prueba (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) y ponerlas en `server/.env`. Hoy, sin claves, el código degrada con gracia (pago responde 503). Paso test→prod documentado en `server/.env.example`. ⚠️ **(2026-10-11)** El flujo integrado ya es Checkout **embebido** (`5b29192`); falta decidir **a qué cuenta/entidad** entran las claves (ver §15).
 - [ ] **Re-ejecutar `npm run init-db`** para aplicar el índice único `idx_gifts_payment_intent` (el agente de BD lo corrió antes de que SecDevOps añadiera el índice) y **verificar la columna/índice de `events.slug`** en BD existentes (ver §7 y §11.5). Incluye las columnas de WhatsApp (`leader_phone`, `whatsapp_sent_at`, `whatsapp_message`, ver §12) y la columna/índice de `custom_domain` (aplicados y verificados el 2026-09-21 en la BD local; **verificar en la BD desplegada**; ver §13).
-- [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js:6` y `server/src/middleware/auth.js:4` leen `process.env` **antes** de que `server/src/index.js:23` cargue `server/.env` con ruta absoluta (afecta al arranque local con `npm start`; en Render no, porque las env vars vienen de la plataforma). Fix sugerido: config compartida de dotenv (ver AUDITORIA.md §4.5).
+- [ ] *(Opcional)* Robustez `.env`: `server/src/db/index.js:6` y `server/src/middleware/auth.js:4` leen `process.env` **antes** de que `server/src/index.js:23` cargue `server/.env` con ruta absoluta (afecta al arranque local con `npm start`; en Railway no, porque las env vars vienen de la plataforma). Fix sugerido: config compartida de dotenv (ver AUDITORIA.md §4.5).
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
-- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS).
+- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS). ⚠️ (2026-10-11) El runbook vigente es de **Railway** (§7/§15); la titularidad de Stripe queda **en espera del usuario (parked)**.
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
 - [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
-- [ ] **Corregir `CLIENT_URL` en Render a una sola URL (`https://displayevent.com`):** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
+- [ ] **Corregir `CLIENT_URL` en Railway a una sola URL:** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). El host canónico definitivo está en decisión (`displayevent.com` vs `macarenayjorge.com`; ver §15). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
 - [ ] **Badge "Powered by Webi"** (solo `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3).
 - [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
 - [ ] *(Menor)* **`X-Robots-Tag` en `/` raíz** del dominio propio: hoy solo lo añade el fallback SPA; `/` lo sirve `express.static` sin header (ver §13.2).
@@ -528,7 +557,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | ---- | ---------------- |
 | `macarenayjorge.com` | **No registrado** al 2026-09-21 (NXDOMAIN; RDAP Verisign 404) → **disponible**. **Bloqueo #1: comprarlo ya** (riesgo de squatting). |
 | `displayevent.com` | Registrado en **Namecheap** y apuntando a **Railway** (A `69.46.46.0`); `www.displayevent.com` NXDOMAIN. |
-| Railway | Sin CLI/token en el entorno → runbook **manual**: añadir custom domain (recomendación: **solo apex**, por límites de plan — Trial 1 / Hobby 2 / Pro 20, y `displayevent.com` ya ocupa 1 slot), registros **CNAME + TXT**, TLS automático. `www` → apex **no existe** en Railway (Cloudflare Bulk Redirect o 301 del backend). |
+| Railway | Sin CLI/token en el entorno → runbook **manual**: añadir custom domain (recomendación: **solo apex**, por límites de plan — Trial 1 / Hobby 2 / Pro 20, y `displayevent.com` ya ocupa 1 slot), registros **CNAME + TXT**, TLS automático. `www` → apex **no existe** en Railway (Cloudflare Bulk Redirect o 301 del backend). ⚠️ Actualizado 2026-10-11: el dashboard exige **CNAME target tipo `xxxxx.up.railway.app` + TXT de verificación**, ambos obligatorios (sin TXT → 404); ver §7. |
 | Variable `ALLOWED_ORIGINS` | Valor exacto: `https://displayevent.com,https://macarenayjorge.com,https://www.macarenayjorge.com`. Reemplaza a `CLIENT_URL` en CORS y los POST same-origin también envían `Origin` (de ahí el wrapper de mismo host). ⚠️ Hoy **no está en `server/.env.example`** (solo se lee del entorno). |
 | Stripe de la pareja | Cuenta propia MX (RFC/entidad), sitio web `https://macarenayjorge.com`, Payment Link **"el cliente elige el importe"** (MXN, tarjeta); la URL `https://buy.stripe.com/...` se pega en el campo del editor. **Sin webhooks ni claves en la plataforma.** |
 
@@ -566,14 +595,89 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ---
 
-## 15. Referencias y documentación del repo
+## 15. Boda Jorge & Macarena — rediseño v2 (Fase 1), campos nuevos y OG dinámico (2026-10-11)
 
-- `README.md` — guía general (setup, scripts, API completa).
+**Estado:** implementado en el working tree **sin commitear** al cierre de la sesión (23 archivos modificados/eliminados + 10 nuevos sin seguimiento + la carpeta del mock; incluye la subida de audio de esta misma fecha). Verificado por los agentes (incluye la prueba de OG con User-Agent de crawler y la subida de un MP3 real a Cloudinary); los pendientes de smoke y producción se listan al final. **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
+
+**Qué se hizo:**
+
+- **Tema reescrito** (`themes/boda_jorge_macarena.js`): papel crema/tinta cálida, **Cormorant Garamond** (display/títulos e itálica) + **Montserrat** (cuerpo), set completo de vars `--inv-*` (incluye `--inv-photo-scrim` claro y las vars `--inv-envelope-*` del sobre editorial) + **puente Tailwind** (ver deuda abajo). El diseño ordena **novia & novio** (`couple.nameB` y luego `couple.nameA`).
+- **Layout reescrito** (`BodaJorgeMacarenaLayout.jsx`) con el **motor de hojas apilables** del mock: cada sección es sticky con `top` adaptativo (`vh − alto`), la hoja entrante entra inclinada y se endereza, la anterior se hunde/gira/escala y se oscurece (`[data-shade]`); en reposo se retira el transform (para no romper descendientes `fixed` como los modales) y con `prefers-reduced-motion` nunca se aplica. Escucha `scroll` en fase de captura (funciona también en la vista previa del editor).
+- **Secciones locales nuevas** (v2, en orden): `Hero.jsx` (portada con countdown inline), `Story.jsx` (Nuestra historia), `Locations.jsx` (una hoja por ubicación: Ceremonia/Recepción), `Itinerary.jsx` (riel con flores), `DressCode.jsx` (Vestimenta), `Gifts.jsx` (Regalo: nota + mesa), `Lodging.jsx` (Hospedaje y viaje), `Footer.jsx` (Cierre).
+- **Chrome nuevo:** `BottomNav.jsx` (pill inferior Ubicación/Regalo/Confirmar; salto por posición de **flujo** para no fallar con tarjetas sticky) y `MusicToggle.jsx` (audio opcional sin autoplay, `preload="none"`, loop, `aria-pressed`).
+- **Sobre editorial** (`EditorialEnvelope.jsx`): variante dedicada seleccionable por tema (`opening.envelopeVariant: "editorial"`), cargada **lazy** desde `InvitationView.jsx`; el `EnvelopeLoader` compartido no cambia. Secuencia sobre → solapa → sello → hoja → pantalla completa → fundido; bloquea el scroll con la clase `de-envelope-lock`.
+- **Decoración/utilidades locales:** `flora.jsx` (Flor/Ramillete/Eyebrow/FlowerRule), `Grain.jsx` (`GrainOverlay`), `SectionPhoto.jsx` (foto B&N por hoja con scrim claro) y `helpers.js` (fechas/nombres/URLs; oculta el placeholder de hora `00:00`).
+- **Eliminados** (sin uso tras el rediseño): `Countdown.jsx`, `Message.jsx`, `RegistryNote.jsx`, `SectionNav.jsx` y `decor.jsx` (solo de esta plantilla; `alice_xv` intacta).
+- **Fuentes** (`client/index.html`): Montserrat 300–600 y Cormorant Garamond 300 + itálica 300 añadidas.
+- **Mock de referencia** en `Invitación Macarena & Jorge/` (carpeta con nombre en Unicode NFD, sin seguimiento en git): `Invitacion Macarena y Jorge v2.dc.html` + `Flor.dc.html` / `Ramillete.dc.html` / `support.js`.
+
+**Contrato nuevo (campos comunes, sin migración):**
+
+| Campo | Tipo / tope | Uso |
+| ----- | ----------- | --- |
+| `story` | string ≤ 4000 (`STORY_MAX_LENGTH`) | relato de "Nuestra historia"; vacío → `message` → `defaultMessage` |
+| `music_url` | string (URL directa; subible desde el editor) | audio del botón de música; vacío → sin botón |
+| `lodging` | `[{name,note,url?}]` | hoteles; sin contenido → sin hoja |
+| `travel` | `{title,airport_note,routes:[{label,note}],closing_note}` | bloque de viaje; sin contenido → sin hoja |
+
+- **Servidor** (`server/src/schemas/invitation.js`): agregados a `commonFields` con defaults + helpers `normalizeLodging`/`normalizeTravel`; los **6 templates** los validan y normalizan (tolerantes: formas inválidas se descartan, `url` opcional).
+- **Cliente** (`client/src/invitation/schema/normalize.js`): espejo exacto (`STORY_MAX_LENGTH`, `normalizeLodging`, `normalizeTravel`; `toFormState` añade filas `_uid` y `serializeForm` las limpia). `fields.js` los declara bajo `EXTRA_FIELDS.boda_jorge_macarena` (documentación del contrato).
+- **Editor** (`EventInvitation.jsx`): bloques **"Nuestra historia y música"** y **"Hospedaje y viaje"** visibles **solo con `template === "boda_jorge_macarena"`**; las 4 claves se excluyen de la grilla genérica "Datos del formato" con `CUSTOM_EXTRA_KEYS`. Fase B quitará el gating.
+
+**Subida de audio desde el editor (misma fecha, 2026-10-11):**
+
+- **Backend** (`server/src/routes/uploads.js`): `POST /api/uploads` ahora acepta **imágenes** (JPG/PNG/WEBP/GIF, **8 MB**) y **audio** (`audio/mpeg` mp3, `audio/mp4`/`audio/x-m4a` m4a, `audio/ogg`, **15 MB**). Multer usa el límite global mayor (15 MB) y la cuota por tipo se valida en el handler con mensaje específico; **Cloudinary** sube el audio con resource type **`video`** (`/video/upload`, mismo preset/firma; el preset unsigned ya permite audio — probado con un MP3 real) y el **fallback local** conserva la extensión correcta (`EXT_BY_MIME`). La respuesta no cambia: `201 { url, public_id }` (`public_id: null` en local). Rate limit (50/h por usuario) y `requireAuth` intactos. En `server/src/index.js`, el mensaje de `LIMIT_FILE_SIZE` quedó "8 MB para imágenes, 15 MB para audio".
+- **Frontend** (`EventInvitation.jsx`): `ImageUploader` se generalizó a **`FileUploader`** con registro `UPLOAD_KINDS` (image/audio; los usos de imagen — p. ej. la foto de portada — quedan idénticos; la galería conserva su subida múltiple propia). En "Nuestra historia y música" hay ahora estado/miniatura de audio, botones **"Subir audio" / "Reemplazar audio" / "Subiendo…"**, "Quitar" y la ayuda **"MP3, M4A u OGG · máx. 15 MB"**; la validación cliente espeja la del server (mime/tamaño; si el navegador no reporta `file.type`, se infiere por extensión y se re-envuelve el `File` con el mime correcto). Al subir, la URL queda en `form.music_url`; el input de **URL directa se conserva** para pegar enlaces.
+- **Nota de uso:** `music_url` debe apuntar a un **archivo de audio directo**; YouTube/Spotify/Apple Music **no funcionan** (el reproductor es un `<audio>` nativo).
+
+**OG dinámico por token (previews de WhatsApp/redes):**
+
+- Nuevo `server/src/utils/invitationLookup.js`: **SQL único** de `findInvitationByToken` (incluye `slug` y `custom_domain`; excluye tokens revocados), reutilizado por `routes/invitations.js` (se eliminó su copia local) y por el catch-all de la SPA.
+- Nuevo `server/src/utils/ogMeta.js`: `invitationTokenFromPath`, `buildInvitationMeta` (título `{nameA} & {nameB} · Nuestra boda` → nombre del evento → genérico; **descripción fija y genérica, sin nombre de familia** por privacidad; imagen `hero_image` → `gallery[0]` → `og-image.png`; URL canónica vía `buildInvitationUrl`), `escapeHtml` e `injectInvitationMeta` (reemplazos quirúrgicos por etiqueta).
+- `server/src/index.js`: plantilla del build **cacheada** una vez (`readFileSync`) y catch-all `async` que inyecta los meta cuando el token resuelve; token inválido/inexistente o error de BD → HTML estático (comportamiento anterior). Solo aplica cuando el servidor sirve `client/dist`.
+- Verificado por el orquestador con **User-Agent de crawler**.
+
+**Desviaciones conscientes:**
+
+- El RSVP sigue siendo `shared/Rsvp.jsx` (mandato); se ve v2 por vars y el layout le neutraliza el fondo (`[&>section]:bg-transparent`).
+- Banco en Regalo: el contrato admite **un solo** `registry.bank`; el encabezado alterna `giftBankTitleMxn`/`giftBankTitleEur` ("Desde México"/"Desde España") según la moneda elegida.
+- La hora `00:00` (placeholder de eventos sin hora) **se oculta** (caja "Hora" e itinerario).
+- Título de "Nuestra historia": `labels.storyTitle` o, si vacío, `event.place`.
+- Cierre: `event.place · Mes Año` + badge "Powered by Webi" (`logo-dark.svg`) intacto; `hideBrand` solo oculta "DisplayEvent".
+- Campos comunes que este diseño **no consume**: `kicker`, `tagline` y `celebrants` (el eyebrow de portada es `labels.heroEyebrow`); el editor aún los ofrece.
+- *(Menor, por confirmar)* El título OG conserva el orden `{nameA} & {nameB}` (p. ej. "Jorge & Macarena") mientras la página muestra `{nameB} & {nameA}` ("Macarena & Jorge"); unificar si se desea.
+
+**Deuda Tailwind (`@theme`) — hallazgo para Fase B:**
+
+- `client/src/index.css` declara `--color-inv-*: var(--inv-*)` dentro de `@theme`, que Tailwind resuelve **una sola vez en `:root`**: las utilidades `bg-inv-*`/`text-inv-*`/`font-inv-*` ignoran el override de `--inv-*` anidado en el tema (**bug preexistente, reproducido también en `alice_xv`**).
+- El tema v2 lo **puentea re-declarando** `--color-inv-*`/`--font-inv-*` dentro de `theme.vars` (que `InvitationView` aplica como style en la raíz del tema), de modo que las utilidades resuelven con los valores del tema, incluidas las secciones compartidas.
+- Pendiente: resolver de raíz (patrón de temas y/o utilidades) al adoptar el diseño en Fase B; también documentado en `INVITACION_BODA_JORGE_MACARENA.md` §8.
+
+**Fase B (planificada):** adoptar este set (tema + secciones + campos) en `xv`, `cumpleanos` y `baby_shower`; **`alice_xv` permanece intacta** (decisión del usuario).
+
+**Producción en Railway (pendientes humanos; runbook de SecDevOps revisado el 2026-10-11, NO ejecutado):**
+
+- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). **Prerrequisito: commit + push del working tree (hoy sin commitear; pendiente de aprobación del usuario).**
+- **Dominio `macarenayjorge.com`:** Settings → Networking → + Custom Domain; el dashboard exige **CNAME target `xxxxx.up.railway.app` + TXT de verificación (ambos obligatorios; sin TXT → 404)**; SSL Let's Encrypt automático (≤1 h); límite de plan (Trial 1 dominio / Hobby 2). Registradores sin ALIAS/flattening → nameservers a Cloudflare (CNAME `@` con proxy ON, SSL "Full"). Detalle en §7.
+- `custom_domain` del evento en el panel + `npm run init-db` en la BD **desplegada**.
+- **Cloudinary en producción** (disco efímero): para persistir fotos/audio y para la imagen del OG; alternativa: volumen Railway en `/app/server/uploads`. **Serverless/sleep desactivado** para la boda.
+- Vars Stripe exactas (confirmadas en `server/src/utils/stripe.js`): `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`.
+- **Decisiones abiertas:** (1) **host canónico** — `CLIENT_URL` = `macarenayjorge.com` (recomendado) vs `displayevent.com`; (2) **titularidad de la cuenta Stripe** — **en espera del usuario (parked)**; §13.4 preveía cuenta propia de la pareja con Payment Link externo y `MODELO_COBRO.md` §6 (línea 136) advierte del riesgo de cobrar en la cuenta de la plataforma; el flujo integrado es Checkout **embebido** (`ui_mode:"embedded"`, `5b29192`) y **las claves definen la cuenta receptora**.
+- **Riesgos:** `npm audit` reportado **7 prod (server) / 2 (client)**; `X-Robots-Tag: noindex` **no aplica a `/` exacto** en host no canónico (deuda conocida, §8/§13.2); disco efímero si no se configura Cloudinary; **verificar el OG con crawler tras el deploy**.
+
+**Pendientes de producto:** fotos reales (hoy placeholders editables desde el editor), **reemplazar el enlace de YouTube de `music_url` del evento por un archivo subido** (reportado: hoy no reproduce; la subida ya está habilitada), API keys de Stripe, smoke test del guardado real del editor con sesión (bloques nuevos) y Fase B.
+
+---
+
+## 16. Referencias y documentación del repo
+
+- `README.md` — guía general (setup, scripts, API completa). Menciona **Railway** para el dominio personalizado (correcto; plataforma confirmada el 2026-10-11; ver §7).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
 - `PLAN_INVITACIONES_MULTIFORMATO.md` — plan de la reestructuración multiformato.
-- `INVITACION_BODA_JORGE_MACARENA.md` — doc de datos dinámicos de la plantilla (⚠️ describe el diseño anterior azul noche/dorado).
+- `INVITACION_BODA_JORGE_MACARENA.md` — doc de datos dinámicos de la plantilla, **actualizado al diseño v2** (2026-10-11; ver §15).
+- `Invitación Macarena & Jorge/` — mock de referencia del rediseño v2 (`.dc.html` + `Flor`/`Ramillete` + `support.js`; **sin seguimiento en git** al 2026-10-11).
 - `FORMATO LISTA DE INVITADOS 2026.xlsx` — archivo de cliente (git-ignored por patrón `*.xlsx`).
-- `render.yaml` — definición legacy de Render (despliegue anterior).
+- `render.yaml` — definición **legacy de Render** (Railway no la usa; se conserva o se borra por decisión humana).
 
 ### Historial reciente relevante (git)
 

@@ -1,107 +1,86 @@
-import { motion, useReducedMotion } from "motion/react";
-import { EASE } from "../motion.jsx";
-import { WeddingSectionTitle } from "./decor.jsx";
+import { Reveal } from "../motion.jsx";
+import { Eyebrow, Flor, FlowerRule } from "./flora.jsx";
+import { prettyTime } from "./helpers.js";
 
 /* ------------------------------------------------------------------
-   Itinerario minimalista (Boda Jorge & Macarena): timeline vertical con
-   línea fina amarilla (izquierda en móvil, centro en desktop), nodos de
-   anillo verde fino con número, tarjetas SIN fondo con borde izquierdo
-   naranja (móvil) o inferior naranja (desktop), hora en rosa/naranja y
-   título serif verde. En desktop los momentos alternan lados; stagger
-   reveal. Null si no hay items (misma paridad que shared/Itinerary).
+   Itinerario (v2): riel vertical con hora en Cormorant a la derecha,
+   nodo de flor sobre el riel y momento en microtexto con su lugar.
+
+   - Cada item es `{ label, time }` del contrato. La sub-línea (lugar)
+     se deriva de `cfg.locations` cuando existe una ubicación con el
+     mismo `label` (así "Misa" muestra su dirección, como el mock);
+     si no, la fila va sin sub-línea.
+   - Flores alternadas granado / bugambilia / dalia / granado.
 ------------------------------------------------------------------ */
+
+const NODE_FLOWERS = ["granado", "bugambilia", "dalia", "granado"];
+
 export default function Itinerary({ cfg, theme }) {
-  const items = (cfg.itinerary || []).map((it) => ({
-    label: it.label,
-    time: it.time,
-  }));
-  const reduced = useReducedMotion();
+  const labels = theme?.labels || {};
+  const locations = (cfg?.locations || []).filter(
+    (l) => l && String(l.place || "").trim()
+  );
+  const items = (cfg?.itinerary || [])
+    .filter((it) => it && (String(it.label || "").trim() || String(it.time || "").trim()))
+    .map((it) => {
+      const label = String(it.label || "").trim();
+      const match = locations.find(
+        (l) => String(l.label || "").trim().toLowerCase() === label.toLowerCase()
+      );
+      return {
+        label,
+        time: prettyTime(it.time),
+        place: match ? String(match.place).trim() : "",
+      };
+    });
+
   if (items.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden px-4 py-8 md:py-16">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_58%)]" />
+    <div className="flex flex-col items-center gap-5 px-6 pb-[120px] pt-24">
+      <Reveal className="flex flex-col items-center gap-[22px] text-center">
+        <Eyebrow>{labels.itineraryEyebrow || "Itinerario del día"}</Eyebrow>
+        <FlowerRule kind="dalia" />
+      </Reveal>
 
-      <div className="relative mx-auto max-w-3xl">
-        <WeddingSectionTitle
-          eyebrow={theme?.labels?.itineraryEyebrow ?? "Horarios"}
-          title={theme?.labels?.itinerary ?? "Itinerario de la Celebración"}
-          subtitle={
-            theme?.labels?.itinerarySubtitle ??
-            "Los momentos que viviremos juntos durante la celebración."
-          }
+      <div className="relative mt-4 flex w-full max-w-[360px] flex-col gap-[38px]">
+        {/* Riel vertical */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-2.5 left-[95px] top-2.5 w-px bg-[var(--inv-accent-border-strong)]"
         />
 
-        <div className="relative mt-14 md:mt-16">
-          {/* Línea fina amarilla animada */}
-          <motion.div
-            className="pointer-events-none absolute bottom-4 left-[21px] top-2 w-px md:left-1/2 md:-translate-x-1/2"
-            style={{ background: "var(--inv-accent-yellow)" }}
-            initial={reduced ? { opacity: 0.5 } : { opacity: 0, scaleY: 0 }}
-            whileInView={{ opacity: 0.5, scaleY: 1 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 1.6, ease: EASE }}
-          />
-
-          <motion.div
-            className="space-y-12 md:space-y-20"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.16 } } }}
+        {items.map((it, i) => (
+          <Reveal
+            key={`${it.label || it.time || i}-${i}`}
+            delay={i * 0.06}
+            className="relative grid grid-cols-[72px_46px_1fr] items-center"
           >
-            {items.map((it, i) => {
-              const left = i % 2 === 0;
-              return (
-                <motion.div
-                  key={`${it.label || it.time || i}-${i}`}
-                  variants={{
-                    hidden: { opacity: 0, x: reduced ? 0 : left ? -28 : 28 },
-                    show: {
-                      opacity: 1,
-                      x: 0,
-                      transition: { duration: 0.75, ease: EASE },
-                    },
-                  }}
-                  className="relative md:flex md:items-center"
-                >
-                  {/* Nodo: anillo verde fino con número */}
-                  <div className="absolute left-[21px] top-2 z-10 -translate-x-1/2 md:left-1/2">
-                    <div className="grid h-10 w-10 place-items-center rounded-full border border-[var(--inv-botanical)]/70 bg-[var(--inv-bg)] font-inv-heading text-sm tabular-nums text-[var(--inv-text)] md:h-12 md:w-12 md:text-base">
-                      {String(i + 1).padStart(2, "0")}
-                    </div>
-                  </div>
+            <div className="font-inv-display text-[28px] leading-none text-right tabular-nums text-[var(--inv-text)]">
+              {it.time}
+            </div>
 
-                  {/* Contenido: alterna lados en desktop, centrado en móvil.
-                      Borde izquierdo naranja en móvil, inferior en desktop. */}
-                  <div
-                    className={`border-l-2 border-[var(--inv-primary)] pl-14 md:w-1/2 md:border-l-0 md:border-b-2 md:border-b-[var(--inv-primary)] md:pb-6 md:pl-0 ${
-                      left ? "md:pr-16 md:text-right" : "md:ml-auto md:pl-16"
-                    }`}
-                  >
-                    {it.time && (
-                      <span className="inline-block text-[0.7rem] uppercase tracking-[0.3em] tabular-nums text-[var(--inv-accent-pink)] md:text-xs">
-                        {it.time}
-                      </span>
-                    )}
-                    <h3 className="mt-2 font-inv-heading text-2xl text-[var(--inv-text)] md:text-3xl">
-                      {it.label || `Momento ${i + 1}`}
-                    </h3>
-                    <div
-                      className={`mt-3 h-px w-10 bg-gradient-to-r from-transparent to-[var(--inv-primary)]/70 ${
-                        left
-                          ? "md:ml-auto md:bg-gradient-to-l md:from-[var(--inv-primary)]/70 md:to-transparent"
-                          : ""
-                      }`}
-                      aria-hidden="true"
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
+            <div className="flex justify-center">
+              <div className="h-[30px] w-[30px] rounded-full bg-[var(--inv-bg-alt2)] p-[3px]">
+                <Flor kind={NODE_FLOWERS[i % NODE_FLOWERS.length]} />
+              </div>
+            </div>
+
+            <div className="pl-1 text-left">
+              {it.label && (
+                <div className="text-[15px] font-semibold uppercase tracking-[0.18em] text-[var(--inv-text)]">
+                  {it.label}
+                </div>
+              )}
+              {it.place && (
+                <div className="mt-0.5 text-[15px] leading-snug text-[var(--inv-text-muted)]">
+                  {it.place}
+                </div>
+              )}
+            </div>
+          </Reveal>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

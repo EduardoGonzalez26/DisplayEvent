@@ -20,14 +20,34 @@ const uploadLimiter = rateLimit({
   keyFn: (req) => `user:${req.user?.id ?? req.ip}`,
 });
 
-const allowedMime = /^image\/(jpeg|png|webp|gif)$/;
+// Tipos permitidos y límites por clase de archivo. El límite global de multer
+// es el mayor (audio); la cuota específica de imágenes se valida en el handler
+// para poder devolver un mensaje preciso por tipo.
+const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const AUDIO_MIMES = new Set(["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg"]);
+const IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const AUDIO_MAX_BYTES = 15 * 1024 * 1024;
+const ALLOWED_MESSAGE =
+  "Solo se permiten imágenes JPG, PNG, WEBP o GIF y audio MP3, M4A u OGG";
+
+// Extensión de archivo por mimetype (para el fallback local).
+const EXT_BY_MIME = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+  "audio/x-m4a": "m4a",
+  "audio/ogg": "ogg",
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: AUDIO_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (!allowedMime.test(file.mimetype)) {
-      return cb(new Error("Solo se permiten imágenes JPG, PNG, WEBP o GIF"));
+    if (!IMAGE_MIMES.has(file.mimetype) && !AUDIO_MIMES.has(file.mimetype)) {
+      return cb(new Error(ALLOWED_MESSAGE));
     }
     cb(null, true);
   },
@@ -44,15 +64,24 @@ function cloudinaryConfigured() {
   );
 }
 
-async function uploadToCloudinary(buffer, folder) {
+// Sube a Cloudinary. `resourceType` es "image" o "video" (Cloudinary trata
+// los audios como recurso de tipo video: /video/upload).
+async function uploadToCloudinary(
+  buffer,
+  folder,
+  resourceType = "image",
+  filename = "upload",
+  contentType = "application/octet-stream"
+) {
   const cloud = process.env.CLOUDINARY_CLOUD_NAME;
   const preset = process.env.CLOUDINARY_PRESET;
+  const folderName = folder || "displayevent";
   const boundary = randomUUID();
   const field = (name, value) =>
     `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
 
-  const bodyHeadParts = [field("folder", folder || "displayevent")];
-  const params = { folder: folder || "display" };
+  const bodyHeadParts = [field("folder", folderName)];
+  const params = { folder: folderName };
 
   if (preset) {
     // Subida unsigned: no requiere API key ni firma.
@@ -73,7 +102,7 @@ async function uploadToCloudinary(buffer, folder) {
 
   const head = Buffer.from(
     bodyHeadParts.join("") +
-      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="img"\r\nContent-Type: application/octet-stream\r\n\r\n`
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`
   );
   const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
   const body = Buffer.concat([head, buffer, tail]);
@@ -83,7 +112,7 @@ async function uploadToCloudinary(buffer, folder) {
       {
         method: "POST",
         hostname: "api.cloudinary.com",
-        path: `/v1_1/${cloud}/image/upload`,
+        path: `/v1_1/${cloud}/${resourceType}/upload`,
         headers: {
           "Content-Type": `multipart/form-data; boundary=${boundary}`,
           "Content-Length": body.length,
@@ -127,11 +156,30 @@ router.post("/", uploadLimiter, upload.single("file"), async (req, res, next) =>
     if (!req.file) {
       return res.status(400).json({ error: "No se recibió ningún archivo" });
     }
-    const ext = req.file.mimetype.split("/")[1] === "jpeg" ? "jpg" : req.file.mimetype.split("/")[1];
+
+    // Cuota por tipo: multer ya limita a 15 MB (audio), aquí se aplica la de
+    // imágenes (8 MB) con mensaje específico.
+    const isAudio = AUDIO_MIMES.has(req.file.mimetype);
+    if (req.file.size > (isAudio ? AUDIO_MAX_BYTES : IMAGE_MAX_BYTES)) {
+      return res.status(400).json({
+        error: isAudio
+          ? "El audio supera el tamaño máximo de 15 MB"
+          : "La imagen supera el tamaño máximo de 8 MB",
+      });
+    }
+
+    const ext = EXT_BY_MIME[req.file.mimetype] || "bin";
+    const resourceType = isAudio ? "video" : "image";
 
     if (cloudinaryConfigured()) {
       try {
-        const result = await uploadToCloudinary(req.file.buffer, "displayevent");
+        const result = await uploadToCloudinary(
+          req.file.buffer,
+          "displayevent",
+          resourceType,
+          `upload.${ext}`,
+          req.file.mimetype
+        );
         return res.status(201).json({ url: result.secure_url, public_id: result.public_id });
       } catch (cloudErr) {
         console.error(`[uploads] Cloudinary falló, guardando en local: ${cloudErr.message}`);

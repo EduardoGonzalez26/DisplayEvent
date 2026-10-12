@@ -1,156 +1,222 @@
-import Countdown from "./Countdown.jsx";
+import { useEffect, useRef } from "react";
+import { GrainOverlay } from "./Grain.jsx";
 import Hero from "./Hero.jsx";
-import SectionPhoto from "./SectionPhoto.jsx";
-import Message from "./Message.jsx";
+import Story from "./Story.jsx";
+import LocationSection from "./Locations.jsx";
 import Itinerary from "./Itinerary.jsx";
-import Locations from "./Locations.jsx";
 import DressCode from "./DressCode.jsx";
-import RegistryNote from "./RegistryNote.jsx";
-import Footer from "./Footer.jsx";
 import Gifts from "./Gifts.jsx";
+import Lodging from "./Lodging.jsx";
+import Footer from "./Footer.jsx";
+import BottomNav from "./BottomNav.jsx";
+import MusicToggle from "./MusicToggle.jsx";
+import SectionPhoto from "./SectionPhoto.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
-import SectionNav from "./SectionNav.jsx";
 import { safeCssUrl } from "../shared/util.jsx";
+import { mapsSearchUrl, safeHttpUrl } from "./helpers.js";
 
 /* ------------------------------------------------------------------
    Orden FIJO de las tarjetas con fondo de foto. La POSICIÓN en esta
    lista decide qué foto de `cfg.gallery` le toca a cada id:
-   `gallery[(i + offset) % length]`. Al ser un orden por id (y no por
-   secciones renderizadas), una sección condicional oculta NO le roba la
-   foto a las demás: cada tarjeta recibe SIEMPRE la misma imagen. Si la
-   portada consume `gallery[0]`, `offset` vale 1 para no repetir la foto
-   de portada en la primera tarjeta. Mover/añadir/quitar ids aquí para
-   reasignar secciones sin tocar el JSX de abajo.
+   `gallery[(i + offset) % length]`. Al ser un orden por id, una sección
+   condicional oculta NO le roba la foto a las demás. Si la portada
+   consume `gallery[0]` (sin `hero_image`), `offset` vale 1.
 ------------------------------------------------------------------ */
 const PHOTO_ORDER = [
-  "carta",
+  "historia",
+  "ceremonia",
+  "recepcion",
   "itinerario",
-  "ubicaciones",
-  "dresscode",
-  "regalos",
-  "mesa-regalos",
-  "confirmaciones",
+  "vestimenta",
+  "regalo",
+  "confirmar",
+  "hospedaje",
   "cierre",
 ];
 
 /* ------------------------------------------------------------------
-   Boda de Jorge & Macarena — composición "carta panel por panel"
-   (tarjetas apiladas con sticky). Cada sección es una tarjeta que:
+   Motor de hojas apiladas (equivalente al `frame()` del mock v2):
 
-      1. Se queda fija arriba (`sticky top-0`).
-      2. Tiene fondo OPACO (`bg-inv-bg`/`-alt`/`-alt2`): restaura el efecto
-         "carta desplegable" y tapa por completo a la tarjeta anterior.
-      3. Tiene `min-h-[100dvh]` para tapar por completo a la anterior.
-      4. Usa z-index creciente (la siguiente cubre a la anterior).
-      5. Lleva acabado de tarjeta: esquinas superiores redondeadas,
-         hairline botánico superior y sombra suave ascendente.
-
-   Orden: Hero (z-0, ya existente), Countdown+Message (z-10),
-   Itinerary (z-20), Locations (z-30), DressCode (z-50),
-   RegistryNote (z-60), Gifts (z-70), Rsvp (z-80), Footer (z-90).
-
-   Varias tarjetas NO son sticky (`flow`): su contenido puede exceder
-   `100dvh` en móvil y `sticky top-0` + `min-h-[100dvh]` recortaría la
-   parte inferior. Fluyen normal (mantienen el acabado de tarjeta) y, al
-   cubrir a la anterior, conservan el efecto "carta desplegable" sin
-   quedarse fijas. Son: Carta (z-10), Itinerario (z-20), Dress Code
-   (z-50), Nota de regalos (z-60), Mesa de regalos (z-70) y Rsvp (z-80).
-   El Hero (z-0) y el cierre (z-90) siguen sticky.
-
-   Las secciones que devuelven `null` no dejan una tarjeta vacía: el
-   layout replica sus condiciones de `return null` y omite el wrapper.
-
-   Fondo de foto: TODAS las tarjetas llevan, sobre su fondo opaco, una
-   capa `absolute` con UNA foto de `cfg.gallery` a pantalla completa
-   (B&N + scrim oscuro del tema) vía `SectionPhoto`. La correspondencia
-   id → foto la fija `PHOTO_ORDER` por índice (con `offset` si la portada
-   ya consumió `gallery[0]`). El fondo sigue siendo opaco, así que el
-   efecto "carta desplegable" se mantiene sin multiplicar translucidez
-   entre tarjetas. Sin galería, todas caen a sus fondos sólidos.
+   - Cada sección `[data-sheet]` es un contenedor sticky; la hoja interior
+     `[data-paper]` es la que se inclina/entra y se hunde/sale.
+   - Cuando una sección es más alta que el viewport, se ajusta su `top`
+     sticky a `vh - alto` (queda "clavada" pegada al fondo) para que todo
+     su contenido sea alcanzable — como el mock.
+   - La hoja entrante entra inclinada y se endereza; la anterior se hunde,
+     gira levemente, se escala y se oscurece (`[data-shade]`).
+   - Al estar la hoja en reposo (activa, sin vecina encima) se retira el
+     `transform` por completo: así los descendientes `position: fixed`
+     (modales de RSVP/Mesa de regalos) se anclan al viewport y no a la
+     hoja. Con `prefers-reduced-motion` nunca se aplica transform.
+   - Escucha `scroll` en fase de captura: funciona con scroll de ventana
+     y con contenedores internos (vista previa del editor).
 ------------------------------------------------------------------ */
+function useStackedSheets() {
+  const rootRef = useRef(null);
 
-/* Canto superior botánico fino (hairline + rombo amarillo) que marca el
-   borde de cada tarjeta, coherente con los hairline/diamantes del tema. */
-function CardEdge() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-center gap-2 pt-3 md:pt-4"
-    >
-      <span className="h-px w-20 bg-gradient-to-r from-transparent to-[var(--inv-botanical)]/40" />
-      <span className="h-1.5 w-1.5 rotate-45 bg-[var(--inv-accent-yellow)]/70" />
-      <span className="h-px w-20 bg-gradient-to-l from-transparent to-[var(--inv-botanical)]/40" />
-    </div>
-  );
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return undefined;
+
+    let reduce = false;
+    try {
+      reduce = !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      /* noop */
+    }
+
+    const sheets = Array.from(root.querySelectorAll("[data-sheet]")).map((sec) => ({
+      sec,
+      paper: sec.querySelector("[data-paper]"),
+      shade: sec.querySelector("[data-shade]"),
+      top: null,
+      origin: null,
+    }));
+    if (sheets.length === 0) return undefined;
+
+    let raf = 0;
+    const clamp = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+    const frame = () => {
+      raf = 0;
+      const vh = window.innerHeight;
+
+      for (const s of sheets) {
+        const h = s.sec.offsetHeight;
+        const top = Math.min(0, vh - h);
+        if (s.top !== top) {
+          s.sec.style.top = `${top}px`;
+          s.top = top;
+        }
+      }
+
+      for (let i = 0; i < sheets.length; i++) {
+        const s = sheets[i];
+        const next = sheets[i + 1];
+        const p = next ? clamp(1 - next.sec.getBoundingClientRect().top / vh) : 0;
+        const e = i === 0 ? 1 : clamp(1 - s.sec.getBoundingClientRect().top / vh);
+        const dir = i % 2 ? 1 : -1;
+
+        if (s.paper) {
+          const atRest = e === 1 && p === 0;
+          if (reduce || atRest) {
+            if (s.paper.style.transform) s.paper.style.transform = "";
+          } else {
+            const inRot = (1 - e) * 3.2 * dir;
+            const inX = (1 - e) * 4 * dir;
+            const outRot = -p * 1.6 * dir;
+            const sc = 1 - 0.08 * p;
+            const ty = -p * 2.5;
+            s.paper.style.transform = `translate3d(${inX}%, ${ty}%, 0) rotate(${(
+              inRot + outRot
+            ).toFixed(3)}deg) scale(${sc.toFixed(4)})`;
+          }
+        }
+
+        if (s.shade) {
+          const o = (p * 0.5).toFixed(3);
+          if (s.origin !== o) {
+            s.shade.style.opacity = o;
+            s.origin = o;
+          }
+        }
+      }
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(frame);
+    };
+
+    onScroll();
+    // Fase de captura: capta scroll de ventana Y de contenedores internos.
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    window.addEventListener("resize", onScroll);
+    let ro = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(onScroll);
+      ro.observe(root);
+    }
+    return () => {
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("resize", onScroll);
+      ro?.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return rootRef;
 }
 
-/* Tarjeta apilable. `flow` = true para contenido que puede exceder el
-   viewport (Carta, Itinerario, Dress Code, Nota de regalos, Mesa de
-   regalos y Rsvp): no se fija, fluye normal manteniendo el acabado.
-
-   Estructura por capas (todas ABSOLUTAS dentro del wrapper):
-     1. Fondo OPACO de la tarjeta (`bg`) — restaura el efecto
-        "carta desplegable" (sin translucidez ni backdrop-blur). Queda
-        como base incluso con foto (la foto lo cubre por completo).
-     2. `SectionPhoto` (solo si `photo`) — UNA foto a pantalla completa en
-        B&N con scrim oscuro del tema, entre el fondo opaco y el contenido.
-     3. `CardEdge` y el contenido, envueltos en `relative` para quedar
-        por encima de la foto.
-
-   Mantener el fondo en una capa `absolute` propia (no en el wrapper) evita
-   que el `<div>` de la tarjeta gane `backdrop-filter` y se convierta en
-   contenedor de posicionamiento para descendientes `fixed` (p. ej. el modal
-   de datos bancarios de Gifts), que siguen anclándose al viewport.
-
-   `photo`: URL opcional. `photoPriority` fuerza la carga eager SOLO en la
-   primera tarjeta visible (las demás van `loading="lazy"`).
-   `contentClassName`: clases extra para el wrapper del contenido (p. ej.
-   neutralizar el fondo opaco de secciones compartidas).
-
-   Sin foto (o con galería vacía) la tarjeta se comporta como antes: solo
-   fondo sólido. */
+/* ------------------------------------------------------------------
+   Hoja apilable (v2): sección sticky con padding lateral fluido; dentro,
+   el papel (máx. 1200px) con fondo opaco claro, sombra ascendente,
+   filete interior y pluma superior (gradiente cálido). Capas:
+     1. Fondo opaco del papel.
+     2. `SectionPhoto` — foto B&N con scrim claro del tema (opcional).
+     3. `[data-shade]` — oscurecimiento por la hoja entrante.
+     4. Marco interior + pluma (z-8/9) y contenido (z-10).
+------------------------------------------------------------------ */
 function StackCard({
-  z,
-  bg,
-  flow = false,
   id,
+  zIndex,
+  bg = "bg-inv-bg-alt",
   photo,
   photoPriority = false,
+  contentAlign = "center",
   contentClassName = "",
   children,
 }) {
-  const finish =
-    "relative overflow-hidden rounded-t-[1.6rem] shadow-[0_-18px_48px_-18px_var(--inv-shadow-deep)]";
-
-  const layers = (
-    <>
-      <div aria-hidden="true" className={`absolute inset-0 ${bg}`} />
-      {photo ? <SectionPhoto src={photo} priority={photoPriority} /> : null}
-    </>
-  );
-
-  if (flow) {
-    return (
-      <div id={id} className={`${finish} ${z}`}>
-        {layers}
-        <CardEdge />
-        <div className={`relative ${contentClassName}`}>{children}</div>
-      </div>
-    );
-  }
-
   return (
-    <div
-      id={id}
-      className={`${finish} ${z} sticky top-0 flex min-h-[100dvh] flex-col justify-center`}
-    >
-      {layers}
-      <CardEdge />
-      <div className={`relative ${contentClassName}`}>{children}</div>
-    </div>
+    <section data-sheet id={id} className="sticky top-0" style={{ zIndex }}>
+      <div className="px-[clamp(8px,3vw,56px)]">
+        <div
+          data-paper
+          className={`relative mx-auto flex min-h-[100svh] max-w-[1200px] flex-col overflow-hidden will-change-transform ${bg} shadow-[0_-22px_44px_-14px_rgba(0,0,0,0.5)]`}
+        >
+          <div
+            data-shade
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[6] bg-[#0E0D0C] opacity-0"
+          />
+          {photo ? <SectionPhoto src={photo} priority={photoPriority} /> : null}
+
+          {/* Marco interior (hairline a 12px) y pluma superior cálida */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-3 z-[8] border border-[var(--inv-card-frame,#E2DACD)]"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[9] h-[34px] bg-[linear-gradient(to_bottom,rgba(60,40,20,0.08),rgba(60,40,20,0))]"
+          />
+
+          <div
+            className={`relative z-10 flex flex-1 flex-col ${
+              contentAlign === "center" ? "justify-center" : ""
+            } ${contentClassName}`}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
+/* ------------------------------------------------------------------
+   Boda de Jorge & Macarena (rediseño v2): sobre editorial en
+   InvitationView y, al abrirse, la página queda compuesta por hojas
+   apiladas en el orden del mock:
+
+     Portada · Nuestra historia · Ceremonia/Recepción (una hoja por
+     `cfg.locations`) · Itinerario · Vestimenta · Regalo ·
+     Confirmación · Hospedaje y viaje · Cierre
+
+   Navegación: pill inferior (Ubicación / Regalo / Confirmar) + botón
+   de música, visibles al abrir el sobre. RSVP, Gifts y el badge Webi
+   conservan su lógica original.
+------------------------------------------------------------------ */
 export default function BodaJorgeMacarenaLayout({
   event,
   family,
@@ -162,126 +228,169 @@ export default function BodaJorgeMacarenaLayout({
   publishableKey,
   hideBrand = false,
 }) {
-  // Evita un hueco con el contador cuando no hay fecha (o es inválida).
-  const hasCountdown = (() => {
-    if (!event.date) return false;
-    const ts = new Date(`${event.date}T${event.time || "00:00:00"}`).getTime();
-    return !Number.isNaN(ts);
-  })();
+  const containerRef = useStackedSheets();
 
-  // Réplicas de las condiciones de `return null` de cada sección para no
-  // renderizar tarjetas vacías de 100dvh.
-  const showItinerary = (cfg.itinerary || []).length > 0;
-  const showLocations = (cfg.locations || []).some(
-    (it) => it && (it.place || it.label)
-  );
-  const showDressCode = (() => {
-    const raw = cfg.dress_code || [];
-    if (Array.isArray(raw)) return raw.length > 0;
-    return (
-      String(raw)
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean).length > 0
-    );
-  })();
-  const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
-  const showGifts = !!(cfg.registry && cfg.registry.enabled);
-
-  // Fotos de `cfg.gallery` como fondo de todas las tarjetas. La POSICIÓN en
-  // `PHOTO_ORDER` decide qué foto le toca (`gallery[(i + offset) % length]`).
-  // `offset` = 1 cuando la portada ya consume `gallery[0]` (no hay
-  // `hero_image` válida), para no repetir de inmediato la foto de portada;
-  // con una sola foto la repetición es inevitable y aceptable. Galería
-  // vacía → `photoFor` devuelve `undefined` y todas las tarjetas quedan
-  // sólidas (comportamiento de siempre).
+  // Fotos de `cfg.gallery` como fondo de las hojas. `offset` = 1 cuando la
+  // portada ya consume `gallery[0]` (no hay `hero_image` válida).
   const gallery = (cfg.gallery || []).filter(
     (s) => typeof s === "string" && s.trim()
   );
-  const photoOffset =
-    !safeCssUrl(cfg.hero_image) && gallery.length > 0 ? 1 : 0;
-  const photoFor = (id) => {
-    const i = PHOTO_ORDER.indexOf(id);
+  const photoOffset = !safeCssUrl(cfg.hero_image) && gallery.length > 0 ? 1 : 0;
+  const photoFor = (name) => {
+    const i = PHOTO_ORDER.indexOf(name);
     if (i === -1 || gallery.length === 0) return undefined;
     return gallery[(i + photoOffset) % gallery.length];
   };
+  // Foto de cada hoja de ubicación (ceremonia, recepción y extra).
+  const photoForLocation = (i) => {
+    if (gallery.length === 0) return undefined;
+    return gallery[(1 + i + photoOffset) % gallery.length];
+  };
 
-  // Puntos de la navegación lateral: una entrada por sección VISIBLE
-  // (mismas condiciones que arriba). "Regalos" apunta a la nota si existe,
-  // si no a la Mesa de Regalos (`mesa-regalos`).
-  const sections = [
-    { id: "carta", label: "Carta" },
-    showItinerary && { id: "itinerario", label: "Itinerario" },
-    showLocations && { id: "ubicaciones", label: "Ubicaciones" },
-    showDressCode && { id: "dresscode", label: "Dress Code" },
-    (showRegistryNote || showGifts) && {
-      id: showRegistryNote ? "regalos" : "mesa-regalos",
-      label: "Regalos",
+  // Réplicas de los `return null` de cada sección para no crear hojas
+  // vacías de 100dvh.
+  const locations = (cfg.locations || []).filter(
+    (l) =>
+      l &&
+      (String(l.label || "").trim() || String(l.place || "").trim())
+  );
+  const itineraryItems = (cfg.itinerary || []).filter(
+    (it) =>
+      it && (String(it.label || "").trim() || String(it.time || "").trim())
+  );
+  const dressItems = (() => {
+    const raw = cfg.dress_code || [];
+    if (Array.isArray(raw)) {
+      return raw
+        .map((d) => (typeof d === "object" && d ? String(d.label || "") : String(d || "")))
+        .filter((s) => s.trim());
+    }
+    return String(raw)
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  })();
+  const showGifts = !!(cfg.registry && cfg.registry.enabled);
+  const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
+  const showGiftSection = showGifts || showRegistryNote;
+  const lodgingItems = (cfg.lodging || []).filter(
+    (h) => h && (String(h.name || "").trim() || String(h.note || "").trim())
+  );
+  const travel = cfg.travel || {};
+  const showTravel = !!(
+    String(travel.title || "").trim() ||
+    String(travel.airport_note || "").trim() ||
+    String(travel.closing_note || "").trim() ||
+    (travel.routes || []).some(
+      (r) => r && (String(r.label || "").trim() || String(r.note || "").trim())
+    )
+  );
+  const showLodging = lodgingItems.length > 0 || showTravel;
+
+  const musicUrl = String(cfg.music_url || "").trim();
+
+  // z-index creciente de las hojas (por debajo del chrome fijo z-60).
+  const zHistoria = 2;
+  const zLocations = 3; // 3, 4, 5…
+  const zItinerary = zLocations + Math.max(locations.length, 0);
+  const zDress = zItinerary + 1;
+  const zGift = zDress + 1;
+  const zRsvp = zGift + 1;
+  const zLodging = zRsvp + 1;
+  const zClosing = zLodging + 1;
+
+  // Pill inferior: solo las secciones que existen.
+  const navItems = [
+    locations.length > 0 && {
+      id: "ubicacion-0",
+      label: theme?.labels?.navLocations || "Ubicación",
     },
-    { id: "confirmaciones", label: "Confirmaciones" },
+    showGiftSection && {
+      id: "regalo",
+      label: theme?.labels?.navGift || "Regalo",
+    },
+    {
+      id: "confirmar",
+      label: theme?.labels?.navRsvp || "Confirmar",
+      primary: true,
+    },
   ].filter(Boolean);
 
   return (
-    <div className="isolate">
-      {/* Card 0 — portada (ya sticky h-dvh) */}
-      <div className="sticky top-0 z-0" id="inicio">
-        <Hero event={event} family={family} cfg={cfg} reveal={reveal} />
-      </div>
+    <div ref={containerRef} className="isolate bg-[#1A1918]">
+      {/* Hoja 1 — Portada */}
+      <Hero event={event} cfg={cfg} reveal={reveal} theme={theme} />
 
-      {/* Card 1 — contador + carta (el contador es pequeño) — FONDO DE FOTO.
-          Primera tarjeta visible: su foto carga eager (`photoPriority`). */}
+      {/* Hoja 2 — Nuestra historia */}
       <StackCard
-        z="z-10"
-        bg="bg-inv-bg"
-        flow
-        id="carta"
-        photo={photoFor("carta")}
-        photoPriority
+        id="historia"
+        zIndex={zHistoria}
+        bg="bg-inv-bg-alt"
       >
-        {hasCountdown && (
-          <div className="px-4 pt-6 pb-6 md:pt-8 md:pb-10">
-            <Countdown date={event.date} time={event.time} theme={theme} />
-          </div>
-        )}
-        <Message cfg={cfg} family={family} theme={theme} />
+        <Story
+          cfg={cfg}
+          family={family}
+          event={event}
+          theme={theme}
+          photo={photoFor("historia")}
+        />
       </StackCard>
 
-      {/* Card 2 — itinerario — FONDO DE FOTO */}
-      {showItinerary && (
-        <StackCard z="z-20" bg="bg-inv-bg" id="itinerario" photo={photoFor("itinerario")} flow>
+      {/* Hojas 3+ — Ceremonia / Recepción (una por ubicación) */}
+      {locations.map((item, i) => (
+        <StackCard
+          key={`ubicacion-${i}`}
+          id={`ubicacion-${i}`}
+          zIndex={zLocations + i}
+          bg={i % 2 === 0 ? "bg-inv-bg-alt2" : "bg-inv-bg-alt"}
+          photo={photoForLocation(i)}
+        >
+          <LocationSection
+            item={item}
+            index={i}
+            event={event}
+            theme={theme}
+            linkUrl={
+              safeHttpUrl(item.url) ||
+              (String(item.place || "").trim()
+                ? mapsSearchUrl(item.place)
+                : null)
+            }
+          />
+        </StackCard>
+      ))}
+
+      {/* Itinerario */}
+      {itineraryItems.length > 0 && (
+        <StackCard
+          id="itinerario"
+          zIndex={zItinerary}
+          bg="bg-inv-bg-alt2"
+          photo={photoFor("itinerario")}
+        >
           <Itinerary cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 3 — ubicaciones — FONDO DE FOTO */}
-      {showLocations && (
-        <StackCard z="z-30" bg="bg-inv-bg-alt2" id="ubicaciones" photo={photoFor("ubicaciones")} flow>
-          <Locations cfg={cfg} theme={theme} />
-        </StackCard>
-      )}
-
-      {/* Card 5 — dress code — FONDO DE FOTO */}
-      {showDressCode && (
-        <StackCard z="z-50" bg="bg-inv-bg" id="dresscode" photo={photoFor("dresscode")} flow>
+      {/* Vestimenta */}
+      {dressItems.length > 0 && (
+        <StackCard
+          id="vestimenta"
+          zIndex={zDress}
+          bg="bg-inv-bg-alt"
+          photo={photoFor("vestimenta")}
+        >
           <DressCode cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
-      {/* Card 6 — nota de regalos — FONDO DE FOTO */}
-      {showRegistryNote && (
-        <StackCard z="z-60" bg="bg-inv-bg" flow id="regalos" photo={photoFor("regalos")}>
-          <RegistryNote cfg={cfg} theme={theme} />
-        </StackCard>
-      )}
-
-      {/* Card 7 — mesa de regalos — FONDO DE FOTO */}
-      {showGifts && (
+      {/* Regalo (nota + Mesa de Regalos) */}
+      {showGiftSection && (
         <StackCard
-          z="z-70"
+          id="regalo"
+          zIndex={zGift}
           bg="bg-inv-bg-alt2"
-          flow
-          id="mesa-regalos"
-          photo={photoFor("mesa-regalos")}
+          photo={photoFor("regalo")}
         >
           <Gifts
             cfg={cfg}
@@ -292,35 +401,52 @@ export default function BodaJorgeMacarenaLayout({
         </StackCard>
       )}
 
-      {/* Card 8 — RSVP (compartido): fluye normal, no sticky — FONDO DE FOTO.
-          shared/Rsvp pinta su <section> raíz con `bg-inv-bg-alt` opaco, lo que
-          taparía la foto de la tarjeta; se neutraliza SOLO ese fondo desde el
-          wrapper local (sin tocar el componente compartido). Los paneles
-          internos del formulario conservan su superficie propia. */}
+      {/* Confirmación (shared/Rsvp): su <section> raíz pinta fondo opaco;
+          se neutraliza SOLO desde el wrapper local. */}
       <StackCard
-        z="z-80"
+        id="confirmar"
+        zIndex={zRsvp}
         bg="bg-inv-bg-alt"
-        flow
-        id="confirmaciones"
-        photo={photoFor("confirmaciones")}
+        photo={photoFor("confirmar")}
         contentClassName="[&>section]:bg-transparent"
       >
         <Rsvp {...rsvp} />
       </StackCard>
 
-      {/* Card 9 — cierre — FONDO DE FOTO */}
-      <StackCard z="z-90" bg="bg-inv-bg-alt" id="cierre" photo={photoFor("cierre")}>
-        <Footer event={event} theme={theme} cfg={cfg} hideBrand={hideBrand} />
+      {/* Hospedaje y viaje */}
+      {showLodging && (
+        <StackCard
+          id="hospedaje"
+          zIndex={zLodging}
+          bg="bg-inv-bg-alt2"
+          photo={photoFor("hospedaje")}
+        >
+          <Lodging cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Cierre */}
+      <StackCard
+        id="cierre"
+        zIndex={zClosing}
+        bg="bg-inv-bg-alt"
+        contentAlign="stretch"
+      >
+        <Footer
+          event={event}
+          theme={theme}
+          cfg={cfg}
+          hideBrand={hideBrand}
+          photo={photoFor("cierre")}
+        />
       </StackCard>
 
-      {/* Navegación lateral flotante (solo tras abrir el sobre) */}
-      {reveal && (
-        <SectionNav
-          sections={sections}
-          rsvpId="confirmaciones"
-          topId="inicio"
-        />
-      )}
+      {/* Navegación inferior + música (aparecen al abrir el sobre) */}
+      {navItems.length > 0 && <BottomNav items={navItems} reveal={reveal} />}
+      <MusicToggle url={musicUrl} reveal={reveal} labels={theme?.labels} />
+
+      {/* Textura de papel del diseño (grano fino sobre todo) */}
+      <GrainOverlay />
     </div>
   );
 }

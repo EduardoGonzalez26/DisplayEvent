@@ -1,94 +1,138 @@
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { Reveal } from "../motion.jsx";
-import { BotanicalDivider, Flourish } from "./decor.jsx";
-
-const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+import { Ramillete } from "./flora.jsx";
+import { displayNames, initialsOf, monthYearLine, parseEventDate } from "./helpers.js";
 
 /* ------------------------------------------------------------------
-   Cierre botánico (Boda Jorge & Macarena): tarjeta final sobre verde
-   noche con divisor botánico, "Con todo nuestro cariño", nombres de la
-   pareja en script rosa, fecha larga + hora + recinto en marfil y la
-   línea discreta "DisplayEvent". Acepta `cfg` opcional para firmar con
-   los nombres de la pareja (el layout lo pasa; sin él degrada a
-   event.name).
+   Cierre (v2): foto B&N a sangre con degradado y la cita del tema;
+   debajo, monograma circular (iniciales en orden de diseño M&J)
+   flanqueado por dos ramilletes, la línea "lugar · mes año" y el pie
+   de marca.
 
-   Badge publicitario "Powered by Webi" (SOLO esta plantilla): último
-   elemento del cierre, enlace sin subrayado a https://webi.mx en
-   pestaña nueva. Usa `client/public/webi/logo-light.svg` (wordmark claro)
-   porque el fondo efectivo del cierre ahora es oscuro: la tarjeta tiene
-   `bg-inv-bg-alt` (verde noche) y, si lleva foto, va en B&N con scrim
-   oscuro. La URL se construye con `import.meta.env.BASE_URL` (convención
-   de assets en `public/`). El texto "Powered by" es contenido de marca
-   fijo: NO vive en `theme.labels` ni en el schema.
+   - La cita sale de `theme.labels.closingQuote`.
+   - La línea inferior combina `event.place` y el mes/año del evento.
+   - Badge "Powered by Webi" (SOLO esta plantilla): enlace fijo a
+     https://webi.mx en pestaña nueva + wordmark oscuro
+     (`client/public/webi/logo-dark.svg`) porque el fondo del cierre es
+     claro. `hideBrand` oculta la línea "DisplayEvent" (white-label por
+     dominio propio), nunca el badge.
 ------------------------------------------------------------------ */
-export default function Footer({ event, theme, cfg, hideBrand = false }) {
-  const reduced = useReducedMotion();
-  // Drift sutil del divisor botánico. La tarjeta final es sticky, así que
-  // no usamos `useScroll({ target })` (offsetTop no refleja el pinning) y
-  // derivamos del scroll global con un desplazamiento pequeño.
-  const { scrollYProgress } = useScroll();
-  const dividerY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -14]);
-
-  const couple = cfg?.couple || {};
-  const names = [String(couple.nameA || "").trim(), String(couple.nameB || "").trim()]
-    .filter(Boolean)
-    .join(" & ");
-
-  const date = new Date(`${event.date}T00:00:00`);
-  const day = date.getDate();
-  const month = cap(date.toLocaleDateString("es-MX", { month: "long" }));
-  const year = date.getFullYear();
-  const weekday = cap(date.toLocaleDateString("es-MX", { weekday: "long" }));
-
-  const details = [weekday, `${day} de ${month}`, `${year}`, event.time, event.place]
+export default function Footer({ event, theme, cfg, hideBrand = false, photo }) {
+  const labels = theme?.labels || {};
+  const names = displayNames(cfg);
+  const initials = initialsOf(cfg);
+  const dateParts = parseEventDate(event?.date);
+  const lowerLine = [String(event?.place || "").trim(), monthYearLine(dateParts)]
     .filter(Boolean)
     .join(" · ");
 
   return (
-    <footer className="relative overflow-hidden px-6 py-10 text-center md:py-14">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_65%)]" />
-
-      <div className="relative mx-auto max-w-3xl">
-        <Reveal>
-          <motion.div
-            className="pointer-events-none"
-            aria-hidden="true"
-            style={{ y: dividerY }}
-          >
-            <BotanicalDivider className="mx-auto h-12 w-72 text-[var(--inv-botanical)] opacity-90 md:h-14 md:w-96" />
-          </motion.div>
-          <p className="mt-8 text-[0.65rem] uppercase tracking-[0.5em] text-[var(--inv-accent-pink)] md:text-xs">
-            {theme?.labels?.withLove ?? "Con todo nuestro cariño"}
-          </p>
-          <p className="mt-4 font-inv-script text-5xl leading-[1.3] text-balance text-[var(--inv-accent-pink)] md:text-7xl">
-            {names || event.name}
-          </p>
-          <Flourish className="mx-auto mt-8 h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
-          <div
-            className="mx-auto mt-8 h-px w-24 bg-gradient-to-r from-transparent via-[var(--inv-accent-yellow)] to-transparent"
-            aria-hidden="true"
+    <footer className="flex min-h-[100svh] w-full flex-col bg-[var(--inv-bg-alt)]">
+      {/* Bloque de foto con la cita */}
+      <div className="relative flex min-h-[58svh] flex-1 items-end justify-center overflow-hidden bg-[#1C1B19]">
+        {photo && (
+          <img
+            src={photo}
+            alt={names.length ? names.join(" y ") : "Cierre"}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-cover [filter:grayscale(1)_contrast(1.05)]"
+            style={{ objectPosition: "50% 30%" }}
           />
-          <p className="mx-auto mt-8 max-w-xl font-inv-serif text-lg text-[var(--inv-text-soft)] md:text-xl">
-            {details}
+        )}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(20,19,18,0) 40%, rgba(20,19,18,0.75) 100%)",
+          }}
+        />
+        <Reveal className="relative w-full max-w-[640px] px-7 pb-12">
+          <p className="m-0 text-center font-inv-display text-[clamp(34px,9vw,58px)] font-[300] italic leading-[1.12] text-[#FAF7F2]">
+            {labels.closingQuote || "Dos ciudades, un mismo camino."}
           </p>
+        </Reveal>
+      </div>
+
+      {/* Monograma + pie */}
+      <div className="flex flex-col items-center gap-[22px] px-5 pb-[120px] pt-16 text-center">
+        <Reveal className="flex flex-col items-center">
+          <div className="relative h-[150px] w-[150px]">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full border border-[var(--inv-accent-border-strong)]"
+            />
+            <div className="absolute inset-2 flex items-center justify-center rounded-full border border-[var(--inv-accent-border)] font-inv-display text-[48px] font-[300] text-[var(--inv-text)]">
+              {initials[0] || "&"}
+              {initials[1] ? (
+                <>
+                  <span className="mx-1 text-[30px] italic">&amp;</span>
+                  {initials[1]}
+                </>
+              ) : null}
+            </div>
+
+            {/* Ramilletes en las esquinas (cuadrante inferior-izquierdo y
+                superior-derecho, como el mock). */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{ left: -52, bottom: -52, width: 90, height: 90 }}
+            >
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  transform: "translateY(90px) scale(0.45,-0.45)",
+                  transformOrigin: "0 0",
+                }}
+              >
+                <Ramillete />
+              </div>
+            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute"
+              style={{ right: -52, top: -52, width: 90, height: 90 }}
+            >
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  transform: "translateX(90px) scale(-0.45,0.45)",
+                  transformOrigin: "0 0",
+                }}
+              >
+                <Ramillete />
+              </div>
+            </div>
+          </div>
+
+          {lowerLine && (
+            <p className="mb-0 mt-16 text-xs font-medium uppercase tracking-[0.34em] text-[var(--inv-primary)]">
+              {lowerLine}
+            </p>
+          )}
+
           {!hideBrand && (
-            <p className="mt-4 text-[0.6rem] uppercase tracking-[0.45em] text-[var(--inv-text-muted)]">
+            <p className="mb-0 mt-[22px] text-[0.6rem] uppercase tracking-[0.45em] text-[var(--inv-text-muted)]">
               DisplayEvent
             </p>
           )}
-          {/* Badge publicitario (solo esta plantilla): nombre accesible
-              "Powered by Webi" (texto visible + alt). Sin aria-label. */}
+
+          {/* Badge publicitario (solo esta plantilla). */}
           <a
             href="https://webi.mx"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-7 inline-flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-bg-alt)]"
+            className="mt-6 inline-flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
           >
             <span className="text-[0.55rem] uppercase tracking-[0.35em] text-[var(--inv-text-muted)]">
               Powered by
             </span>
             <img
-              src={`${import.meta.env.BASE_URL}webi/logo-light.svg`}
+              src={`${import.meta.env.BASE_URL}webi/logo-dark.svg`}
               alt="Webi"
               width={58}
               height={24}

@@ -27,7 +27,7 @@ DisplayEvent/
 1. Configura tu conexión PostgreSQL en `server/.env` (copia `server/.env.example` si no existe).
 
    La opción recomendada es definir la connection string completa en `DATABASE_URL`
-   (es lo que usa Supabase/Render y tiene prioridad en el código):
+   (es lo que usa Supabase/Railway y tiene prioridad en el código):
 
    ```
    DATABASE_URL=postgresql://usuario:password@host:5432/basedatos
@@ -58,8 +58,10 @@ DisplayEvent/
    `WHATSAPP_TEMPLATE_NAME` y una plantilla Utility aprobada).
 
    Para servir invitaciones en **dominios personalizados**, añade el dominio como
-   *custom domain* en Railway y agrégalo a `ALLOWED_ORIGINS` (lista separada por
-   comas; cuando se define, sustituye a `CLIENT_URL` como lista de CORS). La columna
+   *custom domain* en Railway (Settings → Networking) y agrégalo a `ALLOWED_ORIGINS`
+   (lista separada por comas; cuando se define, sustituye a `CLIENT_URL` como lista de
+   CORS). Railway muestra un CNAME target y un TXT de verificación de propiedad:
+   **ambos son obligatorios** (sin el TXT el dominio responde 404). La columna
    `events.custom_domain` se crea al ejecutar `init-db`.
 
 2. Crea el esquema (tablas, índices y backfills; es idempotente) y normaliza las
@@ -144,4 +146,4 @@ Abre http://localhost:5173
 | GET/POST | `/api/templates` | Listar / crear plantillas de invitación del usuario |
 | GET | `/api/templates/:id` | Detalle de una plantilla |
 | PUT/DELETE | `/api/templates/:id` | Editar / eliminar plantilla |
-| POST | `/api/uploads` | Subir imagen (Cloudinary o `server/uploads/`) |
+| POST | `/api/uploads` | Subir imagen (8 MB) o audio (MP3/M4A/OGG, 15 MB) (Cloudinary o `server/uploads/`) |

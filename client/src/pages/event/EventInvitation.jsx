@@ -20,6 +20,11 @@ const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SLUG_MIN = 3;
 const SLUG_MAX = 60;
 
+// Claves de `EXTRA_FIELDS` que se editan en secciones dedicadas (no en la
+// grilla genérica "Datos del formato"): historia/música y hospedaje/viaje
+// del formato editorial `boda_jorge_macarena`.
+const CUSTOM_EXTRA_KEYS = new Set(["story", "music_url", "lodging", "travel"]);
+
 // Convierte el nombre del evento en un slug URL-amigable (misma lógica que el
 // backend) para sugerirlo cuando el evento todavía no tiene slug.
 function slugify(value) {
@@ -61,7 +66,101 @@ function domainFormatError(domain) {
   return "";
 }
 
-function ImageUploader({ label, value, onChange }) {
+/* ------------------------------------------------------------------
+   Subida de archivos del editor (imágenes y audio) vía POST /api/uploads.
+   El endpoint acepta imágenes (JPG/PNG/WEBP/GIF, 8 MB) y audio
+   (MP3/M4A/OGG, 15 MB), y responde { url }. La configuración por tipo
+   (accept, mimes, límite y textos) vive en `UPLOAD_KINDS`; el componente
+   se usa igual para la foto de portada (kind="image", por defecto) y para
+   el archivo de música (kind="audio").
+------------------------------------------------------------------ */
+
+// Extensión -> mimetype esperado. Se usa SOLO como respaldo cuando el
+// navegador no reporta `file.type` (evita rechazar audios válidos) y para
+// re-envolver el archivo con el mime correcto antes de subirlo.
+const EXT_TO_MIME = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  mp3: "audio/mpeg",
+  m4a: "audio/mp4",
+  ogg: "audio/ogg",
+};
+
+const UPLOAD_KINDS = {
+  image: {
+    accept: "image/jpeg,image/png,image/webp,image/gif",
+    mimes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    maxBytes: 8 * 1024 * 1024,
+    emptyText: "Sin imagen",
+    idleLabel: "Subir imagen",
+    replaceLabel: "Reemplazar imagen",
+    mimeError: "Solo se permiten imágenes JPG, PNG, WEBP o GIF",
+    sizeError: "La imagen supera el tamaño máximo de 8 MB",
+    help: "Se almacena vía API de subida (Cloudinary o disco local). Sube la imagen directamente, sin URL.",
+  },
+  audio: {
+    accept: ".mp3,.m4a,.ogg,audio/*",
+    mimes: ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg"],
+    maxBytes: 15 * 1024 * 1024,
+    emptyText: "Sin audio",
+    idleLabel: "Subir audio",
+    replaceLabel: "Reemplazar audio",
+    mimeError: "Solo se permiten audios MP3, M4A u OGG",
+    sizeError: "El audio supera el tamaño máximo de 15 MB",
+    help: "MP3, M4A u OGG · máx. 15 MB.",
+  },
+};
+
+// Extensión en minúsculas de un nombre de archivo ("" si no tiene).
+function fileExt(name) {
+  const parts = String(name || "").split(".");
+  return parts.length > 1 ? parts.pop().toLowerCase() : "";
+}
+
+/* Valida tamaño y tipo ANTES de subir (espejo del endpoint). El mime que
+   reporta el navegador manda; si viene vacío se infiere por extensión y, en
+   ese caso, se re-envuelve el File con el mime inferido para que el backend
+   lo acepte con su content-type correcto. Devuelve `{ file }` o `{ error }`. */
+function validateUploadFile(file, config) {
+  if (file.size > config.maxBytes) return { error: config.sizeError };
+  const inferred = EXT_TO_MIME[fileExt(file.name)] || "";
+  const mime = file.type || inferred;
+  if (mime && !config.mimes.includes(mime)) return { error: config.mimeError };
+  if (!file.type && inferred && config.mimes.includes(inferred)) {
+    try {
+      return { file: new File([file], file.name, { type: inferred }) };
+    } catch {
+      /* noop: navegadores sin constructor File conservan el original */
+    }
+  }
+  return { file };
+}
+
+/* Ícono de nota musical (estado "audio cargado"). */
+function MusicNoteIcon({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M9 18V6l10-2v12" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+    </svg>
+  );
+}
+
+function FileUploader({ label, value, onChange, kind = "image" }) {
+  const config = UPLOAD_KINDS[kind] || UPLOAD_KINDS.image;
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -70,10 +169,15 @@ function ImageUploader({ label, value, onChange }) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setUploading(true);
     setError("");
+    const { file: safeFile, error: validationError } = validateUploadFile(file, config);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setUploading(true);
     try {
-      const { url } = await api.upload(file);
+      const { url } = await api.upload(safeFile);
       onChange(url);
     } catch (err) {
       setError(err.message);
@@ -86,18 +190,30 @@ function ImageUploader({ label, value, onChange }) {
     <div>
       <div className="flex items-start gap-3">
         {value ? (
-          <img src={value} alt={label} className="w-28 h-20 shrink-0 rounded-lg border border-gold-400/30 object-cover" />
+          kind === "audio" ? (
+            <div className="w-28 h-20 shrink-0 rounded-lg border border-gold-400/30 grid place-items-center text-gold-300">
+              <MusicNoteIcon className="w-6 h-6" />
+            </div>
+          ) : (
+            <img src={value} alt={label} className="w-28 h-20 shrink-0 rounded-lg border border-gold-400/30 object-cover" />
+          )
         ) : (
           <div className="w-28 h-20 shrink-0 rounded-lg border border-dashed border-gray-700 grid place-items-center text-gray-600 text-xs">
-            Sin imagen
+            {config.emptyText}
           </div>
         )}
         <div className="flex-1">
           <span className="text-sm text-gray-400 mb-1.5 block">{label}</span>
-          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFiles} />
+          <input
+            ref={inputRef}
+            type="file"
+            accept={config.accept}
+            className="hidden"
+            onChange={handleFiles}
+          />
           <div className="flex gap-2 items-center">
             <Button type="button" variant="secondary" disabled={uploading} onClick={() => inputRef.current?.click()}>
-              {uploading ? "Subiendo…" : value ? "Reemplazar imagen" : "Subir imagen"}
+              {uploading ? "Subiendo…" : value ? config.replaceLabel : config.idleLabel}
             </Button>
             {value && (
               <button type="button" onClick={() => onChange("")} className="text-sm text-red-500 hover:text-red-400">
@@ -105,9 +221,7 @@ function ImageUploader({ label, value, onChange }) {
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-1.5">
-            Se almacena vía API de subida (Cloudinary o disco local). Sube la imagen directamente, sin URL.
-          </p>
+          <p className="text-xs text-gray-500 mt-1.5">{config.help}</p>
         </div>
       </div>
       {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
@@ -302,6 +416,54 @@ export default function EventInvitation() {
     }));
   const delLoc = (i) =>
     setForm((f) => ({ ...f, locations: f.locations.filter((_, idx) => idx !== i) }));
+
+  // Hospedaje (`lodging`) y viaje (`travel`) del formato editorial.
+  const setLodging = (i, key, value) =>
+    setForm((f) => ({
+      ...f,
+      lodging: (f.lodging || []).map((h, idx) =>
+        idx === i ? { ...h, [key]: value } : h
+      ),
+    }));
+  const addLodging = () =>
+    setForm((f) => ({
+      ...f,
+      lodging: [...(f.lodging || []), withUid({ name: "", note: "", url: "" })],
+    }));
+  const delLodging = (i) =>
+    setForm((f) => ({
+      ...f,
+      lodging: (f.lodging || []).filter((_, idx) => idx !== i),
+    }));
+
+  const setTravel = (key, value) =>
+    setForm((f) => ({ ...f, travel: { ...(f.travel || {}), [key]: value } }));
+  const setRoute = (i, key, value) =>
+    setForm((f) => ({
+      ...f,
+      travel: {
+        ...(f.travel || {}),
+        routes: (f.travel?.routes || []).map((r, idx) =>
+          idx === i ? { ...r, [key]: value } : r
+        ),
+      },
+    }));
+  const addRoute = () =>
+    setForm((f) => ({
+      ...f,
+      travel: {
+        ...(f.travel || {}),
+        routes: [...(f.travel?.routes || []), withUid({ label: "", note: "" })],
+      },
+    }));
+  const delRoute = (i) =>
+    setForm((f) => ({
+      ...f,
+      travel: {
+        ...(f.travel || {}),
+        routes: (f.travel?.routes || []).filter((_, idx) => idx !== i),
+      },
+    }));
 
   const setExtra = (key, value) => setForm((f) => setField(f, key, value));
 
@@ -682,7 +844,9 @@ export default function EventInvitation() {
               guardar.
             </p>
             <div className="grid gap-3">
-              {templateFields.map((f) => {
+              {templateFields
+                .filter((f) => !CUSTOM_EXTRA_KEYS.has(f.key))
+                .map((f) => {
                 const value = getField(form, f.key) || "";
                 const label = (
                   <span className="text-sm text-gray-400 mb-1 block">
@@ -772,7 +936,7 @@ export default function EventInvitation() {
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-4">Portada (Hero)</h2>
           <div className="grid gap-3">
-            <ImageUploader label="Foto de fondo (subida directa)" value={form.hero_image} onChange={(url) => set("hero_image", url)} />
+            <FileUploader label="Foto de fondo (subida directa)" value={form.hero_image} onChange={(url) => set("hero_image", url)} />
             <label className="block">
               <span className="text-sm text-gray-400 mb-1 block">O pega una URL (opcional)</span>
               <input className={inputCls} value={form.hero_image} onChange={(e) => set("hero_image", e.target.value)} placeholder="https://…" />
@@ -844,6 +1008,193 @@ export default function EventInvitation() {
             ))}
           </div>
         </section>
+
+        {form.template === "boda_jorge_macarena" && (
+          <>
+            <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+              <h2 className="text-base font-semibold text-white mb-1">
+                Nuestra historia y música
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Relato de la sección "Nuestra historia" y audio de fondo
+                (opcional, sin autoplay).
+              </p>
+              <label className="block">
+                <span className="text-sm text-gray-400 mb-1 block">
+                  Nuestra historia
+                </span>
+                <textarea
+                  className={inputCls}
+                  rows={5}
+                  value={form.story || ""}
+                  onChange={(e) => set("story", e.target.value)}
+                  placeholder={"Cuenten su historia…\nLos saltos de línea se respetan."}
+                />
+                <span className="block text-xs text-gray-500 mt-1.5">
+                  Si la dejas vacía, se usa el "Mensaje de bienvenida" de la
+                  portada.
+                </span>
+              </label>
+              <div className="mt-4">
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">
+                    Música (URL del audio)
+                  </span>
+                  <input
+                    className={inputCls}
+                    value={form.music_url || ""}
+                    onChange={(e) => set("music_url", e.target.value)}
+                    placeholder="https://… (MP3 / M4A)"
+                    inputMode="url"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+                <div className="mt-3">
+                  <FileUploader
+                    label="Archivo de audio"
+                    value={form.music_url || ""}
+                    onChange={(url) => set("music_url", url)}
+                    kind="audio"
+                  />
+                </div>
+                <span className="block text-xs text-gray-500 mt-1.5">
+                  Se reproduce en bucle al tocar el botón de música. Sin URL, el
+                  botón se oculta.
+                </span>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-white">
+                  Hospedaje y viaje
+                </h2>
+                <Button variant="secondary" type="button" onClick={addLodging}>
+                  + Agregar hotel
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500 mb-3">
+                Hoteles sugeridos y datos de viaje. Sin contenido, la sección no
+                aparece en la invitación.
+              </p>
+              <div className="space-y-3">
+                {(form.lodging || []).length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    Aún no hay hoteles sugeridos.
+                  </p>
+                )}
+                {(form.lodging || []).map((h, i) => (
+                  <div
+                    key={h._uid ?? i}
+                    className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2"
+                  >
+                    <input
+                      className={inputCls}
+                      value={h.name}
+                      onChange={(e) => setLodging(i, "name", e.target.value)}
+                      placeholder="Nombre (Hotel Alhambra Palace)"
+                    />
+                    <input
+                      className={inputCls}
+                      value={h.note}
+                      onChange={(e) => setLodging(i, "note", e.target.value)}
+                      placeholder="Nota (Junto a la Alhambra, con vistas)"
+                    />
+                    <div className="flex gap-2 md:col-span-2">
+                      <input
+                        className={inputCls}
+                        value={h.url || ""}
+                        onChange={(e) => setLodging(i, "url", e.target.value)}
+                        placeholder="Enlace del mapa (https://…, opcional)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => delLodging(i)}
+                        className="shrink-0 text-sm text-red-500 hover:text-red-400 px-2"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 border-t border-gray-800 pt-5 space-y-4">
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">
+                    Título del bloque de viaje
+                  </span>
+                  <input
+                    className={inputCls}
+                    value={form.travel?.title || ""}
+                    onChange={(e) => setTravel("title", e.target.value)}
+                    placeholder="Si vienen desde México"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">
+                    Aeropuerto más cercano
+                  </span>
+                  <textarea
+                    className={inputCls}
+                    rows={2}
+                    value={form.travel?.airport_note || ""}
+                    onChange={(e) => setTravel("airport_note", e.target.value)}
+                    placeholder="Federico García Lorca Granada-Jaén (GRX), a unos 17 km del centro."
+                  />
+                </label>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400">
+                      Rutas / alternativas
+                    </span>
+                    <Button variant="secondary" type="button" onClick={addRoute}>
+                      + Agregar ruta
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {(form.travel?.routes || []).map((r, i) => (
+                      <div key={r._uid ?? i} className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          className={inputCls}
+                          value={r.label}
+                          onChange={(e) => setRoute(i, "label", e.target.value)}
+                          placeholder="Etiqueta (Ruta recomendada)"
+                        />
+                        <input
+                          className={inputCls}
+                          value={r.note}
+                          onChange={(e) => setRoute(i, "note", e.target.value)}
+                          placeholder="Nota (Vuelo a Madrid y conexión…)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => delRoute(i)}
+                          className="shrink-0 text-sm text-red-500 hover:text-red-400 px-2"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <label className="block">
+                  <span className="text-sm text-gray-400 mb-1 block">
+                    Nota de cierre
+                  </span>
+                  <textarea
+                    className={inputCls}
+                    rows={2}
+                    value={form.travel?.closing_note || ""}
+                    onChange={(e) => setTravel("closing_note", e.target.value)}
+                    placeholder="Cualquier consejo extra para quienes viajan de lejos."
+                  />
+                </label>
+              </div>
+            </section>
+          </>
+        )}
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-3">Dress code</h2>

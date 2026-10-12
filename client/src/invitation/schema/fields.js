@@ -199,6 +199,38 @@ export const EXTRA_FIELDS = {
       type: "textarea",
       required: false,
     },
+    // Campos congelados del rediseño editorial v2. La historia y la música
+    // se editan en una sección propia del editor; hospedaje y viaje tienen
+    // editor dedicado (tipos `lodging`/`travel`, con UI a medida). Aquí se
+    // declaran para que el contrato quede documentado junto al resto.
+    {
+      key: "story",
+      label: "Nuestra historia",
+      placeholder:
+        "Cuenten su historia… Los saltos de línea se respetan en la invitación.",
+      type: "textarea",
+      required: false,
+    },
+    {
+      key: "music_url",
+      label: "Música (URL del audio)",
+      placeholder: "https://… (MP3 / M4A)",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "lodging",
+      label: "Hospedaje (hoteles)",
+      itemLabel: "Hotel",
+      type: "lodging",
+      required: false,
+    },
+    {
+      key: "travel",
+      label: "Viaje",
+      type: "travel",
+      required: false,
+    },
   ],
 };
 

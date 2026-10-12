@@ -1,8 +1,20 @@
-import { Suspense, useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { getTheme, getThemeLayout } from "./themes/index.js";
 import { motion } from "motion/react";
 import { InvitationLoader } from "./shared/util.jsx";
 import EnvelopeLoader from "./envelope/EnvelopeLoader.jsx";
+
+/* ------------------------------------------------------------------
+   Variantes de sobre por tema. `opening.envelopeVariant` selecciona un
+   componente dedicado (carga perezosa: no se descarga si el tema no lo
+   usa). Los temas sin variante conservan el sobre compartido
+   `EnvelopeLoader` sin ningún cambio de comportamiento.
+------------------------------------------------------------------ */
+const ENVELOPE_VARIANTS = {
+  editorial: lazy(() =>
+    import("./boda_jorge_macarena/EditorialEnvelope.jsx")
+  ),
+};
 
 /* ------------------------------------------------------------------
    Renderiza la invitación con un tema + config. Cada plantilla define
@@ -36,6 +48,10 @@ export default function InvitationView({
   // Marca el momento en que la invitación "se abre" para disparar las
   // transiciones de entrada (monograma, seda, perlas).
   const reveal = preview || !opening?.envelope || envelopeOpen;
+  // Sobre del tema (variante dedicada) o el sobre compartido.
+  const Envelope =
+    (opening?.envelopeVariant && ENVELOPE_VARIANTS[opening.envelopeVariant]) ||
+    EnvelopeLoader;
 
   return (
     <motion.div
@@ -71,12 +87,16 @@ export default function InvitationView({
         />
       </Suspense>
       {showEnvelope && (
-        <EnvelopeLoader
-          monogram={opening?.cardText?.(cfg) || "&"}
-          seal={opening?.sealText?.(cfg) || "&"}
-          family={family}
-          onOpen={() => setEnvelopeOpen(true)}
-        />
+        <Suspense fallback={null}>
+          <Envelope
+            family={family}
+            cfg={cfg}
+            opening={opening}
+            monogram={opening?.cardText?.(cfg) || "&"}
+            seal={opening?.sealText?.(cfg) || "&"}
+            onOpen={() => setEnvelopeOpen(true)}
+          />
+        </Suspense>
       )}
     </motion.div>
   );

@@ -3,22 +3,24 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { loadStripe } from "@stripe/stripe-js";
 import { api } from "../../api.js";
 import { Reveal } from "../motion.jsx";
-import { Flourish, WeddingSectionTitle } from "./decor.jsx";
+import { Eyebrow, Flor, FlowerRule } from "./flora.jsx";
 
 /* ------------------------------------------------------------------
-   Mesa de Regalos (registry) — versión LOCAL de la plantilla
-   "Boda de Jorge & Macarena".
+   Regalo (v2) — versión LOCAL de la plantilla "Boda de Jorge &
+   Macarena".
 
    Replica EXACTAMENTE la lógica de shared/Gifts.jsx (moneda, montos,
    depósito con copiado y pago con tarjeta vía Stripe Checkout EMBEBIDO)
-   pero con un diseño botánico propio: cabecera `WeddingSectionTitle` local,
-   selectores de moneda y monto como dropdowns nativos estilizados (con
-   etiqueta, borde fino y chevron botánico), input underline para el
-   monto libre, banner de estado con floritura botánica y pago con
-   tarjeta como CTA principal (botón naranja alargado con ícono) que abre
-   un modal propio con el formulario embebido de Stripe; el depósito
-   bancario queda relegado a un modal compacto accesible.
-   ------------------------------------------------------------------ */
+   con la presentación del mock v2: eyebrow + flor, título editorial,
+   párrafo de `cfg.registry_note` (o el texto por defecto del tema),
+   selectores de moneda/monto en campos fileteados, CTA de tarjeta en
+   tinta y "Transferencia bancaria" que despliega la tarjeta de datos
+   bancarios (filas con botón Copiar). El marco del Checkout embebido se
+   conserva como modal con el mismo lenguaje editorial.
+
+   La sección se muestra si la mesa está activa o si hay
+   `cfg.registry_note`; sin nada, el layout no crea la tarjeta.
+------------------------------------------------------------------ */
 
 const CURRENCIES = {
   mxn: { symbol: "$", label: "MXN" },
@@ -83,14 +85,8 @@ async function copyToClipboard(text) {
 /* Devuelve el inicializador del Checkout embebido de Stripe.js.
    Firma verificada en @stripe/stripe-js v5.10:
      stripe.initEmbeddedCheckout({ fetchClientSecret, onComplete })
-   `fetchClientSecret: () => Promise<string>` recibe el client_secret de la
-   Checkout Session (ui_mode: "embedded"). `appearance` NO forma parte de
-   esta API: el esquema del runtime solo acepta `clientSecret`,
-   `fetchClientSecret`, `onComplete`, `onLineItemsChange`,
-   `onShippingDetailsChange` y `onAnalyticsEvent` (el tema del iframe se
-   define en el Dashboard de Stripe); el diseño propio vive en el marco del
-   modal. Stripe renombró el método a `createEmbeddedCheckoutPage` con la
-   MISMA firma, así que se prefiere si el runtime ya lo expone. */
+   Stripe renombró el método a `createEmbeddedCheckoutPage` con la MISMA
+   firma, así que se prefiere si el runtime ya lo expone. */
 function resolveEmbeddedCheckoutInit(stripe) {
   const init = stripe.createEmbeddedCheckoutPage || stripe.initEmbeddedCheckout;
   if (typeof init !== "function") {
@@ -99,9 +95,48 @@ function resolveEmbeddedCheckoutInit(stripe) {
   return init.bind(stripe);
 }
 
+/* Ícono de tarjeta de crédito en línea fina. */
+function CardIcon({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M2.5 9.5h19" />
+      <path d="M6 15h4" />
+    </svg>
+  );
+}
+
+/* Ícono chevron en línea fina. */
+function ChevronDown({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
 export default function Gifts({ cfg, theme, token, publishableKey }) {
-  const registry = cfg?.registry;
+  const registry = cfg?.registry || {};
   const reduced = useReducedMotion();
+  const labels = theme?.labels || {};
 
   const [currency, setCurrency] = useState(() => detectCurrency());
   const [chipAmount, setChipAmount] = useState(null);
@@ -182,7 +217,9 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     };
   }, [checkoutOpen, clientSecret, publishableKey]);
 
-  if (!registry?.enabled) return null;
+  const enabled = !!registry.enabled;
+  const publish = String(cfg?.registry_note || "").trim() || labels.giftIntro || "";
+  const hasSection = enabled || !!String(cfg?.registry_note || "").trim();
 
   const suggested = registry[`suggested_${currency}`] || [];
   const min = registry[`min_${currency}`] || 0;
@@ -193,6 +230,23 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
   // (el invitado elige el monto en Stripe) y no se usan los selectores.
   const paymentLink = String(registry.payment_link_url || "").trim();
   const linkMode = !!registry.stripe_enabled && !!paymentLink;
+
+  const bankFields = [
+    { key: "bank_name", label: "Banco" },
+    { key: "holder", label: "Titular" },
+    { key: "account_number", label: "Cuenta / CLABE" },
+    { key: "concept", label: "Concepto" },
+  ].filter((f) => String(bank[f.key] ?? "").trim() !== "");
+
+  const hasCard = !!registry.stripe_enabled;
+  const hasBank = !!bank.enabled && bankFields.length > 0;
+
+  // Sin tarjeta, los datos bancarios son el contenido principal: abiertos.
+  useEffect(() => {
+    if (hasBank && !hasCard) setBankOpen(true);
+  }, [hasBank, hasCard]);
+
+  if (!hasSection) return null;
 
   const activeAmount = custom !== "" ? Number(custom) : chipAmount;
 
@@ -300,276 +354,246 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
     payWithCard();
   };
 
-  const bankFields = [
-    { key: "bank_name", label: "Banco" },
-    { key: "holder", label: "Titular" },
-    { key: "account_number", label: "Cuenta / CLABE" },
-    { key: "concept", label: "Concepto" },
-  ].filter((f) => String(bank[f.key] ?? "").trim() !== "");
-
-  const hasCard = !!registry.stripe_enabled;
-  const hasBank = !!bank.enabled && bankFields.length > 0;
   const showAmount = stripeReady && Number.isFinite(activeAmount) && activeAmount > 0;
   const payAmountLabel = showAmount ? formatAmount(currency, activeAmount) : "";
+  const bankTitle =
+    currency === "eur"
+      ? labels.giftBankTitleEur || "Desde España"
+      : labels.giftBankTitleMxn || "Desde México";
 
   return (
-    <section className="relative overflow-hidden px-4 py-6 md:py-12">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-c),transparent_60%)]" />
-
-      <div className="relative mx-auto max-w-3xl">
-        <WeddingSectionTitle
-          eyebrow={theme?.labels?.registryEyebrow || "Regalos"}
-          title={theme?.labels?.registryTitle || "Mesa de Regalos"}
-          subtitle="Si deseas honrarnos con un detalle, aquí tienes las opciones. ¡Gracias por tu cariño!"
-        />
-
-        {/* Aviso de resultado del pago (al volver de Stripe) */}
-        <AnimatePresence>
-          {status && (
-            <motion.div
-              initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className={`mb-8 overflow-hidden rounded-[1.6rem] border px-6 py-6 text-center shadow-[0_20px_50px_var(--inv-shadow-card)] ${
-                status === "success"
-                  ? "border-[var(--inv-botanical)]/40 bg-[var(--inv-surface)]"
-                  : "border-[var(--inv-accent-pink)]/30 bg-[var(--inv-surface)]"
-              }`}
-            >
-              <Flourish
-                className={`mx-auto h-6 w-44 opacity-80 ${
-                  status === "success"
-                    ? "text-[var(--inv-botanical)]"
-                    : "text-[var(--inv-accent-pink)]"
-                }`}
-              />
-              <motion.div
-                className={`mx-auto mt-6 mb-3 grid h-12 w-12 place-items-center rounded-full text-xl text-[var(--inv-on-accent)] ${
-                  status === "success"
-                    ? "bg-[var(--inv-botanical)] shadow-[0_10px_24px_var(--inv-shadow-mid)]"
-                    : "bg-[var(--inv-accent-pink)] shadow-[0_10px_24px_var(--inv-shadow-ring)]"
-                }`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.08 }}
-              >
-                {status === "success" ? "✓" : "✕"}
-              </motion.div>
-              <p
-                className={`font-inv-heading text-lg ${
-                  status === "success"
-                    ? "text-[var(--inv-text)]"
-                    : "text-[var(--inv-accent-pink)]"
-                }`}
-              >
-                {status === "success" ? "¡Gracias por tu regalo!" : "Pago cancelado"}
-              </p>
-              <p className="mt-1 text-sm font-light text-inv-text-soft">
-                {status === "success"
-                  ? "Tu aportación fue recibida. Nos vemos en la celebración."
-                  : "No se realizó ningún cargo. Puedes intentarlo de nuevo cuando quieras."}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
-            el invitado elige el monto en la pasarela segura de Stripe. */}
-        {!linkMode && (
-          <>
-            {/* Selectores despejados: moneda y monto como dropdowns */}
-            <Reveal>
-              <div className="mx-auto grid max-w-lg grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
-                <FieldSelect
-                  id="gift-currency"
-                  label="Moneda"
-                  value={currency}
-                  onChange={(e) => {
-                    selectCurrency(e.target.value);
-                    setCustomMode(false);
-                  }}
-                >
-                  {Object.entries(CURRENCIES).map(([code, c]) => (
-                    <option key={code} value={code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </FieldSelect>
-
-                {(suggested.length > 0 || allowCustom) && (
-                  <FieldSelect
-                    id="gift-amount"
-                    label="Monto"
-                    value={amountValue}
-                    onChange={(e) => onAmountChange(e.target.value)}
-                  >
-                    <option value="">Selecciona un monto</option>
-                    {suggested.map((v) => (
-                      <option key={v} value={String(v)}>
-                        {formatAmount(currency, v)}
-                      </option>
-                    ))}
-                    {allowCustom && <option value={CUSTOM_AMOUNT}>Monto libre</option>}
-                  </FieldSelect>
-                )}
-
-                {/* Monto libre (solo al elegirlo en el dropdown) */}
-                {customMode && allowCustom && (
-                  <div className="flex justify-center sm:col-span-2">
-                    <label className="flex flex-col items-center gap-3">
-                      <span className="text-xs uppercase tracking-[0.3em] text-[var(--inv-accent-pink)]">
-                        Monto libre
-                      </span>
-                      <div className="flex items-end gap-2 border-b-2 border-[var(--inv-accent-yellow)] pb-1 transition-colors duration-300 focus-within:border-[var(--inv-primary)]">
-                        <span className="font-inv-heading text-2xl text-[var(--inv-text-soft)]">
-                          {CURRENCIES[currency].symbol}
-                        </span>
-                        <input
-                          type="number"
-                          min={min}
-                          step={1}
-                          inputMode="numeric"
-                          value={custom}
-                          onChange={(e) => onCustomChange(e.target.value)}
-                          placeholder="0"
-                          className="w-32 bg-transparent text-center font-inv-heading text-2xl text-[var(--inv-text)] placeholder-[var(--inv-text-dim)]/50 focus:outline-none"
-                        />
-                      </div>
-                    </label>
-                  </div>
-                )}
-              </div>
-            </Reveal>
-
-            {min > 0 && (
-              <p className="mt-5 text-center text-xs uppercase tracking-[0.25em] text-[var(--inv-text-muted)]">
-                Monto mínimo {formatAmount(currency, min)}
-              </p>
-            )}
-          </>
-        )}
-
-        {error && (
-          <p className="mt-4 text-center text-sm font-medium text-[var(--inv-accent-pink)]">
-            {error}
+    <div className="mx-auto flex w-full max-w-[760px] flex-col items-center gap-5 px-6 pb-[120px] pt-24 text-center">
+      <Reveal className="flex flex-col items-center gap-[22px]">
+        <Eyebrow>{labels.registryEyebrow || "Regalo"}</Eyebrow>
+        <FlowerRule kind="granado" />
+        <h2 className="m-0 font-inv-display text-[clamp(36px,8vw,50px)] font-normal leading-[1.08] text-[var(--inv-text)]">
+          {labels.withLove || "Con todo nuestro cariño"}
+        </h2>
+        {publish && (
+          <p className="m-0 max-w-[440px] text-base leading-[1.8] text-[var(--inv-text-soft)] [text-wrap:pretty]">
+            {publish}
           </p>
         )}
+      </Reveal>
 
-        {/* CTA principal: pago con tarjeta + alternativa de depósito */}
-        <div className="mt-7 flex flex-col items-center gap-4">
-          {hasCard && (
-            <Reveal>
-              <div className="w-full max-w-md">
-                {linkMode ? (
-                  <motion.a
-                    href={paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileTap={reduced ? undefined : { scale: 0.98 }}
-                    whileHover={reduced ? undefined : { scale: 1.01 }}
-                    className="block w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-5 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] hover:shadow-[0_18px_44px_var(--inv-shadow-mid)] active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
-                  >
-                    <span className="flex items-center justify-center gap-3">
-                      <CardIcon className="h-5 w-5" />
-                      <span>Pagar con tarjeta</span>
-                    </span>
-                  </motion.a>
-                ) : (
-                  <motion.button
-                    type="button"
-                    onClick={payWithCard}
-                    disabled={paying || !stripeReady}
-                    whileTap={reduced ? undefined : { scale: 0.98 }}
-                    whileHover={reduced ? undefined : { scale: 1.01 }}
-                    className="w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-5 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] hover:shadow-[0_18px_44px_var(--inv-shadow-mid)] active:scale-[.99] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
-                  >
-                    <span className="flex items-center justify-center gap-3">
-                      <CardIcon className="h-5 w-5" />
-                      <span>{paying ? "Abriendo pago…" : "Pagar con tarjeta"}</span>
-                      {showAmount && !paying && (
-                        <span className="rounded-full bg-[var(--inv-on-accent)]/15 px-3 py-0.5 text-sm tabular-nums">
-                          {formatAmount(currency, activeAmount)}
-                        </span>
-                      )}
-                    </span>
-                  </motion.button>
-                )}
-                {linkMode ? (
-                  <p className="mt-2 text-center text-xs text-[var(--inv-text-muted)]">
-                    Elegirás el monto en la pasarela segura de Stripe.
-                  </p>
-                ) : !stripeReady ? (
-                  <p className="mt-2 text-center text-xs text-[var(--inv-text-muted)]">
-                    El pago con tarjeta no está disponible en este momento.
-                  </p>
-                ) : null}
-              </div>
-            </Reveal>
-          )}
-
-          {hasCard && hasBank && (
-            <Reveal delay={0.05}>
-              <button
-                type="button"
-                onClick={() => setBankOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] px-5 py-2.5 text-xs font-medium text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
-              >
-                <BankIcon className="h-4 w-4 text-[var(--inv-botanical)]" />
-                <span>
-                  ¿Prefieres depositar o transferir?{" "}
-                  <span className="font-semibold">Ver datos bancarios</span>
-                </span>
-              </button>
-            </Reveal>
-          )}
-
-          {!hasCard && hasBank && (
-            <Reveal>
-              <div className="w-full rounded-[1.8rem] border border-[var(--inv-accent-yellow)]/40 bg-[var(--inv-surface)] px-6 py-6 shadow-[0_24px_60px_var(--inv-shadow-card)] md:px-8">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full border border-[var(--inv-botanical)]/60 text-[var(--inv-botanical)]">
-                    <BankIcon className="h-5 w-5" />
-                  </span>
-                  <span className="font-inv-heading text-lg text-[var(--inv-text)]">
-                    Depósito / transferencia
-                  </span>
-                </div>
-                <div>
-                  {bankFields.map((f) => (
-                    <BankField
-                      key={f.key}
-                      field={f}
-                      value={bank[f.key]}
-                      copied={copiedKey === f.key}
-                      onCopy={() => doCopy(f.key, bank[f.key])}
-                      reduced={reduced}
-                      className="border-b border-[var(--inv-accent-border)] py-3 last:border-b-0"
-                    />
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          )}
-        </div>
-      </div>
-
-      {/* Modal compacto de depósito bancario */}
+      {/* Aviso de resultado del pago (al volver de Stripe) */}
       <AnimatePresence>
-        {bankOpen && (
-          <BankModal
-            bank={bank}
-            bankFields={bankFields}
-            copiedKey={copiedKey}
-            doCopy={doCopy}
-            reduced={reduced}
-            onClose={() => setBankOpen(false)}
-          />
+        {enabled && status && (
+          <motion.div
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35 }}
+            className="w-full max-w-[440px] border border-[var(--inv-accent-border)] bg-[var(--inv-surface)] px-6 py-6 text-center"
+          >
+            <p className="m-0 font-inv-display text-xl text-[var(--inv-text)]">
+              {status === "success" ? "¡Gracias por su regalo!" : "Pago cancelado"}
+            </p>
+            <p className="m-0 mt-1.5 text-sm leading-relaxed text-[var(--inv-text-muted)]">
+              {status === "success"
+                ? "Su aportación fue recibida. Nos vemos en la celebración."
+                : "No se realizó ningún cargo. Pueden intentarlo de nuevo cuando quieran."}
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Modal del Checkout embebido: el marco botánico mantiene el diseño
-          de la invitación y el formulario interno lo renderiza Stripe. */}
+      {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
+          el invitado elige el monto en la pasarela segura de Stripe. */}
+      {enabled && !linkMode && (
+        <Reveal className="w-full">
+          <div className="mx-auto grid max-w-[400px] grid-cols-1 gap-4 text-left sm:grid-cols-2">
+            <FieldSelect
+              id="gift-currency"
+              label="Moneda"
+              value={currency}
+              onChange={(e) => {
+                selectCurrency(e.target.value);
+                setCustomMode(false);
+              }}
+            >
+              {Object.entries(CURRENCIES).map(([code, c]) => (
+                <option key={code} value={code}>
+                  {c.label}
+                </option>
+              ))}
+            </FieldSelect>
+
+            {(suggested.length > 0 || allowCustom) && (
+              <FieldSelect
+                id="gift-amount"
+                label="Monto"
+                value={amountValue}
+                onChange={(e) => onAmountChange(e.target.value)}
+              >
+                <option value="">Selecciona un monto</option>
+                {suggested.map((v) => (
+                  <option key={v} value={String(v)}>
+                    {formatAmount(currency, v)}
+                  </option>
+                ))}
+                {allowCustom && <option value={CUSTOM_AMOUNT}>Monto libre</option>}
+              </FieldSelect>
+            )}
+
+            {/* Monto libre (solo al elegirlo en el dropdown) */}
+            {customMode && allowCustom && (
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <label
+                  htmlFor="gift-custom"
+                  className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--inv-text-muted)]"
+                >
+                  Monto libre
+                </label>
+                <div className="flex items-center gap-2 border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] px-4 py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-[#1C1B19] focus-within:ring-offset-2">
+                  <span className="font-inv-display text-xl text-[var(--inv-text-muted)]">
+                    {CURRENCIES[currency].symbol}
+                  </span>
+                  <input
+                    id="gift-custom"
+                    type="number"
+                    min={min}
+                    step={1}
+                    inputMode="numeric"
+                    value={custom}
+                    onChange={(e) => onCustomChange(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-transparent text-[15px] font-medium text-[var(--inv-text)] placeholder-[var(--inv-text-dim)] focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </Reveal>
+      )}
+
+      {enabled && min > 0 && !linkMode && (
+        <p className="m-0 text-xs uppercase tracking-[0.22em] text-[var(--inv-text-muted)]">
+          Monto mínimo {formatAmount(currency, min)}
+        </p>
+      )}
+
+      {enabled && error && (
+        <p className="m-0 text-sm font-medium text-[var(--inv-accent-orange)]">
+          {error}
+        </p>
+      )}
+
+      {/* CTA principal: pago con tarjeta + alternativa de depósito */}
+      {enabled && (hasCard || hasBank) && (
+        <div className="flex w-full max-w-[400px] flex-col gap-3 pt-2">
+          {hasCard &&
+            (linkMode ? (
+              <a
+                href={paymentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[56px] items-center justify-center gap-2.5 rounded-[2px] bg-[#1C1B19] px-6 text-[13px] font-medium uppercase tracking-[0.2em] text-[#FAF7F2] no-underline transition-colors hover:bg-[#3A3733] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
+              >
+                <CardIcon className="h-[18px] w-[18px]" />
+                Pagar con tarjeta
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={payWithCard}
+                disabled={paying || !stripeReady}
+                className="flex min-h-[56px] flex-wrap items-center justify-center gap-2.5 rounded-[2px] bg-[#1C1B19] px-6 text-[13px] font-medium uppercase tracking-[0.2em] text-[#FAF7F2] transition-colors hover:bg-[#3A3733] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              >
+                <span className="flex items-center gap-2.5">
+                  <CardIcon className="h-[18px] w-[18px]" />
+                  <span className="whitespace-nowrap">
+                    {paying ? "Abriendo pago…" : "Pagar con tarjeta"}
+                  </span>
+                </span>
+                {showAmount && !paying && (
+                  <span className="whitespace-nowrap text-xs tabular-nums text-[#CFC7BA]">
+                    {payAmountLabel}
+                  </span>
+                )}
+              </button>
+            ))}
+
+          {hasBank && (
+            <button
+              type="button"
+              onClick={() => setBankOpen((v) => !v)}
+              aria-expanded={bankOpen}
+              aria-controls="gift-bank-panel"
+              className="flex min-h-[56px] items-center justify-center gap-2.5 rounded-[2px] border border-[#1C1B19] bg-transparent px-4 text-[13px] font-medium uppercase tracking-[0.2em] text-[#1C1B19] transition-colors hover:bg-[#1C1B19]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 sm:px-6"
+            >
+              Transferencia bancaria
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-300 ${
+                  bankOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
+
+          {enabled && !linkMode && !stripeReady && (
+            <p className="m-0 text-xs text-[var(--inv-text-muted)]">
+              El pago con tarjeta no está disponible en este momento.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Datos bancarios (desplegable) */}
+      <div
+        id="gift-bank-panel"
+        className="grid w-full max-w-[440px] transition-[grid-template-rows] duration-500"
+        style={{ gridTemplateRows: bankOpen ? "1fr" : "0fr" }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className={`pt-3 transition-opacity duration-500 ${
+              bankOpen ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <div className="border border-[var(--inv-accent-border)] bg-[var(--inv-surface)] text-left">
+              <div className="flex items-center gap-2.5 border-b border-[var(--inv-accent-border)] bg-[var(--inv-card)] px-5 py-3.5">
+                <span className="inline-flex h-[18px] w-[18px] flex-none">
+                  <Flor kind="bugambilia" />
+                </span>
+                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--inv-text)]">
+                  {bankTitle}
+                </div>
+              </div>
+              {bankFields.map((f, i) => (
+                <div
+                  key={f.key}
+                  className={`flex items-center gap-3 px-5 py-3 ${
+                    i === bankFields.length - 1
+                      ? ""
+                      : "border-b border-[var(--inv-card)]"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--inv-text-muted)]">
+                      {f.label}
+                    </div>
+                    <div className="mt-0.5 break-all text-base font-medium text-[var(--inv-text)]">
+                      {bank[f.key]}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => doCopy(f.key, bank[f.key])}
+                    aria-label={`Copiar ${f.label}`}
+                    className="min-h-[44px] min-w-[88px] flex-none rounded-[2px] border border-[var(--inv-accent-border-strong)] bg-transparent px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--inv-text)] transition-colors hover:bg-[var(--inv-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
+                  >
+                    {copiedKey === f.key ? "Copiado ✓" : "Copiar"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal del Checkout embebido: mantiene el marco editorial de la
+          invitación; el formulario interno lo renderiza Stripe. */}
       <AnimatePresence>
         {checkoutOpen && (
           <CheckoutModal
@@ -584,97 +608,18 @@ export default function Gifts({ cfg, theme, token, publishableKey }) {
           />
         )}
       </AnimatePresence>
-    </section>
+    </div>
   );
 }
 
-function CopyButton({ label, copied, onCopy, reduced }) {
+/* Selector nativo estilizado: etiqueta microtexto + campo fileteado con
+   chevron en tinta. `<select>` nativo por robustez y accesibilidad. */
+function FieldSelect({ id, label, value, onChange, children }) {
   return (
-    <motion.button
-      type="button"
-      onClick={onCopy}
-      aria-label={`Copiar ${label}`}
-      whileTap={reduced ? undefined : { scale: 0.9 }}
-      className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-        copied
-          ? "bg-[var(--inv-botanical)] text-[var(--inv-on-accent)]"
-          : "border border-[var(--inv-primary)]/60 text-[var(--inv-text-soft)] hover:border-[var(--inv-primary)] hover:bg-[var(--inv-primary)] hover:text-[var(--inv-on-accent)]"
-      }`}
-    >
-      {copied ? "✓ Copiado" : "Copiar"}
-    </motion.button>
-  );
-}
-
-/* Ícono de banco/edificio en línea fina, coloreado con currentColor. */
-function BankIcon({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <path d="M3 9l9-5 9 5" />
-      <path d="M5 9v8M9.5 9v8M14.5 9v8M19 9v8" />
-      <path d="M3 20h18" />
-    </svg>
-  );
-}
-
-/* Ícono de tarjeta de crédito en línea fina, coloreado con currentColor. */
-function CardIcon({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
-      <path d="M2.5 9.5h19" />
-      <path d="M6 15h4" />
-    </svg>
-  );
-}
-
-/* Ícono chevron en línea fina para los dropdowns. */
-function ChevronDown({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
-/* Dropdown nativo estilizado: etiqueta + contenedor con borde fino y
-   chevron botánico. Se usa `<select>` nativo por robustez y accesibilidad
-   (navegación por teclado, lectura por lectores de pantalla y picker
-   nativo en móvil). */
-function FieldSelect({ id, label, value, onChange, children, className = "" }) {
-  const empty = value === "" || value == null;
-  return (
-    <div className={className}>
+    <div className="w-full">
       <label
         htmlFor={id}
-        className="mb-2 block text-center text-[0.65rem] uppercase tracking-[0.3em] text-[var(--inv-accent-pink)]"
+        className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--inv-text-muted)]"
       >
         {label}
       </label>
@@ -683,160 +628,17 @@ function FieldSelect({ id, label, value, onChange, children, className = "" }) {
           id={id}
           value={value}
           onChange={onChange}
-          className={`w-full appearance-none rounded-2xl border border-[var(--inv-accent-yellow)]/60 bg-[var(--inv-surface)] py-3.5 pl-5 pr-12 font-inv-heading text-base shadow-[0_10px_30px_var(--inv-shadow-card)] transition-colors duration-300 hover:border-[var(--inv-primary)]/50 focus:border-[var(--inv-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent-yellow)]/70 focus-visible:ring-offset-2 ${
-            empty ? "text-[var(--inv-text-dim)]" : "text-[var(--inv-text)]"
-          }`}
+          className="w-full appearance-none rounded-[2px] border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] py-3.5 pl-4 pr-10 text-[15px] font-medium text-[var(--inv-text)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
         >
           {children}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--inv-botanical)]" />
+        <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--inv-text-muted)]" />
       </div>
     </div>
   );
 }
 
-/* Fila de dato bancario (etiqueta + valor + botón copiar). Se reutiliza
-   en el bloque inline (caso sin tarjeta) y en el modal compacto. */
-function BankField({ field, value, copied, onCopy, reduced, className = "" }) {
-  return (
-    <div className={`flex items-center justify-between gap-3 ${className}`}>
-      <div className="min-w-0">
-        <div className="text-[0.65rem] uppercase tracking-[0.2em] text-[var(--inv-text-muted)]">
-          {field.label}
-        </div>
-        <div className="truncate font-medium text-[var(--inv-text)]">{value}</div>
-      </div>
-      <CopyButton
-        label={field.label}
-        copied={copied}
-        onCopy={onCopy}
-        reduced={reduced}
-      />
-    </div>
-  );
-}
-
-/* Modal compacto y accesible con los datos bancarios. Cierra con ✕,
-   clic en el backdrop o tecla Escape; atrapa el foco y lo devuelve al
-   disparador al cerrar. Respeta prefers-reduced-motion. */
-function BankModal({ bank, bankFields, copiedKey, doCopy, reduced, onClose }) {
-  const dialogRef = useRef(null);
-  const closeRef = useRef(null);
-  const onCloseRef = useRef(onClose);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  });
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const prevFocus = document.activeElement;
-    closeRef.current?.focus();
-
-    function onKeyDown(e) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (e.key !== "Tab" || !dialog) return;
-      const focusables = Array.from(
-        dialog.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-      ).filter((el) => !el.disabled && el.offsetParent !== null);
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const activeInside = dialog.contains(document.activeElement);
-      if (e.shiftKey) {
-        if (!activeInside || document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (!activeInside || document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow;
-      if (prevFocus && typeof prevFocus.focus === "function") prevFocus.focus();
-    };
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
-        aria-hidden="true"
-        onClick={onClose}
-        initial={reduced ? { opacity: 0.7 } : { opacity: 0 }}
-        animate={{ opacity: 0.7 }}
-        exit={reduced ? { opacity: 0.7 } : { opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-[var(--inv-overlay)] backdrop-blur-sm"
-      />
-
-      <motion.div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Datos de depósito"
-        initial={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="relative z-10 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-[1.8rem] border border-[var(--inv-accent-yellow)]/40 bg-[var(--inv-surface)] p-6 shadow-[0_30px_80px_var(--inv-shadow-card)]"
-      >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[var(--inv-botanical)]/60 text-[var(--inv-botanical)]">
-              <BankIcon className="h-5 w-5" />
-            </span>
-            <div>
-              <h3 className="font-inv-heading text-lg text-[var(--inv-text)]">
-                Depósito / transferencia
-              </h3>
-              <p className="text-xs font-light text-[var(--inv-text-muted)]">
-                Copia los datos y realiza tu transferencia.
-              </p>
-            </div>
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--inv-accent-border)] text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div>
-          {bankFields.map((f) => (
-            <BankField
-              key={f.key}
-              field={f}
-              value={bank[f.key]}
-              copied={copiedKey === f.key}
-              onCopy={() => doCopy(f.key, bank[f.key])}
-              reduced={reduced}
-              className="border-b border-[var(--inv-accent-border)] py-3 last:border-b-0"
-            />
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-/* Modal del Checkout embebido de Stripe, con el diseño botánico de la
+/* Modal del Checkout embebido de Stripe con el marco editorial de la
    invitación. Ciclo de vida: abrir (init + mount) → pagar → onComplete
    (estado de éxito propio) o error de init/mount con reintento. Cierra
    con ✕, clic en el backdrop o Escape; atrapa el foco y lo devuelve al
@@ -910,7 +712,7 @@ function CheckoutModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-[var(--inv-overlay)] backdrop-blur-sm"
+        className="absolute inset-0 bg-[var(--inv-overlay)]/70 backdrop-blur-sm"
       />
 
       <motion.div
@@ -918,25 +720,25 @@ function CheckoutModal({
         role="dialog"
         aria-modal="true"
         aria-label={paid ? "Pago completado" : "Pago con tarjeta"}
-        initial={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 300, damping: 28 }}
-        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[1.8rem] border border-[var(--inv-accent-yellow)]/40 bg-[var(--inv-surface)] p-6 shadow-[0_30px_80px_var(--inv-shadow-card)]"
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={reduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
+        transition={{ duration: 0.25 }}
+        className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[2px] border border-[var(--inv-accent-border)] bg-[var(--inv-surface)] p-6 shadow-[0_30px_80px_rgba(50,35,20,0.35)]"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[var(--inv-botanical)]/60 text-[var(--inv-botanical)]">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[var(--inv-accent-border-strong)] text-[var(--inv-text)]">
               <CardIcon className="h-5 w-5" />
             </span>
             <div>
-              <h3 className="font-inv-heading text-lg text-[var(--inv-text)]">
+              <h3 className="m-0 font-inv-display text-xl text-[var(--inv-text)]">
                 {paid ? "Pago completado" : "Pago con tarjeta"}
               </h3>
-              <p className="text-xs font-light text-[var(--inv-text-muted)]">
+              <p className="m-0 text-xs text-[var(--inv-text-muted)]">
                 {paid
-                  ? "Gracias por tu regalo."
-                  : "Completa tus datos en la pasarela segura de Stripe."}
+                  ? "Gracias por su regalo."
+                  : "Completen sus datos en la pasarela segura de Stripe."}
               </p>
             </div>
           </div>
@@ -945,7 +747,7 @@ function CheckoutModal({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--inv-accent-border)] text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--inv-accent-border)] text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-accent-border-strong)] hover:text-[var(--inv-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
           >
             ✕
           </button>
@@ -953,50 +755,38 @@ function CheckoutModal({
 
         {paid ? (
           <div className="py-2 text-center">
-            <Flourish className="mx-auto h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
-            <motion.div
-              className="mx-auto mt-6 mb-3 grid h-14 w-14 place-items-center rounded-full bg-[var(--inv-botanical)] text-2xl text-[var(--inv-on-accent)] shadow-[0_10px_24px_var(--inv-shadow-mid)]"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.08 }}
-            >
-              ✓
-            </motion.div>
-            <p className="font-inv-heading text-xl text-[var(--inv-text)]">
-              ¡Gracias! Tu regalo se registró correctamente.
+            <p className="m-0 font-inv-display text-xl text-[var(--inv-text)]">
+              ¡Gracias! Su regalo se registró correctamente.
             </p>
-            <p className="mt-2 text-sm font-light text-inv-text-soft">
-              Tu aportación fue recibida. Nos vemos en la celebración.
+            <p className="m-0 mt-2 text-sm text-[var(--inv-text-muted)]">
+              Su aportación fue recibida. Nos vemos en la celebración.
             </p>
             <button
               type="button"
               onClick={onClose}
-              className="mt-6 w-full rounded-2xl bg-[var(--inv-primary)] px-6 py-4 font-inv-heading text-lg text-[var(--inv-on-accent)] shadow-[0_16px_40px_var(--inv-shadow-ring)] transition-colors duration-300 hover:bg-[var(--inv-accent)] active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+              className="mt-6 min-h-[52px] w-full rounded-[2px] bg-[#1C1B19] px-6 text-[13px] font-medium uppercase tracking-[0.2em] text-[#FAF7F2] transition-colors hover:bg-[#3A3733] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
             >
               Cerrar
             </button>
           </div>
         ) : initError ? (
           <div className="py-2 text-center">
-            <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--inv-accent-pink)]/15 text-xl text-[var(--inv-accent-pink)]">
-              ✕
-            </div>
-            <p className="font-inv-heading text-lg text-[var(--inv-text)]">
+            <p className="m-0 font-inv-display text-lg text-[var(--inv-text)]">
               No se pudo abrir el pago
             </p>
-            <p className="mt-1 text-sm font-light text-[var(--inv-text-soft)]">{initError}</p>
+            <p className="m-0 mt-1 text-sm text-[var(--inv-text-muted)]">{initError}</p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-[var(--inv-accent-border-strong)] px-4 py-3 text-sm text-[var(--inv-text-soft)] transition-colors hover:border-[var(--inv-primary)] hover:text-[var(--inv-primary)] active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-primary)] focus-visible:ring-offset-2"
+                className="min-h-[48px] flex-1 rounded-[2px] border border-[var(--inv-accent-border-strong)] px-4 text-sm text-[var(--inv-text-soft)] transition-colors hover:bg-[var(--inv-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={onRetry}
-                className="flex-1 rounded-xl bg-[var(--inv-primary)] px-4 py-3 text-sm font-semibold text-[var(--inv-on-accent)] transition-colors hover:bg-[var(--inv-accent)] active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--inv-accent)] focus-visible:ring-offset-2"
+                className="min-h-[48px] flex-1 rounded-[2px] bg-[#1C1B19] px-4 text-sm font-medium text-[#FAF7F2] transition-colors hover:bg-[#3A3733] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
               >
                 Reintentar
               </button>
@@ -1005,7 +795,7 @@ function CheckoutModal({
         ) : (
           <>
             {amountLabel && (
-              <p className="mb-4 text-center text-sm text-[var(--inv-text-soft)]">
+              <p className="m-0 mb-4 text-center text-sm text-[var(--inv-text-soft)]">
                 Monto a pagar:{" "}
                 <span className="font-semibold text-[var(--inv-text)]">{amountLabel}</span>
               </p>
@@ -1013,19 +803,17 @@ function CheckoutModal({
             {!ready && (
               <div
                 role="status"
-                className="flex items-center justify-center gap-3 py-10 text-[var(--inv-text-soft)]"
+                className="flex items-center justify-center gap-3 py-10 text-[var(--inv-text-muted)]"
               >
-                <motion.span
+                <span
                   aria-hidden="true"
-                  className="h-5 w-5 rounded-full border-2 border-[var(--inv-accent-yellow)]/60 border-t-[var(--inv-primary)]"
-                  animate={reduced ? undefined : { rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                  className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--inv-accent-border-strong)] border-t-[#1C1B19]"
                 />
-                <span className="text-sm font-light">Cargando pasarela segura…</span>
+                <span className="text-sm">Cargando pasarela segura…</span>
               </div>
             )}
             <div ref={mountRef} />
-            <p className="mt-4 text-center text-[0.65rem] uppercase tracking-[0.25em] text-[var(--inv-text-muted)]">
+            <p className="m-0 mt-4 text-center text-[0.65rem] uppercase tracking-[0.22em] text-[var(--inv-text-muted)]">
               Pago seguro procesado por Stripe
             </p>
           </>

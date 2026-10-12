@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Macarena &amp; Jorge · 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&amp;family=Montserrat:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0;color:#1C1B19;font-family:Montserrat,sans-serif;-webkit-font-smoothing:antialiased;background:#1A1918}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+a{color:#1C1B19;text-decoration-thickness:1px;text-underline-offset:4px}
+a:hover{color:#6B6660}
+textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid #1C1B19;outline-offset:3px}
+</style>
+</helmet>
+<div style="position:relative;overflow-x:clip;min-height:100vh;background:#1A1918">
+
+<div style="position:fixed;inset:0;z-index:102;pointer-events:none;opacity:0.55;mix-blend-mode:multiply;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;)"></div>
+
+<sc-if value="{{ showIntro }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ open }}" role="button" aria-label="Abrir invitación" style="position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:24px;cursor:pointer;background:#F6F2EB;opacity:{{ overlayO }};pointer-events:{{ overlayPE }};transition:opacity 0.9s ease">
+<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;opacity:{{ hintO }};transition:opacity 0.6s ease">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Una invitación para</div>
+<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:30px;color:#1C1B19">{{ paraFamilia }}</div>
+</div>
+<div style="position:relative;width:min(84vw,440px);aspect-ratio:3/2;perspective:1100px;opacity:{{ envO }};transform:{{ envT }};transition:opacity 0.7s ease,transform 0.9s ease">
+<div style="position:absolute;inset:0;background:#ECE4D6;border-radius:3px;box-shadow:0 30px 50px -28px rgba(50,35,20,0.35),0 2px 6px rgba(50,35,20,0.08)"></div>
+<div ref="{{ letterRef }}" style="position:absolute;left:5%;right:5%;top:5%;height:90%;z-index:1;background:#FFFDF9;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:9%;gap:6px;transform:{{ letterT }};transition:transform 1.1s cubic-bezier(.3,.7,.2,1)">
+<div style="font-size:9px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Nos casamos</div>
+<div style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:30px;line-height:1.1;color:#1C1B19">Macarena <span style="font-style:italic">&amp;</span> Jorge</div>
+<dc-import name="Flor" kind="dalia" style="width:22px;height:22px;margin-top:6px" hint-size="22px,22px"></dc-import>
+</div>
+<div style="position:absolute;inset:0;z-index:2;background:#F3ECE1;border-radius:3px;clip-path:polygon(0 0,50% 56%,100% 0,100% 100%,0 100%)"></div>
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none"><path d="M0 100 L50 56 L100 100" fill="none" stroke="#DCD2C2" style="stroke-width:1;vector-effect:non-scaling-stroke"></path></svg>
+<div style="position:absolute;left:0;top:0;width:100%;height:60%;z-index:{{ flapZ }};transform-origin:50% 0;transform:{{ flapT }};transition:transform 0.9s cubic-bezier(.5,0,.2,1);filter:drop-shadow(0 3px 3px rgba(60,40,20,0.14))"><div style="width:100%;height:100%;background:#EAE1D2;border-radius:3px 3px 0 0;clip-path:polygon(0 0,100% 0,50% 100%)"></div></div>
+<div style="position:absolute;left:50%;top:60%;z-index:4;width:72px;height:72px;transform:{{ sealT }};opacity:{{ sealO }};transition:transform 0.6s ease,opacity 0.5s ease">
+<div style="width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#55504b,#262422 62%,#1a1817);box-shadow:0 4px 10px rgba(0,0,0,0.3),inset 0 -2px 4px rgba(0,0,0,0.4),inset 0 2px 3px rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center">
+<div style="width:56px;height:56px;border-radius:50%;border:1px solid rgba(250,247,242,0.22);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:500;color:#EFE8DC">M<span style="font-style:italic;font-size:15px;margin:0 2px">&amp;</span>J</div>
+</div>
+<dc-import name="Flor" kind="bugambilia" style="position:absolute;right:-16px;bottom:-6px;width:26px;height:26px" hint-size="26px,26px"></dc-import>
+<dc-import name="Flor" kind="dalia" style="position:absolute;right:-4px;bottom:-16px;width:20px;height:20px" hint-size="20px,20px"></dc-import>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;opacity:{{ hintO }};transition:opacity 0.5s ease">
+<div style="width:1px;height:28px;background:#B9B0A2"></div>
+<div style="font-size:12px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#4A4641">Toca para abrir</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ showSheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;z-index:101;top:{{ sheetTop }};left:{{ sheetLeft }};width:{{ sheetW }};height:{{ sheetH }};background:#FFFDF9;opacity:{{ sheetO }};pointer-events:none;transition:top 1s cubic-bezier(.7,0,.2,1),left 1s cubic-bezier(.7,0,.2,1),width 1s cubic-bezier(.7,0,.2,1),height 1s cubic-bezier(.7,0,.2,1),opacity 0.9s ease"></div>
+</sc-if>
+
+<button onClick="{{ toggleMusic }}" aria-label="{{ musicLabel }}" style="position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid rgba(250,247,242,0.5);background:rgba(28,27,25,0.42);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#FAF7F2;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:{{ navO }};pointer-events:{{ navPE }};transition:opacity 0.8s ease">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" style="stroke-width:1.4"><path d="M9 18V6l10-2v12"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="16.5" cy="16" r="2.5"></circle><sc-if value="{{ musicOff }}" hint-placeholder-val="{{ true }}"><path d="M3 3l18 18"></path></sc-if></svg>
+</button>
+
+<nav style="position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;display:flex;align-items:stretch;background:rgba(255,253,249,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #DDD5C8;border-radius:999px;box-shadow:0 10px 30px -12px rgba(0,0,0,0.45);padding:4px;opacity:{{ navO }};pointer-events:{{ navPE }};transition:opacity 0.8s ease">
+<button onClick="{{ goUbicacion }}" style="min-height:48px;padding:0 16px;border:0;background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#1C1B19;cursor:pointer;border-radius:999px">Ubicación</button>
+<div style="width:1px;margin:14px 0;background:#DDD5C8"></div>
+<button onClick="{{ goRegalo }}" style="min-height:48px;padding:0 16px;border:0;background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#1C1B19;cursor:pointer;border-radius:999px">Regalo</button>
+<button onClick="{{ goConfirmar }}" style="min-height:48px;padding:0 18px;margin-left:4px;border:0;background:#1C1B19;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#FAF7F2;cursor:pointer;border-radius:999px">Confirmar</button>
+</nav>
+
+<section id="portada" data-sheet="1" data-screen-label="01 Portada" style="position:sticky;top:0;z-index:1">
+<div data-paper="1" style="position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;overflow:hidden;background:#1C1B19;color:#FAF7F2;will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<img src="https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=1800&amp;q=70&amp;auto=format" alt="Macarena y Jorge" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;filter:grayscale(1) contrast(1.05) brightness(0.92);transform:{{ heroImgT }};transition:transform 2.6s cubic-bezier(.2,.7,.2,1)">
+<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,19,18,0.35) 0%,rgba(20,19,18,0.05) 32%,rgba(20,19,18,0.25) 55%,rgba(20,19,18,0.82) 100%)"></div>
+<div style="position:absolute;top:-34px;left:-34px;transform:{{ r.hero.fl }};opacity:{{ r.hero.flo }};transform-origin:top left;transition:transform 1.6s cubic-bezier(.2,.8,.2,1) 0.4s,opacity 1.2s ease 0.4s">
+<div style="width:200px;height:200px;transform:scale(0.72);transform-origin:top left"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div>
+</div>
+<div style="position:relative;width:100%;max-width:760px;padding:96px 24px 128px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px;opacity:{{ r.hero.o }};transform:{{ r.hero.ct }};transition:opacity 1.4s ease 0.3s,transform 1.4s cubic-bezier(.2,.7,.2,1) 0.3s">
+<div style="font-size:12px;font-weight:500;letter-spacing:0.4em;text-transform:uppercase;color:#EFE8DC">Nos casamos</div>
+<h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(62px,17vw,136px);line-height:0.92;letter-spacing:-0.01em;display:flex;flex-direction:column;align-items:center"><span>Macarena</span><span style="font-style:italic;font-size:0.5em;line-height:1.2">&amp;</span><span>Jorge</span></h1>
+<div style="display:flex;align-items:center;gap:14px"><div style="width:36px;height:1px;background:rgba(250,247,242,0.55)"></div><div style="font-size:14px;font-weight:400;letter-spacing:0.28em;text-transform:uppercase">[DÍA] de junio de 2027</div><div style="width:36px;height:1px;background:rgba(250,247,242,0.55)"></div></div>
+<div style="font-size:12px;font-weight:500;letter-spacing:0.36em;text-transform:uppercase;color:#EFE8DC;margin-top:-10px">Granada, España</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;max-width:400px;margin-top:10px;border-top:1px solid rgba(250,247,242,0.3);padding-top:20px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1">{{ cd.d }}</div><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#E6DFD3">Días</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;border-left:1px solid rgba(250,247,242,0.2)"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1">{{ cd.h }}</div><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#E6DFD3">Horas</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;border-left:1px solid rgba(250,247,242,0.2)"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1">{{ cd.m }}</div><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#E6DFD3">Min</div></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;border-left:1px solid rgba(250,247,242,0.2)"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1">{{ cd.s }}</div><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#E6DFD3">Seg</div></div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:6px;font-size:10px;font-weight:500;letter-spacing:0.3em;text-transform:uppercase;color:#E6DFD3">Desliza<div style="width:1px;height:22px;background:rgba(250,247,242,0.5)"></div></div>
+</div>
+</div>
+</section>
+
+<section id="historia" data-sheet="1" data-screen-label="02 Nuestra historia" style="position:sticky;top:0;z-index:2;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#FBF8F3;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;right:-36px;z-index:3;transform:{{ r.historia.fl }};opacity:{{ r.historia.flo }};transform-origin:top right;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(-0.62,0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="historia" style="position:relative;z-index:2;min-height:100svh;max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));align-items:center;gap:36px;padding:96px 28px 112px;opacity:{{ r.historia.o }};transform:{{ r.historia.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="aspect-ratio:4/5;padding:10px;background:#FFFFFF;box-shadow:0 14px 30px -18px rgba(40,30,20,0.4);transform:rotate(-1.5deg)"><img src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=900&amp;q=70&amp;auto=format" alt="Manos de Macarena y Jorge" style="width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1) contrast(1.05)"></div>
+<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Nuestra historia</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="bugambilia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(36px,8vw,50px);line-height:1.08">Granada <span style="font-style:italic;font-weight:300">y</span> Ciudad de México</h2>
+<p style="margin:0;max-width:400px;font-size:16px;line-height:1.8;color:#3A3733;text-wrap:pretty">Nos conocimos con un océano de por medio y muchas ganas de acortarlo. Entre vuelos, llamadas y dos ciudades que ya son nuestras, aprendimos que el hogar es donde estamos juntos. Ahora queremos celebrarlo con ustedes.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section id="ceremonia" data-sheet="1" data-screen-label="03 Ceremonia" style="position:sticky;top:0;z-index:3;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#F7F2EA;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;bottom:-36px;left:-36px;z-index:3;transform:{{ r.ceremonia.fl }};opacity:{{ r.ceremonia.flo }};transform-origin:bottom left;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(0.62,-0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="ceremonia" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:96px 28px 120px;opacity:{{ r.ceremonia.o }};transform:{{ r.ceremonia.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Ceremonia religiosa</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="granado" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(38px,9vw,60px);line-height:1.05">[IGLESIA]</h2>
+<p style="margin:0;font-size:16px;line-height:1.7;color:#3A3733">[DIRECCIÓN]<br>Granada, España</p>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 0;border-top:1px solid #E2DACD;border-bottom:1px solid #E2DACD;width:100%;max-width:260px"><div style="font-size:10px;font-weight:500;letter-spacing:0.3em;text-transform:uppercase;color:#6B6660">Hora</div><div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400">[HORA]</div></div>
+<a href="{{ mapaIglesia }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 30px;background:#1C1B19;color:#FAF7F2;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;border-radius:2px;width:100%;max-width:300px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" style="stroke-width:1.5"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>Cómo llegar</a>
+</div>
+</div>
+</section>
+
+<section id="recepcion" data-sheet="1" data-screen-label="04 Recepción" style="position:sticky;top:0;z-index:4;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#FBF8F3;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;right:-36px;z-index:3;transform:{{ r.recepcion.fl }};opacity:{{ r.recepcion.flo }};transform-origin:top right;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(-0.62,0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="recepcion" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:96px 28px 120px;opacity:{{ r.recepcion.o }};transform:{{ r.recepcion.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Recepción y fiesta</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="dalia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(38px,9vw,60px);line-height:1.05">[LUGAR]</h2>
+<p style="margin:0;font-size:16px;line-height:1.7;color:#3A3733">[DIRECCIÓN]<br>Granada, España</p>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 0;border-top:1px solid #E2DACD;border-bottom:1px solid #E2DACD;width:100%;max-width:260px"><div style="font-size:10px;font-weight:500;letter-spacing:0.3em;text-transform:uppercase;color:#6B6660">Hora</div><div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400">[HORA]</div></div>
+<a href="{{ mapaLugar }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 30px;background:#1C1B19;color:#FAF7F2;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;border-radius:2px;width:100%;max-width:300px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" style="stroke-width:1.5"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>Cómo llegar</a>
+</div>
+</div>
+</section>
+
+<section id="itinerario" data-sheet="1" data-screen-label="05 Itinerario" style="position:sticky;top:0;z-index:5;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#F7F2EA;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div data-rv="itinerario" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:96px 24px 120px;opacity:{{ r.itinerario.o }};transform:{{ r.itinerario.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Itinerario del día</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="dalia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<div style="position:relative;width:100%;max-width:360px;margin-top:16px;display:flex;flex-direction:column;gap:38px">
+<div style="position:absolute;left:95px;top:10px;bottom:10px;width:1px;background:#D6CEC1"></div>
+<div style="position:relative;display:grid;grid-template-columns:72px 46px 1fr;align-items:center"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;text-align:right">17:00</div><div style="display:flex;justify-content:center"><div style="width:30px;height:30px;padding:3px;background:#F7F2EA;border-radius:50%"><dc-import name="Flor" kind="granado" style="width:24px;height:24px" hint-size="24px,24px"></dc-import></div></div><div><div style="font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase">Ceremonia</div><div style="font-size:15px;color:#5A5650;margin-top:2px">[IGLESIA]</div></div></div>
+<div style="position:relative;display:grid;grid-template-columns:72px 46px 1fr;align-items:center"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;text-align:right">19:00</div><div style="display:flex;justify-content:center"><div style="width:30px;height:30px;padding:3px;background:#F7F2EA;border-radius:50%"><dc-import name="Flor" kind="bugambilia" style="width:24px;height:24px" hint-size="24px,24px"></dc-import></div></div><div><div style="font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase">Cóctel</div><div style="font-size:15px;color:#5A5650;margin-top:2px">[LUGAR]</div></div></div>
+<div style="position:relative;display:grid;grid-template-columns:72px 46px 1fr;align-items:center"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;text-align:right">21:00</div><div style="display:flex;justify-content:center"><div style="width:30px;height:30px;padding:3px;background:#F7F2EA;border-radius:50%"><dc-import name="Flor" kind="dalia" style="width:24px;height:24px" hint-size="24px,24px"></dc-import></div></div><div><div style="font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase">Cena</div><div style="font-size:15px;color:#5A5650;margin-top:2px">[LUGAR]</div></div></div>
+<div style="position:relative;display:grid;grid-template-columns:72px 46px 1fr;align-items:center"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;text-align:right">23:00</div><div style="display:flex;justify-content:center"><div style="width:30px;height:30px;padding:3px;background:#F7F2EA;border-radius:50%"><dc-import name="Flor" kind="granado" style="width:24px;height:24px" hint-size="24px,24px"></dc-import></div></div><div><div style="font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase">Fiesta</div><div style="font-size:15px;color:#5A5650;margin-top:2px">Hasta que el cuerpo aguante</div></div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="vestimenta" data-sheet="1" data-screen-label="06 Código de vestimenta" style="position:sticky;top:0;z-index:6;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#FBF8F3;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;left:-36px;z-index:3;transform:{{ r.vestimenta.fl }};opacity:{{ r.vestimenta.flo }};transform-origin:top left;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div style="position:absolute;bottom:-36px;right:-36px;z-index:3;transform:{{ r.vestimenta.fl }};opacity:{{ r.vestimenta.flo }};transform-origin:bottom right;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.7s,opacity 1s ease 0.7s"><div style="width:200px;height:200px;transform:scale(-0.62,-0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="vestimenta" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:96px 28px 120px;opacity:{{ r.vestimenta.o }};transform:{{ r.vestimenta.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Código de vestimenta</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="bugambilia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(42px,11vw,72px);line-height:1.05">[ETIQUETA]</h2>
+</div>
+</div>
+</section>
+
+<section id="regalo" data-sheet="1" data-screen-label="07 Regalo" style="position:sticky;top:0;z-index:7;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#F7F2EA;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;right:-36px;z-index:3;transform:{{ r.regalo.fl }};opacity:{{ r.regalo.flo }};transform-origin:top right;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(-0.62,0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="regalo" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;padding:96px 22px 120px;opacity:{{ r.regalo.o }};transform:{{ r.regalo.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Regalo</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="granado" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(36px,8vw,50px);line-height:1.08">Con todo nuestro cariño</h2>
+<p style="margin:0;max-width:440px;font-size:16px;line-height:1.8;color:#3A3733;text-wrap:pretty">Su presencia es nuestro mejor regalo, pero si desean tener un detalle con nosotros, una aportación nos ayudará a construir nuestra vida juntos entre Granada y México.</p>
+<div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:400px;margin-top:8px">
+<a href="{{ enlacePago }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 24px;background:#1C1B19;color:#FAF7F2;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;border-radius:2px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" style="stroke-width:1.5"><rect x="3" y="6" width="18" height="12" rx="1.5"></rect><path d="M3 10h18M7 15h4"></path></svg>Pagar con tarjeta</a>
+<button onClick="{{ toggleGift }}" aria-expanded="{{ giftOpen }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 24px;background:transparent;color:#1C1B19;border:1px solid #1C1B19;font-family:Montserrat,sans-serif;font-size:13px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;border-radius:2px;cursor:pointer">Transferencia bancaria<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" style="stroke-width:1.6;transform:{{ giftChevron }};transition:transform 0.4s ease"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+<div style="display:grid;grid-template-rows:{{ giftRows }};width:100%;max-width:440px;transition:grid-template-rows 0.6s cubic-bezier(.3,.7,.2,1)">
+<div style="overflow:hidden;min-height:0">
+<div style="display:flex;flex-direction:column;gap:18px;padding-top:12px;opacity:{{ giftO }};transition:opacity 0.5s ease 0.15s">
+<div style="border:1px solid #E2DACD;background:#FFFDF9;text-align:left">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #E2DACD;background:#F3EDE3"><dc-import name="Flor" kind="bugambilia" style="width:18px;height:18px" hint-size="18px,18px"></dc-import><div style="font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase">Desde México</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #EFE9DF"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Banco</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;word-break:break-all">[BANCO]</div></div><button data-k="mxBanco" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.mxBanco }}</button></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #EFE9DF"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Titular</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;word-break:break-all">[TITULAR]</div></div><button data-k="mxTitular" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.mxTitular }}</button></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">CLABE</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;letter-spacing:0.04em;word-break:break-all">[CLABE]</div></div><button data-k="mxClabe" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.mxClabe }}</button></div>
+</div>
+<div style="border:1px solid #E2DACD;background:#FFFDF9;text-align:left">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #E2DACD;background:#F3EDE3"><dc-import name="Flor" kind="granado" style="width:18px;height:18px" hint-size="18px,18px"></dc-import><div style="font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase">Desde España</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #EFE9DF"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Banco</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;word-break:break-all">[BANCO]</div></div><button data-k="esBanco" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.esBanco }}</button></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #EFE9DF"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Titular</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;word-break:break-all">[TITULAR]</div></div><button data-k="esTitular" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.esTitular }}</button></div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 18px"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">IBAN</div><div data-v="1" style="font-size:16px;font-weight:500;margin-top:3px;letter-spacing:0.04em;word-break:break-all">[IBAN]</div></div><button data-k="esIban" onClick="{{ copy }}" style="flex:none;min-width:88px;min-height:44px;border:1px solid #CFC7BA;background:transparent;border-radius:2px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#1C1B19;cursor:pointer">{{ cp.esIban }}</button></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="confirmar" data-sheet="1" data-screen-label="08 Confirmación" style="position:sticky;top:0;z-index:8;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#FBF8F3;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;left:-36px;z-index:3;transform:{{ r.rsvp.fl }};opacity:{{ r.rsvp.flo }};transform-origin:top left;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="rsvp" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;padding:96px 20px 120px;opacity:{{ r.rsvp.o }};transform:{{ r.rsvp.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Confirmación de asistencia</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="dalia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<sc-if value="{{ showForm }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%">
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(38px,9vw,54px);line-height:1.05">{{ familiaNombre }}</h2>
+<p style="margin:-6px 0 0;font-size:17px;line-height:1.6;color:#3A3733">{{ lugaresTexto }}</p>
+<div style="font-size:13px;font-weight:500;letter-spacing:0.08em;color:#5A5650;padding:10px 16px;border:1px solid #E2DACD;border-radius:2px">Por favor confirmen antes del [FECHA]</div>
+<div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:440px;margin-top:6px;text-align:left">
+<sc-for list="{{ guests }}" as="g" hint-placeholder-count="4">
+<div style="border:1px solid #E2DACD;background:#FFFDF9;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:17px;font-weight:500">{{ g.name }}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button onClick="{{ g.setYes }}" aria-pressed="{{ g.yes }}" style="min-height:52px;border:1px solid {{ g.yesBorder }};background:{{ g.yesBg }};color:{{ g.yesFg }};font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;border-radius:2px;cursor:pointer;transition:background 0.3s ease,color 0.3s ease">Asistirá</button>
+<button onClick="{{ g.setNo }}" aria-pressed="{{ g.no }}" style="min-height:52px;border:1px solid {{ g.noBorder }};background:{{ g.noBg }};color:#1C1B19;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;border-radius:2px;cursor:pointer;transition:background 0.3s ease">No asistirá</button>
+</div>
+</div>
+</sc-for>
+</div>
+<label style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;text-align:left"><span style="font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#4A4641">Restricciones alimentarias <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#6B6660">(opcional)</span></span><textarea value="{{ diet }}" onChange="{{ onDiet }}" rows="2" placeholder="Alergias, vegetariano, sin gluten…" style="font-family:Montserrat,sans-serif;font-size:16px;line-height:1.5;padding:14px;border:1px solid #CFC7BA;background:#FFFDF9;border-radius:2px;resize:vertical;color:#1C1B19"></textarea></label>
+<label style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;text-align:left"><span style="font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#4A4641">Mensaje para los novios <span style="font-weight:400;letter-spacing:0.05em;text-transform:none;color:#6B6660">(opcional)</span></span><textarea value="{{ msg }}" onChange="{{ onMsg }}" rows="3" placeholder="Unas palabras para Macarena y Jorge" style="font-family:Montserrat,sans-serif;font-size:16px;line-height:1.5;padding:14px;border:1px solid #CFC7BA;background:#FFFDF9;border-radius:2px;resize:vertical;color:#1C1B19"></textarea></label>
+<button onClick="{{ submit }}" style="width:100%;max-width:440px;min-height:60px;border:0;background:#1C1B19;color:#FAF7F2;font-family:Montserrat,sans-serif;font-size:14px;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;border-radius:2px;cursor:pointer;opacity:{{ confirmO }};transition:opacity 0.3s ease">Confirmar</button>
+<sc-if value="{{ needsAnswers }}" hint-placeholder-val="{{ true }}"><div style="font-size:14px;color:#5A5650;margin-top:-8px">Marquen la asistencia de cada persona para continuar.</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:26px;width:100%;padding:12px 0 4px">
+<div style="position:relative;width:240px;aspect-ratio:3/2;margin-top:48px;perspective:900px">
+<div style="position:absolute;inset:0;background:#ECE4D6;border-radius:3px;box-shadow:0 20px 34px -22px rgba(50,35,20,0.35)"></div>
+<div style="position:absolute;left:7%;right:7%;top:6%;height:86%;z-index:1;background:#FFFDF9;box-shadow:0 1px 3px rgba(0,0,0,0.08);display:flex;align-items:flex-start;justify-content:center;padding-top:10%;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;transform:{{ tLetterT }};transition:transform 0.9s cubic-bezier(.4,0,.2,1)">¡Ahí estaremos!</div>
+<div style="position:absolute;inset:0;z-index:2;background:#F3ECE1;border-radius:3px;clip-path:polygon(0 0,50% 56%,100% 0,100% 100%,0 100%)"></div>
+<div style="position:absolute;left:0;top:0;width:100%;height:60%;z-index:{{ tFlapZ }};transform-origin:50% 0;transform:{{ tFlapT }};transition:transform 0.8s cubic-bezier(.5,0,.2,1);filter:drop-shadow(0 3px 3px rgba(60,40,20,0.14))"><div style="width:100%;height:100%;background:#EAE1D2;clip-path:polygon(0 0,100% 0,50% 100%)"></div></div>
+<div style="position:absolute;left:50%;top:60%;z-index:4;width:54px;height:54px;transform:{{ tSealT }};opacity:{{ tSealO }};transition:transform 0.55s cubic-bezier(.3,1.5,.5,1),opacity 0.3s ease">
+<div style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#55504b,#262422 62%,#1a1817);box-shadow:0 3px 8px rgba(0,0,0,0.3),inset 0 -2px 3px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:#EFE8DC">M<span style="font-style:italic;font-size:12px;margin:0 1px">&amp;</span>J</div>
+<dc-import name="Flor" kind="bugambilia" style="position:absolute;right:-12px;bottom:-4px;width:20px;height:20px" hint-size="20px,20px"></dc-import>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;opacity:{{ tTextO }};transform:{{ tTextT }};transition:opacity 0.8s ease,transform 0.8s ease">
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(34px,8vw,46px);line-height:1.08">¡Gracias, {{ familiaNombre }}!</h2>
+<p style="margin:0;max-width:380px;font-size:17px;line-height:1.7;color:#3A3733;text-wrap:pretty">{{ thanksLine }}</p>
+<button onClick="{{ edit }}" style="min-height:48px;padding:0 20px;border:0;background:transparent;font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#1C1B19;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Modificar respuesta</button>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</section>
+
+<section id="hospedaje" data-sheet="1" data-screen-label="09 Hospedaje y viaje" style="position:sticky;top:0;z-index:9;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#F7F2EA;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);will-change:transform">
+<div data-shade="1" style="position:absolute;inset:0;z-index:6;background:#0E0D0C;opacity:0;pointer-events:none"></div>
+<div style="position:absolute;inset:12px;border:1px solid #E2DACD;pointer-events:none"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:34px;background:linear-gradient(to bottom,rgba(60,40,20,0.08),rgba(60,40,20,0));pointer-events:none"></div>
+<div style="position:absolute;top:-36px;right:-36px;z-index:3;transform:{{ r.hospedaje.fl }};opacity:{{ r.hospedaje.flo }};transform-origin:top right;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) 0.5s,opacity 1s ease 0.5s"><div style="width:200px;height:200px;transform:scale(-0.62,0.62);transform-origin:center"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div data-rv="hospedaje" style="position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:96px 22px 120px;opacity:{{ r.hospedaje.o }};transform:{{ r.hospedaje.ct }};transition:opacity 1s ease 0.2s,transform 1s cubic-bezier(.2,.7,.2,1) 0.2s">
+<div style="font-size:11px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#6B6660">Hospedaje y viaje</div>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:1px;background:#CFC7BA"></div><dc-import name="Flor" kind="granado" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="width:36px;height:1px;background:#CFC7BA"></div></div>
+<h2 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(36px,8vw,50px);line-height:1.08;text-align:center">Dónde quedarse</h2>
+<div style="display:flex;flex-direction:column;width:100%;max-width:460px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 0;border-top:1px solid #E2DACD"><div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500">Hotel Alhambra Palace</div><div style="font-size:15px;color:#5A5650;margin-top:2px">Junto a la Alhambra, con vistas a la ciudad</div></div><a href="https://www.google.com/maps/search/?api=1&amp;query=Hotel+Alhambra+Palace+Granada" target="_blank" rel="noopener" style="flex:none;font-size:12px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;min-height:44px;display:flex;align-items:center">Mapa</a></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 0;border-top:1px solid #E2DACD"><div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500">Parador de Granada</div><div style="font-size:15px;color:#5A5650;margin-top:2px">Dentro del recinto de la Alhambra</div></div><a href="https://www.google.com/maps/search/?api=1&amp;query=Parador+de+Granada" target="_blank" rel="noopener" style="flex:none;font-size:12px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;min-height:44px;display:flex;align-items:center">Mapa</a></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 0;border-top:1px solid #E2DACD;border-bottom:1px solid #E2DACD"><div><div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500">Hotel Casa 1800</div><div style="font-size:15px;color:#5A5650;margin-top:2px">Casa histórica en el Albaicín</div></div><a href="https://www.google.com/maps/search/?api=1&amp;query=Hotel+Casa+1800+Granada" target="_blank" rel="noopener" style="flex:none;font-size:12px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;min-height:44px;display:flex;align-items:center">Mapa</a></div>
+</div>
+<div style="width:100%;max-width:460px;margin-top:12px;padding:24px 20px;background:#FFFDF9;border:1px solid #E2DACD;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><dc-import name="Flor" kind="bugambilia" style="width:20px;height:20px" hint-size="20px,20px"></dc-import><div style="font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase">Si vienen desde México</div></div>
+<div><div style="font-size:10px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Aeropuerto más cercano</div><div style="font-size:16px;line-height:1.6;margin-top:4px">Federico García Lorca Granada-Jaén (GRX), a unos 17 km del centro.</div></div>
+<div><div style="font-size:10px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Ruta recomendada</div><div style="font-size:16px;line-height:1.6;margin-top:4px">Vuelo a Madrid (MAD) y conexión a Granada: en avión (≈1 h) o en tren AVE desde Atocha (≈3 h 20 min).</div></div>
+<div><div style="font-size:10px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6B6660">Alternativa</div><div style="font-size:16px;line-height:1.6;margin-top:4px">Aeropuerto de Málaga (AGP), a 1 h 30 min en coche.</div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="cierre" data-sheet="1" data-screen-label="10 Cierre" style="position:sticky;top:0;z-index:10;padding:0 clamp(8px,3vw,56px)">
+<div data-paper="1" style="position:relative;max-width:1200px;margin:0 auto;min-height:100svh;background:#FBF8F3;overflow:hidden;box-shadow:0 -22px 44px -14px rgba(0,0,0,0.5);display:flex;flex-direction:column;will-change:transform">
+<div data-rv="cierre" style="position:relative;flex:1;min-height:58svh;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:#1C1B19">
+<img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=1600&amp;q=70&amp;auto=format" alt="Macarena y Jorge" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;filter:grayscale(1) contrast(1.05);transform:{{ cierreImgT }};transition:transform 2.6s cubic-bezier(.2,.7,.2,1)">
+<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,19,18,0) 40%,rgba(20,19,18,0.75) 100%)"></div>
+<p style="position:relative;margin:0;padding:0 28px 48px;max-width:640px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(34px,9vw,58px);line-height:1.12;color:#FAF7F2;opacity:{{ r.cierre.o }};transform:{{ r.cierre.ct }};transition:opacity 1.2s ease 0.3s,transform 1.2s ease 0.3s">Dos ciudades, un mismo camino.</p>
+</div>
+<div style="padding:64px 20px 120px;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center">
+<div style="position:relative;width:150px;height:150px">
+<div style="position:absolute;inset:0;border:1px solid #CFC7BA;border-radius:50%"></div>
+<div style="position:absolute;inset:8px;border:1px solid #E2DACD;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300">M<span style="font-style:italic;font-size:30px;margin:0 4px">&amp;</span>J</div>
+<div style="position:absolute;left:-52px;bottom:-52px;width:90px;height:90px"><div style="width:200px;height:200px;transform:translateY(90px) scale(0.45,-0.45);transform-origin:0 0"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+<div style="position:absolute;right:-52px;top:-52px;width:90px;height:90px"><div style="width:200px;height:200px;transform:translateX(90px) scale(-0.45,0.45);transform-origin:0 0"><dc-import name="Ramillete" style="width:200px;height:200px" hint-size="200px,200px"></dc-import></div></div>
+</div>
+<div style="font-size:12px;font-weight:500;letter-spacing:0.34em;text-transform:uppercase;color:#4A4641;margin-top:64px">Granada · Junio 2027</div>
+<div style="font-size:13px;letter-spacing:0.12em;color:#6B6660">macarenayjorge.com</div>
+</div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;familiaDemo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;garcia&quot;,&quot;hernandez&quot;,&quot;martin&quot;],&quot;default&quot;:&quot;garcia&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Confirmación&quot;},&quot;mostrarSobre&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Entrada&quot;},&quot;fechaISO&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2027-06-19T17:00:00+02:00&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Boda&quot;},&quot;enlacePago&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Enlaces&quot;},&quot;mapaIglesia&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Enlaces&quot;},&quot;mapaLugar&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Enlaces&quot;},&quot;musicaURL&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Música&quot;}}">
+class Component extends DCLogic {
+  state = { stage: 0, flapZ: 3, sheet: null, sheetFull: false, seen: {}, now: Date.now(), giftOpen: false, copied: null, answers: {}, diet: '', msg: '', sent: false, tStage: 0, music: false };
+  letterRef = React.createRef();
+  FAM = {
+    garcia: { apellido: 'García', invitados: ['Antonio García', 'Carmen Ruiz', 'Lucía García', 'Pablo García'] },
+    hernandez: { apellido: 'Hernández', invitados: ['Roberto Hernández', 'Mariana López', 'Emilia Hernández'] },
+    martin: { apellido: 'Martín', invitados: ['Javier Martín', 'Elena Torres'] },
+  };
+  famKey() {
+    let q = null; try { q = new URLSearchParams(location.search).get('familia'); } catch (e) {}
+    return q && this.FAM[q] ? q : (this.FAM[this.props.familiaDemo] ? this.props.familiaDemo : 'garcia');
+  }
+  later(fn, ms) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
+  componentDidMount() {
+    this.reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (this.props.mostrarSobre === false) this.setState(s => ({ stage: 5, seen: { ...s.seen, hero: true } }));
+    else document.body.style.overflow = 'hidden';
+    this.tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
+    this.io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const k = e.target.dataset.rv;
+      this.setState(s => ({ seen: { ...s.seen, [k]: true } }));
+      this.io.unobserve(e.target);
+    }), { threshold: 0.2 });
+    document.querySelectorAll('[data-rv]').forEach(el => this.io.observe(el));
+    this.sheets = [...document.querySelectorAll('[data-sheet]')].map(sec => ({ sec, paper: sec.querySelector('[data-paper]'), shade: sec.querySelector('[data-shade]'), t: null, o: null }));
+    this.onScroll = () => { if (!this.raf) this.raf = requestAnimationFrame(this.frame); };
+    addEventListener('scroll', this.onScroll, { passive: true });
+    addEventListener('resize', this.onScroll);
+    this.frame();
+    try {
+      const saved = JSON.parse(localStorage.getItem('mj-rsvp-' + this.famKey()) || 'null');
+      if (saved) this.setState({ answers: saved.answers || {}, diet: saved.diet || '', msg: saved.msg || '', sent: true, tStage: 4 });
+    } catch (e) {}
+  }
+  componentDidUpdate() { this.onScroll && this.onScroll(); }
+  componentWillUnmount() {
+    clearInterval(this.tick); this.io && this.io.disconnect();
+    removeEventListener('scroll', this.onScroll); removeEventListener('resize', this.onScroll);
+    cancelAnimationFrame(this.raf);
+    (this.timers || []).forEach(clearTimeout); document.body.style.overflow = '';
+    this.audio && this.audio.pause();
+  }
+  // Hojas apiladas: la nueva hoja sale inclinada y se endereza; la anterior se hunde, gira levemente y se oscurece.
+  frame = () => {
+    this.raf = 0;
+    const S = this.sheets; if (!S) return;
+    const vh = innerHeight, cl = x => x < 0 ? 0 : x > 1 ? 1 : x;
+    for (const s of S) {
+      const h = s.sec.offsetHeight, t = Math.min(0, vh - h);
+      if (s.t !== t) { s.sec.style.top = t + 'px'; s.t = t; }
+      const o = (-t + vh / 2) + 'px';
+      if (s.o !== o) { s.paper.style.transformOrigin = '50% ' + o; s.o = o; }
+    }
+    for (let i = 0; i < S.length; i++) {
+      const s = S[i], next = S[i + 1];
+      const p = next ? cl(1 - next.sec.getBoundingClientRect().top / vh) : 0;
+      const e = i === 0 ? 1 : cl(1 - s.sec.getBoundingClientRect().top / vh);
+      const dir = i % 2 ? 1 : -1;
+      if (this.reduce) { s.paper.style.transform = ''; }
+      else {
+        const inRot = (1 - e) * 3.2 * dir, inX = (1 - e) * 4 * dir;
+        const outRot = -p * 1.6 * dir, sc = 1 - 0.08 * p, ty = -p * 2.5;
+        s.paper.style.transform = `translate3d(${inX}%, ${ty}%, 0) rotate(${(inRot + outRot).toFixed(3)}deg) scale(${sc.toFixed(4)})`;
+      }
+      if (s.shade) s.shade.style.opacity = (p * 0.5).toFixed(3);
+    }
+  };
+  open = () => {
+    if (this.state.stage) return;
+    const R = this.reduce ? 0.35 : 1;
+    this.setState({ stage: 1 });
+    this.later(() => this.setState({ flapZ: 0 }), 600 * R);
+    this.later(() => this.setState({ stage: 2 }), 700 * R);
+    this.later(() => {
+      const el = this.letterRef.current; const b = el && el.getBoundingClientRect();
+      this.setState({ stage: 3, sheet: b ? { top: b.top, left: b.left, width: b.width, height: b.height } : { top: 0, left: 0, width: innerWidth, height: innerHeight } });
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ sheetFull: true })));
+    }, 1850 * R);
+    this.later(() => { this.setState(s => ({ stage: 4, seen: { ...s.seen, hero: true } })); document.body.style.overflow = ''; }, 2850 * R);
+    this.later(() => this.setState({ stage: 5 }), 3800 * R);
+  };
+  rv(k) {
+    const on = !!this.state.seen[k] || this.reduce;
+    return { o: on ? 1 : 0, ct: on ? 'translateY(0px)' : 'translateY(28px)', fl: on ? 'scale(1) rotate(0deg)' : 'scale(0.6) rotate(-18deg)', flo: on ? 1 : 0 };
+  }
+  go(id) {
+    if (!this.sheets) return;
+    let y = 0;
+    for (const s of this.sheets) { if (s.sec.id === id) break; y += s.sec.offsetHeight; }
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+  copy = (e) => {
+    const b = e.currentTarget, k = b.dataset.k;
+    const v = ((b.parentElement.querySelector('[data-v]') || {}).textContent || '').trim();
+    const done = () => { this.setState({ copied: k }); clearTimeout(this.ct); this.ct = setTimeout(() => this.setState({ copied: null }), 1800); };
+    const fallback = () => { const t = document.createElement('textarea'); t.value = v; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (_) {} t.remove(); done(); };
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, fallback); else fallback();
+  };
+  submit = () => {
+    const fam = this.FAM[this.famKey()];
+    if (!fam.invitados.every((_, i) => typeof this.state.answers[i] === 'boolean')) return;
+    try { localStorage.setItem('mj-rsvp-' + this.famKey(), JSON.stringify({ answers: this.state.answers, diet: this.state.diet, msg: this.state.msg })); } catch (e) {}
+    this.setState({ sent: true, tStage: 0 });
+    this.later(() => this.go('confirmar'), 30);
+    this.later(() => this.setState({ tStage: 1 }), 450);
+    this.later(() => this.setState({ tStage: 2 }), 1300);
+    this.later(() => this.setState({ tStage: 3 }), 2100);
+    this.later(() => this.setState({ tStage: 4 }), 2600);
+  };
+  edit = () => { try { localStorage.removeItem('mj-rsvp-' + this.famKey()); } catch (e) {} this.setState({ sent: false, tStage: 0 }); };
+  toggleMusic = () => {
+    const url = this.props.musicaURL, on = !this.state.music;
+    if (url) {
+      if (!this.audio) { this.audio = new Audio(url); this.audio.loop = true; this.audio.volume = 0.5; }
+      on ? this.audio.play().catch(() => {}) : this.audio.pause();
+    }
+    this.setState({ music: on });
+  };
+  renderVals() {
+    const s = this.state, st = s.stage, P = this.props;
+    const fam = this.FAM[this.famKey()], n = fam.invitados.length;
+    const target = new Date(P.fechaISO || '2027-06-19T17:00:00+02:00').getTime();
+    let d = Math.max(0, (isNaN(target) ? 0 : target) - s.now);
+    const D = Math.floor(d / 864e5); d -= D * 864e5;
+    const H = Math.floor(d / 36e5); d -= H * 36e5;
+    const M = Math.floor(d / 6e4); const Sx = Math.floor((d - M * 6e4) / 1e3);
+    const p2 = x => String(x).padStart(2, '0');
+    const r = {};
+    ['hero', 'historia', 'ceremonia', 'recepcion', 'itinerario', 'vestimenta', 'regalo', 'rsvp', 'hospedaje', 'cierre'].forEach(k => r[k] = this.rv(k));
+    const a = s.answers;
+    const guests = fam.invitados.map((name, i) => ({
+      name, yes: a[i] === true, no: a[i] === false,
+      yesBg: a[i] === true ? '#1C1B19' : 'transparent', yesFg: a[i] === true ? '#FAF7F2' : '#1C1B19',
+      yesBorder: a[i] === true ? '#1C1B19' : '#CFC7BA',
+      noBg: a[i] === false ? '#E6DFD3' : 'transparent', noBorder: a[i] === false ? '#8C857B' : '#CFC7BA',
+      setYes: () => this.setState(x => ({ answers: { ...x.answers, [i]: true } })),
+      setNo: () => this.setState(x => ({ answers: { ...x.answers, [i]: false } })),
+    }));
+    const answered = fam.invitados.every((_, i) => typeof a[i] === 'boolean');
+    const yes = fam.invitados.filter((_, i) => a[i] === true).length;
+    const sh = s.sheet || { top: 0, left: 0, width: 0, height: 0 };
+    const t = s.tStage;
+    const cp = {}; ['mxBanco', 'mxTitular', 'mxClabe', 'esBanco', 'esTitular', 'esIban'].forEach(k => cp[k] = s.copied === k ? 'Copiado ✓' : 'Copiar');
+    const q = x => encodeURIComponent(x);
+    return {
+      showIntro: st < 5, open: this.open, letterRef: this.letterRef,
+      paraFamilia: 'la Familia ' + fam.apellido,
+      overlayO: st >= 4 ? 0 : 1, overlayPE: st >= 4 ? 'none' : 'auto',
+      hintO: st >= 1 ? 0 : 1,
+      envO: st >= 3 ? 0 : 1, envT: st >= 3 ? 'scale(1.04)' : 'scale(1)',
+      flapZ: s.flapZ, flapT: st >= 1 ? 'rotateX(180deg)' : 'rotateX(0deg)',
+      sealO: st >= 1 ? 0 : 1, sealT: st >= 1 ? 'translate(-50%,-50%) scale(1.3)' : 'translate(-50%,-50%) scale(1)',
+      letterT: st >= 2 ? 'translateY(-62%)' : 'translateY(0%)',
+      showSheet: st >= 3 && st < 5,
+      sheetTop: s.sheetFull ? '0px' : sh.top + 'px', sheetLeft: s.sheetFull ? '0px' : sh.left + 'px',
+      sheetW: s.sheetFull ? '100vw' : sh.width + 'px', sheetH: s.sheetFull ? '100vh' : sh.height + 'px',
+      sheetO: st >= 4 ? 0 : 1,
+      navO: st >= 4 ? 1 : 0, navPE: st >= 4 ? 'auto' : 'none',
+      heroImgT: r.hero.o ? 'scale(1)' : 'scale(1.08)',
+      cierreImgT: r.cierre.o ? 'scale(1)' : 'scale(1.08)',
+      r,
+      cd: { d: D, h: p2(H), m: p2(M), s: p2(Sx) },
+      toggleMusic: this.toggleMusic, musicOff: !s.music, musicLabel: s.music ? 'Apagar música' : 'Encender música',
+      goUbicacion: () => this.go('ceremonia'), goRegalo: () => this.go('regalo'), goConfirmar: () => this.go('confirmar'),
+      mapaIglesia: P.mapaIglesia || ('https://www.google.com/maps/search/?api=1&query=' + q('Iglesia Granada España')),
+      mapaLugar: P.mapaLugar || ('https://www.google.com/maps/search/?api=1&query=' + q('Granada España')),
+      enlacePago: P.enlacePago || '#',
+      giftOpen: s.giftOpen, toggleGift: () => this.setState(x => ({ giftOpen: !x.giftOpen })),
+      giftRows: s.giftOpen ? '1fr' : '0fr', giftO: s.giftOpen ? 1 : 0, giftChevron: s.giftOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      copy: this.copy, cp,
+      familiaNombre: 'Familia ' + fam.apellido,
+      lugaresTexto: n === 1 ? 'tenemos 1 lugar reservado para ustedes' : `tenemos ${n} lugares reservados para ustedes`,
+      guests, diet: s.diet, msg: s.msg,
+      onDiet: e => this.setState({ diet: e.target.value }), onMsg: e => this.setState({ msg: e.target.value }),
+      submit: this.submit, confirmO: answered ? 1 : 0.35, needsAnswers: !answered,
+      showForm: !s.sent, sent: s.sent, edit: this.edit,
+      tLetterT: t >= 1 ? 'translateY(4%)' : 'translateY(-48%)',
+      tFlapZ: t >= 2 ? 3 : 0, tFlapT: t >= 2 ? 'rotateX(0deg)' : 'rotateX(180deg)',
+      tSealO: t >= 3 ? 1 : 0, tSealT: t >= 3 ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-50%) scale(2.2)',
+      tTextO: t >= 4 ? 1 : 0, tTextT: t >= 4 ? 'translateY(0px)' : 'translateY(10px)',
+      thanksLine: yes === 0
+        ? 'Lamentamos que no puedan acompañarnos. Gracias por avisarnos; los llevaremos en el corazón.'
+        : `Hemos recibido su confirmación: ${yes} de ${n} ${yes === 1 ? 'persona asistirá' : 'personas asistirán'}. ¡Nos vemos en Granada!`,
+    };
+  }
+}
+</script>
+</body>
+</html>

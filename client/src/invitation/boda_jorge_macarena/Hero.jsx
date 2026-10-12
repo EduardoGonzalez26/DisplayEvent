@@ -1,312 +1,182 @@
-import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { useMemo } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useCountdown } from "../shared/Countdown.jsx";
 import { safeCssUrl } from "../shared/util.jsx";
-import { EASE } from "../motion.jsx";
-import { BotanicalCorner, Flourish } from "./decor.jsx";
-
-/* Capitaliza la primera letra (los meses/días de `es-MX` llegan en minúscula). */
-const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-
-/* Monograma de la pareja: primeras letras de ambos nombres ("Jorge & Macarena" -> "J & M"). */
-const initialsOf = (a, b) =>
-  [a, b]
-    .map((n) => String(n || "").trim().charAt(0).toUpperCase())
-    .filter(Boolean)
-    .join(" & ");
-
-/* Hojas/pétalos flotantes deterministas: mismo conjunto en cada render. */
-function seeded(seed) {
-  let s = seed % 2147483647;
-  if (s <= 0) s += 2147483646;
-  return () => (s = (s * 16807) % 2147483647) / 2147483647;
-}
-const rng = seeded(96);
-const FLOATERS = Array.from({ length: 10 }, (_, i) => ({
-  top: `${(rng() * 80 + 6).toFixed(1)}%`,
-  left: `${(rng() * 88 + 4).toFixed(1)}%`,
-  size: 10 + rng() * 16,
-  delay: rng() * 4,
-  duration: 5 + rng() * 5,
-  flip: rng() > 0.5,
-  rotate: (rng() * 60 - 30).toFixed(0),
-}));
-
-/* Hoja flotante sutil con deriva suave (respeta prefers-reduced-motion). */
-function FloatingLeaf({ top, left, size, delay, duration, flip, rotate, reduced }) {
-  return (
-    <motion.span
-      aria-hidden="true"
-      className="pointer-events-none absolute"
-      style={{ top, left, width: size, height: size, rotate }}
-      animate={
-        reduced
-          ? { opacity: 0.5 }
-          : { opacity: [0.25, 0.6, 0.25], y: [0, -16, 0], rotate: [rotate, Number(rotate) + 14, rotate] }
-      }
-      transition={
-        reduced
-          ? { duration: 0 }
-          : { duration, repeat: Infinity, ease: "easeInOut", delay }
-      }
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="h-full w-full"
-        style={{ transform: flip ? "scaleX(-1)" : undefined }}
-      >
-        <path
-          d="M3 20 C 10 19, 16 12, 21 3 C 12 6, 7 11, 3 20 Z"
-          fill="var(--inv-accent-pink)"
-          opacity="0.35"
-        />
-      </svg>
-    </motion.span>
-  );
-}
-
-/* Nombres con entrada letra a letra (desvanecimiento escalonado si se
-   prefiere movimiento reducido: solo opacidad del bloque completo). */
-function AnimatedLetters({ text, delay = 0, reduced }) {
-  if (reduced) return <span>{text}</span>;
-  return Array.from(text).map((ch, i) => (
-    <motion.span
-      key={`${i}-${ch}`}
-      aria-hidden="true"
-      className="inline-block whitespace-pre"
-      initial={{ opacity: 0, y: 26, rotate: -5, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-      transition={{ duration: 0.8, ease: EASE, delay: delay + i * 0.05 }}
-    >
-      {ch}
-    </motion.span>
-  ));
-}
-
-const entrance = (i = 0, delayBase = 0) => ({
-  hidden: { opacity: 0, y: 30 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.9, ease: EASE, delay: delayBase + i * 0.12 },
-  },
-});
+import { Ramillete } from "./flora.jsx";
+import { displayNames, longDateLine, parseEventDate } from "./helpers.js";
 
 /* ------------------------------------------------------------------
-   Portada nocturna: `hero_image` (o la primera foto de `cfg.gallery` si
-   no hay) con VELO OSCURO del tema, o degradado verde-noche como
-   fallback. Flora de esquina (granada/bugambilia), hojas flotantes,
-   nombres INMENSOS en Great Vibes rosa, fecha/hora en Playfair marfil
-   separadas por líneas finas doradas, y scroll cue.
+   Portada del diseño v2: foto B&N a sangre con degradado oscuro,
+   nombres inmensos en Cormorant (novia & novio apilados), fecha y lugar
+   en microtexto, cuenta regresiva inline sobre hairline y cue "Desliza".
+   Ramillete de esquina superior izquierda y rama inferior.
+
+   Props:
+   - `event`: fecha/hora/lugar.
+   - `cfg`: hero_image + gallery (portada) y nombres de la pareja.
+   - `reveal`: la entrada (fade + scale de foto + flor) se dispara cuando
+     el sobre se abre (mismo comportamiento del mock).
 ------------------------------------------------------------------ */
-export default function BodaJorgeMacarenaHero({ event, family, cfg, reveal = true }) {
-  const date = new Date(`${event.date}T00:00:00`);
-  const day = date.getDate();
-  const month = cap(date.toLocaleDateString("es-MX", { month: "long" }));
-  const year = date.getFullYear();
-  const weekday = cap(date.toLocaleDateString("es-MX", { weekday: "long" }));
 
+const pad2 = (n) => String(n).padStart(2, "0");
+
+/* Unidad de la cuenta regresiva: número Cormorant 38 y etiqueta
+   microtexto; separador vertical hairline entre columnas. */
+function CountdownUnit({ value, label, first = false }) {
+  return (
+    <div
+      className={`flex flex-col items-center gap-1.5 ${
+        first ? "" : "border-l border-[rgba(250,247,242,0.2)]"
+      }`}
+    >
+      <div className="font-inv-display text-[38px] font-[300] leading-none tabular-nums">
+        {value}
+      </div>
+      <div className="text-[10px] font-medium uppercase tracking-[0.24em] text-[#E6DFD3]">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+export default function Hero({ event, cfg, reveal = true, theme }) {
   const reduced = useReducedMotion();
-  // Ref al propio <header> (el sticky lo posiciona visualmente, pero
-  // useScroll mide vía offsetTop/offsetParent, así que el progreso no se
-  // corrompe con el sticky). `scrollYProgress` va de 0 (portada visible)
-  // a 1 (portada completamente tapada por el contenido que sube).
-  const headerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: headerRef,
-    offset: ["start start", "end start"],
-  });
-  const bgY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -60]);
-  // Fade/scale sutil del contenido al ser tapado (efecto premium).
-  const contentOpacity = useTransform(scrollYProgress, [0, 1], [1, reduced ? 1 : 0.4]);
-  const contentScale = useTransform(scrollYProgress, [0, 1], [1, reduced ? 1 : 0.96]);
+  const labels = theme?.labels || {};
 
-  const couple = cfg.couple || {};
-  const nameA = String(couple.nameA || "").trim();
-  const nameB = String(couple.nameB || "").trim();
-  const mainNames = [nameA, nameB].filter(Boolean).join(" & ");
-  const monogram = initialsOf(nameA, nameB);
-  const kicker = String(cfg.kicker || "").trim();
-  const tagline = String(cfg.tagline || "").trim();
-  // `hero_image` manda; si no existe (o no es una URL válida), la portada
-  // usa la primera foto de `cfg.gallery`. El layout compensa ese consumo
-  // desplazando el índice de las fotos de las tarjetas.
-  const gallery = (cfg.gallery || []).filter(
+  const names = displayNames(cfg);
+  const title = names.length ? names : [String(event?.name || "").trim()].filter(Boolean);
+  const titleA = title[0] || "";
+  const titleB = title[1] || "";
+
+  const dateParts = parseEventDate(event?.date);
+  const dateLine = longDateLine(dateParts);
+
+  const gallery = (cfg?.gallery || []).filter(
     (s) => typeof s === "string" && s.trim()
   );
-  const bgImage = safeCssUrl(cfg.hero_image) || safeCssUrl(gallery[0]) || "";
-  const heroTitle = mainNames || event.name;
+  const bgImage = safeCssUrl(cfg?.hero_image) || safeCssUrl(gallery[0]) || "";
+
+  const target = useMemo(() => {
+    if (!event?.date) return null;
+    const ts = new Date(`${event.date}T${event.time || "00:00:00"}`).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  }, [event?.date, event?.time]);
+  const { days, hours, minutes, seconds } = useCountdown(target);
+  const hasCountdown = target != null;
+
+  const alt = names.length ? names.join(" y ") : event?.name || "Portada";
 
   return (
-    <header
-      ref={headerRef}
-      className="relative flex h-dvh items-center justify-center overflow-hidden"
-      style={{ background: "var(--inv-hero-fallback)" }}
-    >
-      {/* Fondo con parallax: foto con VELO OSCURO del tema o degradado
-          verde-noche cuando no hay imagen */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div className="absolute inset-0" style={{ y: bgY }}>
-          {bgImage ? (
-            <>
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url('${bgImage}')` }}
-              />
-              {/* Velo oscuro (~64%) + gradiente que refuerza bordes: la foto
-                  de portada se intuye y el texto marfil conserva contraste
-                  AA sobre el peor caso. Se compone con `color-mix` para
-                  tomar el color de fondo del tema sin fringe oscuro. */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "color-mix(in srgb, var(--inv-bg) 64%, transparent)",
-                }}
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, color-mix(in srgb, var(--inv-bg) 30%, transparent) 0%, color-mix(in srgb, var(--inv-bg) 46%, transparent) 50%, color-mix(in srgb, var(--inv-bg) 78%, transparent) 100%)",
-                }}
-              />
-            </>
-          ) : (
-            <>
-              <div
-                className="absolute inset-0"
-                style={{ background: "var(--inv-hero-fallback)" }}
-              />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--inv-radial-a),transparent_62%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,var(--inv-radial-b),transparent_55%)]" />
-            </>
-          )}
-        </motion.div>
-        {/* Hojas flotantes en su propia capa */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          {FLOATERS.map((f, i) => (
-            <FloatingLeaf key={i} {...f} reduced={reduced} />
-          ))}
-        </div>
-      </div>
-
-      {/* Flora botánica en las 4 esquinas */}
+    <section data-sheet id="portada" className="sticky top-0" style={{ zIndex: 0 }}>
       <div
-        className="pointer-events-none absolute inset-0 text-[var(--inv-botanical)]"
-        aria-hidden="true"
+        data-paper
+        className="relative flex min-h-[100svh] flex-col items-center justify-end overflow-hidden bg-[var(--inv-hero-fallback)] text-[#FAF7F2] will-change-transform"
       >
-        <BotanicalCorner className="left-0 top-0 h-40 w-40 opacity-70 md:h-60 md:w-60" />
-        <BotanicalCorner className="right-0 top-0 h-40 w-40 -scale-x-100 opacity-70 md:h-60 md:w-60" />
-        <BotanicalCorner className="bottom-0 left-0 h-40 w-40 -scale-y-100 opacity-70 md:h-60 md:w-60" />
-        <BotanicalCorner className="bottom-0 right-0 h-40 w-40 rotate-180 opacity-70 md:h-60 md:w-60" />
-      </div>
+        {/* Capa de oscurecimiento que aplica el motor de tarjetas apiladas */}
+        <div
+          data-shade
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[6] bg-[#0E0D0C] opacity-0"
+        />
 
-      {/* Línea hairline interior fina (amarillo 1px) */}
-      <motion.div
-        className="pointer-events-none absolute inset-3 md:inset-5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.8, ease: EASE, delay: 0.4 }}
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 border border-[var(--inv-accent-yellow)]/35" />
-        <div className="absolute inset-[10px] border border-[var(--inv-accent-yellow)]/15" />
-      </motion.div>
-
-      <motion.div
-        className="relative z-10 w-full max-w-3xl px-6 pb-20 pt-14 text-center md:pb-32 md:pt-28"
-        initial="hidden"
-        animate={reveal ? "show" : "hidden"}
-        style={{ y: contentY, opacity: contentOpacity, scale: contentScale }}
-      >
-        {/* Monograma + kicker */}
-        <motion.div variants={entrance(0)} className="flex flex-col items-center gap-3">
-          {monogram && (
-            <span
-              aria-hidden="true"
-              className="font-inv-serif text-2xl tracking-[0.25em] text-[var(--inv-botanical)] md:text-4xl"
-            >
-              {monogram}
-            </span>
-          )}
-          {kicker && (
-            <p className="text-[0.62rem] uppercase tracking-[0.55em] text-[var(--inv-primary)] md:text-xs">
-              {kicker}
-            </p>
-          )}
-        </motion.div>
-
-        {/* Nombres INMENSOS en Great Vibes rosa con entrada letra a letra */}
-        <motion.h1
-          variants={entrance(1, 0.3)}
-          aria-label={heroTitle}
-          className="mt-5 font-inv-script text-5xl leading-[1.15] text-balance text-[var(--inv-accent-pink)] sm:leading-[1.2] sm:text-8xl md:text-[7rem]"
-        >
-          <AnimatedLetters text={heroTitle} delay={0.3} reduced={reduced} />
-        </motion.h1>
-
-        <motion.div variants={entrance(2)}>
-          <Flourish className="mx-auto mt-6 h-6 w-44 text-[var(--inv-botanical)] opacity-80" />
-        </motion.div>
-
-        {tagline && (
-          <motion.p
-            variants={entrance(2)}
-            className="mt-4 font-inv-serif text-base italic text-balance text-[var(--inv-text-soft)] md:text-2xl"
-          >
-            {tagline}
-          </motion.p>
+        {bgImage && (
+          <motion.img
+            src={bgImage}
+            alt={alt}
+            loading="eager"
+            decoding="async"
+            draggable={false}
+            initial={{ scale: reduced ? 1 : 1.08 }}
+            animate={{ scale: reveal ? 1 : reduced ? 1 : 1.08 }}
+            transition={{ duration: reduced ? 0 : 2.6, ease: [0.2, 0.7, 0.2, 1] }}
+            className="absolute inset-0 h-full w-full object-cover [filter:grayscale(1)_contrast(1.05)_brightness(0.92)]"
+            style={{ objectPosition: "50% 35%" }}
+          />
         )}
 
-        {/* Fecha/hora: tipografía Playfair verde, separada por líneas amarillas 1px */}
-        <motion.div variants={entrance(3)} className="mt-7">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center gap-5">
-              <span className="h-px w-10 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
-              <p className="font-inv-heading text-xl text-[var(--inv-text)] md:text-3xl">
-                {weekday}
-              </p>
-              <span className="h-px w-10 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
-            </div>
-            <p className="font-inv-heading text-3xl font-medium tabular-nums text-[var(--inv-text)] md:text-5xl">
-              <span className="text-[var(--inv-primary)]">{day}</span> de {month},{" "}
-              <span className="text-[var(--inv-text-muted)]">{year}</span>
-            </p>
-            {event.time && (
-              <>
-                <span className="h-px w-24 bg-[var(--inv-accent-yellow)]" aria-hidden="true" />
-                <p className="text-xs uppercase tracking-[0.35em] tabular-nums text-[var(--inv-text-soft)] md:text-base">
-                  {event.time}
-                </p>
-              </>
-            )}
+        {/* Velo del diseño: claro arriba, profundo abajo para sostener la tinta */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(20,19,18,0.35) 0%, rgba(20,19,18,0.05) 32%, rgba(20,19,18,0.25) 55%, rgba(20,19,18,0.82) 100%)",
+          }}
+        />
+
+        {/* Ramillete de la esquina superior izquierda */}
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-[34px] -top-[34px] z-[2] origin-top-left"
+          initial={reduced ? { opacity: 1 } : { opacity: 0, scale: 0.6, rotate: -18 }}
+          animate={
+            reveal
+              ? reduced
+                ? { opacity: 1 }
+                : { opacity: 1, scale: 1, rotate: 0 }
+              : undefined
+          }
+          transition={{ duration: reduced ? 0 : 1.6, ease: [0.2, 0.8, 0.2, 1], delay: reduced ? 0 : 0.4 }}
+        >
+          <div className="origin-top-left scale-[0.72]">
+            <Ramillete />
           </div>
         </motion.div>
 
-        <motion.p
-          variants={entrance(4)}
-          className="mt-7 text-[0.62rem] uppercase tracking-[0.4em] text-[var(--inv-text-muted)] md:text-xs"
+        {/* Contenido */}
+        <motion.div
+          className="relative z-[3] flex w-full max-w-[760px] flex-col items-center gap-[22px] self-center px-6 pb-32 pt-24 text-center"
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 28 }}
+          animate={reveal ? (reduced ? { opacity: 1 } : { opacity: 1, y: 0 }) : undefined}
+          transition={{ duration: reduced ? 0 : 1.4, ease: [0.2, 0.7, 0.2, 1], delay: reduced ? 0 : 0.3 }}
         >
-          Invitación para&nbsp;la{" "}
-          <span className="font-semibold capitalize text-[var(--inv-accent-pink)]">
-            {family}
-          </span>
-        </motion.p>
-      </motion.div>
+          <p className="text-xs font-medium uppercase tracking-[0.4em] text-[#EFE8DC]">
+            {labels.heroEyebrow || "Nos casamos"}
+          </p>
 
-      {/* Scroll cue "Desliza" */}
-      <motion.div
-        className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-[var(--inv-primary)] md:bottom-20"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: reveal ? 1 : 0 }}
-        transition={{ duration: 1, delay: 1.8 }}
-        aria-hidden="true"
-      >
-        <span className="text-[0.55rem] uppercase tracking-[0.45em] opacity-80">Desliza</span>
-        <span className="animate-float-slow text-2xl">↓</span>
-      </motion.div>
-    </header>
+          <h1 className="m-0 flex flex-col items-center font-inv-display text-[clamp(62px,17vw,136px)] font-[300] leading-[0.92] tracking-[-0.01em]">
+            {titleB ? (
+              <>
+                <span>{titleA}</span>
+                <span className="font-[300] italic leading-[1.2] text-[0.5em]">&amp;</span>
+                <span>{titleB}</span>
+              </>
+            ) : (
+              <span>{titleA}</span>
+            )}
+          </h1>
+
+          {dateLine && (
+            <div className="flex items-center gap-[14px]">
+              <span aria-hidden="true" className="h-px w-9 bg-[rgba(250,247,242,0.55)]" />
+              <div className="text-sm font-normal uppercase tracking-[0.28em]">
+                {dateLine}
+              </div>
+              <span aria-hidden="true" className="h-px w-9 bg-[rgba(250,247,242,0.55)]" />
+            </div>
+          )}
+
+          {event?.place && (
+            <div className="-mt-2.5 text-xs font-medium uppercase tracking-[0.36em] text-[#EFE8DC]">
+              {event.place}
+            </div>
+          )}
+
+          {hasCountdown && (
+            <div className="mt-2.5 grid w-full max-w-[400px] grid-cols-4 border-t border-[rgba(250,247,242,0.3)] pt-5">
+              <CountdownUnit value={days} label="Días" first />
+              <CountdownUnit value={pad2(hours)} label="Horas" />
+              <CountdownUnit value={pad2(minutes)} label="Min" />
+              <CountdownUnit value={pad2(seconds)} label="Seg" />
+            </div>
+          )}
+
+          <div className="mt-1.5 flex flex-col items-center gap-2 text-[10px] font-medium uppercase tracking-[0.3em] text-[#E6DFD3]">
+            {labels.heroScroll || "Desliza"}
+            <span aria-hidden="true" className="h-[22px] w-px bg-[rgba(250,247,242,0.5)]" />
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }

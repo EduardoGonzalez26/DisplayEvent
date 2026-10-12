@@ -141,6 +141,44 @@ function normalizeContacts(v) {
     .filter((c) => c.name || c.phone);
 }
 
+// Hospedaje: [{ name, note, url? }]. `url` es opcional: se omite cuando viene
+// vacía/ausente (igual que `icon` en dress code). No-array se conserva para
+// que la validación lo rechace.
+function normalizeLodging(v) {
+  if (v == null) return [];
+  if (!Array.isArray(v)) return v;
+  return v
+    .filter((l) => l && typeof l === "object")
+    .map((l) => {
+      const item = { name: str(l.name), note: str(l.note) };
+      if (l.url != null && str(l.url)) item.url = str(l.url);
+      return item;
+    })
+    .filter((l) => l.name || l.note || l.url);
+}
+
+// Viaje: { title, airport_note, routes: [{ label, note }], closing_note }.
+// Objeto siempre presente y tolerante (no-objeto -> defaults). `routes`
+// no-array se conserva tal cual para que la validación lo rechace.
+function normalizeTravel(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  let routes = obj.routes;
+  if (routes == null) {
+    routes = [];
+  } else if (Array.isArray(routes)) {
+    routes = routes
+      .filter((r) => r && typeof r === "object")
+      .map((r) => ({ label: str(r.label), note: str(r.note) }))
+      .filter((r) => r.label || r.note);
+  }
+  return {
+    title: str(obj.title),
+    airport_note: str(obj.airport_note),
+    routes,
+    closing_note: str(obj.closing_note),
+  };
+}
+
 // Pareja (boda): { nameA, nameB }.
 function normalizeCouple(v) {
   const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -163,6 +201,10 @@ export const DEFAULT_SUGGESTED_EUR = [
 // Tope del Payment Link externo de Stripe (u otro procesador): una URL larga
 // no aporta valor y evita payloads abusivos en el JSONB.
 export const PAYMENT_LINK_MAX_LENGTH = 500;
+
+// Tope del texto "Nuestra historia": suficiente para un relato largo sin
+// permitir payloads abusivos en el JSONB.
+export const STORY_MAX_LENGTH = 4000;
 
 // Booleano tolerante. null/undefined -> default. Strings "true"/"false"/"0"/"1".
 function toBool(v, dflt) {
@@ -257,6 +299,24 @@ const contactItemSchema = z.object({
   phone: z.string().default(""),
 });
 
+const lodgingItemSchema = z.object({
+  name: z.string().default(""),
+  note: z.string().default(""),
+  url: z.string().optional(),
+});
+
+const travelRouteSchema = z.object({
+  label: z.string().default(""),
+  note: z.string().default(""),
+});
+
+const travelSchema = z.object({
+  title: z.string().default(""),
+  airport_note: z.string().default(""),
+  routes: z.array(travelRouteSchema).default([]),
+  closing_note: z.string().default(""),
+});
+
 const coupleSchema = z.object({
   nameA: z.string().default(""),
   nameB: z.string().default(""),
@@ -296,6 +356,10 @@ const commonFields = {
   dress_note: z.string().default(""),
   contacts: z.array(contactItemSchema).default([]),
   contact_note: z.string().default(""),
+  story: z.string().max(STORY_MAX_LENGTH).default(""),
+  music_url: z.string().default(""),
+  lodging: z.array(lodgingItemSchema).default([]),
+  travel: travelSchema.default({}),
   registry: registrySchema.default({}),
   rsvp_editable: z.boolean().default(false),
   rsvp_edit_deadline: z.string().default(""),
@@ -391,6 +455,10 @@ export function normalizeInvitation(raw) {
     dress_note: str(source.dress_note),
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
+    story: str(source.story).slice(0, STORY_MAX_LENGTH),
+    music_url: str(source.music_url),
+    lodging: normalizeLodging(source.lodging),
+    travel: normalizeTravel(source.travel),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
     rsvp_edit_deadline: toIsoDate(source.rsvp_edit_deadline),
@@ -459,9 +527,15 @@ export function parseInvitation(raw) {
 // incluso si el dato guardado está corrupto. Nunca lanza.
 export function normalizeForRead(raw) {
   const out = normalizeInvitation(raw);
-  const arrayKeys = ["itinerary", "locations", "gallery", "dress_code", "contacts"];
+  const arrayKeys = ["itinerary", "locations", "gallery", "dress_code", "contacts", "lodging"];
   for (const key of arrayKeys) {
     if (!Array.isArray(out[key])) out[key] = [];
+  }
+  // `travel` siempre presente, con `routes` como array real para lectura.
+  if (!out.travel || typeof out.travel !== "object" || Array.isArray(out.travel)) {
+    out.travel = normalizeTravel(null);
+  } else if (!Array.isArray(out.travel.routes)) {
+    out.travel.routes = [];
   }
   // `registry` siempre presente, con subestructuras saneadas para lectura.
   if (!out.registry || typeof out.registry !== "object" || Array.isArray(out.registry)) {

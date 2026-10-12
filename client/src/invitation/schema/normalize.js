@@ -130,6 +130,52 @@ function normalizeCouple(v) {
 }
 
 /* ------------------------------------------------------------------
+   Campos congelados del rediseño editorial (comunes en el backend):
+   `story`, `music_url`, `lodging` y `travel`. Espejan exactamente los
+   helpers de `server/src/schemas/invitation.js`.
+------------------------------------------------------------------ */
+
+// Tope del texto "Nuestra historia" (espeja el backend).
+export const STORY_MAX_LENGTH = 4000;
+
+// Hospedaje: [{ name, note, url? }]. `url` es opcional: se omite cuando
+// viene vacía/ausente. No-array se conserva para que la validación lo
+// rechace (igual que el backend).
+function normalizeLodging(v) {
+  if (v == null) return [];
+  if (!Array.isArray(v)) return v;
+  return v
+    .filter((l) => l && typeof l === "object")
+    .map((l) => {
+      const item = { name: str(l.name), note: str(l.note) };
+      if (l.url != null && str(l.url)) item.url = str(l.url);
+      return item;
+    })
+    .filter((l) => l.name || l.note || l.url);
+}
+
+// Viaje: { title, airport_note, routes: [{ label, note }], closing_note }.
+// Objeto siempre presente y tolerante (no-objeto -> defaults).
+function normalizeTravel(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  let routes = obj.routes;
+  if (routes == null) {
+    routes = [];
+  } else if (Array.isArray(routes)) {
+    routes = routes
+      .filter((r) => r && typeof r === "object")
+      .map((r) => ({ label: str(r.label), note: str(r.note) }))
+      .filter((r) => r.label || r.note);
+  }
+  return {
+    title: str(obj.title),
+    airport_note: str(obj.airport_note),
+    routes,
+    closing_note: str(obj.closing_note),
+  };
+}
+
+/* ------------------------------------------------------------------
    Mesa de regalos (registry): campo común a todos los templates.
    Objeto con `bank` anidado. Espeja `normalizeRegistry` del backend
    (`server/src/schemas/invitation.js`) exactamente.
@@ -247,6 +293,12 @@ export function normalizeInvitation(raw) {
     dress_note: str(source.dress_note),
     contacts: normalizeContacts(source.contacts),
     contact_note: str(source.contact_note),
+    // Campos del rediseño editorial (comunes en el backend): "Nuestra
+    // historia", música externa, hospedaje y bloque de viaje.
+    story: str(source.story).slice(0, STORY_MAX_LENGTH),
+    music_url: str(source.music_url),
+    lodging: normalizeLodging(source.lodging),
+    travel: normalizeTravel(source.travel),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
     // Límite opcional para confirmar/editar el RSVP (ISO UTC; "" = sin límite).
@@ -328,6 +380,8 @@ const EMPTY_ROWS = {
   itinerary: { label: "", time: "" },
   locations: { label: "", place: "", url: "" },
   contacts: { name: "", phone: "" },
+  lodging: { name: "", note: "", url: "" },
+  travelRoute: { label: "", note: "" },
 };
 
 // Canónico -> estado del formulario del editor.
@@ -357,6 +411,15 @@ export function toFormState(raw) {
     locations: rows(c.locations, EMPTY_ROWS.locations),
     gallery: c.gallery,
     contacts: rows(c.contacts, EMPTY_ROWS.contacts),
+    // "Nuestra historia", música y hospedaje/viaje (filas con `_uid` para
+    // el editor; `serializeForm` las limpia al guardar).
+    story: c.story,
+    music_url: c.music_url,
+    lodging: rows(c.lodging, EMPTY_ROWS.lodging),
+    travel: {
+      ...c.travel,
+      routes: rows(c.travel.routes, EMPTY_ROWS.travelRoute),
+    },
     registry: {
       ...c.registry,
       suggested_mxn: c.registry.suggested_mxn.slice(),

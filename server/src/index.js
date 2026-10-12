@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -20,6 +20,12 @@ import webhooksRouter from "./routes/webhooks.js";
 import { requireAuth, csrfProtection } from "./middleware/auth.js";
 import { eventAccess } from "./middleware/eventAccess.js";
 import { clientUrl } from "./utils/clientUrl.js";
+import { findInvitationByToken } from "./utils/invitationLookup.js";
+import {
+  invitationTokenFromPath,
+  buildInvitationMeta,
+  injectInvitationMeta,
+} from "./utils/ogMeta.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "..", ".env") });
@@ -120,11 +126,42 @@ if (existsSync(CLIENT_DIST)) {
   }
 
   app.use(express.static(CLIENT_DIST));
-  app.get(/^\/(?!api|uploads).*/, function (req, res) {
+
+  // Plantilla de la SPA cacheada UNA sola vez (no se lee por petición): las
+  // respuestas de /invitacion/<token> inyectan metadatos OG por invitación.
+  const INDEX_HTML = join(CLIENT_DIST, "index.html");
+  let htmlTemplate = "";
+  try {
+    htmlTemplate = readFileSync(INDEX_HTML, "utf8");
+  } catch (err) {
+    console.error("[spa] No se pudo cachear index.html; se servirá con sendFile", err);
+  }
+
+  app.get(/^\/(?!api|uploads).*/, async function (req, res) {
     if (canonicalHost && req.get("host") !== canonicalHost) {
       res.setHeader("X-Robots-Tag", "noindex, nofollow");
     }
-    res.sendFile(join(CLIENT_DIST, "index.html"));
+
+    // Previews de WhatsApp/redes: resuelve el token y sustituye título, og:*
+    // y twitter:* en la plantilla. Token inválido/inexistente o error de DB
+    // => se sirve el HTML estático tal como antes.
+    const token = invitationTokenFromPath(req.path);
+    if (token && htmlTemplate) {
+      try {
+        const inv = await findInvitationByToken(token);
+        if (inv) {
+          const meta = buildInvitationMeta(inv, token, req);
+          // Mismo contrato de caché que `res.sendFile`: revalidación con ETag.
+          res.setHeader("Cache-Control", "public, max-age=0");
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          return res.status(200).send(injectInvitationMeta(htmlTemplate, meta));
+        }
+      } catch (err) {
+        console.error("[og] No se pudieron resolver los metadatos de la invitación", err);
+      }
+    }
+
+    res.sendFile(INDEX_HTML);
   });
 }
 
@@ -140,7 +177,7 @@ app.use((err, _req, res, _next) => {
   if (err.name === "MulterError") {
     const msg =
       err.code === "LIMIT_FILE_SIZE"
-        ? "La imagen supera el tamaño máximo de 8 MB"
+        ? "El archivo supera el tamaño máximo permitido (8 MB para imágenes, 15 MB para audio)"
         : "Error al subir el archivo";
     return res.status(400).json({ error: msg });
   }
