@@ -303,7 +303,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] **Fotos reales de la boda** (hoy placeholders editables desde el editor) + **smoke test del guardado real del editor con sesión** (los bloques nuevos no se han guardado E2E).
 - [ ] **Reemplazar el enlace de YouTube de `music_url`** del evento por un archivo subido desde el panel (la subida de audio ya está habilitada; ver §15).
 - [x] ~~**Confirmar plataforma de despliegue real** (Railway vs Render)~~ → **Railway confirmado por el usuario (2026-10-11)**; `render.yaml` queda como legacy (ver §7 y §15).
-- [x] ~~**Commit + push pendientes de aprobación**~~ → hecho: la fase quedó commiteada (`a60d442`, `1ea314f`, `2718f6f`, `2abf462`) y **pusheada a `origin/main`**; el working tree de código quedó limpio **en ese momento** (hoy hay cambios sin commitear de §16).
+- [x] ~~**Commit + push pendientes de aprobación**~~ → hecho: la fase quedó commiteada (`a60d442`, `1ea314f`, `2718f6f`, `2abf462`) y **pusheada a `origin/main`**; el working tree de código quedó limpio **en ese momento**. §16 se commiteó después en `fae3ca5`; solo quedan sin commitear los cambios previos de `BottomNav`/tema/`publicDomain.js`.
 - [ ] **Cloudinary en producción:** activar `CLOUDINARY_*` (el disco de Railway es efímero) para persistir fotos/audio y para la imagen del OG; alternativa: volumen en `/app/server/uploads`; **sleep/serverless desactivado**.
 - [ ] **Verificar el OG con crawler tras el deploy** (User-Agent de WhatsApp/Facebook) en el dominio real: portada de la raíz (título, imagen y canonical del evento) e invitación personalizada (`/invitacion/<token>`).
 - [ ] **Stripe Connect — pendientes (ver §15):** **onboarding real de la cuenta MX desde el panel (modo test)** + flujo completo; correr `npm run init-db` (**local y producción, ANTES del deploy**); **activación live** (claves + **webhook live** + variables en Railway); verificar la suscripción de `account.updated` en el endpoint del dashboard; documentar que los descriptores/merchant-of-record en cargos ES cambian con `on_behalf_of`. **Plan B de moneda decidido** (cuenta MX única + conversión automática; commiteado en `2abf462`); Plan A (cuenta ES) como opción futura.
@@ -316,8 +316,8 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
-- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (también pendiente de commit/deploy).
-- [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada y verificada en el working tree, **sin commit ni deploy**; portada **fija** (no editable desde el panel) y sin migración de BD (el evento id 2 ya tenía `custom_domain = "macarenayjorge.com"`).
+- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (commiteada en `fae3ca5`; deploy pendiente).
+- [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; **deploy pendiente**; portada **fija** (no editable desde el panel) y sin migración de BD (el evento id 2 ya tenía `custom_domain = "macarenayjorge.com"`). Los cambios previos de `BottomNav.jsx`, del tema `boda_jorge_macarena` y de `client/src/lib/publicDomain.js` siguen **sin commitear** y son ajenos a esta feature.
 - [ ] **Hoteles/Booking en lugar de la mesa de regalos en la portada (decisión del usuario; ver §16):** la portada actual no muestra regalos y `GET /api/public/event` excluye `registry`; la sección futura queda pendiente de definir recomendaciones.
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
 - [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
@@ -606,7 +606,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ## 15. Boda Jorge & Macarena — rediseño v2 (Fase 1), campos nuevos y OG dinámico (2026-10-11)
 
-**Estado:** el rediseño v2, el OG dinámico y la subida de audio quedaron **commiteados** en `a60d442` ("Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio"; incluye también `MEMORIA.md`, `README.md` y `INVITACION_BODA_JORGE_MACARENA.md`). Después se commitearon **Stripe Connect** + el fix del guardado (`1ea314f`), el fix **`on_behalf_of`** cross-región (`2718f6f`) y el **fallback cross-currency "Plan B"** (`2abf462`, que incluye además la actualización de estos docs). **Working tree de código limpio y pusheado** (`origin/main`) al cierre de esa fase; esta corrección documental de `MEMORIA.md` queda para el próximo commit. ⚠️ (2026-10-19) Hay además el bloque **sin commitear** de la portada pública del dominio propio (ver §16). **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
+**Estado:** el rediseño v2, el OG dinámico y la subida de audio quedaron **commiteados** en `a60d442` ("Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio"; incluye también `MEMORIA.md`, `README.md` y `INVITACION_BODA_JORGE_MACARENA.md`). Después se commitearon **Stripe Connect** + el fix del guardado (`1ea314f`), el fix **`on_behalf_of`** cross-región (`2718f6f`) y el **fallback cross-currency "Plan B"** (`2abf462`, que incluye además la actualización de estos docs). **Working tree de código limpio y pusheado** (`origin/main`) al cierre de esa fase; esta corrección documental de `MEMORIA.md` queda para el próximo commit. ⚠️ (2026-10-19) La portada pública del dominio propio quedó **commiteada en `fae3ca5`** (ver §16). **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
 
 **Qué se hizo:**
 
@@ -696,7 +696,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ## 16. Portada pública del dominio propio, separada de la invitación (2026-10-19)
 
-**Estado:** implementada y verificada en el working tree, **sin commit ni deploy** al cierre de esta documentación. **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
+**Estado:** implementada, verificada y commiteada en `fae3ca5` (2026-10-19); **deploy pendiente**. **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
 
 **Objetivo y decisiones del usuario:**
 
@@ -765,7 +765,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Pendientes:**
 
-- **Commit + deploy** de la portada (hoy todo el bloque está sin commitear; ver §8).
+- **Deploy** de la portada (commiteada en `fae3ca5`, 2026-10-19; ver §8).
 - **Hoteles/Booking** en lugar de la mesa de regalos (decisión del usuario): definir recomendaciones y sección cuando existan.
 - **Verificar el OG con crawler** tras el deploy (raíz + invitación personalizada).
 - **`www`/apex:** la resolución tolera `www` y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente (ver §13.4 y §8).
@@ -788,6 +788,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `fae3ca5` | Boda Macarena & Jorge: portada pública del dominio propio separada de la invitación; ver §16. |
 | `2abf462` | Pagos: permitir cobros convertidos cuando la cuenta Connect no coincide en moneda (Plan B); incluye la actualización de docs de la fase; ver §15. |
 | `2718f6f` | Pagos: liquidar con `on_behalf_of` los cargos a cuentas Connect fuera de la región (fix cross-región; ver §15). |
 | `1ea314f` | Pagos: conectar Stripe Connect (Express, ruteo por moneda) y corregir el guardado durante subidas; ver §15. |
