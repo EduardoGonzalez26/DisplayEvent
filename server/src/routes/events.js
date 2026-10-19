@@ -1,7 +1,12 @@
 import { Router } from "express";
-import { isIP } from "node:net";
 import { query, pool } from "../db/index.js";
 import { parseInvitation, normalizeForRead } from "../schemas/invitation.js";
+import {
+  DOMAIN_MAX_LENGTH,
+  DOMAIN_RE,
+  isReservedCustomDomain,
+  normalizeCustomDomain,
+} from "../utils/customDomain.js";
 
 const router = Router();
 
@@ -246,36 +251,12 @@ function parseSlugInput(slug) {
 
 /* ------------------------------------------------------------------
    Dominio personalizado por evento (`events.custom_domain`).
-   Hostname normalizado: minúsculas, sin protocolo, sin `www.` ni barra
-   final. El enlace público queda https://<custom_domain>/invitacion/<token>.
------------------------------------------------------------------- */
-
-const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
-const DOMAIN_MAX_LENGTH = 255;
-// Dominios propios del servicio o no enroutables públicamente.
-const RESERVED_DOMAINS = new Set(["displayevent.com", "localhost", "railway.app"]);
-
-// Normaliza lo que llega del cliente (trim, lower, sin protocolo/www/barra
-// final). "" si no queda nada.
-function normalizeCustomDomain(value) {
-  if (typeof value !== "string") return "";
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .replace(/\/+$/, "");
-}
-
-// Reservados: nuestro propio dominio (con subdominios), localhost, IPs
-// literales (v4/v6) y cualquier host de Railway.
-function isReservedCustomDomain(domain) {
-  if (RESERVED_DOMAINS.has(domain)) return true;
-  if (domain.endsWith(".displayevent.com")) return true;
-  if (domain.endsWith(".railway.app")) return true;
-  if (isIP(domain) !== 0) return true;
-  return false;
-}
+   La normalización/validación vive en `utils/customDomain.js` (compartida
+   con la resolución pública por host). Aquí solo se interpreta el input
+   del body. Hostname normalizado: minúsculas, sin protocolo, sin `www.`
+   ni barra final. El enlace público queda
+   https://<custom_domain>/invitacion/<token>.
+------------------------------------------------------------------- */
 
 // Interpreta `custom_domain` del body con semántica de "conservar si ausente":
 //   undefined        -> { keep: true }  (no se toca el valor almacenado)

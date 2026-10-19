@@ -8,6 +8,7 @@ import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
 import InvitationPage from "./invitation/InvitationPage.jsx";
 import LandingPage from "./landing/LandingPage.jsx";
+import { isCustomDomainHost } from "./lib/customDomainHome.js";
 import AuthPage from "./pages/AuthPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
@@ -17,6 +18,10 @@ import { useAuth } from "./auth.jsx";
 // El editor de invitación (schema, plantillas, vista previa) se carga solo al
 // entrar a la pestaña; así el bundle inicial no lo incluye.
 const EventInvitation = lazy(() => import("./pages/event/EventInvitation.jsx"));
+
+// La portada del dominio propio no se descarga en el resto de la app
+// (landing, panel, invitación): solo se pide si el host la necesita.
+const MacarenaJorgeCover = lazy(() => import("./wedding/MacarenaJorgeCover.jsx"));
 
 export default function App() {
   const location = useLocation();
@@ -28,11 +33,18 @@ export default function App() {
     location.pathname === "/login" ||
     location.pathname === "/registro" ||
     location.pathname.startsWith("/verificar-correo");
-  const isLanding = location.pathname === "/";
+  // En el dominio propio del evento, la raíz es una portada pública
+  // independiente (el servidor inyecta la meta `de-custom-domain`).
+  const customHome = isCustomDomainHost() && location.pathname === "/";
+  const isLanding = location.pathname === "/" && !customHome;
 
   useEffect(() => {
-    document.documentElement.dataset.theme = isInvitation ? "dark" : isLanding ? "light" : theme;
-  }, [isInvitation, isLanding, theme]);
+    document.documentElement.dataset.theme = isInvitation
+      ? "dark"
+      : isLanding || customHome
+        ? "light"
+        : theme;
+  }, [isInvitation, isLanding, customHome, theme]);
 
   const handleLogout = async () => {
     await logout();
@@ -45,6 +57,31 @@ export default function App() {
         ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md shadow-indigo-900/40"
         : "text-gray-300 hover:bg-gray-800 hover:text-white"
     }`;
+
+  // Portada pública del dominio propio. Va ANTES de la landing: en `/`
+  // dentro del dominio del evento nunca se muestra DisplayEvent.
+  if (customHome) {
+    return (
+      <Suspense
+        fallback={
+          <div
+            aria-busy="true"
+            className="grid min-h-[100svh] place-items-center bg-[#F6F2EB] text-[#1C1B19]"
+            style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}
+          >
+            <span aria-hidden="true" className="text-5xl font-light italic">
+              &amp;
+            </span>
+            <span className="sr-only">Cargando la portada</span>
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/" element={<MacarenaJorgeCover />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   if (isLanding) {
     return (

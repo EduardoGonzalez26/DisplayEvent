@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-10-11
+> **Última actualización:** 2026-10-19
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -16,7 +16,7 @@
 - Crear eventos y administrar invitados por **grupos** (con líder), con marcado de niños y registro de asistencia.
 - Organizar **mesas** con drag & drop (dnd-kit), colores por grupo, acompañantes en bloque y validación de capacidad en servidor.
 - Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<slug>/<token>`, con la ruta legacy `/invitacion/<token>` aún soportada) que muestra una invitación sin requerir sesión.
-- **Landing pública de marketing** en `/` (`client/src/landing/**`, visible con o sin sesión) y **panel admin** en `/eventos` (protegido con JWT en cookie httpOnly + verificación de correo).
+- **Landing pública de marketing** en `/` (`client/src/landing/**`, visible con o sin sesión) y **panel admin** en `/eventos` (protegido con JWT en cookie httpOnly + verificación de correo). En un **dominio propio de evento**, la raíz muestra una **portada pública del evento** en lugar de la landing (ver §16).
 - Editor de invitación dirigido por schema, con vista previa y plantillas reutilizables por usuario.
 - **Mesa de Regalos reutilizable** por invitación: regalos monetarios por **depósito bancario** o **pago con tarjeta vía Stripe** (modo test por ahora).
 
@@ -262,7 +262,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - **Plataforma confirmada por el usuario: Railway.** `render.yaml` queda como **legacy** de Render (Railway lo ignora; se conserva o se borra por decisión humana).
 - **Railpack** detecta automáticamente los scripts del `package.json` **raíz**: `build` (`npm ci` de server+client + `vite build`) y `start` (`node server/src/index.js`); `PORT` lo inyecta Railway y `NODE_ENV=production` lo fija Railpack. **No hacen falta** `Procfile`, `railway.json` ni `nixpacks.toml` (no existen en el repo).
 - **Healthcheck:** `GET /api/health` (configurar en Settings → Deploy). **Node:** hoy "lts" automático (local v22); opcional fijar versión con `RAILPACK_NODE_VERSION` o `engines.node`.
-- **Prerrequisito:** Railway despliega desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`); el working tree con todo lo de hoy está **sin commitear** → sin commit+push (pendiente de aprobación del usuario) no se publica nada.
+- **Deploy desde GitHub** (`EduardoGonzalez26/DisplayEvent`, rama `main`): el trabajo de la fase ya está **commiteado y pusheado** (`origin/main`); un push dispara el deploy de Railway (hoy no quedan commits locales pendientes).
 - **Disco efímero:** igual que en Render → configurar **Cloudinary** para persistir fotos/audio (y para que el OG tenga imagen) o montar un **volumen en `/app/server/uploads`**. **Serverless/sleep** (opt-in) debe quedar **DESACTIVADO** para la boda.
 
 ### Dominio personalizado en Railway (runbook 2026-10-11)
@@ -303,10 +303,10 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] **Fotos reales de la boda** (hoy placeholders editables desde el editor) + **smoke test del guardado real del editor con sesión** (los bloques nuevos no se han guardado E2E).
 - [ ] **Reemplazar el enlace de YouTube de `music_url`** del evento por un archivo subido desde el panel (la subida de audio ya está habilitada; ver §15).
 - [x] ~~**Confirmar plataforma de despliegue real** (Railway vs Render)~~ → **Railway confirmado por el usuario (2026-10-11)**; `render.yaml` queda como legacy (ver §7 y §15).
-- [ ] **Commit + push pendientes de aprobación:** todo el trabajo de la fase (rediseño v2, OG, subida de audio) está sin commitear y Railway despliega desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`).
+- [x] ~~**Commit + push pendientes de aprobación**~~ → hecho: la fase quedó commiteada (`a60d442`, `1ea314f`, `2718f6f`, `2abf462`) y **pusheada a `origin/main`**; el working tree de código quedó limpio **en ese momento** (hoy hay cambios sin commitear de §16).
 - [ ] **Cloudinary en producción:** activar `CLOUDINARY_*` (el disco de Railway es efímero) para persistir fotos/audio y para la imagen del OG; alternativa: volumen en `/app/server/uploads`; **sleep/serverless desactivado**.
-- [ ] **Verificar el OG con crawler tras el deploy** (User-Agent de WhatsApp/Facebook) en el dominio real.
-- [ ] **Stripe Connect — pendientes (ver §15):** **commit del fallback cross-currency** (1 archivo sin commitear, pendiente de aprobación); **onboarding real de la cuenta MX desde el panel (modo test)** + flujo completo; correr `npm run init-db` (**local y producción, ANTES del deploy**); **activación live** (claves + **webhook live** + variables en Railway); verificar la suscripción de `account.updated` en el endpoint del dashboard; documentar que los descriptores/merchant-of-record en cargos ES cambian con `on_behalf_of`. **Plan B de moneda decidido** (cuenta MX única + conversión automática); Plan A (cuenta ES) como opción futura.
+- [ ] **Verificar el OG con crawler tras el deploy** (User-Agent de WhatsApp/Facebook) en el dominio real: portada de la raíz (título, imagen y canonical del evento) e invitación personalizada (`/invitacion/<token>`).
+- [ ] **Stripe Connect — pendientes (ver §15):** **onboarding real de la cuenta MX desde el panel (modo test)** + flujo completo; correr `npm run init-db` (**local y producción, ANTES del deploy**); **activación live** (claves + **webhook live** + variables en Railway); verificar la suscripción de `account.updated` en el endpoint del dashboard; documentar que los descriptores/merchant-of-record en cargos ES cambian con `on_behalf_of`. **Plan B de moneda decidido** (cuenta MX única + conversión automática; commiteado en `2abf462`); Plan A (cuenta ES) como opción futura.
 - [ ] ⚠️ **Orden de despliegue (Stripe Connect, 2026-10-11):** `npm run init-db` **antes** de desplegar el código; sin las columnas `stripe_accounts`/`events.stripe_account_*`, `GET /api/invitations/:token` responde **500** (ver §15).
 - [ ] **Producción de la boda (runbook Railway §7/§15, sin ejecutar):** dominio `macarenayjorge.com` (Settings → Networking; **CNAME target + TXT de verificación**, ambos obligatorios), `custom_domain` del evento en el panel, `npm run init-db` en la BD desplegada y las 3 vars Stripe exactas. **Decisiones abiertas:** host canónico (`CLIENT_URL`); Stripe: **Plan B decidido** (una cuenta MX + conversión automática de EUR; ver §15).
 - [ ] **Re-agregar 3D** (perlas XV, anillos boda) cuando el usuario lo indique. Escenas inertes en `client/src/invitation/3d/`.
@@ -316,13 +316,15 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
-- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** comprar ya `macarenayjorge.com` (disponible; riesgo de squatting) y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final** (hoy: 25 archivos modificados + `client/src/lib/` sin commitear; el smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS). ⚠️ (2026-10-11) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó al flujo **Stripe Connect** (ver §15) y el Payment Link externo sigue disponible como opción.
+- [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (también pendiente de commit/deploy).
+- [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada y verificada en el working tree, **sin commit ni deploy**; portada **fija** (no editable desde el panel) y sin migración de BD (el evento id 2 ya tenía `custom_domain = "macarenayjorge.com"`).
+- [ ] **Hoteles/Booking en lugar de la mesa de regalos en la portada (decisión del usuario; ver §16):** la portada actual no muestra regalos y `GET /api/public/event` excluye `registry`; la sección futura queda pendiente de definir recomendaciones.
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
 - [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
-- [ ] **Corregir `CLIENT_URL` en Railway a una sola URL:** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). El host canónico definitivo está en decisión (`displayevent.com` vs `macarenayjorge.com`; ver §15). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron).
-- [ ] **Badge "Powered by Webi"** (solo `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3).
-- [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4).
-- [ ] *(Menor)* **`X-Robots-Tag` en `/` raíz** del dominio propio: hoy solo lo añade el fallback SPA; `/` lo sirve `express.static` sin header (ver §13.2).
+- [ ] **Corregir `CLIENT_URL` en Railway a una sola URL:** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). El host canónico definitivo está en decisión (`displayevent.com` vs `macarenayjorge.com`; ver §15). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron). La portada de §16 **no cambió** esta decisión ni el valor de `CLIENT_URL`.
+- [ ] **Badge "Powered by Webi"** (solo invitación personalizada de `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3). La portada de §16 no muestra marcas.
+- [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4). La portada de §16 resuelve `www` (normaliza el host) y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente.
+- [x] ~~*(Menor)* **`X-Robots-Tag` en `/` raíz** del dominio propio: hoy solo lo añade el fallback SPA; `/` lo sirve `express.static` sin header (ver §13.2).~~ → **resuelto por §16:** `express.static(..., { index: false })` hace que `/` pase por el catch-all; la raíz custom se sirve con `robots: index, follow` y sin `X-Robots-Tag`, mientras las demás rutas del host conservan `noindex`.
 - [ ] *(Menor)* **Documentar `ALLOWED_ORIGINS` en `server/.env.example`**: hoy la variable solo se lee del entorno y no aparece en el template (ver §13.4).
 - [x] ~~**Corregir el error de sintaxis de `server/src/db/init.js:1`**~~ → corregido 2026-09-14 por el agente de BD; `node --check` OK, `init-db` re-ejecutado con éxito y las 3 columnas re-verificadas en `information_schema.columns`.
 - [x] ~~**Commitear** el rediseño de la landing y el envío por WhatsApp~~ → hecho: landing `32cb71e` y WhatsApp `8fd76c1` (docs en `91b407d`; ver §10 y §12).
@@ -403,7 +405,7 @@ Inventario verificado con `git status` el 2026-09-14: **29 archivos** — 6 nuev
 
 ### 11.1 Rutas (`client/src/App.jsx`)
 
-- `/` → **landing pública de marketing** (`client/src/landing/**`). Se renderiza con una **rama temprana** (`isLanding`, antes de auth/panel) y está **siempre visible** (con o sin sesión). Fuerza `data-theme="light"` (el script inline de `index.html` también lo hace en `/`).
+- `/` → **landing pública de marketing** (`client/src/landing/**`) en el host de la plataforma. Se renderiza con una **rama temprana** (`isLanding`, antes de auth/panel) y está **siempre visible** (con o sin sesión). Fuerza `data-theme="light"` (el script inline de `index.html` también lo hace en `/`). En un **dominio propio de evento**, el servidor inyecta `de-custom-domain` y la SPA monta la **portada pública del evento** antes de la landing (ver §16).
 - `/eventos` → **panel admin** (antes `/`), protegido con `RequireAuth`. Las rutas internas del panel siguen igual (`/events/:id/...`).
 - `/invitacion/:slug/:token` → invitación pública con **URL bonita** (commit `1b69831`); `/invitacion/:token` → ruta **legacy** que se mantiene. `InvitationPage` resuelve por el token en ambos casos y fuerza `data-theme="dark"`.
 - `/login`, `/registro` y `/verificar-correo` no cambian.
@@ -432,6 +434,7 @@ Inventario verificado con `git status` el 2026-09-14: **29 archivos** — 6 nuev
 
 - `client/index.html`: `title`, `description`, `theme-color`, `canonical`, OG y Twitter (card `summary_large_image`).
 - Dominio en canonical/OG/sitemap: **`https://displayevent.com/`** (edición local del usuario; ya coherente en todos los meta).
+- En la raíz de un dominio propio, el catch-all sustituye canonical/OG por los del evento (`https://<custom_domain>/`) y añade `robots: index, follow`; ver §16.
 - `client/public/robots.txt`: `Allow: /` y `Disallow: /api/`, `/uploads/`; `client/public/sitemap.xml` con la home.
 - Pendiente: `robots.txt` sin línea `Sitemap:` (ver AUDITORIA.md §4.5).
 
@@ -513,7 +516,9 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | # | Decisión | Detalle |
 | - | -------- | ------- |
 | **1A** | El dinero de la boda va a la **cuenta Stripe propia de la pareja** vía **Payment Link externo** | **Sin Stripe Connect** y **sin webhooks nuevos**: el webhook de plataforma (`server/src/routes/webhooks.js`) **no cambia**. El pago integrado sigue disponible para el resto de eventos. |
-| **2A** | La **raíz** del dominio personalizado **no** tendrá portada especial | Se acepta la landing de DisplayEvent en `https://<dominio>/`. La marca "DisplayEvent" se oculta **solo** en el host que coincide con el dominio del evento (en la práctica, solo esta invitación). |
+| **2A** | ~~La **raíz** del dominio personalizado **no** tendrá portada especial~~ → **sustituida (2026-10-19)** | Se aceptaba la landing de DisplayEvent en `https://<dominio>/`. **Ya no aplica:** la raíz muestra una portada pública del evento (sin token, sin marca y sin mesa de regalos); ver §16. La landing de DisplayEvent queda solo para el host de la plataforma. |
+
+> ⚠️ **Decisión 2A sustituida (2026-10-19):** la raíz del dominio propio ya no muestra la landing de DisplayEvent, sino la portada pública del evento. El resto de §13 (dominio, normalización y Payment Link externo) sigue vigente; ver §16.
 
 ### 13.1 Base de datos
 
@@ -539,7 +544,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Evidencia (reportada por el agente):** `node --check` OK; E2E CRUD **25/25** (normalización, conservar/borrar, 409, reservados) y **8/8** de invitación pública + WhatsApp (enlaces con dominio, `public_config`); `Origin: evil.example` sigue respondiendo 403; datos de prueba limpiados.
 
-⚠️ **Nota conocida:** la raíz `/` del dominio propio la sirve `express.static` (no el fallback SPA), así que **no** lleva `X-Robots-Tag` (pendiente menor, ver §8).
+⚠️ **Nota histórica (resuelta el 2026-10-19):** entonces la raíz `/` del dominio propio la servía `express.static` (no el fallback SPA), así que **no** llevaba `X-Robots-Tag` (pendiente menor). Con la portada pública de §16, `express.static` usa `index: false` y `/` pasa por el catch-all: la raíz custom es `index, follow` sin `X-Robots-Tag`, y las demás rutas del host conservan su tratamiento previo (`noindex` cuando el host no es el canónico).
 
 ### 13.3 Frontend (`client/src/`)
 
@@ -559,7 +564,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 | Tema | Estado / runbook |
 | ---- | ---------------- |
-| `macarenayjorge.com` | **No registrado** al 2026-09-21 (NXDOMAIN; RDAP Verisign 404) → **disponible**. **Bloqueo #1: comprarlo ya** (riesgo de squatting). |
+| `macarenayjorge.com` | **No registrado** al 2026-09-21 (NXDOMAIN; RDAP Verisign 404) → **disponible**. **Bloqueo #1: comprarlo ya** (riesgo de squatting). ⚠️ (2026-10-19) El evento ya tiene `custom_domain = "macarenayjorge.com"`; confirmar compra/DNS y el deploy de la portada (ver §16). |
 | `displayevent.com` | Registrado en **Namecheap** y apuntando a **Railway** (A `69.46.46.0`); `www.displayevent.com` NXDOMAIN. |
 | Railway | Sin CLI/token en el entorno → runbook **manual**: añadir custom domain (recomendación: **solo apex**, por límites de plan — Trial 1 / Hobby 2 / Pro 20, y `displayevent.com` ya ocupa 1 slot), registros **CNAME + TXT**, TLS automático. `www` → apex **no existe** en Railway (Cloudflare Bulk Redirect o 301 del backend). ⚠️ Actualizado 2026-10-11: el dashboard exige **CNAME target tipo `xxxxx.up.railway.app` + TXT de verificación**, ambos obligatorios (sin TXT → 404); ver §7. |
 | Variable `ALLOWED_ORIGINS` | Valor exacto: `https://displayevent.com,https://macarenayjorge.com,https://www.macarenayjorge.com`. Reemplaza a `CLIENT_URL` en CORS y los POST same-origin también envían `Origin` (de ahí el wrapper de mismo host). ⚠️ Hoy **no está en `server/.env.example`** (solo se lee del entorno). |
@@ -601,7 +606,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ## 15. Boda Jorge & Macarena — rediseño v2 (Fase 1), campos nuevos y OG dinámico (2026-10-11)
 
-**Estado:** el rediseño v2, el OG dinámico y la subida de audio quedaron **commiteados** en `a60d442` ("Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio"; incluye también `MEMORIA.md`, `README.md` y `INVITACION_BODA_JORGE_MACARENA.md`). Después se commitearon **Stripe Connect** + el fix del guardado (`1ea314f`) y el fix **`on_behalf_of`** cross-región (`2718f6f`). El working tree tiene **1 archivo sin commitear** (`server/src/utils/stripeDestination.js`: **fallback cross-currency "Plan B"**; pendiente de aprobación del usuario). **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
+**Estado:** el rediseño v2, el OG dinámico y la subida de audio quedaron **commiteados** en `a60d442` ("Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio"; incluye también `MEMORIA.md`, `README.md` y `INVITACION_BODA_JORGE_MACARENA.md`). Después se commitearon **Stripe Connect** + el fix del guardado (`1ea314f`), el fix **`on_behalf_of`** cross-región (`2718f6f`) y el **fallback cross-currency "Plan B"** (`2abf462`, que incluye además la actualización de estos docs). **Working tree de código limpio y pusheado** (`origin/main`) al cierre de esa fase; esta corrección documental de `MEMORIA.md` queda para el próximo commit. ⚠️ (2026-10-19) Hay además el bloque **sin commitear** de la portada pública del dominio propio (ver §16). **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
 
 **Qué se hizo:**
 
@@ -633,7 +638,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 - **Backend** (`server/src/routes/uploads.js`): `POST /api/uploads` ahora acepta **imágenes** (JPG/PNG/WEBP/GIF, **8 MB**) y **audio** (`audio/mpeg` mp3, `audio/mp4`/`audio/x-m4a` m4a, `audio/ogg`, **15 MB**). Multer usa el límite global mayor (15 MB) y la cuota por tipo se valida en el handler con mensaje específico; **Cloudinary** sube el audio con resource type **`video`** (`/video/upload`, mismo preset/firma; el preset unsigned ya permite audio — probado con un MP3 real) y el **fallback local** conserva la extensión correcta (`EXT_BY_MIME`). La respuesta no cambia: `201 { url, public_id }` (`public_id: null` en local). Rate limit (50/h por usuario) y `requireAuth` intactos. En `server/src/index.js`, el mensaje de `LIMIT_FILE_SIZE` quedó "8 MB para imágenes, 15 MB para audio".
 - **Frontend** (`EventInvitation.jsx`): `ImageUploader` se generalizó a **`FileUploader`** con registro `UPLOAD_KINDS` (image/audio; los usos de imagen — p. ej. la foto de portada — quedan idénticos; la galería conserva su subida múltiple propia). En "Nuestra historia y música" hay ahora estado/miniatura de audio, botones **"Subir audio" / "Reemplazar audio" / "Subiendo…"**, "Quitar" y la ayuda **"MP3, M4A u OGG · máx. 15 MB"**; la validación cliente espeja la del server (mime/tamaño; si el navegador no reporta `file.type`, se infiere por extensión y se re-envuelve el `File` con el mime correcto). Al subir, la URL queda en `form.music_url`; el input de **URL directa se conserva** para pegar enlaces.
 - **Nota de uso:** `music_url` debe apuntar a un **archivo de audio directo**; YouTube/Spotify/Apple Music **no funcionan** (el reproductor es un `<audio>` nativo).
-- **(Working tree, sin commitear) Fix de guardado:** `FileUploader` gana `onUploadingChange` y el editor deshabilita **"Guardar cambios"** mientras hay una subida en curso (`fileUploading`), para no persistir la URL anterior del archivo (audio/portada).
+- **Fix de guardado (commiteado en `1ea314f`):** `FileUploader` gana `onUploadingChange` y el editor deshabilita **"Guardar cambios"** mientras hay una subida en curso (`fileUploading`), para no persistir la URL anterior del archivo (audio/portada).
 
 **OG dinámico por token (previews de WhatsApp/redes):**
 
@@ -650,11 +655,11 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 - **Webhook** (`server/src/routes/webhooks.js`): agregado `account.updated` (UPDATE idempotente de flags por `stripe_account_id`); `checkout.session.completed` intacto.
 - **Pago** (`server/src/routes/invitations.js` + `server/src/utils/stripeDestination.js` + `invitationLookup` ampliado con `owner_user_id` y overrides): resuelve `destination` con **orden determinista**: (1) override del evento con moneda **exacta** habilitada; (2) cuenta del dueño con moneda **exacta** habilitada; (3) **fallback (Plan B)**: override habilitado aunque su moneda no coincida; (4) **fallback**: cuenta del dueño habilitada aunque su moneda no coincida — el fallback deja la **conversión** a Stripe. Se usa `payment_intent_data` con `transfer_data.destination` (**sin `application_fee`**) + **`on_behalf_of`** cuando el destino cruza región (ver bullet siguiente); **sin destino válido → `400` claro**. El `GET /api/invitations/:token` expone top-level **`payment_methods: { card: { mxn, eur } }`** calculado con **la misma resolución** que el pago: con una sola cuenta MX habilitada devuelve **`{mxn:true, eur:true}`** (EUR con conversión); solo `false/false` sin ninguna cuenta habilitada; nunca lanza. Las demás validaciones, `return_url`, metadata y `gifts` quedan intactos.
 - **`on_behalf_of` cross-región (commiteado en `2718f6f`: "Pagos: liquidar con on_behalf_of los cargos a cuentas Connect fuera de la región"):** Stripe exige liquidar en la región del destino cuando la cuenta conectada está fuera de la región de la plataforma (p. ej. plataforma MX → cuenta ES). `getPlatformCountry()` obtiene el país de la plataforma **una vez** (`stripe.accounts.retrieve()`) y lo **cachea en memoria** (lazy; si falla, **reintenta** en la siguiente llamada); `destinationNeedsOnBehalfOf()` decide (mismo país → **no se envía**; país distinto o desconocido → se envía) y `buildPaymentIntentData()` arma el `payment_intent_data`. Verificado en test-mode: **EUR→ES ✅** con el parámetro; **controles MX intactos**.
-- ⚠️ **Nota de verificación (docs, 2026-10-11):** el desempate "menor `id`" del fallback no llega a operar en las consultas actuales porque `CANDIDATE_COLUMNS` **no selecciona `id`** (solo aplicaría en pruebas puras con filas que lo traigan); con varias cuentas habilitadas del mismo nivel, el elegido depende del orden que devuelva Postgres. Incluir `id` en el `SELECT` si se quiere el determinismo que anuncia el comentario del código.
+- **Desempate determinista (corregido en `2abf462`):** el fallback elige la fila de **menor `id`** entre las habilitadas del mismo nivel y `CANDIDATE_COLUMNS` **ya incluye `id`** en el `SELECT` (imprescindible para que la ordenación tenga datos; antes del fix no operaba en las consultas).
 - **Frontend:** `client/src/api.js` gana `api.stripe.accounts()` / `createAccount({country})` + `err.status`; `EventInvitation.jsx` añade el bloque **"Pagos / Conectar Stripe"** (estados legibles Sin completar / En revisión / Activa / Con observaciones; selector México (MXN)/España (EUR); conectar → onboarding; "Actualizar estado"; 502 con hint de la política "Accounts v1"). `EventsPage.jsx` captura `?stripe=return|refresh` (aviso, sincroniza cuentas y limpia el query param). `payment_methods` se propaga `InvitationPage → InvitationView → layouts xv/boda/cumpleanos/baby_shower/boda_jorge_macarena → shared/Gifts` y `Gifts` local: la tarjeta se muestra por moneda solo si `card[currency] !== false`; si no, se deshabilita/oculta con mensaje y la transferencia queda intacta; `null`/ausente (respuesta vieja o vista previa) → comportamiento actual. (`alice_xv` no toca su `Gifts` informativo sin Stripe.)
 - **Matriz test-mode verificada:** MXN→cuenta MX ✅ íntegro; EUR→cuenta MX ✅ con **conversión automática** (€20 → MX$407.66); **EUR→cuenta ES ✅ con `on_behalf_of`** (controles MX intactos); **fallback cross-currency ✅** (13/13 pruebas puras + E2E real con fila temporal MX: `payment_methods {mxn:true, eur:true}`, checkout EUR 200 con destino MX **sin** `on_behalf_of`, conversión verificada y limpieza total). El **onboarding real** de la cuenta MX desde el panel y la prueba del flujo completo quedan para el humano (ver pendientes).
 - ⚠️ **ORDEN DE DESPLIEGUE CRÍTICO:** correr `npm run init-db` (**local y producción**) **ANTES** de desplegar este código. Sin las columnas nuevas, `GET /api/invitations/:token` responde **500** (verificado en local).
-- **Pendientes humanos:** **commit del fallback cross-currency** (working tree, 1 archivo; pendiente de aprobación del usuario); **onboarding real de la cuenta MX desde el panel (modo test)** + prueba del **flujo completo**; correr `init-db` (local y producción); **activación live** (claves live + **webhook live** + variables en **Railway**); verificar la suscripción de `account.updated` en el endpoint del dashboard; **documentar** que los descriptores / merchant-of-record en cargos ES cambian con `on_behalf_of`.
+- **Pendientes humanos:** **onboarding real de la cuenta MX desde el panel (modo test)** + prueba del **flujo completo**; correr `init-db` (local y producción); **activación live** (claves live + **webhook live** + variables en **Railway**); verificar la suscripción de `account.updated` en el endpoint del dashboard; **documentar** que los descriptores / merchant-of-record en cargos ES cambian con `on_behalf_of`. (El **fallback Plan B** quedó commiteado en `2abf462`.)
 - **Pendientes de producto:** **Plan A opcional a futuro** (conectar una cuenta ES para cobrar EUR sin conversión; la resolución ya prioriza la moneda exacta y `on_behalf_of` cubre esa ruta).
 
 **Desviaciones conscientes:**
@@ -677,19 +682,99 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Producción en Railway (pendientes humanos; runbook de SecDevOps revisado el 2026-10-11, NO ejecutado):**
 
-- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). **Prerrequisito: commit + push del working tree (hoy sin commitear; pendiente de aprobación del usuario).**
+- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). **El repo ya está pusheado a `origin/main`** (verificar en Railway que el deploy se haya disparado).
 - **Dominio `macarenayjorge.com`:** Settings → Networking → + Custom Domain; el dashboard exige **CNAME target `xxxxx.up.railway.app` + TXT de verificación (ambos obligatorios; sin TXT → 404)**; SSL Let's Encrypt automático (≤1 h); límite de plan (Trial 1 dominio / Hobby 2). Registradores sin ALIAS/flattening → nameservers a Cloudflare (CNAME `@` con proxy ON, SSL "Full"). Detalle en §7.
 - `custom_domain` del evento en el panel + `npm run init-db` en la BD **desplegada**.
 - **Cloudinary en producción** (disco efímero): para persistir fotos/audio y para la imagen del OG; alternativa: volumen Railway en `/app/server/uploads`. **Serverless/sleep desactivado** para la boda.
 - Vars Stripe exactas (confirmadas en `server/src/utils/stripe.js`): `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`. Las **de test nuevas** ya están en `server/.env` local (cuenta plataforma MX, reportado); **faltan live mode y cargarlas en Railway Variables**.
 - **Decisiones abiertas:** (1) **host canónico** — `CLIENT_URL` = `macarenayjorge.com` (recomendado) vs `displayevent.com`; (2) **Stripe** — modelo **decidido**: Connect (destination charges, **100% al anfitrión, sin `application_fee`**) y **Plan B de moneda** (una sola cuenta **MX/MXN**; los cobros en EUR se **convierten automáticamente** al liquidar). El "Plan A" (conectar una cuenta ES para EUR sin conversión) queda como opción futura (ver subsección Connect).
-- **Riesgos:** `npm audit` reportado **7 prod (server) / 2 (client)**; `X-Robots-Tag: noindex` **no aplica a `/` exacto** en host no canónico (deuda conocida, §8/§13.2); disco efímero si no se configura Cloudinary; **verificar el OG con crawler tras el deploy**; ⚠️ **orden de despliegue:** `init-db` (local y producción) **antes** del deploy de Connect (si no, `GET /api/invitations/:token` → 500).
+- **Riesgos:** `npm audit` reportado **7 prod (server) / 2 (client)**; `X-Robots-Tag: noindex` ya se aplica a `/` en hosts no canónicos desde el catch-all de §16 (la raíz de un dominio propio es la excepción indexable); disco efímero si no se configura Cloudinary; **verificar el OG con crawler tras el deploy**; ⚠️ **orden de despliegue:** `init-db` (local y producción) **antes** del deploy de Connect (si no, `GET /api/invitations/:token` → 500).
 
-**Pendientes de producto:** fotos reales (hoy placeholders editables desde el editor), **reemplazar el enlace de YouTube de `music_url` del evento por un archivo subido** (reportado: hoy no reproduce; la subida ya está habilitada), **Stripe Connect:** commit del fallback cross-currency + onboarding real de la cuenta MX (modo test) + activación live (claves/webhook/Railway), smoke test del guardado real del editor con sesión (bloques nuevos) y Fase B.
+**Pendientes de producto:** fotos reales (hoy placeholders editables desde el editor), **reemplazar el enlace de YouTube de `music_url` del evento por un archivo subido** (reportado: hoy no reproduce; la subida ya está habilitada), **Stripe Connect:** onboarding real de la cuenta MX (modo test) + activación live (claves/webhook/Railway), smoke test del guardado real del editor con sesión (bloques nuevos) y Fase B.
 
 ---
 
-## 16. Referencias y documentación del repo
+## 16. Portada pública del dominio propio, separada de la invitación (2026-10-19)
+
+**Estado:** implementada y verificada en el working tree, **sin commit ni deploy** al cierre de esta documentación. **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
+
+**Objetivo y decisiones del usuario:**
+
+- `https://macarenayjorge.com/` muestra una **portada pública del evento**, sin token, visible para cualquier invitado. Es una página **independiente** de `InvitationView`/`InvitationPage`: **no** reutiliza la invitación en modo general.
+- La **invitación personalizada** de cada grupo sigue en `https://<dominio>/invitacion/<token>` (y su variante con slug), con su RSVP y su mesa de regalos.
+- Portada **fija** por ahora: **no se edita desde el panel**.
+- Mismo **lenguaje visual v2** de la boda (papel, tinta, Cormorant Garamond + Montserrat, fotos B&N, flora; ver §15).
+- Incluye el contenido relevante del evento **menos la mesa de regalos**. Esa sección se reemplazará después por recomendaciones de **hoteles/Booking**.
+- Acceso a la invitación personal: instrucciones + contactos + input opcional para pegar el **enlace o token**. **Sin RSVP genérico**: la confirmación ocurre dentro de la invitación personal.
+- El contrato público **excluye `registry`** para no exponer datos bancarios; la invitación personalizada conserva el suyo.
+
+**Arquitectura y archivos:**
+
+| Capa | Archivo | Rol |
+| ---- | ------- | --- |
+| Backend | `server/src/utils/customDomain.js` (**nuevo**) | Fuente única de normalización/validación: `normalizeCustomDomain`, `normalizeHost`, `isReservedCustomDomain`, `DOMAIN_RE`, `DOMAIN_MAX_LENGTH`. Reutilizado por administración y resolución pública. |
+| Backend | `server/src/utils/eventLookup.js` (**nuevo**) | `findEventByCustomDomain(host)`: SQL único de la portada; normaliza el host y rechaza dominios reservados; selecciona solo campos públicos. |
+| Backend | `server/src/routes/public.js` (**nuevo**) | `GET /api/public/event` (ver contrato). |
+| Backend | `server/src/index.js` | `express.static(..., { index: false })`; catch-all que resuelve el host, inyecta marker/OG/robots y canonical; `/index.html` → 301; fallback estático si falla la BD. |
+| Backend | `server/src/routes/events.js` | Usa el util compartido de dominio; **sin cambio de comportamiento** en el CRUD. |
+| Backend | `server/src/utils/ogMeta.js` | `buildEventMeta`, `injectEventMeta` e `injectCustomDomainMarker`; reutiliza la inyección OG existente. |
+| Frontend | `client/src/wedding/MacarenaJorgeCover.jsx` (**nuevo**) | Portada independiente: hero, countdown, bienvenida, "El gran día", historia, hospedaje/viaje y "Tu invitación"; sin mesa de regalos; footer sin marcas. |
+| Frontend | `client/src/wedding/invitationLink.js` (**nuevo**) | Parser endurecido de enlace/token (URL completa, sin protocolo, token suelto y puntuación); navega siempre contra el origen actual. |
+| Frontend | `client/src/lib/customDomainHome.js` (**nuevo**) | Lee el marker `de-custom-domain` del documento; la SPA no deduce el host. |
+| Frontend | `client/src/App.jsx` | Rama `customHome` **antes** de la landing; carga `MacarenaJorgeCover` con `lazy` (chunk propio). |
+| Frontend | `client/src/api.js` | `api.public.event()`. |
+| Frontend | `client/index.html` | Limpio: sin meta temporal de la portada. |
+
+> La portada reutiliza el tema y piezas visuales de `boda_jorge_macarena` (`themes/boda_jorge_macarena.js`, `flora.jsx`, `Grain.jsx`, `helpers.js`), pero **no** monta su layout ni `InvitationView`: la composición es propia.
+
+**Contrato `GET /api/public/event`:**
+
+- **Público** (sin sesión), rate limit **120/15 min por IP** y `Cache-Control: no-store`.
+- Resuelve el evento **solo por `req.hostname`**; no acepta dominio por query ni body. `normalizeHost` quita puerto, punto final y `www.` inicial; los dominios reservados (`displayevent.com` y subdominios, `localhost`, IPs y `*.railway.app`) nunca resuelven a un evento.
+- `200`:
+
+```json
+{
+  "event": { "name": "…", "date": "…", "time": "…", "place": "…", "invitation": { "…": "…" } },
+  "public_config": { "custom_domain": "macarenayjorge.com" }
+}
+```
+
+- `invitation` es `normalizeForRead(event.invitation)` **sin `registry`** (se omite por destructuring, sin mutar el objeto). Incluye los campos públicos de la portada (hero, historia, ubicaciones, itinerario, vestimenta, contactos, hospedaje/viaje, etc.). **No** devuelve dueño, cuentas Stripe, grupos, invitados ni tokens.
+- `404 { "error": "Evento no encontrado" }` si el host no corresponde a ningún evento.
+
+**Rutas y SEO:**
+
+| Ruta / caso | Comportamiento |
+| ----------- | -------------- |
+| `/` en dominio propio | Catch-all (ya no `express.static`): marker `de-custom-domain`, OG del evento, canonical `https://<custom_domain>/`, `robots: index, follow` y **sin** `X-Robots-Tag: noindex`. `Cache-Control: public, max-age=0`. |
+| `/invitacion/<token>` (y `/<slug>/<token>`) | Conserva el OG por token y el `noindex`; si el host es propio añade el marker para el white-label. La invitación y su RSVP no cambian. |
+| `/index.html` | 301 a `/` para no servir el HTML crudo sin marker. |
+| Otras rutas HTML del dominio propio | Reciben el marker (white-label de la SPA). |
+| Host de plataforma (`displayevent.com`, `localhost`, etc.) | La landing y el comportamiento previo quedan intactos; un host no canónico conserva `X-Robots-Tag: noindex, nofollow`. |
+| Fallo de BD al resolver el host | Se sirve el HTML estático (sin marker): el sitio no se cae por esta feature. |
+
+**Verificación (2026-10-19):**
+
+- **Backend:** 27 aserciones con `Host` — raíz custom con marker/OG/robots y sin `noindex`; API `200`/`404`; `www`; `/invitacion/<token>` con `noindex`; landing intacta; sin campos privados.
+- **Frontend:** `npm run build` en `client` OK (**549 módulos**; chunk `MacarenaJorgeCover-*.js`); el chunk **no contiene `registry`**; parser **22/22** casos.
+- **Integración:** servidor con `PORT=4137 node --env-file=server/.env …`; raíz custom `200` con contenido correcto y sin `noindex`; API `200`; invitación `noindex`; `displayevent`/`localhost` mantienen la landing sin marker; `/index.html` `301`; asset del cover `200`.
+- **Privacidad:** se detectó que `registry` (con datos bancarios) salía en `/api/public/event`; se corrigió excluyéndolo. La invitación personalizada (`/api/invitations/:token`) sigue exponiendo su `registry` según su contrato.
+- **Invitación personalizada:** no se tocaron `InvitationView`, `shared/Rsvp`, `Gifts` ni `InvitationPage`; el modo `general` que se había planteado quedó **cancelado**.
+- **BD:** sin migración; el evento ya tenía `custom_domain`; no hace falta `init-db` para esta feature.
+
+**Pendientes:**
+
+- **Commit + deploy** de la portada (hoy todo el bloque está sin commitear; ver §8).
+- **Hoteles/Booking** en lugar de la mesa de regalos (decisión del usuario): definir recomendaciones y sección cuando existan.
+- **Verificar el OG con crawler** tras el deploy (raíz + invitación personalizada).
+- **`www`/apex:** la resolución tolera `www` y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente (ver §13.4 y §8).
+- **`CLIENT_URL`:** decisión abierta y sin cambios por esta feature (ver §8/§15).
+- La portada es **fija**: cualquier cambio de contenido/estructura requiere código, no panel.
+
+---
+
+## 17. Referencias y documentación del repo
 
 - `README.md` — guía general (setup, scripts, API completa). Menciona **Railway** para el dominio personalizado (correcto; plataforma confirmada el 2026-10-11; ver §7).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
@@ -703,6 +788,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `2abf462` | Pagos: permitir cobros convertidos cuando la cuenta Connect no coincide en moneda (Plan B); incluye la actualización de docs de la fase; ver §15. |
 | `2718f6f` | Pagos: liquidar con `on_behalf_of` los cargos a cuentas Connect fuera de la región (fix cross-región; ver §15). |
 | `1ea314f` | Pagos: conectar Stripe Connect (Express, ruteo por moneda) y corregir el guardado durante subidas; ver §15. |
 | `a60d442` | Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio; ver §15. |

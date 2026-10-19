@@ -24,6 +24,11 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  // Contrato público de la portada (dominio propio): evento + configuración
+  // pública. No incluye invitados, grupos ni tokens.
+  public: {
+    event: () => request("/public/event"),
+  },
   auth: {
     me: () => request("/auth/me"),
     login: (payload) => request("/auth/login", { method: "POST", body: JSON.stringify(payload) }),

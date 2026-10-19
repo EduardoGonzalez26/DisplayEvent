@@ -14,6 +14,7 @@ import tablesRouter from "./routes/tables.js";
 import templatesRouter from "./routes/templates.js";
 import whatsappRouter from "./routes/whatsapp.js";
 import invitationsRouter from "./routes/invitations.js";
+import publicRouter from "./routes/public.js";
 import uploadsRouter from "./routes/uploads.js";
 import stripeRouter from "./routes/stripe.js";
 import authRouter from "./routes/auth.js";
@@ -22,10 +23,15 @@ import { requireAuth, csrfProtection } from "./middleware/auth.js";
 import { eventAccess } from "./middleware/eventAccess.js";
 import { clientUrl } from "./utils/clientUrl.js";
 import { findInvitationByToken } from "./utils/invitationLookup.js";
+import { findEventByCustomDomain } from "./utils/eventLookup.js";
+import { normalizeHost } from "./utils/customDomain.js";
 import {
   invitationTokenFromPath,
   buildInvitationMeta,
   injectInvitationMeta,
+  buildEventMeta,
+  injectEventMeta,
+  injectCustomDomainMarker,
 } from "./utils/ogMeta.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -100,9 +106,11 @@ app.get("/api/health", (_req, res) => {
 // Protección CSRF: aplica a todo /api (auth e invitaciones incluidas).
 app.use("/api", csrfProtection);
 
-// Públicas: autenticación e invitaciones (enlace con token que recibe el invitado).
+// Públicas: autenticación, invitaciones (enlace con token que recibe el
+// invitado) y portada de un dominio personalizado (resuelta por host).
 app.use("/api/auth", authRouter);
 app.use("/api/invitations", invitationsRouter);
+app.use("/api/public", publicRouter);
 
 // Protegidas: todo el panel de administración.
 app.use("/api/events", requireAuth, eventsRouter);
@@ -127,10 +135,15 @@ if (existsSync(CLIENT_DIST)) {
     canonicalHost = "";
   }
 
-  app.use(express.static(CLIENT_DIST));
+  // `index: false` deja que `/` llegue al catch-all de la SPA, donde se
+  // resuelve el dominio personalizado. `/index.html` se redirige para no
+  // servir nunca el HTML crudo sin marker.
+  app.get("/index.html", (_req, res) => res.redirect(301, "/"));
+  app.use(express.static(CLIENT_DIST, { index: false }));
 
   // Plantilla de la SPA cacheada UNA sola vez (no se lee por petición): las
-  // respuestas de /invitacion/<token> inyectan metadatos OG por invitación.
+  // respuestas de /invitacion/<token> inyectan metadatos OG por invitación y
+  // la raíz de un dominio propio inyecta los de la portada del evento.
   const INDEX_HTML = join(CLIENT_DIST, "index.html");
   let htmlTemplate = "";
   try {
@@ -140,8 +153,33 @@ if (existsSync(CLIENT_DIST)) {
   }
 
   app.get(/^\/(?!api|uploads).*/, async function (req, res) {
-    if (canonicalHost && req.get("host") !== canonicalHost) {
+    // Resolución única del host para toda la petición HTML. Si la BD falla,
+    // se sirve el HTML estático (sin marker): el sitio nunca se cae por esto.
+    const host = normalizeHost(req.hostname);
+    let customEvent = null;
+    try {
+      customEvent = await findEventByCustomDomain(host);
+    } catch (err) {
+      console.error("[custom-domain] No se pudo resolver el dominio personalizado", err);
+    }
+
+    const isCustomRoot = Boolean(customEvent) && req.path === "/";
+
+    // Hosts no canónicos: no indexar (comportamiento actual). La raíz de un
+    // dominio propio es la excepción: ahí el contenido ES canónico.
+    if (canonicalHost && req.get("host") !== canonicalHost && !isCustomRoot) {
       res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    }
+
+    // Portada pública: OG del evento, canonical https://<dominio>/ y robots
+    // index. Sin X-Robots-Tag aunque el host no sea el canónico.
+    if (isCustomRoot && htmlTemplate) {
+      res.removeHeader("X-Robots-Tag");
+      const meta = buildEventMeta(customEvent, req);
+      // Mismo contrato de caché que `res.sendFile`: revalidación con ETag.
+      res.setHeader("Cache-Control", "public, max-age=0");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(injectEventMeta(htmlTemplate, meta));
     }
 
     // Previews de WhatsApp/redes: resuelve el token y sustituye título, og:*
@@ -153,14 +191,28 @@ if (existsSync(CLIENT_DIST)) {
         const inv = await findInvitationByToken(token);
         if (inv) {
           const meta = buildInvitationMeta(inv, token, req);
+          let html = injectInvitationMeta(htmlTemplate, meta);
+          // Invitación white-label: el cliente necesita el marker y la página
+          // sigue sin indexarse (cabecera X-Robots-Tag + meta robots).
+          if (customEvent) {
+            html = injectCustomDomainMarker(html, { robots: "noindex, nofollow" });
+          }
           // Mismo contrato de caché que `res.sendFile`: revalidación con ETag.
           res.setHeader("Cache-Control", "public, max-age=0");
           res.setHeader("Content-Type", "text/html; charset=utf-8");
-          return res.status(200).send(injectInvitationMeta(htmlTemplate, meta));
+          return res.status(200).send(html);
         }
       } catch (err) {
         console.error("[og] No se pudieron resolver los metadatos de la invitación", err);
       }
+    }
+
+    // Cualquier otra ruta HTML del dominio propio: al menos el marker para
+    // que la navegación cliente aplique el white-label.
+    if (customEvent && htmlTemplate) {
+      res.setHeader("Cache-Control", "public, max-age=0");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(injectCustomDomainMarker(htmlTemplate));
     }
 
     res.sendFile(INDEX_HTML);

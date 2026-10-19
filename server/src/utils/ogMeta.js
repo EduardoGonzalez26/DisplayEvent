@@ -97,6 +97,21 @@ export function buildInvitationMeta(inv, token, req) {
   };
 }
 
+// Metadatos de la portada pública servida en la raíz de un dominio propio.
+// `event` es una fila de findEventByCustomDomain (sin token de invitación).
+// La imagen cae a `og-image.png` (servida por la SPA en el mismo host).
+export function buildEventMeta(event, req) {
+  const cfg = normalizeForRead(event?.invitation);
+  const domain =
+    typeof event?.custom_domain === "string" ? event.custom_domain.trim() : "";
+  return {
+    title: buildTitle(cfg, event?.name),
+    description: OG_DESCRIPTION,
+    image: buildImage(cfg, req) || absoluteUrl("/og-image.png", req),
+    url: domain ? `https://${domain}/` : absoluteUrl("/", req),
+  };
+}
+
 // Reemplazo por función: conserva los grupos (prefijo/sufijo de la etiqueta)
 // y evita que un `$&`/`$'` en el valor se interprete como patrón de
 // sustitución de String.replace.
@@ -104,10 +119,26 @@ function replaceTag(html, regex, value) {
   return html.replace(regex, (match, open, close) => `${open}${value}${close}`);
 }
 
+// Insertar el marker de dominio propio (y, opcionalmente, una directiva
+// robots) inmediatamente después de `<head>`, ANTES del script inline de
+// tema. Idempotente: si el documento ya lo tiene, no duplica nada.
+export function injectCustomDomainMarker(html, { robots = "" } = {}) {
+  if (typeof html !== "string" || !html) return html;
+  if (html.includes('name="de-custom-domain"')) return html;
+
+  const tags = ['<meta name="de-custom-domain" content="1" />'];
+  if (robots) tags.push(`<meta name="robots" content="${escapeHtml(robots)}" />`);
+
+  return html.replace(
+    /<head(?:\s[^>]*)?>/i,
+    (tag) => `${tag}\n    ${tags.join("\n    ")}`
+  );
+}
+
 // Inyecta los metadatos en la plantilla HTML cacheada. Reemplazos quirúrgicos
 // por etiqueta: si alguna no existe en la plantilla, el reemplazo es un
 // no-op y el resto del documento queda intacto.
-export function injectInvitationMeta(html, meta) {
+function injectMeta(html, meta) {
   if (typeof html !== "string" || !html || !meta) return html;
   let out = html;
 
@@ -142,4 +173,17 @@ export function injectInvitationMeta(html, meta) {
   }
 
   return out;
+}
+
+// Invitación personalizada: conserva la inyección OG de siempre.
+export function injectInvitationMeta(html, meta) {
+  return injectMeta(html, meta);
+}
+
+// Portada en la raíz de un dominio propio: OG del evento + marker +
+// `robots: index, follow` (la portada es el contenido canónico del host).
+export function injectEventMeta(html, meta) {
+  return injectCustomDomainMarker(injectMeta(html, meta), {
+    robots: "index, follow",
+  });
 }
