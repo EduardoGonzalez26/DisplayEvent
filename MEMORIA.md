@@ -317,8 +317,11 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (commiteada en `fae3ca5`; deploy pendiente).
-- [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; **deploy pendiente**; portada **fija** (no editable desde el panel) y sin migración de BD (el evento id 2 ya tenía `custom_domain = "macarenayjorge.com"`). Los cambios previos de `BottomNav.jsx`, del tema `boda_jorge_macarena` y de `client/src/lib/publicDomain.js` siguen **sin commitear** y son ajenos a esta feature.
-- [ ] **Hoteles/Booking en lugar de la mesa de regalos en la portada (decisión del usuario; ver §16):** la portada actual no muestra regalos y `GET /api/public/event` excluye `registry`; la sección futura queda pendiente de definir recomendaciones.
+- [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; **deploy pendiente**; portada **fija** (no editable desde el panel) y sin migración de BD (el evento id 2 ya tenía `custom_domain = "macarenayjorge.com"`). La iteración posterior de **"La estancia" + hoteles + scroll suave** (ver §16.1) está **sin commitear**; también siguen **sin commitear** otros cambios de código ya presentes en el working tree (`BottomNav.jsx`, tema `boda_jorge_macarena`, `publicDomain.js` y `BodaJorgeMacarenaLayout.jsx`), que no forman parte de esta actualización documental.
+- [x] ~~**Hoteles/Booking en lugar de la mesa de regalos en la portada**~~ → **hecho (2026-10-19):** "La estancia" con **Parador de Granada** (destacado) y **Hotel América Granada** (secundario) cargados en `invitation.lodging` del evento id 2, con enlaces de mapa/reserva. Sin migración ni cambio de esquema (ver §16.1).
+- [ ] **Validación visual final de "La estancia" en el dominio tras el deploy:** responsive, foto/caption, enlaces reales y estados vacíos. El build y las pruebas mock ya pasaron; la validación con datos reales está en curso (ver §16.1).
+- [ ] **Commit/push de la iteración de hoteles + scroll suave** (working tree; no incluye los cambios ajenos ya presentes).
+- [ ] **Integración futura de disponibilidad/precios reales de Booking:** requiere API o programa de afiliados; hoy los enlaces son directos o búsquedas, sin disponibilidad en vivo.
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
 - [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
 - [ ] **Corregir `CLIENT_URL` en Railway a una sola URL:** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). El host canónico definitivo está en decisión (`displayevent.com` vs `macarenayjorge.com`; ver §15). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron). La portada de §16 **no cambió** esta decisión ni el valor de `CLIENT_URL`.
@@ -696,7 +699,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ## 16. Portada pública del dominio propio, separada de la invitación (2026-10-19)
 
-**Estado:** implementada, verificada y commiteada en `fae3ca5` (2026-10-19); **deploy pendiente**. **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
+**Estado:** portada base implementada, verificada y commiteada en `fae3ca5` (2026-10-19); la iteración de **"La estancia"/hoteles/scroll suave** (§16.1) está **sin commitear**. **Deploy pendiente.** **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
 
 **Objetivo y decisiones del usuario:**
 
@@ -704,7 +707,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 - La **invitación personalizada** de cada grupo sigue en `https://<dominio>/invitacion/<token>` (y su variante con slug), con su RSVP y su mesa de regalos.
 - Portada **fija** por ahora: **no se edita desde el panel**.
 - Mismo **lenguaje visual v2** de la boda (papel, tinta, Cormorant Garamond + Montserrat, fotos B&N, flora; ver §15).
-- Incluye el contenido relevante del evento **menos la mesa de regalos**. Esa sección se reemplazará después por recomendaciones de **hoteles/Booking**.
+- Incluye el contenido relevante del evento **menos la mesa de regalos**. Esa sección ya se sustituyó por **"La estancia"** (hoteles recomendados; ver §16.1).
 - Acceso a la invitación personal: instrucciones + contactos + input opcional para pegar el **enlace o token**. **Sin RSVP genérico**: la confirmación ocurre dentro de la invitación personal.
 - El contrato público **excluye `registry`** para no exponer datos bancarios; la invitación personalizada conserva el suyo.
 
@@ -718,7 +721,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | Backend | `server/src/index.js` | `express.static(..., { index: false })`; catch-all que resuelve el host, inyecta marker/OG/robots y canonical; `/index.html` → 301; fallback estático si falla la BD. |
 | Backend | `server/src/routes/events.js` | Usa el util compartido de dominio; **sin cambio de comportamiento** en el CRUD. |
 | Backend | `server/src/utils/ogMeta.js` | `buildEventMeta`, `injectEventMeta` e `injectCustomDomainMarker`; reutiliza la inyección OG existente. |
-| Frontend | `client/src/wedding/MacarenaJorgeCover.jsx` (**nuevo**) | Portada independiente: hero, countdown, bienvenida, "El gran día", historia, hospedaje/viaje y "Tu invitación"; sin mesa de regalos; footer sin marcas. |
+| Frontend | `client/src/wedding/MacarenaJorgeCover.jsx` (**nuevo**) | Portada independiente: hero, countdown, bienvenida, "El gran día", historia, **"La estancia"** (hoteles y cómo llegar) y "Tu invitación"; sin mesa de regalos; footer sin marcas. |
 | Frontend | `client/src/wedding/invitationLink.js` (**nuevo**) | Parser endurecido de enlace/token (URL completa, sin protocolo, token suelto y puntuación); navega siempre contra el origen actual. |
 | Frontend | `client/src/lib/customDomainHome.js` (**nuevo**) | Lee el marker `de-custom-domain` del documento; la SPA no deduce el host. |
 | Frontend | `client/src/App.jsx` | Rama `customHome` **antes** de la landing; carga `MacarenaJorgeCover` con `lazy` (chunk propio). |
@@ -766,11 +769,64 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 **Pendientes:**
 
 - **Deploy** de la portada (commiteada en `fae3ca5`, 2026-10-19; ver §8).
-- **Hoteles/Booking** en lugar de la mesa de regalos (decisión del usuario): definir recomendaciones y sección cuando existan.
+- **La estancia/hoteles:** implementada y con datos reales (ver §16.1); quedan la validación visual en el dominio tras el deploy y la integración futura con Booking (API/afiliado).
 - **Verificar el OG con crawler** tras el deploy (raíz + invitación personalizada).
 - **`www`/apex:** la resolución tolera `www` y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente (ver §13.4 y §8).
 - **`CLIENT_URL`:** decisión abierta y sin cambios por esta feature (ver §8/§15).
 - La portada es **fija**: cualquier cambio de contenido/estructura requiere código, no panel.
+
+### 16.1 Rediseño de La estancia, hoteles reales y scroll suave (2026-10-19)
+
+**Estado:** cambios en el **working tree, sin commitear** al cierre de esta sesión. **Sin migración de BD:** solo se actualizó el JSONB `events.invitation` del evento id 2 (`custom_domain = "macarenayjorge.com"`); `npm run init-db` no aplica.
+
+**Diseño de la sección ("La estancia", antes "Hospedaje y viaje"):**
+
+- Bloque editorial a **dos columnas** en `MacarenaJorgeCover.jsx`: foto a sangre + panel de papel.
+- La foto sale de `cfg.gallery`: prioriza una imagen no usada por Hero (`hero_image`/`gallery[0]`) ni Story (la siguiente distinta); si no hay, cae a `gallery[1]`/`gallery[0]`. B&N cálido (`grayscale` + `sepia`), caption **"Granada · Andalucía"** y mes-año del evento.
+- El panel lleva index **04**, título **"La estancia"**, kicker "Para quienes vienen de lejos" e intro editorial.
+- **Tarjeta destacada del primer hotel** (número 01): nombre, nota, "Recomendación de los novios" y CTA **"Ver mapa"** / **"Ver disponibilidad"**.
+- **Hoteles secundarios** en lista numerada, con los mismos enlaces por hotel.
+- **"Cómo llegar"**: si `cfg.travel` tiene contenido (`title`, `airport_note`, `routes`, `closing_note`) se muestra ese bloque; si no, una línea con "Granada · España" y **"Ver mapa de la ciudad"** (Google Maps generado).
+- CTA **"¿Necesitas ayuda con tu reserva?"** con el primer contacto válido del evento (WhatsApp > teléfono > email).
+- **Sin mesa de regalos, datos bancarios ni marcas.** Si no hay `lodging` ni `travel`, la sección no se renderiza.
+
+**Hoteles cargados (evento id 2, `invitation.lodging` JSONB):**
+
+1. **Parador de Granada** — destacado. Nota: "Dentro del recinto de la Alhambra, en un antiguo convento del siglo XV. Jardines, historia y vistas al Generalife." `url`: `https://www.booking.com/hotel/es/parador-de-granada.es.html`
+2. **Hotel América Granada** — secundario. Nota: "También dentro del recinto de la Alhambra, a pocos metros de los Palacios Nazaríes. Una opción tradicional y bien situada para explorar Granada." `url`: `https://www.booking.com/hotel/es/america-granada.es.html`
+
+Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlaces de Booking quedaron limpios, sin parámetros de campaña; el resto de claves de `invitation` no cambió.
+
+**Convención de enlaces de hotel:**
+
+- `url` de mapas (Google/Apple/Waze) → **"Ver mapa"** la usa tal cual; **"Ver disponibilidad"** busca en Booking las noches alrededor de la boda.
+- `url` que no es de mapas (Booking o web del hotel) → **"Ver disponibilidad"** la usa tal cual; el mapa se genera con **nombre + lugar**.
+- Sin `url` → se generan ambos enlaces (mapa por nombre/lugar y búsqueda en Booking).
+- Lógica pura en `lodgingLinks.js` (`hotelLinks`) + `isMapsUrl` en `helpers.js`; la invitación (`Lodging.jsx`) muestra **"Mapa"** y **"Reservar"** por separado.
+
+**Archivos de esta iteración:**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/wedding/MacarenaJorgeCover.jsx` | Rediseño de la sección (`Stay`, `FeaturedHotel`, `SecondaryHotel`, `StayAction`) y `useSmoothCoverScroll`; la foto de estancia se elige sin repetir Hero/Story. |
+| `client/src/wedding/lodgingLinks.js` (**nuevo**) | `hotelLinks(hotel, place, eventDate)`: enlaces de mapa/reserva y búsqueda en Booking con las noches alrededor de la boda (sin fecha válida, búsqueda por nombre + lugar). |
+| `client/src/invitation/boda_jorge_macarena/helpers.js` | Nuevo `isMapsUrl` (Google Maps/`goo.gl`/`maps.app.goo.gl`, Apple Maps y Waze). |
+| `client/src/invitation/boda_jorge_macarena/Lodging.jsx` | La hoja de invitación separa **"Mapa"** y **"Reservar"** según `url`; el mapa se genera por nombre. |
+| `client/src/pages/event/EventInvitation.jsx` | Ayuda y placeholder del hotel: "Enlace del mapa o de reserva". |
+| `client/src/index.css` | `html.de-cover-scroll { scroll-behavior: smooth; }` (la regla global de `prefers-reduced-motion` lo desactiva). |
+
+**Scroll suave y reduced motion:**
+
+- `useSmoothCoverScroll` añade/retira `de-cover-scroll` a `<html>` solo mientras la portada está montada (se limpia al navegar a `/invitacion/<token>`).
+- `index.css` define `html.de-cover-scroll { scroll-behavior: smooth; }`; el bloque `@media (prefers-reduced-motion: reduce)` fuerza `scroll-behavior: auto !important`.
+- Los CTAs del Hero y `StayAction` tienen feedback táctil sutil (`active:translate-y-px`).
+
+**Verificación (2026-10-19, reportada) y pendientes:**
+
+- `npm run build` OK (**550 módulos**); el chunk de la portada **no contiene `registry`**.
+- Casos mock de URL de mapas vs Booking validados (`isMapsUrl`/`hotelLinks`).
+- Scroll suave y `prefers-reduced-motion` validados en Chrome headless.
+- **Pendientes:** validación visual final con los datos reales (en curso) y en el dominio tras el deploy; **commit/push** de la iteración; integración futura de disponibilidad/precios reales de Booking (requiere API/afiliado; hoy los enlaces son directos o búsquedas).
 
 ---
 

@@ -1,14 +1,16 @@
 import { Reveal } from "../motion.jsx";
 import { Eyebrow, Flor, FlowerRule } from "./flora.jsx";
-import { mapsSearchUrl, safeHttpUrl } from "./helpers.js";
+import { isMapsUrl, mapsSearchUrl, safeHttpUrl } from "./helpers.js";
 
 /* ------------------------------------------------------------------
    Hospedaje y viaje (v2): lista editorial de hoteles con filetes y
-   enlace "Mapa", más una tarjeta blanca de viaje (aeropuerto + rutas +
-   nota de cierre).
+   enlaces "Mapa" / "Reservar", más una tarjeta blanca de viaje
+   (aeropuerto + rutas + nota de cierre).
 
-   - `cfg.lodging`: [{ name, note, url? }]. El enlace usa `url` si es una
-     URL http(s) válida; si no, una búsqueda de Google Maps por nombre.
+   - `cfg.lodging`: [{ name, note, url? }]. Si `url` es de mapas
+     (Google/Apple/Waze) se usa para "Mapa"; si es una URL de reserva
+     (Booking o web del hotel) se usa para "Reservar" y el mapa se genera
+     por nombre. Sin `url`, solo se muestra el mapa generado.
    - `cfg.travel`: { title, airport_note, routes: [{label, note}],
      closing_note }. Cada bloque se pinta solo si tiene contenido.
    - Sin hospedaje NI viaje con contenido, la sección completa no se
@@ -19,11 +21,18 @@ export default function Lodging({ cfg, theme }) {
 
   const lodging = (cfg?.lodging || [])
     .filter((h) => h && (String(h.name || "").trim() || String(h.note || "").trim()))
-    .map((h) => ({
-      name: String(h.name || "").trim(),
-      note: String(h.note || "").trim(),
-      link: safeHttpUrl(h.url) || (String(h.name || "").trim() ? mapsSearchUrl(h.name) : null),
-    }));
+    .map((h) => {
+      const name = String(h.name || "").trim();
+      const note = String(h.note || "").trim();
+      const url = safeHttpUrl(h.url);
+      const isMap = url ? isMapsUrl(url) : false;
+      return {
+        name,
+        note,
+        mapHref: (isMap ? url : "") || (name ? mapsSearchUrl(name) : ""),
+        bookingHref: url && !isMap ? url : "",
+      };
+    });
 
   const travel = cfg?.travel || {};
   const travelTitle = String(travel.title || "").trim();
@@ -70,15 +79,29 @@ export default function Lodging({ cfg, theme }) {
                   </div>
                 )}
               </div>
-              {h.link && (
-                <a
-                  href={h.link}
-                  target="_blank"
-                  rel="noopener"
-                  className="flex min-h-[44px] flex-none items-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--inv-text)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
-                >
-                  {labels.lodgingMapLink || "Mapa"}
-                </a>
+              {(h.mapHref || h.bookingHref) && (
+                <div className="flex flex-none flex-col items-end gap-0.5">
+                  {h.mapHref && (
+                    <a
+                      href={h.mapHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-[44px] items-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--inv-text)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
+                    >
+                      {labels.lodgingMapLink || "Mapa"}
+                    </a>
+                  )}
+                  {h.bookingHref && (
+                    <a
+                      href={h.bookingHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-[44px] items-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--inv-text)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2"
+                    >
+                      {labels.lodgingReserveLink || "Reservar"}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           ))}

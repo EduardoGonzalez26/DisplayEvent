@@ -679,6 +679,16 @@ html.de-envelope-lock {
 }
 
 /* ------------------------------------------------------------------
+   Portada del dominio propio: desplazamiento suave para los anchors
+   internos. La clase la pone/retira MacarenaJorgeCover al montarse;
+   el bloque de movimiento reducido de abajo la desactiva con
+   `!important`.
+------------------------------------------------------------------ */
+html.de-cover-scroll {
+  scroll-behavior: smooth;
+}
+
+/* ------------------------------------------------------------------
    Movimiento reducido: respeta la preferencia del usuario
 ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {

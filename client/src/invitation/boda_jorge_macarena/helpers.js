@@ -84,3 +84,24 @@ export function safeHttpUrl(url) {
 export function mapsSearchUrl(query) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(query || ""))}`;
 }
+
+/* ¿La URL http(s) apunta a un mapa? Cubre Google Maps (incluidos los
+   enlaces cortos goo.gl/maps.app.goo.gl), Apple Maps y Waze. */
+export function isMapsUrl(url) {
+  const href = safeHttpUrl(url);
+  if (!href) return false;
+  try {
+    const u = new URL(href);
+    const host = u.hostname.toLowerCase();
+    const path = u.pathname.toLowerCase();
+    if (host === "maps.app.goo.gl") return true;
+    if ((host === "goo.gl" || host === "www.goo.gl") && path.startsWith("/maps")) return true;
+    if (host === "maps.google.com" || /^maps\.google\./.test(host)) return true;
+    if (/(^|\.)google\.[a-z.]+$/.test(host) && path.startsWith("/maps")) return true;
+    if (host === "maps.apple.com") return true;
+    if (host === "waze.com" || host.endsWith(".waze.com")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}

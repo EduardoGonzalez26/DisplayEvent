@@ -1192,7 +1192,9 @@ export default function EventInvitation() {
               </div>
               <p className="text-sm text-gray-500 mb-3">
                 Hoteles sugeridos y datos de viaje. Sin contenido, la sección no
-                aparece en la invitación.
+                aparece en la invitación. Pega el enlace del mapa o el de Booking
+                o la web del hotel: se usará como “Reservar” y el mapa se
+                generará con el nombre.
               </p>
               <div className="space-y-3">
                 {(form.lodging || []).length === 0 && (
@@ -1222,7 +1224,7 @@ export default function EventInvitation() {
                         className={inputCls}
                         value={h.url || ""}
                         onChange={(e) => setLodging(i, "url", e.target.value)}
-                        placeholder="Enlace del mapa (https://…, opcional)"
+                        placeholder="Enlace del mapa o de reserva (https://…, opcional)"
                       />
                       <button
                         type="button"
