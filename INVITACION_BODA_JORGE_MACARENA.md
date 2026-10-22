@@ -4,20 +4,24 @@
 >
 > **Plantilla:** `boda_jorge_macarena` · **Diseño actual (v2 "editorial sobre papel", 2026-10-11):** fondos crema (`--inv-bg #F6F2EB`), tinta cálida (`--inv-text #1C1B19`), fotos B&N con scrim claro y flora de Granada (dalia, bugambilia y granado) en SVG. Fuentes: **Cormorant Garamond** (display/títulos, también la itálica) y **Montserrat** (cuerpo).
 >
-> **Nota de estado (2026-10-22):** la **cuenta Connect única por evento** y la **UI de monto libre sin sugeridos** están implementadas en el **working tree**, **sin commitear ni desplegar**. Ver §2.3 y §7.
+> **Nota de estado (2026-10-22):** la **cuenta Connect única por evento** y la **UI de monto libre sin sugeridos** siguen en el **working tree**, **sin commitear ni desplegar**. La **separación de Viaje/Hospedaje (`trip`/`stay`)** quedó **commiteada en `4773112`**, **sin desplegar**. La BD del evento 2 ya tiene `stay`/`trip`; el API de producción todavía devuelve `lodging`/`travel`. Build del cliente OK (**556 módulos**) y `node --check` del schema backend OK. Ver §2.3, §2.5, §5 y §7.
 >
 > **Archivos clave:**
 > - Vista pública: `client/src/invitation/InvitationPage.jsx` (obtiene datos por token).
 > - Orquestación: `client/src/invitation/InvitationView.jsx` (tema + layout + sobre según `opening.envelopeVariant`).
 > - Layout de este formato: `client/src/invitation/boda_jorge_macarena/BodaJorgeMacarenaLayout.jsx` (motor de hojas apilables).
-> - Portada: `.../Hero.jsx`. Secciones locales: `.../Story.jsx`, `.../Locations.jsx`, `.../Itinerary.jsx`, `.../DressCode.jsx`, `.../Gifts.jsx`, `.../Lodging.jsx`, `.../Footer.jsx`.
-> - Navegación y música: `.../BottomNav.jsx`, `.../MusicToggle.jsx`. Sobre: `.../EditorialEnvelope.jsx`.
+> - Portada: `.../Hero.jsx`. Secciones locales: `.../Story.jsx`, `.../Locations.jsx`, `.../Itinerary.jsx`, `.../DressCode.jsx`, `.../Gifts.jsx`, `.../Travel.jsx` (Viaje), `.../Stay.jsx` (Hospedaje), `.../Footer.jsx`.
+> - Mapa y links de Viaje/Hospedaje: `.../ZoneMap.jsx` (Leaflet/OSM) y `client/src/wedding/stayTravelLinks.js` (generador puro).
+> - Editor dedicado: `client/src/pages/event/StayTravelEditor.jsx` (integrado en `EventInvitation.jsx`).
+> - Navegación y música: `.../MusicToggle.jsx`. (`BottomNav.jsx` fue eliminado en el working tree por un cambio ajeno a Viaje/Hospedaje; el código desplegado aún lo incluye.) Sobre: `.../EditorialEnvelope.jsx`.
 > - Utilidades locales: `.../flora.jsx` (flores SVG), `.../Grain.jsx` (grano de papel), `.../SectionPhoto.jsx` (foto B&N por hoja), `.../helpers.js`.
+> - Portada pública del dominio propio: `client/src/wedding/MacarenaJorgeCover.jsx` (Viaje 04 / Hospedaje 05 desde el commit `4773112`; no desplegado).
 > - Tema (textos, paleta, funciones): `client/src/invitation/themes/boda_jorge_macarena.js`.
 > - Sección compartida: `client/src/invitation/shared/Rsvp.jsx` (+ utilidades `shared/util.jsx` y `shared/Countdown.jsx` → `useCountdown`).
-> - Contrato de datos: `client/src/invitation/schema/fields.js`, `client/src/invitation/schema/normalize.js` y `server/src/schemas/invitation.js`.
+> - Contrato de datos: `client/src/invitation/schema/normalize.js` y `server/src/schemas/invitation.js` (incluyen `stay`/`trip`; `fields.js` documenta los descriptores legacy y los campos v2).
 > - Metadatos OG por token: `server/src/utils/invitationLookup.js`, `server/src/utils/ogMeta.js` y `server/src/index.js`.
 > - Pagos con tarjeta (opcional): `server/src/routes/stripe.js` (cuentas Connect del organizador), `server/src/utils/stripeDestination.js` (cuenta explícita del evento con prioridad; si es NULL, resolución legacy por moneda) y `payment_methods` en `server/src/routes/invitations.js`.
+> - ⚠️ `Lodging.jsx` y `client/src/wedding/lodgingLinks.js` fueron **eliminados en `4773112`**; `lodging`/`travel` quedan como **legado** en el JSONB (ver §2.4 y §2.5).
 > - Assets fijos del cierre (badge "Powered by Webi"): `client/public/webi/` (`logo-dark.svg`; `logo-light.svg` reservado para fondos oscuros).
 > - Mock de referencia del diseño: `Invitación Macarena & Jorge/Invitacion Macarena y Jorge v2.dc.html` (+ `Flor.dc.html`, `Ramillete.dc.html`, `support.js`).
 
@@ -57,7 +61,7 @@ Internamente, la vista los recibe con estos nombres de prop:
 
 ## 2. Datos dinámicos específicos del formato `boda_jorge_macarena`
 
-`cfg` es un objeto JSON con esta forma. Los campos **específicos de esta boda** siguen siendo tres; el resto son comunes a todos los formatos (y desde el 2026-10-11 hay **4 campos comunes nuevos** del rediseño v2, ver §2.4).
+`cfg` es un objeto JSON con esta forma. Los campos **específicos de esta boda** siguen siendo tres; el resto son comunes a todos los formatos (los **4 campos del rediseño v2** de 2026-10-11, ver §2.4, y los **2 campos nuevos de Viaje/Hospedaje** de 2026-10-22, ver §2.5).
 
 ### 2.1 Campos específicos (los propios de esta plantilla)
 
@@ -84,8 +88,10 @@ Internamente, la vista los recibe con estos nombres de prop:
 | `cfg.contact_note` | string | Mensaje de aclaración junto a los contactos |
 | `cfg.story` | string (máx 4000) | **Nuevo** — relato de "Nuestra historia" (respeta saltos de línea) |
 | `cfg.music_url` | string (URL directa) | **Nuevo** — audio del botón de música; se puede subir el archivo desde el editor (ver §2.4) |
-| `cfg.lodging` | `[{name, note, url?}]` | **Nuevo** — hoteles sugeridos |
-| `cfg.travel` | `{title, airport_note, routes:[{label,note}], closing_note}` | **Nuevo** — bloque de viaje |
+| `cfg.lodging` | `[{name, note, url?}]` | **Legado** — hoteles sugeridos; la UI nueva de esta plantilla **no lo renderiza** (el evento 2 conserva 2 hoteles) |
+| `cfg.travel` | `{title, airport_note, routes:[{label,note}], closing_note}` | **Legado** — bloque de viaje anterior; la UI nueva usa `cfg.trip` |
+| `cfg.stay` | objeto | **Hospedaje** — contrato nuevo (ver §2.5) |
+| `cfg.trip` | objeto | **Viaje** — contrato nuevo (ver §2.5) |
 | `cfg.registry` | objeto | Mesa de regalos (ver §2.3) |
 
 > **No consumidos por este diseño:** `cfg.kicker`, `cfg.tagline` y `cfg.celebrants` siguen en el contrato y en el editor, pero la portada v2 usa los textos del tema (`labels.heroEyebrow`, etc.).
@@ -106,18 +112,60 @@ Internamente, la vista los recibe con estos nombres de prop:
 >
 > **Monto libre sin sugeridos:** con `allow_custom:true` y `suggested_mxn`/`suggested_eur` vacío para la moneda activa, la vista muestra directamente el **selector de moneda + campo "Monto"** (sin la opción "Monto libre" de un dropdown). Si no hay sugeridos y `allow_custom:false`, se muestra **"La mesa de regalos aún no tiene montos configurados."** y se omite el CTA de tarjeta; el banco se conserva si está habilitado. El **Payment Link externo** no cambia.
 
-### 2.4 Campos nuevos del rediseño v2 (detalle y tolerancias)
+### 2.4 Campos del rediseño v2 (`story`/`music_url`) y legado (`lodging`/`travel`)
 
-Los cuatro campos son **opcionales y tolerantes** (sin migración; el backend los valida en los 6 formatos, con defaults):
+`story` y `music_url` son los campos vivos del rediseño v2. `lodging` y `travel` siguen en el contrato común y en el JSONB, pero desde el **commit `4773112`** (2026-10-22) **no se renderizan** en `boda_jorge_macarena`; la UI nueva usa `stay`/`trip` (§2.5).
 
 | Campo | Forma exacta | En la pantalla |
 | ----- | ------------ | -------------- |
 | `cfg.story` | string, tope **4000** (`STORY_MAX_LENGTH`); se recorta al normalizar | Relato de "Nuestra historia". Vacío → `cfg.message` → `defaultMessage` del tema |
 | `cfg.music_url` | string: URL **directa** a un archivo de audio (MP3/M4A/OGG). El editor permite **subirlo** (máx. **15 MB**) o pegar la URL | Botón de música (arriba a la derecha). **Sin autoplay** (`preload="none"`), en loop; sin URL, el botón no se monta. ⚠️ YouTube / Spotify / Apple Music **no funcionan** (el reproductor es un `<audio>` nativo) |
-| `cfg.lodging` | lista `{ name, note, url? }` (`url` opcional) | Filas editoriales de hoteles con enlace "Mapa" (si no hay `url`, se busca por nombre en Google Maps). Sin filas con contenido, no hay hoja |
-| `cfg.travel` | `{ title, airport_note, routes:[{label,note}], closing_note }` | Tarjeta blanca de viaje (aeropuerto, rutas y nota de cierre). Cada bloque se pinta solo si tiene contenido; sin nada, no hay hoja |
+| `cfg.lodging` | lista `{ name, note, url? }` (`url` opcional) | **Legado** — ya no hay hoja de hoteles; el evento 2 conserva 2 hoteles en el JSONB |
+| `cfg.travel` | `{ title, airport_note, routes:[{label,note}], closing_note }` | **Legado** — ya no hay bloque de viaje; el contrato nuevo es `cfg.trip` (§2.5) |
 
-**Editor:** se editan en dos bloques dedicados de `EventInvitation.jsx` — **"Nuestra historia y música"** y **"Hospedaje y viaje"** — visibles **hoy solo para el template `boda_jorge_macarena`** (los demás formatos los ignoran; Fase B los activará). La **música se puede subir desde el panel**: el bloque ofrece botones **"Subir audio" / "Reemplazar audio"** (componente `FileUploader`, `kind="audio"`) con validación cliente de tipo y tamaño espejo del servidor y la ayuda **"MP3, M4A u OGG · máx. 15 MB"**; al subir, la URL devuelta (`POST /api/uploads`, `201 { url }`; el endpoint acepta además imágenes de hasta 8 MB) queda en `form.music_url`. El input de **URL directa se conserva** para pegar enlaces. `schema/fields.js` los declara bajo `EXTRA_FIELDS.boda_jorge_macarena` y `schema/normalize.js` los espeja exactamente del backend.
+**Editor:** "Nuestra historia y música" (`story`, `music_url`) y **`StayTravelEditor.jsx`** (Viaje/Hospedaje), visibles **hoy solo para `boda_jorge_macarena`** (los demás formatos los ignoran; Fase B los activará). La **música se puede subir desde el panel**: botones **"Subir audio" / "Reemplazar audio"** (`FileUploader`, `kind="audio"`) con validación cliente de tipo y tamaño espejo del servidor y la ayuda **"MP3, M4A u OGG · máx. 15 MB"**; al subir, la URL devuelta (`POST /api/uploads`, `201 { url }`; el endpoint acepta además imágenes de hasta 8 MB) queda en `form.music_url`. El input de **URL directa se conserva** para pegar enlaces. `schema/fields.js` conserva los descriptores legacy `lodging`/`travel`; `stay`/`trip` se editan con `setField` desde el editor dedicado y se normalizan en `schema/normalize.js` + `server/src/schemas/invitation.js`.
+
+### 2.5 Viaje y Hospedaje (`trip` / `stay`) — contrato nuevo (commit `4773112`, 2026-10-22; no desplegado)
+
+Campos **aditivos** al contrato común. El backend los valida y normaliza en los **6 templates**, pero **solo la UI de `boda_jorge_macarena` los consume**. `enabled` decide si la sección se renderiza.
+
+#### `cfg.stay` (Hospedaje)
+
+| Campo | Tipo / default | Uso |
+| ----- | -------------- | --- |
+| `enabled` | boolean, default `false` | Renderiza la sección |
+| `intro` | string | Texto de entrada |
+| `zone` | `{lat:37.1761, lng:-3.5881, radius_km:1.5, label:"Alhambra, Granada"}` | Centro/radio del mapa y base de los links; lat/lng acotadas y radio backend 0.1–50 km |
+| `checkin` / `checkout` | `YYYY-MM-DD`; defaults de UI/links **2027-06-08/12** | Fechas editables por el invitado; el backend acepta `""` y el cliente/links aplican el fallback |
+| `cards[]` | máx. 12: `{id,platform,title,description,url,auto}` | Tarjetas de plataforma; `auto:true` genera el link, `auto:false` usa `url` manual validada http(s) |
+
+- **Tarjetas por defecto (4):** Booking, Airbnb, Trivago y Google Hotels (`auto:true`).
+- **Plataformas auto:** `booking`, `airbnb`, `trivago`, `google_hotels`.
+- **UI:** mapa Leaflet/OSM (centro + círculo + punto), etiqueta y enlace a Google Maps, fechas editables y carrusel de tarjetas. Sin fotos ni precios; sin tarjetas muestra un aviso.
+- **Links:** Booking usa `lat`/`lng`/`radius_km` de la zona; Airbnb usa un **bbox** (`search_by_map`); Trivago y Google Hotels usan la etiqueta. Fechas prellenadas. Hospedaje fija **1 adulto** en los links (no lee `trip.adults`).
+
+#### `cfg.trip` (Viaje)
+
+| Campo | Tipo / default | Uso |
+| ----- | -------------- | --- |
+| `enabled` | boolean, default `false` | Renderiza la sección |
+| `intro` | string | Texto de entrada |
+| `origins[]` | máx. 20: `{code,label}`; defaults **MEX** (CDMX – Benito Juárez), **NLU** (CDMX – AIFA), **GDL** (Guadalajara), **MTY** (Monterrey) | Orígenes de vuelo; código IATA de 2–3 letras |
+| `arrivals[]` | máx. 4: `{code,label}`; defaults **MAD** (Madrid), **BCN** (Barcelona) | Ciudades de llegada a España |
+| `date_from` / `date_to` | `YYYY-MM-DD`; defaults de UI/links **2027-06-08/12** | Fechas editables; fallback si vienen vacías |
+| `adults` | entero ≥1, default **1** | La UI muestra `{adults} adulto(s)`; por defecto 1 y no hay selector (tampoco en el editor) |
+| `modes` | `{flight,train,bus}`, cada uno `{enabled:true,note,providers[]}` | Bloques de transporte con carrusel |
+| Proveedores default | avión: `google_flights`,`skyscanner`,`kayak`; tren: `renfe`,`omio`,`trainline`; bus: `alsa`,`omio`,`flixbus` | Máx. 10 por modo |
+
+- **UI:** tabs de llegada Madrid/Barcelona; selector de origen MEX/NLU/GDL/MTY + **"Otro"** (IATA manual); fechas editables; línea de adultos (por defecto 1); bloques avión/tren/autobús con carrusel horizontal de proveedores. En tren/autobús el origen es la ciudad de llegada a España y el destino es Granada. Sin precios, fotos ni logos oficiales; si faltan llegadas, orígenes, modos o proveedores, muestra avisos en lugar de links.
+- **Vuelos:** Google Flights, Skyscanner y Kayak reciben origen/destino IATA y fechas.
+- **Tren:** Omio recibe ciudad + fecha; **Renfe y Trainline no aceptan fecha estable** y muestran **"Selecciona la fecha en el proveedor."**
+- **Bus:** Omio y FlixBus reciben ciudad + fecha; **ALSA no acepta fecha estable** y muestra el mismo aviso.
+- **Prefill de fechas:** Booking, Airbnb, Trivago, Google Hotels, vuelos, Omio (tren/bus) y FlixBus llevan las fechas en la URL; **Renfe, Trainline y ALSA no**, y la UI muestra **"Selecciona la fecha en el proveedor."**
+- **Fallback:** una fecha vacía/inválida cae a **2027-06-08/12** para no generar links rotos. No hay disponibilidad ni precios en vivo.
+- **Backend:** `normalizeStay`/`normalizeTrip` + schemas zod en `server/src/schemas/invitation.js`; agregados a `commonFields`, `normalizeInvitation` y `normalizeForRead` (listas siempre arrays). **Espejo cliente** en `client/src/invitation/schema/normalize.js` (mismos defaults/rangos; `_uid` solo en el formulario).
+- **Listas vacías:** `cards: []`, `origins: []`, `arrivals: []` y `providers: []` se respetan como decisión explícita; solo `undefined`/`null` cae a los defaults.
+- **Legado:** `lodging` y `travel` no se renderizan; el evento 2 conserva sus 2 hoteles en `lodging`.
 
 ---
 
@@ -158,16 +206,19 @@ El layout `BodaJorgeMacarenaLayout` arma la página en este orden, y **cada secc
 6. **Vestimenta** (`DressCode.jsx`): eyebrow + divisor + cada etiqueta de `dress_code` en Cormorant gigante; `dress_note` como cita itálica. Se omite si no hay etiquetas.
 7. **Regalo** (`Gifts.jsx`): se muestra si `registry.enabled` **o** si hay `registry_note`. Eyebrow "Regalo", "Con todo nuestro cariño", párrafo (`registry_note` o `giftIntro` del tema), selectores de moneda/monto (o CTA de Payment Link externo), pago con tarjeta (Checkout embebido) y "Transferencia bancaria" desplegable con los datos de `registry.bank` y botón Copiar. El encabezado del banco alterna "Desde México" / "Desde España" según la moneda elegida. **Monto:** con sugeridos se muestran los chips/dropdown y "Monto libre" como alternativa; sin sugeridos y con `allow_custom`, se muestra directamente moneda + campo **"Monto"**; sin sugeridos ni monto libre, se muestra el aviso **"La mesa de regalos aún no tiene montos configurados."** y **no se ofrece el CTA de tarjeta** (el banco se conserva). **Tarjeta:** se ofrece solo si `payment_methods.card[moneda]` no es `false`. Con una **cuenta de evento** seleccionada, MXN y EUR comparten la misma cuenta (`true/true` si está habilitada; `false/false` sin fallback si no). Sin cuenta de evento, se mantiene la resolución legacy: con **una sola cuenta MX habilitada**, tanto MXN como EUR muestran tarjeta (en EUR **Stripe convierte automáticamente** al liquidar); sin ninguna cuenta habilitada se muestra el aviso y la transferencia queda intacta.
 8. **Confirmación (RSVP)**: sección **compartida** `shared/Rsvp.jsx` (misma lógica que en todas las plantillas: invitados, contactos, nota, límite de edición). El layout solo le neutraliza el fondo opaco para que se vea la hoja.
-9. **Hospedaje y viaje** (`Lodging.jsx`): filas de `cfg.lodging` (con enlace "Mapa") + tarjeta de `cfg.travel`. Se omite si no hay contenido.
-10. **Cierre** (`Footer.jsx`): foto B&N con la cita (`closingQuote`), monograma circular flanqueado por ramilletes, línea `event.place · Mes Año`, "DisplayEvent" (salvo `hideBrand`) y el badge **"Powered by Webi"** (fijo, solo esta plantilla).
+9. **Viaje** (`Travel.jsx`): se muestra si `cfg.trip.enabled` y hay contenido. Tabs de llegada Madrid/Barcelona; selector de origen MEX/NLU/GDL/MTY + **"Otro"** (IATA manual); fechas editables; línea de adultos (por defecto 1); bloques avión/tren/autobús con carrusel de proveedores. En tren/autobús el origen es la ciudad de llegada a España y el destino es Granada. Sin precios ni disponibilidad.
+10. **Hospedaje** (`Stay.jsx`): se muestra si `cfg.stay.enabled`. Mapa **Leaflet/OSM** de la zona (centro + radio), etiqueta + enlace a Google Maps, fechas editables y carrusel de tarjetas de plataforma (Booking, Airbnb, Trivago, Google Hotels o personalizadas). Sin fotos ni precios; sin tarjetas muestra un aviso.
+11. **Cierre** (`Footer.jsx`): foto B&N con la cita (`closingQuote`), monograma circular flanqueado por ramilletes, línea `event.place · Mes Año`, "DisplayEvent" (salvo `hideBrand`) y el badge **"Powered by Webi"** (fijo, solo esta plantilla).
+
+> **Portada pública (`MacarenaJorgeCover.jsx`):** después de `Story` y antes de `InvitationAccess` se renderizan `TravelSection` (**04 Viaje**, con tarjeta editorial `TravelEditorial` + `Travel` en `variant="cover"`) y `StaySection` (**05 Hospedaje**, con `StayPhoto` + `Stay` en `variant="cover"`). El CTA de contacto se conserva en Hospedaje; se eliminaron `FeaturedHotel`, `SecondaryHotel`, `StayAction` y `hotelLinks`.
 
 **Además (chrome fijo, sin datos del usuario):**
 
-- **Pill de navegación inferior** (`BottomNav.jsx`): botones "Ubicación" / "Regalo" / "Confirmar" (solo si la sección existe; "Confirmar" en tinta, como acción principal). Aparece al abrir el sobre; el salto usa la posición de flujo real de cada hoja.
+- **Pill de navegación inferior** (`BottomNav.jsx`): botones "Ubicación" / "Regalo" / "Confirmar". **En el working tree actual está eliminada** (cambio ajeno a Viaje/Hospedaje); el código desplegado aún la incluye.
 - **Botón de música** (`MusicToggle.jsx`): arriba a la derecha; solo si `music_url` (debe ser URL directa a un archivo; ver §2.4).
 - **Grano de papel** (`GrainOverlay`): capa fija decorativa sobre todo (también sobre el sobre).
 
-**Fotos de las hojas:** `PHOTO_ORDER` fija qué foto de `gallery` toca a cada id (`historia`, `ceremonia`, `recepcion`, `itinerario`, `vestimenta`, `regalo`, `confirmar`, `hospedaje`, `cierre`): `gallery[(i + offset) % length]` (con `offset=1` si la portada consumió `gallery[0]`); las hojas de ubicación usan `gallery[(1 + i + offset) % length]`. Todas en B&N con scrim **claro** (`--inv-photo-scrim`, el papel del tema: 88% en bordes / 72% al centro) para que la tinta siga legible. La foto de portada carga `eager`; las de las hojas, `lazy` + `decoding="async"`.
+**Fotos de las hojas:** `PHOTO_ORDER` fija qué foto de `gallery` toca a cada id (`historia`, `ceremonia`, `recepcion`, `itinerario`, `vestimenta`, `regalo`, `confirmar`, `viaje`, `hospedaje`, `cierre`): `gallery[(i + offset) % length]` (con `offset=1` si la portada consumió `gallery[0]`); las hojas de ubicación usan `gallery[(1 + i + offset) % length]`. Todas en B&N con scrim **claro** (`--inv-photo-scrim`, el papel del tema: 88% en bordes / 72% al centro) para que la tinta siga legible. La foto de portada carga `eager`; las de las hojas, `lazy` + `decoding="async"`.
 
 ---
 
@@ -176,14 +227,16 @@ El layout `BodaJorgeMacarenaLayout` arma la página en este orden, y **cada secc
 Los textos fijos viven en `themes/boda_jorge_macarena.js`, bloque `labels` (más `opening.editorial` para el sobre), y se pueden reescribir sin tocar datos:
 
 - **Portada / sobre:** `heroEyebrow` ("Nos casamos"), `heroScroll` ("Desliza"); en `opening.editorial`: `kicker` ("Una invitación para"), `letterKicker` ("Nos casamos"), `hint` ("Toca para abrir"), `familyPrefix` ("la Familia") y las funciones `names`/`monogram`.
-- **Navegación / música:** `navLocations` ("Ubicación"), `navGift` ("Regalo"), `navRsvp` ("Confirmar"), `musicOn` / `musicOff`.
+- **Música:** `musicOn` / `musicOff`. (`navLocations`/`navGift`/`navRsvp` se eliminaron junto con `BottomNav.jsx` en el working tree; cambio ajeno a Viaje/Hospedaje.)
 - **Nuestra historia:** `storyEyebrow` ("Nuestra historia"), `storyTitle` (vacío → usa `event.place`).
 - **Ceremonia / Recepción:** `locationEyebrows` (["Ceremonia religiosa", "Recepción y fiesta"]), `locationsEyebrow` ("Ceremonia y recepción"), `locations` ("Cómo llegar"), `locationTimeLabel` ("Hora").
 - **Itinerario:** `itineraryEyebrow` ("Itinerario del día"), `itinerary` ("Itinerario").
 - **Vestimenta:** `dressCodeEyebrow` ("Código de vestimenta"), `dressCode` ("Código de Vestimenta").
 - **Regalo:** `registryEyebrow` ("Regalo"), `registryTitle` ("Mesa de Regalos"), `withLove` ("Con todo nuestro cariño"), `giftIntro`, `giftBankTitleMxn` / `giftBankTitleEur` ("Desde México" / "Desde España").
 - **RSVP (compartido):** `rsvpEyebrow` ("Confirmación de asistencia"), `rsvp` ("Confirma tu asistencia"), `rsvpHelp` ("Marquen la asistencia de cada persona para continuar.").
-- **Hospedaje:** `lodgingEyebrow` ("Hospedaje y viaje"), `lodgingTitle` ("Dónde quedarse"), `lodgingMapLink` ("Mapa"), `travelAirportLabel` ("Aeropuerto más cercano").
+- **Viaje:** `travelEyebrow` ("Para quienes vienen de lejos"), `travelTitle` ("Viaje"), `travelArrivalLabel` ("Ciudad de llegada"), `travelOriginLabel` ("Ciudad de salida"), `travelOriginCodeLabel` ("Código IATA"), `travelOriginPlaceholder` ("MEX"), `travelOriginHint`, `travelOriginInvalid`, `travelDateFromLabel` ("Llegada a España"), `travelDateToLabel` ("Regreso"), `travelAdultsOne` ("1 adulto"), `travelAdultsMany` ("adultos"), `travelOtherOrigin` ("Otro aeropuerto"), `travelCta` ("Buscar"), `travelFlightTitle` ("Avión"), `travelTrainTitle` ("Tren"), `travelBusTitle` ("Autobús"), `travelNoArrivals`, `travelNoOrigins`, `travelNoModes`, `travelNoProviders`.
+- **Hospedaje:** `stayEyebrow` ("La estancia"), `stayTitle` ("Hospedaje"), `stayDateInLabel` ("Llegada"), `stayDateOutLabel` ("Salida"), `stayZoneLabel` ("Zona sugerida"), `stayMapLink` ("Abrir en Google Maps"), `stayCta` ("Buscar hospedaje"), `stayCardsLabel` ("Opciones de hospedaje"), `stayPlatformFallback` ("Hospedaje"), `stayEmptyNotice`.
+- **Legado:** `lodgingEyebrow`, `lodgingTitle`, `lodgingMapLink` y `travelAirportLabel` siguen en el tema pero **ya no se consumen**.
 - **Cierre:** `closingQuote` ("Dos ciudades, un mismo camino.").
 - **Compatibilidad:** `countdown` ("Faltan"), `message` ("Nuestra historia"); conservados por contrato: `familyGreeting`, `defaultMessage`.
 
@@ -193,6 +246,12 @@ Y la **paleta completa** está en `theme.vars` (variables CSS `--inv-*`): papel,
 
 ## 7. Pendientes / oportunidades visuales
 
+- [ ] **Desplegar backend y frontend del commit `4773112` para que `stay`/`trip` salgan en producción** (hoy el API de `macarenayjorge.com` sigue devolviendo `lodging`/`travel`).
+- [ ] **Verificar en `macarenayjorge.com` el mapa, los carruseles y los links con fechas** tras el deploy (portada 04/05 e invitación personalizada).
+- [ ] **Confirmar la ubicación real de la Misa** (hoy placeholder "Sagrada Familia" en `cfg.locations`; no está confirmada).
+- [ ] **Decidir si se elimina el legado `lodging`/`travel`**; el evento 2 conserva 2 hoteles en `lodging` y la UI nueva no los muestra.
+- [ ] *(Opcional)* **Fecha separada de traslado a Granada** en `trip` (hoy solo `date_from`/`date_to`).
+- [ ] *(Menor)* Declarar `stay`/`trip` en `schema/fields.js` (hoy solo están en `normalize.js` y en el schema del servidor) para que el contrato quede documentado junto a los campos legacy.
 - [ ] **Seleccionar explícitamente la cuenta Connect del evento 2 en el editor; hasta entonces se usa la cuenta habilitada de menor id.**
 - [ ] **Revisar los 2 cargos live pequeños (MX$10 y €1)** registrados en `gifts` (la tabla no distingue `livemode`).
 - [ ] **Definir los montos reales de la mesa de regalos del evento 2:** hoy `allow_custom:false`, `min_mxn:0`, `min_eur:0`, `suggested_mxn:[10]`, `suggested_eur:[10,1]` y banco habilitado.
@@ -206,8 +265,8 @@ Y la **paleta completa** está en `theme.vars` (variables CSS `--inv-*`): papel,
 
 ## 8. Reglas a respetar al rediseñar
 
-1. **No cambies los nombres de los campos** (`cfg.couple.nameA`, `cfg.itinerary`, `cfg.story`, `cfg.lodging`, etc.): son el contrato de datos con el backend y el editor.
+1. **No cambies los nombres de los campos** (`cfg.couple.nameA`, `cfg.itinerary`, `cfg.story`, `cfg.stay`, `cfg.trip`, etc.): son el contrato de datos con el backend y el editor. `cfg.lodging`/`cfg.travel` se conservan solo como legado.
 2. **Respeta las variables CSS** `--inv-*` para colores/fuentes, o todo el sistema de temas se rompe.
-3. **El editor es schema-driven**: si agregas un dato nuevo, debe reflejarse en `schema/fields.js` y `server/src/schemas/invitation.js` (y, si tiene UI propia, en `EventInvitation.jsx`).
+3. **El editor es schema-driven**: si agregas un dato nuevo, debe reflejarse en `server/src/schemas/invitation.js` y en `client/src/invitation/schema/normalize.js` (y, si tiene UI propia, en `EventInvitation.jsx` o en un editor dedicado como `StayTravelEditor.jsx`). `stay`/`trip` no están en la grilla genérica: viven en `StayTravelEditor.jsx`.
 4. El layout recibe `event`, `family`, `cfg`, `theme`, `rsvp`, `token`, `publishableKey`, `reveal` y `hideBrand`. Puedes reorganizar secciones, pero conserva esas props (y el contrato de `shared/Rsvp` si lo reutilizas).
 5. **Puente de utilidades Tailwind:** por un bug conocido del `@theme` de `client/src/index.css` (`--color-inv-*` se resuelve una sola vez en `:root`), el tema re-declara `--color-inv-*`/`--font-inv-*` dentro de `theme.vars` para que `bg-inv-*`/`text-inv-*` tomen el valor del tema. Si creas otro tema que anide `--inv-*`, replica ese puente (deuda a resolver de raíz; ver MEMORIA §15).

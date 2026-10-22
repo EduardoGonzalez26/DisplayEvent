@@ -10,10 +10,10 @@ Organizador de eventos web: crea eventos, administra invitados por grupos y llev
 DisplayEvent/
 ├── client/   # Frontend React (Vite + Tailwind)
 │   └── src/invitation/   # Invitación pública multiformato
-│       ├── themes/       # Temas (xv, boda, cumpleanos, baby_shower)
+│       ├── themes/       # Temas (xv, boda, cumpleanos, baby_shower, alice_xv, boda_jorge_macarena)
 │       ├── shared/       # Secciones compartidas (RSVP, galería, cuenta regresiva…)
 │       ├── schema/       # Contrato de campos y normalización
-│       └── <formato>/    # Un Layout + Hero por formato
+│       └── <formato>/    # Layout + secciones propias (las especiales solo comparten shared/Rsvp.jsx)
 └── server/   # Backend Express + PostgreSQL
 ```
 
@@ -102,13 +102,25 @@ Abre http://localhost:5173
   - **Invitados**: organización por grupos con líder; cada invitado se marca como niño y como "registrado". El líder del grupo cuenta automáticamente como invitado.
   - **Mesas**: organizador visual con **drag & drop** (dnd-kit), búsqueda y filtro de sin asignar, mesas redondas/cuadradas/rectangulares con porcentaje de ocupación, colores por grupo, acompañantes que se mueven en bloque y validación de capacidad en el servidor. Solo invitados confirmados pueden sentarse. Exportación a lista imprimible y CSV.
   - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo.
-- **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas — `xv`, `boda`, `cumpleanos`, `baby_shower` — compuestos por un `Layout` + `Hero` por formato y secciones compartidas (RSVP, cuenta regresiva, galería, itinerario, etc.).
-- **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`). La raíz `https://<dominio>/` muestra una **portada pública del evento** (general, sin token y sin mesa de regalos; portada fija por ahora), mientras que la invitación personalizada de cada grupo sigue en `https://<dominio>/invitacion/<token>` (sin slug). La marca "DisplayEvent" se oculta en ese host; la invitación personalizada se marca `noindex` y la portada de la raíz es indexable. La portada incluye una sección **"La estancia"** con hoteles recomendados y enlaces de mapa/reserva.
-- **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables.
+- **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas genéricos — `xv`, `boda`, `cumpleanos`, `baby_shower` — y 2 plantillas especiales (`alice_xv`, `boda_jorge_macarena`), compuestas por un `Layout` + secciones propias; los genéricos reutilizan las secciones de `shared/`.
+- **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`). La raíz `https://<dominio>/` muestra una **portada pública del evento** (general, sin token y sin mesa de regalos; portada fija por ahora), mientras que la invitación personalizada de cada grupo sigue en `https://<dominio>/invitacion/<token>` (sin slug). La marca "DisplayEvent" se oculta en ese host; la invitación personalizada se marca `noindex` y la portada de la raíz es indexable. La portada incluye **Viaje (04)** y **Hospedaje (05)** desde el commit `4773112`, aún sin desplegar (ver abajo).
+- **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables. La plantilla `boda_jorge_macarena` añade un editor dedicado de **Viaje/Hospedaje** (ver abajo).
 - **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado con **Stripe Connect**. En el editor (**Pagos / Conectar Stripe**), **"Cuenta de Stripe para este evento"** permite elegir entre **Automática** (resolución heredada por moneda/cuenta del dueño) y una cuenta concreta; solo se aceptan cuentas propias con cobros habilitados. Con una cuenta elegida, **esa es la única que recibe los pagos del evento**, en MXN y EUR (Stripe convierte si la moneda no coincide); si deja de estar habilitada, la tarjeta queda sin disponibilidad y no hay fallback. Requiere las claves `STRIPE_*`.
 - **Monto libre sin montos sugeridos**: si la mesa de regalos permite monto libre (`allow_custom`) y no hay montos sugeridos para la moneda, la invitación muestra directamente el selector de moneda y el campo **"Monto"** (sin la opción "Monto libre" en un desplegable). Si no hay sugeridos y el monto libre está desactivado, muestra **"La mesa de regalos aún no tiene montos configurados."** y no ofrece el CTA de tarjeta; la transferencia bancaria se conserva. El editor avisa (sin bloquear el guardado) cuando el pago con tarjeta está activo, falta alguna lista de montos y `allow_custom` es false.
 - **Envío de invitaciones por WhatsApp**: desde **Invitados**, el botón "Enviar invitaciones" resume grupos enviables e invitados cubiertos, permite editar el mensaje (3 plantillas y vista previa) y pide confirmación antes de enviar. Por defecto usa enlaces `wa.me` (el organizador abre cada chat y puede marcarlas como enviadas); con la **WhatsApp Cloud API** configurada el envío es automático desde el servidor.
 - **Subida de archivos**: imágenes (8 MB) y audio (15 MB) para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
+
+### Viaje y Hospedaje (plantilla `boda_jorge_macarena`)
+
+Dos secciones independientes que sustituyen a la antigua hoja combinada "Hospedaje y viaje"; quedaron commiteadas en **`4773112`**, aún sin desplegar. En la invitación personalizada el orden es **RSVP → Viaje → Hospedaje → Cierre**; en la portada pública van después de la historia como **04 Viaje** y **05 Hospedaje**.
+
+- **Viaje** (`client/src/invitation/boda_jorge_macarena/Travel.jsx`): tabs Madrid/Barcelona, origen MEX/NLU/GDL/MTY u "Otro" (IATA), fechas editables, adultos (por defecto 1) y bloques de avión/tren/autobús con carrusel de proveedores. En tren/autobús se sale de la ciudad de llegada a España hacia Granada.
+- **Hospedaje** (`.../Stay.jsx`): mapa de la zona con centro y radio, etiqueta + enlace a Google Maps, fechas editables y carrusel de tarjetas de plataforma (Booking, Airbnb, Trivago, Google Hotels o personalizadas). Sin fotos ni precios.
+- **Mapa** (`.../ZoneMap.jsx`): **Leaflet + OpenStreetMap**, sin API key. Solo lectura para el invitado; en el editor permite mover el centro con un clic.
+- **Links** (`client/src/wedding/stayTravelLinks.js`): generador puro. Booking usa `lat`/`lng`/`radius_km`; Airbnb usa un bbox; Trivago y Google Hotels usan la etiqueta. Vuelos con origen/destino IATA; tren y autobús desde Madrid/Barcelona a Granada. Fechas prellenadas en Booking/Airbnb/Trivago/Google Hotels/vuelos/Omio/FlixBus; Renfe, Trainline y ALSA no aceptan fecha estable y muestran "Selecciona la fecha en el proveedor".
+- **Editor** (`client/src/pages/event/StayTravelEditor.jsx`, integrado en `EventInvitation.jsx`): activa/desactiva cada sección, edita intro, orígenes/llegadas, fechas, modos/proveedores, zona (mapa + slider 0.5–20 km + etiqueta) y tarjetas (auto/manual, URL manual y "Probar link"). Las advertencias son no bloqueantes.
+- **Contrato**: `stay` y `trip` se normalizan/validan en `server/src/schemas/invitation.js` y en `client/src/invitation/schema/normalize.js`. `lodging` y `travel` siguen en el JSONB como **legado** y la UI nueva no los renderiza (el evento 2 conserva 2 hoteles en `lodging`).
+- **Estado**: commiteado en `4773112`, no desplegado; build del cliente OK (556 módulos) y `node --check` del schema backend OK. El API de producción todavía devuelve `lodging`/`travel` hasta que se despliegue. La BD ya tiene `stay`/`trip` y el evento 2 está sembrado.
 
 ## API
 
@@ -124,7 +136,7 @@ Abre http://localhost:5173
 | GET | `/api/invitations/:token` | Invitación pública por token (evento, grupo, invitados y `payment_methods` de tarjeta por moneda; con `events.stripe_account_id` seleccionado, ambas monedas comparten disponibilidad) |
 | PUT | `/api/invitations/:token/rsvp` | Confirmación pública de asistencia (RSVP) |
 | POST | `/api/invitations/:token/payment` | Crea la Checkout Session embebida del regalo (Stripe Connect: el importe va a la cuenta del anfitrión o a la cuenta elegida para el evento) |
-| GET | `/api/public/event` | Portada pública del dominio propio: resuelve el evento por `Host` (sin token) y devuelve solo datos de portada; excluye `registry` y datos privados |
+| GET | `/api/public/event` | Portada pública del dominio propio: resuelve el evento por `Host` (sin token) y devuelve solo datos de portada (incluye `stay`/`trip` cuando están en el JSONB); excluye `registry` y datos privados |
 | GET | `/api/events` | Lista eventos con conteos |
 | POST | `/api/events` | Crea un evento |
 | GET | `/api/events/:id` | Detalle de un evento |
