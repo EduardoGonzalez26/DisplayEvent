@@ -105,7 +105,8 @@ Abre http://localhost:5173
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas — `xv`, `boda`, `cumpleanos`, `baby_shower` — compuestos por un `Layout` + `Hero` por formato y secciones compartidas (RSVP, cuenta regresiva, galería, itinerario, etc.).
 - **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`). La raíz `https://<dominio>/` muestra una **portada pública del evento** (general, sin token y sin mesa de regalos; portada fija por ahora), mientras que la invitación personalizada de cada grupo sigue en `https://<dominio>/invitacion/<token>` (sin slug). La marca "DisplayEvent" se oculta en ese host; la invitación personalizada se marca `noindex` y la portada de la raíz es indexable. La portada incluye una sección **"La estancia"** con hoteles recomendados y enlaces de mapa/reserva.
 - **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables.
-- **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado con **Stripe Connect**: el anfitrión conecta su cuenta desde el editor (**Pagos / Conectar Stripe**) y el importe llega directo a su cuenta (requiere las claves `STRIPE_*` y una cuenta Connect con cobros habilitados; si el invitado paga en una moneda distinta a la de la cuenta, **Stripe convierte automáticamente** al liquidar).
+- **Mesa de regalos**: depósito/transferencia bancaria y pago con tarjeta con Stripe. Admite un **Payment Link externo** por evento (`registry.payment_link_url`, p. ej. la cuenta Stripe del organizador) que abre la pasarela y deja que el invitado elija el monto; sin él se usa el pago integrado con **Stripe Connect**. En el editor (**Pagos / Conectar Stripe**), **"Cuenta de Stripe para este evento"** permite elegir entre **Automática** (resolución heredada por moneda/cuenta del dueño) y una cuenta concreta; solo se aceptan cuentas propias con cobros habilitados. Con una cuenta elegida, **esa es la única que recibe los pagos del evento**, en MXN y EUR (Stripe convierte si la moneda no coincide); si deja de estar habilitada, la tarjeta queda sin disponibilidad y no hay fallback. Requiere las claves `STRIPE_*`.
+- **Monto libre sin montos sugeridos**: si la mesa de regalos permite monto libre (`allow_custom`) y no hay montos sugeridos para la moneda, la invitación muestra directamente el selector de moneda y el campo **"Monto"** (sin la opción "Monto libre" en un desplegable). Si no hay sugeridos y el monto libre está desactivado, muestra **"La mesa de regalos aún no tiene montos configurados."** y no ofrece el CTA de tarjeta; la transferencia bancaria se conserva. El editor avisa (sin bloquear el guardado) cuando el pago con tarjeta está activo, falta alguna lista de montos y `allow_custom` es false.
 - **Envío de invitaciones por WhatsApp**: desde **Invitados**, el botón "Enviar invitaciones" resume grupos enviables e invitados cubiertos, permite editar el mensaje (3 plantillas y vista previa) y pide confirmación antes de enviar. Por defecto usa enlaces `wa.me` (el organizador abre cada chat y puede marcarlas como enviadas); con la **WhatsApp Cloud API** configurada el envío es automático desde el servidor.
 - **Subida de archivos**: imágenes (8 MB) y audio (15 MB) para la invitación vía **Cloudinary** (si está configurado) o guardado local en `server/uploads/`.
 
@@ -120,14 +121,14 @@ Abre http://localhost:5173
 | GET | `/api/auth/me` | Usuario autenticado actual |
 | POST | `/api/auth/verify` | Verifica el correo con el token del enlace |
 | POST | `/api/auth/resend-verification` | Reenvía el correo de verificación |
-| GET | `/api/invitations/:token` | Invitación pública por token (evento, grupo, invitados y `payment_methods` de tarjeta por moneda) |
+| GET | `/api/invitations/:token` | Invitación pública por token (evento, grupo, invitados y `payment_methods` de tarjeta por moneda; con `events.stripe_account_id` seleccionado, ambas monedas comparten disponibilidad) |
 | PUT | `/api/invitations/:token/rsvp` | Confirmación pública de asistencia (RSVP) |
-| POST | `/api/invitations/:token/payment` | Crea la Checkout Session embebida del regalo (Stripe Connect: el importe va a la cuenta del anfitrión) |
+| POST | `/api/invitations/:token/payment` | Crea la Checkout Session embebida del regalo (Stripe Connect: el importe va a la cuenta del anfitrión o a la cuenta elegida para el evento) |
 | GET | `/api/public/event` | Portada pública del dominio propio: resuelve el evento por `Host` (sin token) y devuelve solo datos de portada; excluye `registry` y datos privados |
 | GET | `/api/events` | Lista eventos con conteos |
 | POST | `/api/events` | Crea un evento |
 | GET | `/api/events/:id` | Detalle de un evento |
-| PUT | `/api/events/:id` | Edita un evento |
+| PUT | `/api/events/:id` | Edita un evento; acepta `stripe_account_id` (ausente = conservar; `""`/`null` = limpiar; `acct_...` = cuenta propia con cobros habilitados; inválida → 400) |
 | DELETE | `/api/events/:id` | Elimina un evento (y sus grupos/invitados) |
 | GET | `/api/events/:id/stats` | Estadísticas del evento |
 | GET | `/api/events/:id/invitation` | Configuración de la invitación del evento |

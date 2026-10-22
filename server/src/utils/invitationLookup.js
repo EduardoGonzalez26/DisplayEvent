@@ -8,8 +8,9 @@ import { query } from "../db/index.js";
    de la SPA en `index.js`, para no duplicar la consulta. Incluye `slug`
    y `custom_domain` porque la URL canónica de los metadatos se construye
    igual que los enlaces de WhatsApp (`buildInvitationUrl`); `owner_user_id`
-   y los overrides Connect (`stripe_account_mxn/eur`) alimentan la
-   resolución del destino de pago. Excluye tokens revocados.
+   y los destinos Connect (`stripe_account_id` y los legacy
+   `stripe_account_mxn/eur`) alimentan la resolución del pago. Excluye tokens
+   revocados.
 ------------------------------------------------------------------- */
 
 export async function findInvitationByToken(token) {
@@ -18,6 +19,7 @@ export async function findInvitationByToken(token) {
             g.leader_name, g.rsvp_note,
             e.name AS event_name, e.date, e.time, e.place, e.invitation,
             e.slug, e.custom_domain, e.user_id AS owner_user_id,
+            e.stripe_account_id,
             e.stripe_account_mxn, e.stripe_account_eur
      FROM "groups" g
      JOIN events e ON e.id = g.event_id

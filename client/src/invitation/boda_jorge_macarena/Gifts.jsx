@@ -222,8 +222,15 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
   const hasSection = enabled || !!String(cfg?.registry_note || "").trim();
 
   const suggested = registry[`suggested_${currency}`] || [];
+  const hasSuggested = suggested.length > 0;
   const min = registry[`min_${currency}`] || 0;
   const allowCustom = !!registry.allow_custom;
+  // Sin montos sugeridos, el monto libre deja de ser una opción del dropdown y
+  // pasa a ser el campo principal: se muestra de inmediato.
+  const onlyCustom = allowCustom && !hasSuggested;
+  // Sin sugeridos ni monto libre no hay forma de elegir una cantidad: la
+  // tarjeta embebida no se ofrece y queda el aviso neutro / la transferencia.
+  const noAmountOptions = !hasSuggested && !allowCustom;
   const bank = registry.bank || {};
   const stripeReady = !!registry.stripe_enabled && !!publishableKey && !!token;
   // Payment Link externo: si está definido, el CTA de tarjeta abre ese link
@@ -252,7 +259,8 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
     `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.` +
     (bank.enabled && bankFields.length > 0 ? " Puedes usar la transferencia bancaria." : "");
 
-  const hasCard = cardConfigured && cardAvailableAny;
+  const hasCard =
+    cardConfigured && cardAvailableAny && (linkMode || !noAmountOptions);
   const hasBank = !!bank.enabled && bankFields.length > 0;
 
   // Sin tarjeta, los datos bancarios son el contenido principal: abiertos.
@@ -418,11 +426,19 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
         )}
       </AnimatePresence>
 
+      {/* Sin montos sugeridos ni monto libre no hay cantidad que cobrar: se
+          evita el CTA de tarjeta y se conserva el banco si está configurado. */}
+      {enabled && !linkMode && noAmountOptions && (
+        <p className="m-0 max-w-[440px] text-sm leading-relaxed text-[var(--inv-text-muted)]">
+          La mesa de regalos aún no tiene montos configurados.
+        </p>
+      )}
+
       {/* Selectores del pago integrado. Con Payment Link externo se ocultan:
           el invitado elige el monto en la pasarela segura de Stripe. Si
           ninguna moneda tiene tarjeta disponible, también se ocultan y la
           tarjeta degrada a banco/aviso neutro. */}
-      {enabled && !linkMode && cardAvailableAny && (
+      {enabled && !linkMode && cardAvailableAny && (hasSuggested || allowCustom) && (
         <Reveal className="w-full">
           <div className="mx-auto grid max-w-[400px] grid-cols-1 gap-4 text-left sm:grid-cols-2">
             <FieldSelect
@@ -441,7 +457,7 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
               ))}
             </FieldSelect>
 
-            {(suggested.length > 0 || allowCustom) && (
+            {hasSuggested && (
               <FieldSelect
                 id="gift-amount"
                 label="Monto"
@@ -458,38 +474,32 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
               </FieldSelect>
             )}
 
-            {/* Monto libre (solo al elegirlo en el dropdown) */}
-            {customMode && allowCustom && (
-              <div className="flex flex-col gap-2 sm:col-span-2">
-                <label
-                  htmlFor="gift-custom"
-                  className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--inv-text-muted)]"
-                >
-                  Monto libre
-                </label>
-                <div className="flex items-center gap-2 border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] px-4 py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-[#1C1B19] focus-within:ring-offset-2">
-                  <span className="font-inv-display text-xl text-[var(--inv-text-muted)]">
-                    {CURRENCIES[currency].symbol}
-                  </span>
-                  <input
-                    id="gift-custom"
-                    type="number"
-                    min={min}
-                    step={1}
-                    inputMode="numeric"
-                    value={custom}
-                    onChange={(e) => onCustomChange(e.target.value)}
-                    placeholder="0"
-                    className="w-full bg-transparent text-[15px] font-medium text-[var(--inv-text)] placeholder-[var(--inv-text-dim)] focus:outline-none"
-                  />
-                </div>
-              </div>
+            {/* Sin montos sugeridos, el campo de cantidad es el principal. */}
+            {onlyCustom && (
+              <AmountField
+                currency={currency}
+                min={min}
+                value={custom}
+                onChange={onCustomChange}
+              />
+            )}
+
+            {/* Monto libre elegido en el dropdown (solo con sugeridos). */}
+            {!onlyCustom && customMode && allowCustom && (
+              <AmountField
+                className="sm:col-span-2"
+                label="Monto libre"
+                currency={currency}
+                min={min}
+                value={custom}
+                onChange={onCustomChange}
+              />
             )}
           </div>
         </Reveal>
       )}
 
-      {enabled && min > 0 && !linkMode && cardAvailableAny && (
+      {enabled && min > 0 && !linkMode && cardAvailableAny && (hasSuggested || allowCustom) && (
         <p className="m-0 text-xs uppercase tracking-[0.22em] text-[var(--inv-text-muted)]">
           Monto mínimo {formatAmount(currency, min)}
         </p>
@@ -668,6 +678,48 @@ function FieldSelect({ id, label, value, onChange, children }) {
           {children}
         </select>
         <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--inv-text-muted)]" />
+      </div>
+    </div>
+  );
+}
+
+/* Campo numérico de monto con el filete y la tipografía editoriales.
+   Se muestra de inmediato cuando no hay montos sugeridos y, con sugeridos,
+   solo al elegir "Monto libre" en el dropdown. */
+function AmountField({
+  className = "",
+  label = "Monto",
+  currency,
+  min,
+  value,
+  onChange,
+}) {
+  return (
+    <div className={`flex w-full flex-col gap-2 ${className}`}>
+      <label
+        htmlFor="gift-custom"
+        className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--inv-text-muted)]"
+      >
+        {label}
+      </label>
+      <div className="flex items-center gap-2 border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] px-4 py-3 focus-within:outline-none focus-within:ring-2 focus-within:ring-[#1C1B19] focus-within:ring-offset-2">
+        <span
+          aria-hidden="true"
+          className="font-inv-display text-xl text-[var(--inv-text-muted)]"
+        >
+          {CURRENCIES[currency].symbol}
+        </span>
+        <input
+          id="gift-custom"
+          type="number"
+          min={min}
+          step={1}
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="0"
+          className="w-full bg-transparent text-[15px] font-medium text-[var(--inv-text)] placeholder-[var(--inv-text-dim)] focus:outline-none"
+        />
       </div>
     </div>
   );

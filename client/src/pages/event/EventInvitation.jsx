@@ -360,6 +360,13 @@ export default function EventInvitation() {
   const [stripeErrorHint, setStripeErrorHint] = useState("");
   const [stripeCountry, setStripeCountry] = useState("MX");
   const [stripeConnecting, setStripeConnecting] = useState(false);
+  // Cuenta Connect elegida para este evento (`events.stripe_account_id`).
+  // "" = automática (el backend resuelve por moneda/dueño). Se persiste con
+  // el update del evento, no con la configuración de invitación.
+  const [stripeAccountId, setStripeAccountId] = useState("");
+  // Solo la preselección automática inicial puede rellenar el selector; si el
+  // usuario elige "Automática" explícitamente, no se vuelve a imponer.
+  const stripeSelectionTouchedRef = useRef(false);
 
   const loadStripeAccounts = () => {
     setStripeLoading(true);
@@ -402,10 +409,23 @@ export default function EventInvitation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Preselecciona la única cuenta habilitada cuando el evento aún no tiene una
+  // asignada. Es solo estado local: no se guarda hasta pulsar "Guardar cambios".
+  useEffect(() => {
+    if (stripeSelectionTouchedRef.current) return;
+    if (stripeLoading || !event || stripeAccountId) return;
+    const enabled = stripeAccounts.filter((acc) => acc?.charges_enabled === true);
+    if (enabled.length === 1) {
+      setStripeAccountId(enabled[0].stripe_account_id || "");
+    }
+  }, [event, stripeAccountId, stripeAccounts, stripeLoading]);
+
   useEffect(() => {
     setEvent(null);
     setSlug("");
     setCustomDomain("");
+    setStripeAccountId("");
+    stripeSelectionTouchedRef.current = false;
     api.events
       .get(id)
       .then((ev) => {
@@ -413,6 +433,7 @@ export default function EventInvitation() {
         // Si el evento aún no tiene slug (eventos antiguos), sugerimos uno.
         setSlug(ev?.slug || slugify(ev?.name || ""));
         setCustomDomain(ev?.custom_domain || "");
+        setStripeAccountId(ev?.stripe_account_id || "");
       })
       .catch(() => setEvent(null));
     api.templates.list().then(setTemplates).catch(() => setTemplates([]));
@@ -715,16 +736,24 @@ export default function EventInvitation() {
       // de invitación): se guardan con el update del evento, reenviando sus
       // campos actuales. `custom_domain: ""` borra el dominio.
       if (event) {
+        const eventPayload = {
+          name: event.name,
+          date: event.date,
+          time: event.time,
+          place: event.place,
+          slug: slugValue,
+          custom_domain: domainValue,
+        };
+        // Si la cuenta guardada ya no está habilitada o no aparece en la lista,
+        // se omite la clave para que el backend conserve el valor almacenado y
+        // se puedan guardar los demás cambios. "" (Automática) sí se reenvía
+        // para limpiar la elección cuando el usuario la hace explícitamente.
+        if (!stripeSelectionInvalid) {
+          eventPayload.stripe_account_id = stripeAccountId || "";
+        }
         requests.push(
           api.events
-            .update(id, {
-              name: event.name,
-              date: event.date,
-              time: event.time,
-              place: event.place,
-              slug: slugValue,
-              custom_domain: domainValue,
-            })
+            .update(id, eventPayload)
             .then((updated) => {
               updatedEvent = updated;
               return updated;
@@ -736,6 +765,7 @@ export default function EventInvitation() {
       const finalSlug = updatedEvent?.slug || slugValue;
       if (updatedEvent) {
         setEvent(updatedEvent);
+        setStripeAccountId(updatedEvent.stripe_account_id || "");
         // El backend normaliza el dominio (minúsculas, sin www): refleja lo guardado.
         if (typeof updatedEvent.custom_domain === "string") {
           setCustomDomain(updatedEvent.custom_domain);
@@ -764,6 +794,36 @@ export default function EventInvitation() {
 
   const inputCls =
     "w-full rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gold-400";
+
+  const enabledStripeAccounts = stripeAccounts.filter(
+    (acc) => acc?.charges_enabled === true
+  );
+  // Cuenta guardada en el evento: si desapareció de la lista o perdió los
+  // cobros, no se reenvía al backend para no bloquear cambios no relacionados
+  // ni redirigir cobros a otra cuenta sin una elección explícita del usuario.
+  const selectedStripeAccount = stripeAccounts.find(
+    (acc) => acc.stripe_account_id === stripeAccountId
+  );
+  const stripeSelectionInvalid =
+    !!stripeAccountId &&
+    (!selectedStripeAccount || selectedStripeAccount.charges_enabled !== true);
+  // Aviso de la mesa de regalos: hay tarjeta activa, pero falta alguna lista de
+  // montos y no se permite monto libre. No aplica con Payment Link externo
+  // (el invitado elige el monto directamente en Stripe).
+  const registryCfg = form.registry || {};
+  const hasPaymentLink =
+    String(registryCfg.payment_link_url || "").trim() !== "";
+  const missingSuggestedAmounts =
+    !!registryCfg.stripe_enabled &&
+    !hasPaymentLink &&
+    !registryCfg.allow_custom &&
+    ["suggested_mxn", "suggested_eur"].some((key) => {
+      const list = registryCfg[key];
+      return (
+        !Array.isArray(list) ||
+        list.every((value) => String(value ?? "").trim() === "")
+      );
+    });
 
   return (
     <div>
@@ -1512,6 +1572,15 @@ export default function EventInvitation() {
                 <span className="text-sm text-gray-300">Habilitar pago con tarjeta (Stripe)</span>
               </label>
 
+              {missingSuggestedAmounts && (
+                <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+                  <p className="text-sm text-amber-300">
+                    Sin montos sugeridos y sin monto libre, los invitados no podrán
+                    pagar con tarjeta en esa moneda.
+                  </p>
+                </div>
+              )}
+
               {form.registry?.stripe_enabled && (
                 <label className="block">
                   <span className="text-sm text-gray-400 mb-1 block">
@@ -1624,6 +1693,65 @@ export default function EventInvitation() {
             </div>
           )}
 
+          <div className="mb-5">
+            <label
+              htmlFor="event-stripe-account"
+              className="text-sm text-gray-400 mb-1 block"
+            >
+              Cuenta de Stripe para este evento
+            </label>
+            <select
+              id="event-stripe-account"
+              className={inputCls}
+              value={stripeAccountId}
+              onChange={(e) => {
+                stripeSelectionTouchedRef.current = true;
+                setStripeAccountId(e.target.value);
+              }}
+            >
+              <option value="">Automática (no recomendada)</option>
+              {stripeAccounts.map((acc) => {
+                const st = stripeAccountStatus(acc);
+                const enabled = acc.charges_enabled === true;
+                const country = stripeCountryLabel(acc.country);
+                const currency = String(acc.default_currency || "")
+                  .trim()
+                  .toUpperCase();
+                const countryWithCurrency =
+                  currency && !country.toUpperCase().includes(currency)
+                    ? `${country} · ${currency}`
+                    : country;
+                return (
+                  <option
+                    key={acc.id}
+                    value={acc.stripe_account_id}
+                    disabled={!enabled}
+                  >
+                    {countryWithCurrency} · {st.label}
+                    {!enabled ? " (sin cobros habilitados)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="text-xs text-gray-500 mt-1.5">
+              Solo esta cuenta recibirá los pagos del evento, en MXN y EUR
+              (Stripe convierte si la moneda no coincide).
+            </p>
+            {stripeSelectionInvalid && (
+              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                La cuenta seleccionada ya no está habilitada o no está
+                disponible. Elige otra o 'Automática'; mientras tanto, el evento
+                no cobrará con tarjeta.
+              </p>
+            )}
+            {enabledStripeAccounts.length >= 2 && !stripeAccountId && (
+              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                Tienes varias cuentas habilitadas. Selecciona una para que este
+                evento cobre siempre en la misma.
+              </p>
+            )}
+          </div>
+
           {stripeLoading && stripeAccounts.length === 0 ? (
             <p className="text-sm text-gray-400">
               Consultando cuentas de Stripe…
@@ -1651,6 +1779,12 @@ export default function EventInvitation() {
                       >
                         {st.label}
                       </span>
+                      {acc.stripe_account_id === stripeAccountId &&
+                        acc.charges_enabled === true && (
+                          <span className="rounded-full border border-gold-400/40 bg-gold-400/10 px-2.5 py-0.5 text-[11px] font-medium text-gold-300">
+                            Activa para este evento
+                          </span>
+                        )}
                     </div>
                     <div className="mt-1.5 truncate font-mono text-xs text-gray-500">
                       {acc.stripe_account_id}

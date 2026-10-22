@@ -4,6 +4,8 @@
 >
 > **Plantilla:** `boda_jorge_macarena` · **Diseño actual (v2 "editorial sobre papel", 2026-10-11):** fondos crema (`--inv-bg #F6F2EB`), tinta cálida (`--inv-text #1C1B19`), fotos B&N con scrim claro y flora de Granada (dalia, bugambilia y granado) en SVG. Fuentes: **Cormorant Garamond** (display/títulos, también la itálica) y **Montserrat** (cuerpo).
 >
+> **Nota de estado (2026-10-22):** la **cuenta Connect única por evento** y la **UI de monto libre sin sugeridos** están implementadas en el **working tree**, **sin commitear ni desplegar**. Ver §2.3 y §7.
+>
 > **Archivos clave:**
 > - Vista pública: `client/src/invitation/InvitationPage.jsx` (obtiene datos por token).
 > - Orquestación: `client/src/invitation/InvitationView.jsx` (tema + layout + sobre según `opening.envelopeVariant`).
@@ -15,7 +17,7 @@
 > - Sección compartida: `client/src/invitation/shared/Rsvp.jsx` (+ utilidades `shared/util.jsx` y `shared/Countdown.jsx` → `useCountdown`).
 > - Contrato de datos: `client/src/invitation/schema/fields.js`, `client/src/invitation/schema/normalize.js` y `server/src/schemas/invitation.js`.
 > - Metadatos OG por token: `server/src/utils/invitationLookup.js`, `server/src/utils/ogMeta.js` y `server/src/index.js`.
-> - Pagos con tarjeta (opcional): `server/src/routes/stripe.js` (cuentas Connect del organizador), `server/src/utils/stripeDestination.js` (destino por moneda con fallback de conversión) y `payment_methods` en `server/src/routes/invitations.js`.
+> - Pagos con tarjeta (opcional): `server/src/routes/stripe.js` (cuentas Connect del organizador), `server/src/utils/stripeDestination.js` (cuenta explícita del evento con prioridad; si es NULL, resolución legacy por moneda) y `payment_methods` en `server/src/routes/invitations.js`.
 > - Assets fijos del cierre (badge "Powered by Webi"): `client/public/webi/` (`logo-dark.svg`; `logo-light.svg` reservado para fondos oscuros).
 > - Mock de referencia del diseño: `Invitación Macarena & Jorge/Invitacion Macarena y Jorge v2.dc.html` (+ `Flor.dc.html`, `Ramillete.dc.html`, `support.js`).
 
@@ -31,7 +33,7 @@ La invitación se publica con un token único por grupo de invitados (`/invitaci
 | `group` | El grupo invitado | `{ name, leader_name, rsvp_note }` |
 | `guests` | Los invitados de ese grupo | lista de `{ id, name, is_leader, is_child, registered, declined }` |
 | `public_config` | Config pública | `{ stripe_publishable_key, custom_domain }` |
-| `payment_methods` | Disponibilidad de pago con tarjeta | `{ card: { mxn, eur } }` — con una **cuenta Stripe Connect habilitada** la tarjeta se ofrece en cada moneda; si la moneda de la cuenta no coincide, **Stripe convierte automáticamente** al liquidar (p. ej. cuenta MX cobrando EUR; ver §2.3 y §5) |
+| `payment_methods` | Disponibilidad de pago con tarjeta | `{ card: { mxn, eur } }` — solo aplica con la mesa habilitada, `stripe_enabled` y Stripe configurado. Con una **cuenta Connect válida para el evento** (`events.stripe_account_id`) ambas monedas comparten la misma cuenta: `true/true` si está habilitada y `false/false` si no. Sin cuenta de evento se conserva la resolución **legacy**: cuenta habilitada del dueño/override por moneda, con **conversión automática** si la moneda no coincide (p. ej. cuenta MX cobrando EUR; ver §2.3 y §5) |
 
 Internamente, la vista los recibe con estos nombres de prop:
 
@@ -100,6 +102,10 @@ Internamente, la vista los recibe con estos nombres de prop:
 | `payment_link_url` | string (URL) | Payment Link externo de Stripe; si tiene valor, el CTA de tarjeta abre ese enlace (el invitado elige el monto allí) |
 | `bank` | `{ enabled, bank_name, holder, account_number, concept }` | Datos de depósito/transferencia |
 
+> **Cuenta Connect del evento (`events.stripe_account_id`; es una columna del evento, no se expone en la respuesta pública ni vive en `cfg.registry`):** si el evento tiene una cuenta seleccionada en el editor (**"Cuenta de Stripe para este evento"**, dentro de "Pagos / Conectar Stripe"), esa es la **única** cuenta que recibe los pagos de la mesa de regalos, tanto en MXN como en EUR (Stripe convierte si la moneda no coincide). Solo se pueden elegir cuentas propias con cobros habilitados; una cuenta ajena, inexistente o deshabilitada deja `payment_methods.card` en `false/false` **sin fallback**. Si `stripe_account_id` es NULL, se usa la resolución **legacy**: override `stripe_account_mxn/eur` → cuenta habilitada del dueño → fallback con conversión, con desempate por menor `id`. El backend valida esta cuenta en `PUT /api/events/:id` (ausente = conservar; `""`/`null` = limpiar). En el editor, el selector muestra **Automática** o las cuentas del usuario (las que no tienen cobros aparecen deshabilitadas), avisa si hay varias habilitadas y ninguna seleccionada, marca la elegida con **"Activa para este evento"** y, si la cuenta guardada dejó de estar habilitada, omite la clave al guardar para no bloquear el resto de cambios.
+>
+> **Monto libre sin sugeridos:** con `allow_custom:true` y `suggested_mxn`/`suggested_eur` vacío para la moneda activa, la vista muestra directamente el **selector de moneda + campo "Monto"** (sin la opción "Monto libre" de un dropdown). Si no hay sugeridos y `allow_custom:false`, se muestra **"La mesa de regalos aún no tiene montos configurados."** y se omite el CTA de tarjeta; el banco se conserva si está habilitado. El **Payment Link externo** no cambia.
+
 ### 2.4 Campos nuevos del rediseño v2 (detalle y tolerancias)
 
 Los cuatro campos son **opcionales y tolerantes** (sin migración; el backend los valida en los 6 formatos, con defaults):
@@ -150,7 +156,7 @@ El layout `BodaJorgeMacarenaLayout` arma la página en este orden, y **cada secc
 4. **Ceremonia / Recepción** (`Locations.jsx`): **una hoja por item de `cfg.locations`** (label → título; place → dirección; `url` → botón "Cómo llegar"; si no hay `url`, se busca por `place`). El eyebrow se elige por palabra clave (`locationEyebrows`: "Ceremonia religiosa" / "Recepción y fiesta") y la flor alterna. Caja "Hora" con `event.time` (oculta si falta o es `00:00`).
 5. **Itinerario** (`Itinerary.jsx`): riel vertical con la hora en Cormorant, nodo de flor y momento en microtexto; si un `label` coincide con una ubicación, debajo aparece su `place`. Las horas `00:00` se ocultan. Se omite la hoja si no hay items.
 6. **Vestimenta** (`DressCode.jsx`): eyebrow + divisor + cada etiqueta de `dress_code` en Cormorant gigante; `dress_note` como cita itálica. Se omite si no hay etiquetas.
-7. **Regalo** (`Gifts.jsx`): se muestra si `registry.enabled` **o** si hay `registry_note`. Eyebrow "Regalo", "Con todo nuestro cariño", párrafo (`registry_note` o `giftIntro` del tema), selectores de moneda/monto (o CTA de Payment Link externo), pago con tarjeta (Checkout embebido) y "Transferencia bancaria" desplegable con los datos de `registry.bank` y botón Copiar. El encabezado del banco alterna "Desde México" / "Desde España" según la moneda elegida. La **tarjeta** se ofrece por moneda solo si `payment_methods.card[moneda]` no es `false`: con **una sola cuenta MX habilitada**, tanto MXN como EUR muestran tarjeta (en EUR **Stripe convierte automáticamente** al liquidar); sin ninguna cuenta habilitada se muestra el aviso y la transferencia queda intacta.
+7. **Regalo** (`Gifts.jsx`): se muestra si `registry.enabled` **o** si hay `registry_note`. Eyebrow "Regalo", "Con todo nuestro cariño", párrafo (`registry_note` o `giftIntro` del tema), selectores de moneda/monto (o CTA de Payment Link externo), pago con tarjeta (Checkout embebido) y "Transferencia bancaria" desplegable con los datos de `registry.bank` y botón Copiar. El encabezado del banco alterna "Desde México" / "Desde España" según la moneda elegida. **Monto:** con sugeridos se muestran los chips/dropdown y "Monto libre" como alternativa; sin sugeridos y con `allow_custom`, se muestra directamente moneda + campo **"Monto"**; sin sugeridos ni monto libre, se muestra el aviso **"La mesa de regalos aún no tiene montos configurados."** y **no se ofrece el CTA de tarjeta** (el banco se conserva). **Tarjeta:** se ofrece solo si `payment_methods.card[moneda]` no es `false`. Con una **cuenta de evento** seleccionada, MXN y EUR comparten la misma cuenta (`true/true` si está habilitada; `false/false` sin fallback si no). Sin cuenta de evento, se mantiene la resolución legacy: con **una sola cuenta MX habilitada**, tanto MXN como EUR muestran tarjeta (en EUR **Stripe convierte automáticamente** al liquidar); sin ninguna cuenta habilitada se muestra el aviso y la transferencia queda intacta.
 8. **Confirmación (RSVP)**: sección **compartida** `shared/Rsvp.jsx` (misma lógica que en todas las plantillas: invitados, contactos, nota, límite de edición). El layout solo le neutraliza el fondo opaco para que se vea la hoja.
 9. **Hospedaje y viaje** (`Lodging.jsx`): filas de `cfg.lodging` (con enlace "Mapa") + tarjeta de `cfg.travel`. Se omite si no hay contenido.
 10. **Cierre** (`Footer.jsx`): foto B&N con la cita (`closingQuote`), monograma circular flanqueado por ramilletes, línea `event.place · Mes Año`, "DisplayEvent" (salvo `hideBrand`) y el badge **"Powered by Webi"** (fijo, solo esta plantilla).
@@ -187,6 +193,9 @@ Y la **paleta completa** está en `theme.vars` (variables CSS `--inv-*`): papel,
 
 ## 7. Pendientes / oportunidades visuales
 
+- [ ] **Seleccionar explícitamente la cuenta Connect del evento 2 en el editor; hasta entonces se usa la cuenta habilitada de menor id.**
+- [ ] **Revisar los 2 cargos live pequeños (MX$10 y €1)** registrados en `gifts` (la tabla no distingue `livemode`).
+- [ ] **Definir los montos reales de la mesa de regalos del evento 2:** hoy `allow_custom:false`, `min_mxn:0`, `min_eur:0`, `suggested_mxn:[10]`, `suggested_eur:[10,1]` y banco habilitado.
 - [ ] **Fotos reales:** la boda aún usa imágenes de relleno (editables desde el editor). Subirlas a `gallery`/`hero_image` (y, si se suben archivos, activar Cloudinary en producción: el disco de Railway es efímero).
 - [ ] **Reemplazar el enlace de YouTube de `music_url`** del evento (reportado: hoy no reproduce en el `<audio>` nativo) por un archivo subido desde el panel (MP3/M4A/OGG, máx. 15 MB; ver §2.4).
 - [ ] El **scrim del `SectionPhoto`** es claro (88%/72% de `--inv-photo-scrim`); ajustar opacidades si se quiere más/menos protagonismo de la foto.

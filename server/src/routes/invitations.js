@@ -50,6 +50,7 @@ async function cardPaymentMethods(inv, cfg) {
         ownerUserId: inv.owner_user_id,
         overrideMxn: inv.stripe_account_mxn,
         overrideEur: inv.stripe_account_eur,
+        eventAccountId: inv.stripe_account_id,
       }),
     };
   } catch (err) {
@@ -223,17 +224,29 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
     }
 
     // Destination charge (Connect): el 100% va al anfitrión, sin
-    // application_fee. El destino se elige por moneda: override del evento
-    // (`stripe_account_<currency>`) ?? cuenta del dueño habilitada con esa
-    // `default_currency`. Sin destino válido la tarjeta queda deshabilitada.
+    // application_fee. Si el evento tiene una cuenta seleccionada
+    // (`stripe_account_id`), es la única admitida para cualquier moneda; sin
+    // ella se conserva la resolución legacy por moneda
+    // (`stripe_account_<currency>` ?? cuenta del dueño habilitada con esa
+    // `default_currency`). Sin destino válido la tarjeta queda deshabilitada.
     const overrideAccountId =
       currency === "mxn" ? inv.stripe_account_mxn : inv.stripe_account_eur;
+    const eventAccountId = inv.stripe_account_id;
     const destination = await resolveStripeDestination({
       currency,
       overrideAccountId,
       ownerUserId: inv.owner_user_id,
+      eventAccountId,
     });
     if (!destination) {
+      // La cuenta del evento está seleccionada pero no se puede usar
+      // (deshabilitada, ajena o inexistente): no hay fallback. Mensaje
+      // estable y sin detalles internos para el invitado.
+      if (typeof eventAccountId === "string" && eventAccountId.trim() !== "") {
+        return res.status(400).json({
+          error: "La cuenta de Stripe seleccionada para este evento no está habilitada para cobros.",
+        });
+      }
       return res.status(400).json({
         error: "El pago con tarjeta no está disponible para esta moneda por el momento",
       });

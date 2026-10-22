@@ -173,14 +173,24 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
   if (!registry?.enabled) return null;
 
   const suggested = registry[`suggested_${currency}`] || [];
+  const hasSuggested = suggested.length > 0;
   const min = registry[`min_${currency}`] || 0;
   const allowCustom = !!registry.allow_custom;
+  // Sin montos sugeridos, el input libre es la única forma de elegir cantidad
+  // y pasa a mostrarse con la etiqueta "Monto".
+  const onlyCustom = allowCustom && !hasSuggested;
+  // Sin sugeridos ni monto libre no hay cantidad posible: se evita el CTA de
+  // tarjeta y se conserva el banco con un aviso neutro.
+  const noAmountOptions = !hasSuggested && !allowCustom;
   const bank = registry.bank || {};
   const stripeReady = !!registry.stripe_enabled && !!publishableKey && !!token;
   // Payment Link externo: si está definido, el CTA de tarjeta abre ese link
   // (el invitado elige el monto en Stripe) y no se usan los selectores.
   const paymentLink = String(registry.payment_link_url || "").trim();
   const linkMode = !!registry.stripe_enabled && !!paymentLink;
+  // El CTA de tarjeta solo se ofrece si hay forma de elegir monto (sugeridos o
+  // libre) o si el pago se delega a un Payment Link externo.
+  const cardSectionVisible = linkMode || !noAmountOptions;
 
   // Disponibilidad de tarjeta POR MONEDA (`payment_methods.card.{mxn,eur}` de
   // la respuesta pública). Contrato:
@@ -352,7 +362,7 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
             el invitado elige el monto en la pasarela segura de Stripe. Si
             ninguna moneda tiene tarjeta disponible, también se ocultan y la
             sección degrada a banco/aviso neutro. */}
-        {!linkMode && cardAvailableAny && (
+        {!linkMode && cardAvailableAny && (hasSuggested || allowCustom) && (
           <>
             {/* Selector manual de moneda */}
             <Reveal>
@@ -382,7 +392,7 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
             </Reveal>
 
             {/* Montos sugeridos */}
-            {suggested.length > 0 && (
+            {hasSuggested && (
               <Reveal>
                 <motion.div
                   className="flex flex-wrap justify-center gap-3"
@@ -414,13 +424,14 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
               </Reveal>
             )}
 
-            {/* Monto libre */}
+            {/* Monto libre. Sin sugeridos es el campo principal; con
+                sugeridos se mantiene como alternativa. */}
             {allowCustom && (
               <Reveal delay={0.1}>
                 <div className="mt-6 flex justify-center">
                   <label className="flex flex-col items-center gap-2">
                     <span className="text-xs uppercase tracking-[0.3em] text-inv-primary">
-                      Monto libre
+                      {onlyCustom ? "Monto" : "Monto libre"}
                     </span>
                     <div className="flex items-center gap-2 rounded-2xl border border-inv-primary/30 bg-inv-surface px-4 py-3">
                       <span className="font-inv-heading text-xl text-inv-text-soft">
@@ -456,6 +467,14 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
 
         {/* Opciones: depósito bancario y/o tarjeta */}
         <div className="mt-10 space-y-4">
+          {noAmountOptions && !linkMode && (
+            <Reveal>
+              <p className="text-center text-sm font-light text-inv-text-soft">
+                La mesa de regalos aún no tiene montos configurados.
+              </p>
+            </Reveal>
+          )}
+
           {bank.enabled && bankFields.length > 0 && (
             <Reveal>
               <div className="rounded-3xl border border-inv-primary/30 bg-inv-surface px-6 md:px-8 py-6 shadow-[0_20px_50px_var(--inv-shadow-card)]">
@@ -494,7 +513,7 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
             </Reveal>
           )}
 
-          {cardConfigured && cardAvailableAny ? (
+          {cardSectionVisible && cardConfigured && cardAvailableAny ? (
             <Reveal>
               {linkMode ? (
                 <motion.a
@@ -531,7 +550,7 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
                 </p>
               ) : null}
             </Reveal>
-          ) : cardConfigured ? (
+          ) : cardSectionVisible && cardConfigured ? (
             <Reveal>
               <p className="mt-2 text-center text-xs text-inv-text-muted">
                 El pago con tarjeta no está disponible en este momento

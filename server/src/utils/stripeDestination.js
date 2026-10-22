@@ -5,17 +5,27 @@ import { getStripe } from "./stripe.js";
    Resolución del destino del pago (Stripe Connect, destination charges).
 
    El 100% del cobro se transfiere al anfitrión (sin application_fee).
-   El destino se elige POR MONEDA en orden determinista:
-     1) override del evento (`events.stripe_account_mxn`/`_eur`) con la
-        moneda EXACTA y `charges_enabled`;
-     2) cuenta del dueño del evento con la moneda EXACTA y `charges_enabled`;
-     3) fallback (Plan B): override del evento habilitado aunque su moneda
-        no coincida;
-     4) fallback: cuenta del dueño habilitada aunque su moneda no coincida.
-   El fallback permite operar con UNA sola cuenta (p. ej. MX) y deja que
-   Stripe convierta automáticamente los cobros en otra moneda (EUR -> MXN).
-   Entre varias cuentas habilitadas de un mismo nivel se elige la de MENOR
-   `id` (estable e independiente del orden de filas que devuelva Postgres).
+
+   A) Cuenta EXPLÍCITA del evento (`events.stripe_account_id`):
+      si tiene valor, SOLO se admite esa cuenta, siempre que pertenezca
+      al dueño del evento y tenga `charges_enabled`. Se usa para
+      CUALQUIER moneda (si `default_currency` no coincide, Stripe
+      convierte). Si la cuenta no existe, es de otro usuario o está
+      deshabilitada, se devuelve null SIN fallback: esto garantiza
+      "una sola cuenta activa por evento".
+
+   B) Legacy (sin cuenta explícita): el destino se elige POR MONEDA en
+      orden determinista:
+        1) override del evento (`events.stripe_account_mxn`/`_eur`) con la
+           moneda EXACTA y `charges_enabled`;
+        2) cuenta del dueño del evento con la moneda EXACTA y `charges_enabled`;
+        3) fallback (Plan B): override del evento habilitado aunque su moneda
+           no coincida;
+        4) fallback: cuenta del dueño habilitada aunque su moneda no coincida.
+      El fallback permite operar con UNA sola cuenta (p. ej. MX) y deja que
+      Stripe convierta automáticamente los cobros en otra moneda (EUR -> MXN).
+      Entre varias cuentas habilitadas de un mismo nivel se elige la de MENOR
+      `id` (estable e independiente del orden de filas que devuelva Postgres).
 
    `pickStripeDestination` es pura y testeable; `resolveStripeDestination`
    y `resolveCardAvailability` son los wrappers con una única consulta SQL
@@ -47,18 +57,55 @@ function firstById(rows) {
   return rows.length ? rows.slice().sort(byIdAsc)[0] : null;
 }
 
-// Pura: elige la fila destino dados los candidatos (override + dueño).
+// `acct_...` canónico o null. "" / solo espacios / no-string -> null.
+function normalizeAccountId(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+// IDs únicos (y no vacíos) para la consulta `ANY($n::text[])`.
+function candidateAccountIds(...ids) {
+  return [...new Set(ids.map(normalizeAccountId).filter(Boolean))];
+}
+
+// Pura: elige la fila destino dados los candidatos (cuenta del evento,
+// override legacy y cuentas del dueño).
 // - `currency`: "mxn" | "eur" (se normaliza a minúsculas).
-// - `overrideAccountId`: `acct_...` del evento para esa moneda (o null).
+// - `overrideAccountId`: `acct_...` legacy del evento para esa moneda (o null).
 // - `ownerUserId`: dueño del evento.
+// - `eventAccountId`: cuenta explícita del evento (o null).
 // - `accounts`: filas candidatas de `stripe_accounts`.
 // Devuelve la fila elegida o null.
-export function pickStripeDestination({ currency, overrideAccountId, ownerUserId, accounts }) {
+export function pickStripeDestination({
+  currency,
+  overrideAccountId,
+  ownerUserId,
+  eventAccountId,
+  accounts,
+}) {
   const cur = typeof currency === "string" ? currency.trim().toLowerCase() : "";
   if (!cur || !Array.isArray(accounts)) return null;
 
-  const overrideRow = overrideAccountId
-    ? accounts.find((row) => row && row.stripe_account_id === overrideAccountId) || null
+  // A) Cuenta explícita del evento: la MISMA para cualquier moneda.
+  // Sin fallback si no es válida: una sola cuenta activa por evento.
+  const eventId = normalizeAccountId(eventAccountId);
+  if (eventId) {
+    return (
+      accounts.find(
+        (row) =>
+          row &&
+          row.stripe_account_id === eventId &&
+          row.user_id === ownerUserId &&
+          isEnabled(row)
+      ) || null
+    );
+  }
+
+  // B) Legacy: resolución por moneda.
+  const overrideId = normalizeAccountId(overrideAccountId);
+  const overrideRow = overrideId
+    ? accounts.find((row) => row && row.stripe_account_id === overrideId) || null
     : null;
 
   // 1) override del evento con moneda exacta.
@@ -82,37 +129,67 @@ export function pickStripeDestination({ currency, overrideAccountId, ownerUserId
 const CANDIDATE_COLUMNS = `id, user_id, stripe_account_id, country, default_currency,
                            charges_enabled, payouts_enabled, details_submitted`;
 
-// Destino para UNA moneda del pago de un evento. Aplica el orden completo
-// de `pickStripeDestination` (exacto -> fallback Plan B con conversión).
-export async function resolveStripeDestination({ currency, overrideAccountId, ownerUserId }) {
-  const rows = await query(
-    `SELECT ${CANDIDATE_COLUMNS}
-       FROM stripe_accounts
-      WHERE user_id = $1
-         OR stripe_account_id = $2`,
-    [ownerUserId, overrideAccountId || null]
-  );
-  return pickStripeDestination({ currency, overrideAccountId, ownerUserId, accounts: rows });
-}
-
-// Disponibilidad de tarjeta por moneda para la vista pública (una sola query).
-// El llamador decide si aplica (registry con pago habilitado + Stripe configurado).
-export async function resolveCardAvailability({ ownerUserId, overrideMxn, overrideEur }) {
-  const overrides = [overrideMxn, overrideEur].filter(Boolean);
+// Destino para UNA moneda del pago de un evento. Aplica la cuenta explícita
+// del evento o, en su ausencia, el orden legacy completo (exacto -> fallback
+// Plan B con conversión).
+export async function resolveStripeDestination({
+  currency,
+  overrideAccountId,
+  ownerUserId,
+  eventAccountId,
+}) {
+  const eventId = normalizeAccountId(eventAccountId);
+  const overrideId = normalizeAccountId(overrideAccountId);
   const rows = await query(
     `SELECT ${CANDIDATE_COLUMNS}
        FROM stripe_accounts
       WHERE user_id = $1
          OR stripe_account_id = ANY($2::text[])`,
-    [ownerUserId, overrides]
+    [ownerUserId, candidateAccountIds(eventId, overrideId)]
+  );
+  return pickStripeDestination({
+    currency,
+    overrideAccountId: overrideId,
+    ownerUserId,
+    eventAccountId: eventId,
+    accounts: rows,
+  });
+}
+
+// Disponibilidad de tarjeta por moneda para la vista pública (una sola query).
+// El llamador decide si aplica (registry con pago habilitado + Stripe configurado).
+// Con cuenta de evento seleccionada, ambas monedas comparten el mismo destino:
+// { mxn: true, eur: true } si es válida y está habilitada, o
+// { mxn: false, eur: false } si está seleccionada pero no se puede usar.
+export async function resolveCardAvailability({
+  ownerUserId,
+  overrideMxn,
+  overrideEur,
+  eventAccountId,
+}) {
+  const eventId = normalizeAccountId(eventAccountId);
+  const mxnId = normalizeAccountId(overrideMxn);
+  const eurId = normalizeAccountId(overrideEur);
+  const rows = await query(
+    `SELECT ${CANDIDATE_COLUMNS}
+       FROM stripe_accounts
+      WHERE user_id = $1
+         OR stripe_account_id = ANY($2::text[])`,
+    [ownerUserId, candidateAccountIds(eventId, mxnId, eurId)]
   );
   const available = (currency, overrideAccountId) =>
     Boolean(
-      pickStripeDestination({ currency, overrideAccountId, ownerUserId, accounts: rows })
+      pickStripeDestination({
+        currency,
+        overrideAccountId,
+        ownerUserId,
+        eventAccountId: eventId,
+        accounts: rows,
+      })
     );
   return {
-    mxn: available("mxn", overrideMxn),
-    eur: available("eur", overrideEur),
+    mxn: available("mxn", mxnId),
+    eur: available("eur", eurId),
   };
 }
 

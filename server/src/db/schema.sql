@@ -166,9 +166,19 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
 
--- 2.2b) Override por moneda del destino Connect del evento (`acct_...` de
---       stripe_accounts). TEXT (no FK): el ID es externo a Postgres y Stripe
---       puede alargar su formato; NULL = usar la cuenta del dueño del evento.
+-- 2.2b) Destino Connect del evento (`acct_...` de stripe_accounts).
+--       TEXT (no FK): el ID es externo a Postgres y Stripe puede alargar su
+--       formato.
+--
+--       stripe_account_id: cuenta Connect elegida EXPLÍCITAMENTE para el evento.
+--         Tiene PRIORIDAD sobre stripe_account_mxn/stripe_account_eur. Si es
+--         NULL, se mantiene el comportamiento anterior (resolver por moneda vía
+--         stripe_account_mxn/eur y, en su defecto, la cuenta del dueño).
+--
+--       stripe_account_mxn/stripe_account_eur: LEGACY / fallback por moneda.
+--         Solo se consultan cuando stripe_account_id es NULL. NULL en ambas =
+--         compatibilidad total con el comportamiento previo.
+ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_id TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_mxn TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_eur TEXT;
 

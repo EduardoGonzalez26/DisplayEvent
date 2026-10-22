@@ -280,6 +280,49 @@ function parseCustomDomainInput(value) {
   return { value: domain };
 }
 
+/* ------------------------------------------------------------------
+   Cuenta Connect del evento (`events.stripe_account_id`).
+
+   Semántica del body:
+     undefined           -> { keep: true }  (no se toca el valor guardado)
+     null / ""           -> { value: null } (limpiar)
+     string              -> { value } `acct_...` (trim + validación en BD)
+   La cuenta debe existir, pertenecer al usuario autenticado y tener
+   `charges_enabled`; de lo contrario se responde 400. No se permite
+   seleccionar cuentas de terceros ni deshabilitadas.
+------------------------------------------------------------------- */
+
+const STRIPE_ACCOUNT_RE = /^acct_[A-Za-z0-9]+$/;
+
+async function parseStripeAccountInput(value, ownerUserId) {
+  if (value === undefined) return { keep: true };
+  if (value === null || value === "") return { value: null };
+  if (typeof value !== "string") return { error: "La cuenta de Stripe es inválida" };
+
+  const accountId = value.trim();
+  if (!accountId) return { error: "La cuenta de Stripe no es válida" };
+  if (!STRIPE_ACCOUNT_RE.test(accountId)) {
+    return { error: "La cuenta de Stripe no es válida" };
+  }
+
+  // Mismo filtro de dueño que la resolución de pagos. Una cuenta ajena no
+  // se distingue de una inexistente para no filtrar información.
+  const rows = await query(
+    `SELECT charges_enabled
+       FROM stripe_accounts
+      WHERE stripe_account_id = $1 AND user_id = $2
+      LIMIT 1`,
+    [accountId, ownerUserId]
+  );
+  if (rows.length === 0) {
+    return { error: "La cuenta de Stripe no existe o no pertenece a tu usuario" };
+  }
+  if (rows[0].charges_enabled !== true) {
+    return { error: "La cuenta de Stripe seleccionada no está habilitada para cobros" };
+  }
+  return { value: accountId };
+}
+
 // Busca un slug libre. Si `base` ya está tomado prueba `base-2`, `base-3`, ...
 // `excludeId` permite ignorar el propio evento al editarlo. Los slugs generados
 // respetan el máximo de 60 caracteres.
@@ -372,7 +415,8 @@ router.post("/", async (req, res, next) => {
 });
 
 router.put("/:id", async (req, res, next) => {
-  const validated = validateEventPayload(req.body || {});
+  const body = req.body || {};
+  const validated = validateEventPayload(body);
   if (validated.error) return res.status(400).json({ error: validated.error });
   const {
     name,
@@ -383,23 +427,36 @@ router.put("/:id", async (req, res, next) => {
     custom_domain: domainInput,
   } = validated.value;
   try {
+    // `stripe_account_id` ausente => se conserva; presente => se valida y se
+    // escribe (null cuando se envía "" o null para limpiarlo).
+    const stripeInput = await parseStripeAccountInput(body.stripe_account_id, req.user.id);
+    if (stripeInput.error) return res.status(400).json({ error: stripeInput.error });
+
     // Excluye el propio evento: si el slug no cambia se conserva tal cual y,
     // si está tomado por otro, se añade sufijo (-2, -3, ...).
     const slug = await generateUniqueSlug(requestedSlug || slugify(name), req.params.id);
-    // `custom_domain` ausente => se conserva el valor almacenado (otras
-    // pantallas guardan el evento sin enviarlo). Presente => se escribe
-    // (null cuando se envía "" o null para borrarlo).
-    const result = domainInput.keep
-      ? await pool.query(
-          `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5
-           WHERE id = $6 AND user_id = $7 RETURNING *`,
-          [name, date, time, place, slug, req.params.id, req.user.id]
-        )
-      : await pool.query(
-          `UPDATE events SET name = $1, date = $2, time = $3, place = $4, slug = $5, custom_domain = $6
-           WHERE id = $7 AND user_id = $8 RETURNING *`,
-          [name, date, time, place, slug, domainInput.value ?? null, req.params.id, req.user.id]
-        );
+
+    // UPDATE único con campos opcionales "keep if absent": `custom_domain` y
+    // `stripe_account_id` solo entran en el SET cuando el body los envía
+    // (otras pantallas guardan el evento sin enviarlos).
+    const assignments = ["name = $1", "date = $2", "time = $3", "place = $4", "slug = $5"];
+    const params = [name, date, time, place, slug];
+    if (!domainInput.keep) {
+      params.push(domainInput.value ?? null);
+      assignments.push(`custom_domain = $${params.length}`);
+    }
+    if (!stripeInput.keep) {
+      params.push(stripeInput.value ?? null);
+      assignments.push(`stripe_account_id = $${params.length}`);
+    }
+    const idIndex = params.push(req.params.id);
+    const userIndex = params.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE events SET ${assignments.join(", ")}
+        WHERE id = $${idIndex} AND user_id = $${userIndex} RETURNING *`,
+      params
+    );
     if (result.rowCount === 0) return res.status(404).json({ error: "Evento no encontrado" });
     res.json(result.rows[0]);
   } catch (err) {
