@@ -226,12 +226,11 @@ export const boda_jorge_macarena = {
     },
   },
   labels: {
-    // Portada y navegación (pill inferior + música).
+    // Portada.
     heroEyebrow: "Nos casamos",
     heroScroll: "Desliza",
-    navLocations: "Ubicación",
-    navGift: "Regalo",
-    navRsvp: "Confirmar",
+
+    // Música (botón flotante).
     musicOn: "Encender música",
     musicOff: "Apagar música",
 
@@ -269,11 +268,48 @@ export const boda_jorge_macarena = {
     rsvp: "Confirma tu asistencia",
     rsvpHelp: "Marquen la asistencia de cada persona para continuar.",
 
-    // Hospedaje y viaje.
+    // Hospedaje y viaje (legado: se conserva por compatibilidad).
     lodgingEyebrow: "Hospedaje y viaje",
     lodgingTitle: "Dónde quedarse",
     lodgingMapLink: "Mapa",
     travelAirportLabel: "Aeropuerto más cercano",
+
+    // Viaje (sección independiente).
+    travelEyebrow: "Para quienes vienen de lejos",
+    travelTitle: "Viaje",
+    travelArrivalLabel: "Ciudad de llegada",
+    travelOriginLabel: "Ciudad de salida",
+    travelOriginCodeLabel: "Código IATA",
+    travelOriginPlaceholder: "MEX",
+    travelOriginHint:
+      "El aeropuerto de salida solo aplica a los vuelos. Código IATA de 3 letras.",
+    travelOriginInvalid: "Escribe un código IATA de 3 letras para ver los vuelos.",
+    travelDateFromLabel: "Llegada a España",
+    travelDateToLabel: "Regreso",
+    travelAdultsOne: "1 adulto",
+    travelAdultsMany: "adultos",
+    travelOtherOrigin: "Otro aeropuerto",
+    travelCta: "Buscar",
+    travelFlightTitle: "Avión",
+    travelTrainTitle: "Tren",
+    travelBusTitle: "Autobús",
+    travelNoArrivals:
+      "Muy pronto compartiremos las ciudades de llegada y las opciones de transporte.",
+    travelNoOrigins: "Muy pronto compartiremos los aeropuertos de salida.",
+    travelNoModes: "Muy pronto compartiremos las opciones de transporte.",
+    travelNoProviders: "Muy pronto compartiremos enlaces para este medio.",
+
+    // Hospedaje (sección independiente).
+    stayEyebrow: "La estancia",
+    stayTitle: "Hospedaje",
+    stayDateInLabel: "Llegada",
+    stayDateOutLabel: "Salida",
+    stayZoneLabel: "Zona sugerida",
+    stayMapLink: "Abrir en Google Maps",
+    stayCta: "Buscar hospedaje",
+    stayCardsLabel: "Opciones de hospedaje",
+    stayPlatformFallback: "Hospedaje",
+    stayEmptyNotice: "Muy pronto compartiremos opciones de hospedaje.",
 
     // Cierre.
     closingQuote: "Dos ciudades, un mismo camino.",

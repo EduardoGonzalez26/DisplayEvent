@@ -6,9 +6,9 @@ import LocationSection from "./Locations.jsx";
 import Itinerary from "./Itinerary.jsx";
 import DressCode from "./DressCode.jsx";
 import Gifts from "./Gifts.jsx";
-import Lodging from "./Lodging.jsx";
+import Travel from "./Travel.jsx";
+import Stay from "./Stay.jsx";
 import Footer from "./Footer.jsx";
-import BottomNav from "./BottomNav.jsx";
 import MusicToggle from "./MusicToggle.jsx";
 import SectionPhoto from "./SectionPhoto.jsx";
 import Rsvp from "../shared/Rsvp.jsx";
@@ -30,6 +30,7 @@ const PHOTO_ORDER = [
   "vestimenta",
   "regalo",
   "confirmar",
+  "viaje",
   "hospedaje",
   "cierre",
 ];
@@ -211,11 +212,11 @@ function StackCard({
 
      Portada · Nuestra historia · Ceremonia/Recepción (una hoja por
      `cfg.locations`) · Itinerario · Vestimenta · Regalo ·
-     Confirmación · Hospedaje y viaje · Cierre
+     Confirmación · Viaje · Hospedaje · Cierre
 
-   Navegación: pill inferior (Ubicación / Regalo / Confirmar) + botón
-   de música, visibles al abrir el sobre. RSVP, Gifts y el badge Webi
-   conservan su lógica original.
+   Sin navegación inferior flotante; el botón de música (arriba a la
+   derecha) se mantiene. RSVP, Gifts y el badge Webi conservan su
+   lógica original.
 ------------------------------------------------------------------ */
 export default function BodaJorgeMacarenaLayout({
   event,
@@ -275,19 +276,24 @@ export default function BodaJorgeMacarenaLayout({
   const showGifts = !!(cfg.registry && cfg.registry.enabled);
   const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
   const showGiftSection = showGifts || showRegistryNote;
-  const lodgingItems = (cfg.lodging || []).filter(
-    (h) => h && (String(h.name || "").trim() || String(h.note || "").trim())
-  );
-  const travel = cfg.travel || {};
+  // Viaje y Hospedaje son secciones independientes (contrato `trip`/`stay`).
+  // `lodging`/`travel` quedan como legado y no se renderizan en esta plantilla.
+  const trip = cfg.trip || {};
+  const tripModes = trip.modes || {};
   const showTravel = !!(
-    String(travel.title || "").trim() ||
-    String(travel.airport_note || "").trim() ||
-    String(travel.closing_note || "").trim() ||
-    (travel.routes || []).some(
-      (r) => r && (String(r.label || "").trim() || String(r.note || "").trim())
-    )
+    trip.enabled &&
+    (String(trip.intro || "").trim() ||
+      (Array.isArray(trip.origins) && trip.origins.length > 0) ||
+      (Array.isArray(trip.arrivals) && trip.arrivals.length > 0) ||
+      Object.values(tripModes).some(
+        (mode) =>
+          mode &&
+          mode.enabled &&
+          (String(mode.note || "").trim() ||
+            (Array.isArray(mode.providers) && mode.providers.length > 0))
+      ))
   );
-  const showLodging = lodgingItems.length > 0 || showTravel;
+  const showStay = !!cfg.stay?.enabled;
 
   const musicUrl = String(cfg.music_url || "").trim();
 
@@ -298,25 +304,9 @@ export default function BodaJorgeMacarenaLayout({
   const zDress = zItinerary + 1;
   const zGift = zDress + 1;
   const zRsvp = zGift + 1;
-  const zLodging = zRsvp + 1;
-  const zClosing = zLodging + 1;
-
-  // Pill inferior: solo las secciones que existen.
-  const navItems = [
-    locations.length > 0 && {
-      id: "ubicacion-0",
-      label: theme?.labels?.navLocations || "Ubicación",
-    },
-    showGiftSection && {
-      id: "regalo",
-      label: theme?.labels?.navGift || "Regalo",
-    },
-    {
-      id: "confirmar",
-      label: theme?.labels?.navRsvp || "Confirmar",
-      primary: true,
-    },
-  ].filter(Boolean);
+  const zTravel = zRsvp + 1;
+  const zStay = zTravel + 1;
+  const zClosing = zStay + 1;
 
   return (
     <div ref={containerRef} className="isolate bg-[#1A1918]">
@@ -416,15 +406,27 @@ export default function BodaJorgeMacarenaLayout({
         <Rsvp {...rsvp} />
       </StackCard>
 
-      {/* Hospedaje y viaje */}
-      {showLodging && (
+      {/* Viaje */}
+      {showTravel && (
+        <StackCard
+          id="viaje"
+          zIndex={zTravel}
+          bg="bg-inv-bg-alt2"
+          photo={photoFor("viaje")}
+        >
+          <Travel cfg={cfg} theme={theme} />
+        </StackCard>
+      )}
+
+      {/* Hospedaje */}
+      {showStay && (
         <StackCard
           id="hospedaje"
-          zIndex={zLodging}
-          bg="bg-inv-bg-alt2"
+          zIndex={zStay}
+          bg="bg-inv-bg-alt"
           photo={photoFor("hospedaje")}
         >
-          <Lodging cfg={cfg} theme={theme} />
+          <Stay cfg={cfg} theme={theme} />
         </StackCard>
       )}
 
@@ -444,8 +446,7 @@ export default function BodaJorgeMacarenaLayout({
         />
       </StackCard>
 
-      {/* Navegación inferior + música (aparecen al abrir el sobre) */}
-      {navItems.length > 0 && <BottomNav items={navItems} reveal={reveal} />}
+      {/* Botón de música (aparece al abrir el sobre) */}
       <MusicToggle url={musicUrl} reveal={reveal} labels={theme?.labels} />
 
       {/* Textura de papel del diseño (grano fino sobre todo) */}

@@ -179,6 +179,216 @@ function normalizeTravel(v) {
   };
 }
 
+/* ------------------------------------------------------------------
+   Hospedaje (`stay`) y viaje (`trip`) de boda_jorge_macarena.
+   Campos aditivos al contrato común. `lodging`/`travel` permanecen
+   intactos como legado.
+   ------------------------------------------------------------------ */
+
+const DEFAULT_STAY_ZONE = Object.freeze({
+  lat: 37.1761,
+  lng: -3.5881,
+  radius_km: 1.5,
+  label: "Alhambra, Granada",
+});
+
+const DEFAULT_STAY_CARDS = Object.freeze([
+  Object.freeze({
+    id: "booking",
+    platform: "booking",
+    title: "Booking.com",
+    description: "Hoteles, apartamentos y casas cerca de la Alhambra.",
+    url: "",
+    auto: true,
+  }),
+  Object.freeze({
+    id: "airbnb",
+    platform: "airbnb",
+    title: "Airbnb",
+    description: "Alojamientos completos y habitaciones en Granada.",
+    url: "",
+    auto: true,
+  }),
+  Object.freeze({
+    id: "trivago",
+    platform: "trivago",
+    title: "Trivago",
+    description: "Compara precios de hoteles en Granada.",
+    url: "",
+    auto: true,
+  }),
+  Object.freeze({
+    id: "google_hotels",
+    platform: "google_hotels",
+    title: "Google Hotels",
+    description: "Busca hoteles y compara opciones cerca de la zona.",
+    url: "",
+    auto: true,
+  }),
+]);
+
+const STAY_AUTO_PLATFORMS = new Set(["booking", "airbnb", "trivago", "google_hotels"]);
+const STAY_MAX_CARDS = 12;
+
+const DEFAULT_TRIP_ORIGINS = Object.freeze([
+  Object.freeze({ code: "MEX", label: "CDMX – Benito Juárez" }),
+  Object.freeze({ code: "NLU", label: "CDMX – AIFA" }),
+  Object.freeze({ code: "GDL", label: "Guadalajara" }),
+  Object.freeze({ code: "MTY", label: "Monterrey" }),
+]);
+
+const DEFAULT_TRIP_ARRIVALS = Object.freeze([
+  Object.freeze({ code: "MAD", label: "Madrid" }),
+  Object.freeze({ code: "BCN", label: "Barcelona" }),
+]);
+
+const DEFAULT_TRIP_MODE_PROVIDERS = Object.freeze({
+  flight: Object.freeze(["google_flights", "skyscanner", "kayak"]),
+  train: Object.freeze(["renfe", "omio", "trainline"]),
+  bus: Object.freeze(["alsa", "omio", "flixbus"]),
+});
+
+const TRIP_MAX_ORIGINS = 20;
+const TRIP_MAX_ARRIVALS = 4;
+const TRIP_MAX_PROVIDERS = 10;
+const IATA_CODE_RE = /^[A-Z]{2,3}$/;
+
+function cloneStayCards() {
+  return DEFAULT_STAY_CARDS.map((card) => ({ ...card }));
+}
+
+function cloneTripPlaces(list) {
+  return list.map((place) => ({ ...place }));
+}
+
+function cloneTripMode(kind) {
+  return {
+    enabled: true,
+    note: "",
+    providers: [...DEFAULT_TRIP_MODE_PROVIDERS[kind]],
+  };
+}
+
+// Número finito tolerante (number o string numérica). Inválido -> default.
+function toFiniteNumber(v, dflt) {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim() !== "") {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return dflt;
+}
+
+function clamp(n, min, max) {
+  return Math.min(max, Math.max(min, n));
+}
+
+function normalizeStayCard(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  const platform = str(obj.platform).slice(0, 40);
+  return {
+    id: str(obj.id).slice(0, 80),
+    platform,
+    title: str(obj.title).slice(0, 120),
+    description: str(obj.description).slice(0, 300),
+    url: str(obj.url).slice(0, 500),
+    auto: toBool(obj.auto, STAY_AUTO_PLATFORMS.has(platform.toLowerCase())),
+  };
+}
+
+// `undefined`/`null` -> 4 tarjetas por defecto. Un array (incluido []) se
+// respeta; cualquier otro tipo se sanea a [].
+function normalizeStayCards(v) {
+  if (v == null) return cloneStayCards();
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((card) => card && typeof card === "object" && !Array.isArray(card))
+    .slice(0, STAY_MAX_CARDS)
+    .map(normalizeStayCard);
+}
+
+function normalizeStayZone(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    lat: clamp(toFiniteNumber(obj.lat, DEFAULT_STAY_ZONE.lat), -90, 90),
+    lng: clamp(toFiniteNumber(obj.lng, DEFAULT_STAY_ZONE.lng), -180, 180),
+    radius_km: clamp(
+      toFiniteNumber(obj.radius_km, DEFAULT_STAY_ZONE.radius_km),
+      0.1,
+      50
+    ),
+    label: str(obj.label).slice(0, 120) || DEFAULT_STAY_ZONE.label,
+  };
+}
+
+function normalizeStay(raw) {
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    intro: str(obj.intro),
+    zone: normalizeStayZone(obj.zone),
+    checkin: str(obj.checkin),
+    checkout: str(obj.checkout),
+    cards: normalizeStayCards(obj.cards),
+  };
+}
+
+// Códigos IATA: mayúsculas, 2-3 letras. Se desechan entradas sin código
+// válido (no se inventan códigos). `undefined`/`null` -> defaults.
+function normalizeTripPlaces(v, defaults, max) {
+  if (v == null) return cloneTripPlaces(defaults);
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((place) => place && typeof place === "object" && !Array.isArray(place))
+    .map((place) => ({
+      code: str(place.code).toUpperCase(),
+      label: str(place.label),
+    }))
+    .filter((place) => IATA_CODE_RE.test(place.code))
+    .slice(0, max);
+}
+
+function normalizeTripProviders(v, kind) {
+  if (v == null) return [...DEFAULT_TRIP_MODE_PROVIDERS[kind]];
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((provider) => str(provider))
+    .filter(Boolean)
+    .slice(0, TRIP_MAX_PROVIDERS);
+}
+
+function normalizeTripMode(v, kind) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    enabled: toBool(obj.enabled, true),
+    note: str(obj.note),
+    providers: normalizeTripProviders(obj.providers, kind),
+  };
+}
+
+function normalizeTripModes(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    flight: normalizeTripMode(obj.flight, "flight"),
+    train: normalizeTripMode(obj.train, "train"),
+    bus: normalizeTripMode(obj.bus, "bus"),
+  };
+}
+
+function normalizeTrip(raw) {
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    intro: str(obj.intro),
+    origins: normalizeTripPlaces(obj.origins, DEFAULT_TRIP_ORIGINS, TRIP_MAX_ORIGINS),
+    arrivals: normalizeTripPlaces(obj.arrivals, DEFAULT_TRIP_ARRIVALS, TRIP_MAX_ARRIVALS),
+    date_from: str(obj.date_from),
+    date_to: str(obj.date_to),
+    adults: Math.max(1, toNonNegInt(obj.adults, 1)),
+    modes: normalizeTripModes(obj.modes),
+  };
+}
+
 // Pareja (boda): { nameA, nameB }.
 function normalizeCouple(v) {
   const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -317,6 +527,70 @@ const travelSchema = z.object({
   closing_note: z.string().default(""),
 });
 
+export const stayZoneSchema = z.object({
+  lat: z.number().min(-90).max(90).default(DEFAULT_STAY_ZONE.lat),
+  lng: z.number().min(-180).max(180).default(DEFAULT_STAY_ZONE.lng),
+  radius_km: z.number().min(0.1).max(50).default(DEFAULT_STAY_ZONE.radius_km),
+  label: z.string().max(120).default(DEFAULT_STAY_ZONE.label),
+});
+
+export const stayCardSchema = z.object({
+  id: z.string().max(80).default(""),
+  platform: z.string().max(40).default(""),
+  title: z.string().max(120).default(""),
+  description: z.string().max(300).default(""),
+  url: z.string().max(500).default(""),
+  auto: z.boolean().default(false),
+});
+
+export const staySchema = z.object({
+  enabled: z.boolean().default(false),
+  intro: z.string().default(""),
+  zone: stayZoneSchema.default({}),
+  checkin: z.string().default(""),
+  checkout: z.string().default(""),
+  cards: z.array(stayCardSchema).max(STAY_MAX_CARDS).default(cloneStayCards),
+});
+
+export const tripOriginSchema = z.object({
+  code: z.string().regex(IATA_CODE_RE),
+  label: z.string().default(""),
+});
+
+export const tripArrivalSchema = z.object({
+  code: z.string().regex(IATA_CODE_RE),
+  label: z.string().default(""),
+});
+
+export const tripModeSchema = z.object({
+  enabled: z.boolean().default(true),
+  note: z.string().default(""),
+  providers: z.array(z.string()).max(TRIP_MAX_PROVIDERS).default([]),
+});
+
+export const tripModesSchema = z.object({
+  flight: tripModeSchema.default(() => cloneTripMode("flight")),
+  train: tripModeSchema.default(() => cloneTripMode("train")),
+  bus: tripModeSchema.default(() => cloneTripMode("bus")),
+});
+
+export const tripSchema = z.object({
+  enabled: z.boolean().default(false),
+  intro: z.string().default(""),
+  origins: z
+    .array(tripOriginSchema)
+    .max(TRIP_MAX_ORIGINS)
+    .default(() => cloneTripPlaces(DEFAULT_TRIP_ORIGINS)),
+  arrivals: z
+    .array(tripArrivalSchema)
+    .max(TRIP_MAX_ARRIVALS)
+    .default(() => cloneTripPlaces(DEFAULT_TRIP_ARRIVALS)),
+  date_from: z.string().default(""),
+  date_to: z.string().default(""),
+  adults: z.number().int().min(1).default(1),
+  modes: tripModesSchema.default({}),
+});
+
 const coupleSchema = z.object({
   nameA: z.string().default(""),
   nameB: z.string().default(""),
@@ -360,6 +634,8 @@ const commonFields = {
   music_url: z.string().default(""),
   lodging: z.array(lodgingItemSchema).default([]),
   travel: travelSchema.default({}),
+  stay: staySchema.default({}),
+  trip: tripSchema.default({}),
   registry: registrySchema.default({}),
   rsvp_editable: z.boolean().default(false),
   rsvp_edit_deadline: z.string().default(""),
@@ -459,6 +735,8 @@ export function normalizeInvitation(raw) {
     music_url: str(source.music_url),
     lodging: normalizeLodging(source.lodging),
     travel: normalizeTravel(source.travel),
+    stay: normalizeStay(source.stay),
+    trip: normalizeTrip(source.trip),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
     rsvp_edit_deadline: toIsoDate(source.rsvp_edit_deadline),
@@ -536,6 +814,15 @@ export function normalizeForRead(raw) {
     out.travel = normalizeTravel(null);
   } else if (!Array.isArray(out.travel.routes)) {
     out.travel.routes = [];
+  }
+  // `stay` y `trip` siempre presentes, con sus listas como arrays reales.
+  out.stay = normalizeStay(out.stay);
+  if (!Array.isArray(out.stay.cards)) out.stay.cards = [];
+  out.trip = normalizeTrip(out.trip);
+  if (!Array.isArray(out.trip.origins)) out.trip.origins = [];
+  if (!Array.isArray(out.trip.arrivals)) out.trip.arrivals = [];
+  for (const mode of Object.values(out.trip.modes)) {
+    if (!Array.isArray(mode.providers)) mode.providers = [];
   }
   // `registry` siempre presente, con subestructuras saneadas para lectura.
   if (!out.registry || typeof out.registry !== "object" || Array.isArray(out.registry)) {

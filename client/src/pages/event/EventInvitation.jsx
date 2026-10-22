@@ -15,15 +15,24 @@ import {
   serializeForm,
   withUid,
 } from "../../invitation/schema/normalize.js";
+import StayTravelEditor from "./StayTravelEditor.jsx";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SLUG_MIN = 3;
 const SLUG_MAX = 60;
 
 // Claves de `EXTRA_FIELDS` que se editan en secciones dedicadas (no en la
-// grilla genérica "Datos del formato"): historia/música y hospedaje/viaje
-// del formato editorial `boda_jorge_macarena`.
-const CUSTOM_EXTRA_KEYS = new Set(["story", "music_url", "lodging", "travel"]);
+// grilla genérica "Datos del formato"): historia/música, hospedaje/viaje
+// legado y los bloques nuevos `stay`/`trip` del formato editorial
+// `boda_jorge_macarena` (fase B del editor).
+const CUSTOM_EXTRA_KEYS = new Set([
+  "story",
+  "music_url",
+  "lodging",
+  "travel",
+  "stay",
+  "trip",
+]);
 
 /* ------------------------------------------------------------------
    Stripe Connect (panel): país de la cuenta y estado legible.
@@ -547,54 +556,6 @@ export default function EventInvitation() {
     }));
   const delLoc = (i) =>
     setForm((f) => ({ ...f, locations: f.locations.filter((_, idx) => idx !== i) }));
-
-  // Hospedaje (`lodging`) y viaje (`travel`) del formato editorial.
-  const setLodging = (i, key, value) =>
-    setForm((f) => ({
-      ...f,
-      lodging: (f.lodging || []).map((h, idx) =>
-        idx === i ? { ...h, [key]: value } : h
-      ),
-    }));
-  const addLodging = () =>
-    setForm((f) => ({
-      ...f,
-      lodging: [...(f.lodging || []), withUid({ name: "", note: "", url: "" })],
-    }));
-  const delLodging = (i) =>
-    setForm((f) => ({
-      ...f,
-      lodging: (f.lodging || []).filter((_, idx) => idx !== i),
-    }));
-
-  const setTravel = (key, value) =>
-    setForm((f) => ({ ...f, travel: { ...(f.travel || {}), [key]: value } }));
-  const setRoute = (i, key, value) =>
-    setForm((f) => ({
-      ...f,
-      travel: {
-        ...(f.travel || {}),
-        routes: (f.travel?.routes || []).map((r, idx) =>
-          idx === i ? { ...r, [key]: value } : r
-        ),
-      },
-    }));
-  const addRoute = () =>
-    setForm((f) => ({
-      ...f,
-      travel: {
-        ...(f.travel || {}),
-        routes: [...(f.travel?.routes || []), withUid({ label: "", note: "" })],
-      },
-    }));
-  const delRoute = (i) =>
-    setForm((f) => ({
-      ...f,
-      travel: {
-        ...(f.travel || {}),
-        routes: (f.travel?.routes || []).filter((_, idx) => idx !== i),
-      },
-    }));
 
   const setExtra = (key, value) => setForm((f) => setField(f, key, value));
 
@@ -1241,136 +1202,11 @@ export default function EventInvitation() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-semibold text-white">
-                  Hospedaje y viaje
-                </h2>
-                <Button variant="secondary" type="button" onClick={addLodging}>
-                  + Agregar hotel
-                </Button>
-              </div>
-              <p className="text-sm text-gray-500 mb-3">
-                Hoteles sugeridos y datos de viaje. Sin contenido, la sección no
-                aparece en la invitación. Pega el enlace del mapa o el de Booking
-                o la web del hotel: se usará como “Reservar” y el mapa se
-                generará con el nombre.
-              </p>
-              <div className="space-y-3">
-                {(form.lodging || []).length === 0 && (
-                  <p className="text-sm text-gray-500">
-                    Aún no hay hoteles sugeridos.
-                  </p>
-                )}
-                {(form.lodging || []).map((h, i) => (
-                  <div
-                    key={h._uid ?? i}
-                    className="rounded-xl border border-gray-800 p-3 grid md:grid-cols-2 gap-2"
-                  >
-                    <input
-                      className={inputCls}
-                      value={h.name}
-                      onChange={(e) => setLodging(i, "name", e.target.value)}
-                      placeholder="Nombre (Hotel Alhambra Palace)"
-                    />
-                    <input
-                      className={inputCls}
-                      value={h.note}
-                      onChange={(e) => setLodging(i, "note", e.target.value)}
-                      placeholder="Nota (Junto a la Alhambra, con vistas)"
-                    />
-                    <div className="flex gap-2 md:col-span-2">
-                      <input
-                        className={inputCls}
-                        value={h.url || ""}
-                        onChange={(e) => setLodging(i, "url", e.target.value)}
-                        placeholder="Enlace del mapa o de reserva (https://…, opcional)"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => delLodging(i)}
-                        className="shrink-0 text-sm text-red-500 hover:text-red-400 px-2"
-                      >
-                        Quitar
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 border-t border-gray-800 pt-5 space-y-4">
-                <label className="block">
-                  <span className="text-sm text-gray-400 mb-1 block">
-                    Título del bloque de viaje
-                  </span>
-                  <input
-                    className={inputCls}
-                    value={form.travel?.title || ""}
-                    onChange={(e) => setTravel("title", e.target.value)}
-                    placeholder="Si vienen desde México"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-gray-400 mb-1 block">
-                    Aeropuerto más cercano
-                  </span>
-                  <textarea
-                    className={inputCls}
-                    rows={2}
-                    value={form.travel?.airport_note || ""}
-                    onChange={(e) => setTravel("airport_note", e.target.value)}
-                    placeholder="Federico García Lorca Granada-Jaén (GRX), a unos 17 km del centro."
-                  />
-                </label>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-400">
-                      Rutas / alternativas
-                    </span>
-                    <Button variant="secondary" type="button" onClick={addRoute}>
-                      + Agregar ruta
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {(form.travel?.routes || []).map((r, i) => (
-                      <div key={r._uid ?? i} className="flex flex-col gap-2 sm:flex-row">
-                        <input
-                          className={inputCls}
-                          value={r.label}
-                          onChange={(e) => setRoute(i, "label", e.target.value)}
-                          placeholder="Etiqueta (Ruta recomendada)"
-                        />
-                        <input
-                          className={inputCls}
-                          value={r.note}
-                          onChange={(e) => setRoute(i, "note", e.target.value)}
-                          placeholder="Nota (Vuelo a Madrid y conexión…)"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => delRoute(i)}
-                          className="shrink-0 text-sm text-red-500 hover:text-red-400 px-2"
-                        >
-                          Quitar
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <label className="block">
-                  <span className="text-sm text-gray-400 mb-1 block">
-                    Nota de cierre
-                  </span>
-                  <textarea
-                    className={inputCls}
-                    rows={2}
-                    value={form.travel?.closing_note || ""}
-                    onChange={(e) => setTravel("closing_note", e.target.value)}
-                    placeholder="Cualquier consejo extra para quienes viajan de lejos."
-                  />
-                </label>
-              </div>
-            </section>
+            <StayTravelEditor
+              form={form}
+              setForm={setForm}
+              inputCls={inputCls}
+            />
           </>
         )}
 

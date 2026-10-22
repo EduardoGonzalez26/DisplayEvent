@@ -15,7 +15,8 @@ import {
   safeHttpUrl,
 } from "../invitation/boda_jorge_macarena/helpers.js";
 import { extractInvitationToken } from "./invitationLink.js";
-import { hotelLinks } from "./lodgingLinks.js";
+import Travel from "../invitation/boda_jorge_macarena/Travel.jsx";
+import Stay from "../invitation/boda_jorge_macarena/Stay.jsx";
 
 /* ------------------------------------------------------------------
    Portada pública de la boda de Macarena & Jorge en su dominio propio.
@@ -840,199 +841,6 @@ function ArrowUpRight({ className = "" }) {
   );
 }
 
-function StayAction({
-  href,
-  children,
-  ariaLabel,
-  variant = "outline",
-  onPaper = true,
-}) {
-  if (!href) return null;
-
-  const variants = {
-    outline:
-      "min-h-[48px] justify-between gap-3 whitespace-nowrap border border-[var(--inv-accent-border-strong)] px-4 text-[var(--inv-text)] hover:bg-[var(--inv-bg-alt2)]",
-    solid:
-      "min-h-[48px] justify-between gap-3 whitespace-nowrap bg-[#1C1B19] px-4 text-[#FAF7F2] hover:bg-[#3A3733]",
-    text:
-      "min-h-[44px] gap-2 border-b border-[var(--inv-accent-border-strong)] text-[var(--inv-text)] hover:border-[var(--inv-text)] hover:text-[var(--inv-text-muted)]",
-  };
-  const ringOffset = onPaper
-    ? "focus-visible:ring-offset-[var(--inv-surface)]"
-    : "focus-visible:ring-offset-[var(--inv-bg-alt2)]";
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={ariaLabel}
-      className={`inline-flex items-center text-[9px] font-semibold uppercase tracking-[0.18em] transition-[color,background-color,border-color,transform] duration-200 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 ${ringOffset} ${variants[variant]}`}
-    >
-      <span>{children}</span>
-      <ArrowUpRight className="h-3.5 w-3.5 flex-none" />
-    </a>
-  );
-}
-
-function FeaturedHotel({ hotel, place, eventDate }) {
-  const { name, note, mapHref, reserveHref, reserveIsBooking } = hotelLinks(
-    hotel,
-    place,
-    eventDate
-  );
-  const headingId = "hospedaje-hotel-1";
-
-  return (
-    <article
-      aria-labelledby={name ? headingId : undefined}
-      className="relative mt-4 border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] shadow-[0_24px_50px_-36px_rgba(40,30,20,0.5)]"
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-2 border border-[var(--inv-accent-border)]"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute right-3 top-3 h-16 w-16 opacity-20"
-      >
-        <Flor kind="granado" />
-      </span>
-
-      <div className="relative px-5 py-6 sm:px-7 sm:py-8">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="font-inv-display text-[15px] leading-none tracking-[0.16em] text-[var(--inv-text-dim)]"
-          >
-            01
-          </span>
-          <span
-            aria-hidden="true"
-            className="h-px flex-1 bg-[var(--inv-accent-border-strong)]"
-          />
-          <span className="text-right text-[8px] font-semibold uppercase leading-[1.5] tracking-[0.24em] text-[var(--inv-text-muted)]">
-            Recomendación de los novios
-          </span>
-        </div>
-
-        {name && (
-          <h4
-            id={headingId}
-            className="mt-5 font-inv-display text-[clamp(30px,3.4vw,42px)] font-normal leading-[1.05] text-[var(--inv-text)] [text-wrap:balance]"
-          >
-            {name}
-          </h4>
-        )}
-
-        {note && (
-          <p
-            className={`${
-              name ? "mt-3" : "mt-5"
-            } max-w-[44ch] whitespace-pre-line text-[14px] leading-[1.8] text-[var(--inv-text-soft)]`}
-          >
-            {note}
-          </p>
-        )}
-
-        <div className="mt-6 grid gap-2 border-t border-[var(--inv-accent-border)] pt-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-          <StayAction
-            href={mapHref}
-            ariaLabel={`Ver ubicación de ${
-              name || "el hotel"
-            } en el mapa (se abre en una nueva pestaña)`}
-            variant="outline"
-          >
-            Ver mapa
-          </StayAction>
-          <StayAction
-            href={reserveHref}
-            ariaLabel={`Ver disponibilidad de ${
-              name || "el hotel"
-            } ${
-              reserveIsBooking ? "en Booking.com" : "en su web"
-            } (se abre en una nueva pestaña)`}
-            variant="solid"
-          >
-            Ver disponibilidad
-          </StayAction>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function SecondaryHotel({ hotel, position, place, eventDate }) {
-  const { name, note, mapHref, reserveHref, reserveIsBooking } = hotelLinks(
-    hotel,
-    place,
-    eventDate
-  );
-  const headingId = `hospedaje-hotel-${position + 1}`;
-
-  return (
-    <li className="border-b border-[var(--inv-accent-border)] last:border-b-0">
-      <article
-        aria-labelledby={name ? headingId : undefined}
-        className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 py-6"
-      >
-        <span
-          aria-hidden="true"
-          className="pt-1 font-inv-display text-[15px] leading-none tracking-[0.16em] text-[var(--inv-text-dim)]"
-        >
-          {String(position + 1).padStart(2, "0")}
-        </span>
-
-        <div className="min-w-0">
-          {name && (
-            <h4
-              id={headingId}
-              className="font-inv-display text-[clamp(24px,2.6vw,30px)] font-normal leading-[1.08] text-[var(--inv-text)] [text-wrap:balance]"
-            >
-              {name}
-            </h4>
-          )}
-
-          {note && (
-            <p
-              className={`${
-                name ? "mt-2" : ""
-              } max-w-[46ch] whitespace-pre-line text-[14px] leading-[1.75] text-[var(--inv-text-soft)]`}
-            >
-              {note}
-            </p>
-          )}
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1">
-            <StayAction
-              href={mapHref}
-              ariaLabel={`Ver ubicación de ${
-                name || "el hotel"
-              } en el mapa (se abre en una nueva pestaña)`}
-              variant="text"
-              onPaper={false}
-            >
-              Ver mapa
-            </StayAction>
-            <StayAction
-              href={reserveHref}
-              ariaLabel={`Ver disponibilidad de ${
-                name || "el hotel"
-              } ${
-                reserveIsBooking ? "en Booking.com" : "en su web"
-              } (se abre en una nueva pestaña)`}
-              variant="text"
-              onPaper={false}
-            >
-              Ver disponibilidad
-            </StayAction>
-          </div>
-        </div>
-      </article>
-    </li>
-  );
-}
-
 function StayPhoto({ photo, monthYear, place }) {
   const reduced = useReducedMotion();
   const hasPhoto = Boolean(photo);
@@ -1118,29 +926,160 @@ function StayPhoto({ photo, monthYear, place }) {
   );
 }
 
-function Stay({
-  lodging,
-  travel,
-  routes,
-  themeLabels,
-  photo,
-  monthYear,
-  eventDate,
-  place,
-  contacts,
-}) {
-  const travelTitle = String(travel?.title || "").trim();
-  const airportNote = String(travel?.airport_note || "").trim();
-  const closingNote = String(travel?.closing_note || "").trim();
-  const hasTravel = Boolean(travelTitle || airportNote || closingNote || routes.length);
-  const hasLodging = lodging.length > 0;
+function tripPlaces(value) {
+  return (Array.isArray(value) ? value : [])
+    .map((item) => (item && typeof item === "object" ? item : {}))
+    .map((item) => ({
+      code: String(item.code || "").trim().toUpperCase(),
+      label: String(item.label || "").trim(),
+    }))
+    .filter((item) => item.code || item.label);
+}
+
+function hasTripContent(trip) {
+  if (!trip || typeof trip !== "object" || !trip.enabled) return false;
+  const modes = trip.modes && typeof trip.modes === "object" ? trip.modes : {};
+  return Boolean(
+    String(trip.intro || "").trim() ||
+      (Array.isArray(trip.origins) && trip.origins.length > 0) ||
+      (Array.isArray(trip.arrivals) && trip.arrivals.length > 0) ||
+      Object.values(modes).some(
+        (mode) =>
+          mode &&
+          mode.enabled &&
+          (String(mode.note || "").trim() ||
+            (Array.isArray(mode.providers) && mode.providers.length > 0))
+      )
+  );
+}
+
+function TravelEditorial({ trip, monthYear, place }) {
+  const origins = tripPlaces(trip?.origins);
+  const arrivals = tripPlaces(trip?.arrivals);
+  const hasIntro = Boolean(String(trip?.intro || "").trim());
+  const originLine = origins.map((item) => item.code || item.label).join(" · ");
+  const arrivalLine = arrivals.map((item) => item.code || item.label).join(" · ");
+  const modeCount = ["flight", "train", "bus"].filter(
+    (key) => trip?.modes?.[key]?.enabled
+  ).length;
+  const waysTitle =
+    modeCount === 1
+      ? "Una forma de llegar"
+      : modeCount === 2
+        ? "Dos formas de llegar"
+        : modeCount === 3
+          ? "Tres formas de llegar"
+          : "Cómo llegar";
+
+  return (
+    <Reveal className="relative border border-[var(--inv-accent-border-strong)] bg-[var(--inv-surface)] p-6 md:p-8">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-2 border border-[var(--inv-accent-border)]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-4 -top-5 h-14 w-14 opacity-90"
+      >
+        <Flor kind="granado" />
+      </span>
+
+      <div className="relative">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[var(--inv-text-muted)]">
+          El trayecto
+        </p>
+        <p className="mt-4 font-inv-display text-[clamp(30px,3.6vw,48px)] font-light leading-[1.08] text-[var(--inv-text)] [text-wrap:balance]">
+          {waysTitle}
+        </p>
+        {!hasIntro && (
+          <p className="mt-4 max-w-[40ch] text-[14px] leading-[1.8] text-[var(--inv-text-soft)]">
+            Vuelo, tren o autobús. Elige tu ciudad de salida y ajusta las fechas:
+            los enlaces se abren con los datos listos para consultar.
+          </p>
+        )}
+
+        <dl className="mt-7 divide-y divide-[var(--inv-accent-border)] border-t border-[var(--inv-accent-border-strong)]">
+          {originLine && (
+            <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+              <dt className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
+                Origen
+              </dt>
+              <dd className="m-0 text-[13px] leading-[1.6] text-[var(--inv-text)] sm:text-right">
+                {originLine}
+              </dd>
+            </div>
+          )}
+          {arrivalLine && (
+            <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+              <dt className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
+                Destino
+              </dt>
+              <dd className="m-0 text-[13px] leading-[1.6] text-[var(--inv-text)] sm:text-right">
+                {arrivalLine}
+              </dd>
+            </div>
+          )}
+          {monthYear && (
+            <div className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+              <dt className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
+                Fechas
+              </dt>
+              <dd className="m-0 text-[13px] leading-[1.6] text-[var(--inv-text)] sm:text-right">
+                {monthYear}
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        <div className="mt-7 flex items-center gap-3 border-t border-[var(--inv-accent-border)] pt-4">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
+            {place || "Granada"}
+          </span>
+          <span aria-hidden="true" className="h-px flex-1 bg-[var(--inv-accent-border)]" />
+          <span aria-hidden="true" className="inline-flex h-5 w-5 flex-none">
+            <Flor kind="bugambilia" />
+          </span>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+function TravelSection({ cfg, monthYear, place }) {
+  const trip = cfg?.trip && typeof cfg.trip === "object" ? cfg.trip : {};
+
+  if (!trip.enabled) return null;
+
+  return (
+    <section
+      id="viaje"
+      aria-labelledby="viaje-title"
+      className="scroll-mt-8 bg-[var(--inv-bg-alt)] px-5 py-20 md:px-8 md:py-28"
+    >
+      <div className="mx-auto max-w-[1180px]">
+        <SectionHeading
+          index="04"
+          kicker="Para quienes vienen de lejos"
+          title="Viaje"
+          titleId="viaje-title"
+        />
+
+        <div className="mt-12 grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-14">
+          <TravelEditorial trip={trip} monthYear={monthYear} place={place} />
+          <Travel cfg={cfg} theme={THEME} variant="cover" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StaySection({ cfg, photo, monthYear, place, contacts }) {
+  const stay = cfg?.stay && typeof cfg.stay === "object" ? cfg.stay : {};
+
+  if (!stay.enabled) return null;
+
   const contactAction = firstContactAction(contacts);
-  const cityLine = /granada/i.test(place) ? "Granada · España" : place || "Granada · España";
-  const cityMapHref = mapsSearchUrl(place || "Granada");
-
-  if (!hasLodging && !hasTravel) return null;
-
-  const [featured, ...rest] = lodging;
+  const stayIntro = String(stay.intro || "").trim();
 
   return (
     <section
@@ -1155,150 +1094,44 @@ function Stay({
           <div className="mx-auto w-full max-w-[620px]">
             <Reveal>
               <SectionHeading
-                index="04"
-                kicker="Para quienes vienen de lejos"
-                title="La estancia"
+                index="05"
+                kicker="La estancia"
+                title="Hospedaje"
                 titleId="hospedaje-title"
               />
-              <p className="mt-5 max-w-[48ch] text-[15px] leading-[1.9] text-[var(--inv-text-soft)] [text-wrap:pretty]">
-                Granada se disfruta sin prisa. Hemos preparado una pequeña selección de
-                hoteles para que la estancia sea parte de estos días.
-              </p>
+              {!stayIntro && (
+                <p className="mt-5 max-w-[48ch] text-[15px] leading-[1.9] text-[var(--inv-text-soft)] [text-wrap:pretty]">
+                  Granada se disfruta sin prisa. Hemos preparado una selección de
+                  plataformas para que la estancia sea parte de estos días.
+                </p>
+              )}
             </Reveal>
 
-            {hasLodging && (
-              <Reveal delay={0.08} className="mt-9">
-                <div className="flex flex-wrap items-end justify-between gap-3 border-t border-[var(--inv-accent-border-strong)] pt-4">
-                  <h3 className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[var(--inv-text-muted)]">
-                    {themeLabels.lodgingTitle || "Dónde quedarse"}
-                  </h3>
-                  <span className="font-inv-display text-sm italic leading-none text-[var(--inv-text-dim)]">
-                    {lodging.length === 1
-                      ? "Una recomendación"
-                      : `${lodging.length} recomendaciones`}
-                  </span>
+            <div className="mt-8">
+              <Stay cfg={cfg} theme={THEME} variant="cover" />
+            </div>
+
+            {contactAction && (
+              <div className="mt-8 border-t border-[var(--inv-accent-border-strong)] pt-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-[14px] leading-[1.7] text-[var(--inv-text-soft)]">
+                    ¿Necesitas ayuda con tu reserva?
+                  </p>
+                  <a
+                    href={contactAction.href}
+                    target={contactAction.external ? "_blank" : undefined}
+                    rel={contactAction.external ? "noopener noreferrer" : undefined}
+                    aria-label={`${contactAction.label}${
+                      contactAction.name ? ` a ${contactAction.name}` : ""
+                    }${contactAction.external ? " (se abre en una nueva pestaña)" : ""}`}
+                    className="inline-flex min-h-[44px] items-center gap-2 border-b border-[var(--inv-accent-border-strong)] text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--inv-text)] transition-colors hover:border-[var(--inv-text)] hover:text-[var(--inv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-bg-alt2)]"
+                  >
+                    {contactAction.kind === "phone" ? "Llámanos" : "Escríbenos"}
+                    <ArrowUpRight className="h-3.5 w-3.5 flex-none" />
+                  </a>
                 </div>
-
-                <FeaturedHotel hotel={featured} place={place} eventDate={eventDate} />
-
-                {rest.length > 0 && (
-                  <ul className="mt-4 border-t border-[var(--inv-accent-border)]">
-                    {rest.map((hotel, index) => (
-                      <SecondaryHotel
-                        key={`${hotel.name || hotel.note || "hotel"}-${index + 2}`}
-                        hotel={hotel}
-                        position={index + 1}
-                        place={place}
-                        eventDate={eventDate}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </Reveal>
+              </div>
             )}
-
-            <Reveal delay={hasLodging ? 0.14 : 0.08}>
-              {hasTravel ? (
-                <div className="mt-9 border-t border-[var(--inv-accent-border-strong)] pt-6">
-                  <div className="flex items-center gap-3">
-                    <span aria-hidden="true" className="h-7 w-7 flex-none">
-                      <Flor kind="bugambilia" />
-                    </span>
-                    <h3
-                      id="como-llegar-title"
-                      className="font-inv-display text-[28px] font-normal leading-none text-[var(--inv-text)]"
-                    >
-                      {travelTitle || "Cómo llegar"}
-                    </h3>
-                  </div>
-
-                  {airportNote && (
-                    <div className="mt-5 border-t border-[var(--inv-accent-border)] pt-4">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
-                        {themeLabels.travelAirportLabel || "Aeropuerto más cercano"}
-                      </p>
-                      <p className="mt-1.5 whitespace-pre-line text-[14px] leading-[1.75] text-[var(--inv-text-soft)]">
-                        {airportNote}
-                      </p>
-                    </div>
-                  )}
-
-                  {routes.length > 0 && (
-                    <div className="mt-4 border-t border-[var(--inv-accent-border)]">
-                      {routes.map((route, index) => (
-                        <div
-                          key={`${route.label || route.note || index}-${index}`}
-                          className="border-b border-[var(--inv-accent-border)] py-3 last:border-b-0"
-                        >
-                          {route.label && (
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
-                              {route.label}
-                            </p>
-                          )}
-                          {route.note && (
-                            <p
-                              className={`${
-                                route.label ? "mt-1" : ""
-                              } whitespace-pre-line text-[14px] leading-[1.75] text-[var(--inv-text-soft)]`}
-                            >
-                              {route.note}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {closingNote && (
-                    <p className="mt-5 border-t border-[var(--inv-accent-border)] pt-4 font-inv-display text-xl italic leading-[1.5] text-[var(--inv-text-muted)]">
-                      {closingNote}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-9 border-t border-[var(--inv-accent-border-strong)] pt-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--inv-text-muted)]">
-                      {cityLine}
-                    </p>
-                    <a
-                      href={cityMapHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Ver mapa de ${
-                        place || "Granada"
-                      } (se abre en una nueva pestaña)`}
-                      className="inline-flex min-h-[44px] items-center gap-2 border-b border-[var(--inv-accent-border-strong)] text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--inv-text)] transition-colors hover:border-[var(--inv-text)] hover:text-[var(--inv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-bg-alt2)]"
-                    >
-                      Ver mapa de la ciudad
-                      <ArrowUpRight className="h-3.5 w-3.5 flex-none" />
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {contactAction && (
-                <div className="mt-8 border-t border-[var(--inv-accent-border-strong)] pt-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[14px] leading-[1.7] text-[var(--inv-text-soft)]">
-                      ¿Necesitas ayuda con tu reserva?
-                    </p>
-                    <a
-                      href={contactAction.href}
-                      target={contactAction.external ? "_blank" : undefined}
-                      rel={contactAction.external ? "noopener noreferrer" : undefined}
-                      aria-label={`${contactAction.label}${
-                        contactAction.name ? ` a ${contactAction.name}` : ""
-                      }${contactAction.external ? " (se abre en una nueva pestaña)" : ""}`}
-                      className="inline-flex min-h-[44px] items-center gap-2 border-b border-[var(--inv-accent-border-strong)] text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--inv-text)] transition-colors hover:border-[var(--inv-text)] hover:text-[var(--inv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--inv-bg-alt2)]"
-                    >
-                      {contactAction.kind === "phone" ? "Llámanos" : "Escríbenos"}
-                      <ArrowUpRight className="h-3.5 w-3.5 flex-none" />
-                    </a>
-                  </div>
-                </div>
-              )}
-            </Reveal>
           </div>
         </div>
       </div>
@@ -1724,15 +1557,11 @@ export default function MacarenaJorgeCover() {
   const storyText =
     String(cfg.story || "").trim() || String(cfg.message || "").trim();
 
-  const lodging = (Array.isArray(cfg.lodging) ? cfg.lodging : []).filter(
-    (hotel) =>
-      hotel && (String(hotel.name || "").trim() || String(hotel.note || "").trim())
-  );
-
-  const travel = cfg.travel && typeof cfg.travel === "object" ? cfg.travel : {};
-  const routes = (Array.isArray(travel.routes) ? travel.routes : []).filter(
-    (route) =>
-      route && (String(route.label || "").trim() || String(route.note || "").trim())
+  // Viaje y Hospedaje son secciones independientes (contrato `trip`/`stay`).
+  // Los campos antiguos de hospedaje y viaje ya no se renderizan.
+  const showTrip = hasTripContent(cfg.trip);
+  const showStay = Boolean(
+    cfg.stay && typeof cfg.stay === "object" && cfg.stay.enabled
   );
 
   const contacts = (Array.isArray(cfg.contacts) ? cfg.contacts : []).filter(
@@ -1790,17 +1619,19 @@ export default function MacarenaJorgeCover() {
 
         {storyText && <Story names={names} text={storyText} photo={storyImage} />}
 
-        <Stay
-          lodging={lodging}
-          travel={travel}
-          routes={routes}
-          themeLabels={THEME.labels}
-          photo={stayImage}
-          monthYear={monthYear}
-          eventDate={event.date}
-          place={place}
-          contacts={contacts}
-        />
+        {showTrip && (
+          <TravelSection cfg={cfg} monthYear={monthYear} place={place} />
+        )}
+
+        {showStay && (
+          <StaySection
+            cfg={cfg}
+            photo={stayImage}
+            monthYear={monthYear}
+            place={place}
+            contacts={contacts}
+          />
+        )}
 
         <InvitationAccess contacts={{ items: contacts, note: cfg.contact_note }} />
       </main>
