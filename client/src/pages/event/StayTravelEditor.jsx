@@ -19,7 +19,7 @@ import {
      y `setForm`; no se persiste nada por sí solo.
    - `serializeForm` normaliza y limpia `_uid`; las tarjetas conservan su
      `id` como parte del contrato público.
-   - Las advertencias son informativas: nunca bloquean "Guardar cambios".
+   - Las advertencias son informativas: nunca bloquean "Guardar cambios"
    - Leaflet se carga en un chunk perezoso, igual que en la invitación.
 ----------------------------------------------------------------- */
 
