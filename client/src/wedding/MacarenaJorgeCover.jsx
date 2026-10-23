@@ -926,14 +926,11 @@ function StayPhoto({ photo, monthYear, place }) {
   );
 }
 
-function tripPlaces(value) {
+function tripPlaceLabels(value) {
   return (Array.isArray(value) ? value : [])
-    .map((item) => (item && typeof item === "object" ? item : {}))
-    .map((item) => ({
-      code: String(item.code || "").trim().toUpperCase(),
-      label: String(item.label || "").trim(),
-    }))
-    .filter((item) => item.code || item.label);
+    .map((item) => (item && typeof item === "object" ? item.label : ""))
+    .map((label) => String(label || "").trim())
+    .filter(Boolean);
 }
 
 function hasTripContent(trip) {
@@ -954,11 +951,11 @@ function hasTripContent(trip) {
 }
 
 function TravelEditorial({ trip, monthYear, place }) {
-  const origins = tripPlaces(trip?.origins);
-  const arrivals = tripPlaces(trip?.arrivals);
+  const origins = tripPlaceLabels(trip?.origins);
+  const arrivals = tripPlaceLabels(trip?.arrivals);
   const hasIntro = Boolean(String(trip?.intro || "").trim());
-  const originLine = origins.map((item) => item.code || item.label).join(" · ");
-  const arrivalLine = arrivals.map((item) => item.code || item.label).join(" · ");
+  const originLine = origins.join(" · ");
+  const arrivalLine = arrivals.join(" · ");
   const modeCount = ["flight", "train", "bus"].filter(
     (key) => trip?.modes?.[key]?.enabled
   ).length;

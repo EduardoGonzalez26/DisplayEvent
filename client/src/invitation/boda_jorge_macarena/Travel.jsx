@@ -11,14 +11,13 @@ import { buildModeLinks, citySlugFor } from "../../wedding/stayTravelLinks.js";
    - Llegada a España: fila estática si solo hay una ciudad (Madrid) o
      selector si el dato legado trae varias; cambia el destino del vuelo y
      el origen del tren/autobús.
-   - Selector de salida (IATA) con opción "Otro" + input manual. Solo
-     aplica a vuelos.
+   - Selector de salida con los aeropuertos configurados, mostrados por su
+     nombre. Solo aplica a vuelos.
    - Fechas editables por el invitado; cada cambio regenera los links.
    - Un bloque por modo habilitado (avión / tren / autobús) con carrusel
      horizontal de proveedores. Sin fotos, precios ni logos oficiales.
------------------------------------------------------------------ */
+---------------------------------------------------------------- */
 
-const OTHER_ORIGIN = "__other";
 const MODE_ORDER = ["flight", "train", "bus"];
 
 const FIELD_CLASS =
@@ -177,8 +176,7 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
   const modes = trip.modes;
 
   const [arrivalCode, setArrivalCode] = useState(() => arrivals[0]?.code || "");
-  const [originChoice, setOriginChoice] = useState(() => origins[0]?.code || OTHER_ORIGIN);
-  const [customOrigin, setCustomOrigin] = useState("");
+  const [originChoice, setOriginChoice] = useState(() => origins[0]?.code || "");
   const [dateFrom, setDateFrom] = useState(trip.date_from);
   const [dateTo, setDateTo] = useState(trip.date_to);
 
@@ -190,9 +188,7 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
 
   useEffect(() => {
     setOriginChoice((prev) =>
-      prev === OTHER_ORIGIN || origins.some((o) => o.code === prev)
-        ? prev
-        : origins[0]?.code || OTHER_ORIGIN
+      origins.some((o) => o.code === prev) ? prev : origins[0]?.code || ""
     );
   }, [origins]);
 
@@ -220,8 +216,9 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
   const arrival = arrivals.find((a) => a.code === arrivalCode) || arrivals[0] || null;
   const destination = arrival?.code || "";
   const city = citySlugFor(destination) || citySlugFor(arrival?.label);
-  const usingOther = originChoice === OTHER_ORIGIN || origins.length === 0;
-  const resolvedOrigin = usingOther ? customOrigin : originChoice;
+  const selectedOrigin =
+    origins.find((o) => o.code === originChoice) || origins[0] || null;
+  const resolvedOrigin = selectedOrigin?.code || "";
   const originValid = /^[A-Z]{3}$/.test(resolvedOrigin);
 
   const enabledModes = MODE_ORDER.filter((key) => modes[key]?.enabled);
@@ -232,10 +229,7 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
       note: modes.flight.note,
       empty: !origins.length
         ? labels.travelNoOrigins || "Muy pronto compartiremos los aeropuertos de salida."
-        : !originValid
-          ? labels.travelOriginInvalid ||
-            "Escribe un código IATA de 3 letras para ver los vuelos."
-          : labels.travelNoProviders || "Muy pronto compartiremos enlaces para este medio.",
+        : labels.travelNoProviders || "Muy pronto compartiremos enlaces para este medio.",
       links:
         destination && originValid
           ? buildModeLinks("flight", {
@@ -342,8 +336,7 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                     <p className="m-0 flex min-h-[44px] w-full items-center border border-[var(--inv-accent-border)] bg-[var(--inv-bg-alt)] px-4 text-[13px] text-[var(--inv-text)]">
                       Llegada:{" "}
                       <span className="ml-1 font-medium">
-                        {arrivals[0].label || arrivals[0].code} (
-                        {arrivals[0].code})
+                        {arrivals[0].label || "Madrid"}
                       </span>
                     </p>
                   ) : (
@@ -361,7 +354,7 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                               : "border-[var(--inv-accent-border)] bg-transparent text-[var(--inv-text-soft)] hover:border-[var(--inv-text)]"
                           }`}
                         >
-                          {item.label || item.code}
+                          {item.label || "Llegada"}
                         </button>
                       );
                     })
@@ -377,40 +370,17 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                   {origins.length > 0 ? (
                     <select
                       id={`${uid}-origin`}
-                      value={usingOther ? OTHER_ORIGIN : originChoice}
+                      value={resolvedOrigin}
                       onChange={(event) => setOriginChoice(event.target.value)}
                       className={FIELD_CLASS}
                     >
                       {origins.map((item) => (
                         <option key={item.code} value={item.code}>
-                          {item.label || item.code}
+                          {item.label}
                         </option>
                       ))}
-                      <option value={OTHER_ORIGIN}>
-                        {labels.travelOtherOrigin || "Otro aeropuerto"}
-                      </option>
                     </select>
                   ) : (
-                    <input
-                      id={`${uid}-origin`}
-                      type="text"
-                      value={customOrigin}
-                      onChange={(event) =>
-                        setCustomOrigin(
-                          event.target.value
-                            .toUpperCase()
-                            .replace(/[^A-Z]/g, "")
-                            .slice(0, 3)
-                        )
-                      }
-                      placeholder={labels.travelOriginPlaceholder || "MEX"}
-                      className={FIELD_CLASS}
-                      autoComplete="off"
-                      spellCheck={false}
-                      aria-describedby={`${uid}-origin-hint`}
-                    />
-                  )}
-                  {origins.length === 0 && (
                     <Notice className="mt-2">
                       {labels.travelNoOrigins ||
                         "Muy pronto compartiremos los aeropuertos de salida."}
@@ -433,33 +403,6 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                 </div>
               </div>
 
-              {usingOther && origins.length > 0 && (
-                <div>
-                  <label htmlFor={`${uid}-origin-other`} className={LABEL_CLASS}>
-                    {labels.travelOriginCodeLabel || "Código IATA"}
-                  </label>
-                  <input
-                    id={`${uid}-origin-other`}
-                    type="text"
-                    value={customOrigin}
-                    onChange={(event) =>
-                      setCustomOrigin(
-                        event.target.value
-                          .toUpperCase()
-                          .replace(/[^A-Z]/g, "")
-                          .slice(0, 3)
-                      )
-                    }
-                    placeholder={labels.travelOriginPlaceholder || "MEX"}
-                    maxLength={3}
-                    className={FIELD_CLASS}
-                    autoComplete="off"
-                    spellCheck={false}
-                    aria-describedby={`${uid}-origin-hint`}
-                  />
-                </div>
-              )}
-
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor={`${uid}-date-to`} className={LABEL_CLASS}>
@@ -480,14 +423,6 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                   </p>
                 </div>
               </div>
-
-              <p
-                id={`${uid}-origin-hint`}
-                className="m-0 text-[11px] leading-snug text-[var(--inv-text-muted)]"
-              >
-                {labels.travelOriginHint ||
-                  "El aeropuerto de salida solo aplica a los vuelos. Código IATA de 3 letras."}
-              </p>
             </div>
           </Reveal>
 

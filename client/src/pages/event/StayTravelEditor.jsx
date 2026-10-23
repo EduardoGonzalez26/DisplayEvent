@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useId, useMemo } from "react";
 import { Button } from "../../components/ui.jsx";
 import { getField, setField } from "../../invitation/schema/fields.js";
 import { DEFAULT_STAY_CARDS, withUid } from "../../invitation/schema/normalize.js";
+import { MEXICAN_AIRPORTS } from "../../wedding/mexicanAirports.js";
 import {
   BUS_PROVIDERS,
   FLIGHT_PROVIDERS,
@@ -27,7 +28,6 @@ const ZoneMap = lazy(() =>
   import("../../invitation/boda_jorge_macarena/ZoneMap.jsx")
 );
 
-const ORIGIN_MAX = 20;
 const STAY_CARD_MAX = 12;
 const RADIUS_MIN = 0.5;
 const RADIUS_MAX = 20;
@@ -77,8 +77,6 @@ const STAY_CARD_DEFAULTS = Object.fromEntries(
   DEFAULT_STAY_CARDS.map((card) => [card.platform, card])
 );
 
-const IATA_RE = /^[A-Z]{3}$/;
-
 const MAP_THEME_STYLE = {
   "--inv-accent-border": "#374151",
   "--inv-surface": "#030712",
@@ -106,13 +104,6 @@ function clamp(value, min, max) {
 function toDayValue(value) {
   const raw = str(value);
   return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : "";
-}
-
-function cleanCode(value) {
-  return str(value)
-    .toUpperCase()
-    .replace(/[^A-Z]/g, "")
-    .slice(0, 3);
 }
 
 function platformKey(value) {
@@ -257,24 +248,22 @@ export default function StayTravelEditor({
 
   /* ------------------------------ Viaje ------------------------------ */
 
-  const setOrigin = (index, key, value) =>
-    updateList("trip.origins", (list) =>
-      list.map((origin, i) =>
-        i === index ? { ...origin, [key]: value } : origin
-      )
-    );
-
-  const addOrigin = () =>
-    updateList("trip.origins", (list) =>
-      list.length >= ORIGIN_MAX
-        ? list
-        : [...list, withUid({ code: "", label: "" })]
-    );
-
-  const removeOrigin = (index) =>
-    updateList("trip.origins", (list) =>
-      list.filter((_, i) => i !== index)
-    );
+  const toggleOrigin = (airport) =>
+    setForm((current) => {
+      const value = getField(current, "trip.origins");
+      const list = Array.isArray(value) ? value : [];
+      const selected = new Set(
+        list.map((origin) => str(origin?.code).toUpperCase())
+      );
+      if (selected.has(airport.code)) selected.delete(airport.code);
+      else selected.add(airport.code);
+      // Se reconstruye desde el catálogo para conservar su orden y sus
+      // etiquetas; el `code` queda solo como identificador interno.
+      const next = MEXICAN_AIRPORTS.filter((item) =>
+        selected.has(item.code)
+      ).map((item) => ({ code: item.code, label: item.label }));
+      return setField(current, "trip.origins", next);
+    });
 
   const setMode = (modeId, patch) =>
     setForm((current) => {
@@ -295,15 +284,16 @@ export default function StayTravelEditor({
       return setField(current, `trip.modes.${modeId}.providers`, next);
     });
 
-  const validOrigins = origins.filter((origin) =>
-    IATA_RE.test(str(origin?.code).toUpperCase())
+  const originCodes = useMemo(
+    () => new Set(origins.map((origin) => str(origin?.code).toUpperCase())),
+    [origins]
   );
 
   const tripWarnings = [];
   if (trip.enabled) {
-    if (validOrigins.length === 0) {
+    if (origins.length === 0) {
       tripWarnings.push(
-        "La sección Viaje está activa pero no tiene orígenes válidos; los vuelos no mostrarán enlaces."
+        "La sección Viaje está activa pero no tiene orígenes seleccionados; los vuelos no mostrarán enlaces."
       );
     }
     for (const modeDef of TRIP_MODES) {
@@ -485,74 +475,33 @@ export default function StayTravelEditor({
         )}
 
         <div className="mt-5 border-t border-gray-800 pt-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <h3 className="text-sm font-semibold text-white">
-              Orígenes de salida
-            </h3>
-            <span className="text-xs text-gray-500">
-              {origins.length}/{ORIGIN_MAX}
-            </span>
-          </div>
+          <h3 className="text-sm font-semibold text-white mb-1">
+            Orígenes de salida
+          </h3>
           <p className="text-sm text-gray-500 mb-3">
-            Aeropuertos desde los que viajan los invitados. Código IATA de 3
-            letras (ej. MEX) y una etiqueta legible.
+            Aeropuertos desde los que viajan los invitados. Se muestran al
+            invitado por su nombre.
           </p>
 
-          <div className="space-y-2">
-            {origins.length === 0 && (
-              <p className="text-sm text-gray-500">
-                Aún no hay orígenes de salida.
-              </p>
-            )}
-            {origins.map((origin, index) => (
-              <div
-                key={index}
-                className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          <div
+            className="grid gap-x-6 gap-y-2 sm:grid-cols-2"
+            role="group"
+            aria-label="Orígenes de salida"
+          >
+            {MEXICAN_AIRPORTS.map((airport) => (
+              <label
+                key={airport.code}
+                className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none"
               >
                 <input
-                  className={`${inputCls} uppercase sm:w-24`}
-                  value={str(origin?.code)}
-                  onChange={(e) =>
-                    setOrigin(index, "code", cleanCode(e.target.value))
-                  }
-                  placeholder="MEX"
-                  maxLength={3}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-label={`Código IATA del origen ${index + 1}`}
+                  type="checkbox"
+                  checked={originCodes.has(airport.code)}
+                  onChange={() => toggleOrigin(airport)}
+                  className="h-4 w-4 accent-gold-400"
                 />
-                <input
-                  className={inputCls}
-                  value={str(origin?.label)}
-                  onChange={(e) => setOrigin(index, "label", e.target.value)}
-                  placeholder="CDMX – Benito Juárez"
-                  aria-label={`Etiqueta del origen ${index + 1}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeOrigin(index)}
-                  className="shrink-0 self-start text-sm text-red-500 hover:text-red-400 px-2 py-1 sm:self-auto sm:py-0"
-                >
-                  Quitar
-                </button>
-              </div>
+                {airport.label}
+              </label>
             ))}
-          </div>
-
-          <div className="mt-3">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={origins.length >= ORIGIN_MAX}
-              onClick={addOrigin}
-            >
-              + Agregar origen
-            </Button>
-            {origins.length >= ORIGIN_MAX && (
-              <p className="text-xs text-gray-500 mt-1.5">
-                Máximo {ORIGIN_MAX} orígenes.
-              </p>
-            )}
           </div>
         </div>
 
@@ -563,7 +512,7 @@ export default function StayTravelEditor({
           <p className="rounded-xl border border-gray-800 px-4 py-3 text-sm text-gray-200">
             Ciudad de llegada:{" "}
             <span className="font-medium text-white">
-              Madrid ({FIXED_ARRIVAL.code})
+              {FIXED_ARRIVAL.label}
             </span>
           </p>
           <p className="text-xs text-gray-500 mt-1.5">
