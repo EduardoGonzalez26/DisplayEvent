@@ -181,7 +181,7 @@ function normalizeTravel(v) {
    Espejan los defaults y las reglas de normalización del backend:
    - Si `stay`/`trip` no existen, el bloque queda deshabilitado pero con
      los defaults internos (zona Alhambra, fechas 2027-06-08/12, cuatro
-     tarjetas, cuatro orígenes, MAD/BCN y los tres modos con proveedores).
+     tarjetas, cuatro orígenes, MAD y los tres modos con proveedores).
    - `cards`, `origins` y `arrivals` vacíos (`[]`) se respetan: el vacío es
      una decisión explícita. Solo `undefined`/`null` cae a los defaults.
    - `providers: []` también se respeta; ausente -> lista default del modo.
@@ -250,13 +250,12 @@ export const DEFAULT_TRIP_ORIGINS = [
 
 export const DEFAULT_TRIP_ARRIVALS = [
   { code: "MAD", label: "Madrid" },
-  { code: "BCN", label: "Barcelona" },
 ];
 
 export const DEFAULT_TRIP_MODES = {
   flight: {
     enabled: true,
-    note: "Vuelo internacional a Madrid o Barcelona; desde ahí continúa a Granada.",
+    note: "Vuelo internacional a Madrid; desde ahí continúa a Granada.",
     providers: ["google_flights", "skyscanner", "kayak"],
   },
   train: {

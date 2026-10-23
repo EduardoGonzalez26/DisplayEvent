@@ -8,8 +8,9 @@ import { buildModeLinks, citySlugFor } from "../../wedding/stayTravelLinks.js";
    Viaje (v2) — independiente de Hospedaje.
 
    - Lee `cfg.trip` (normalizado en cliente; si falta, no se renderiza).
-   - Selector de llegada (Madrid / Barcelona) que cambia el destino del
-     vuelo y el origen del tren/autobús.
+   - Llegada a España: fila estática si solo hay una ciudad (Madrid) o
+     selector si el dato legado trae varias; cambia el destino del vuelo y
+     el origen del tren/autobús.
    - Selector de salida (IATA) con opción "Otro" + input manual. Solo
      aplica a vuelos.
    - Fechas editables por el invitado; cada cambio regenera los links.
@@ -337,24 +338,34 @@ export default function Travel({ cfg, theme, variant = "invitation" }) {
                   role="group"
                   aria-label={labels.travelArrivalLabel || "Ciudad de llegada"}
                 >
-                  {arrivals.map((item) => {
-                    const selected = item.code === destination;
-                    return (
-                      <button
-                        key={item.code}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => setArrivalCode(item.code)}
-                        className={`min-h-[44px] border px-4 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 ${
-                          selected
-                            ? "border-[var(--inv-text)] bg-[var(--inv-text)] text-[var(--inv-on-accent)]"
-                            : "border-[var(--inv-accent-border)] bg-transparent text-[var(--inv-text-soft)] hover:border-[var(--inv-text)]"
-                        }`}
-                      >
-                        {item.label || item.code}
-                      </button>
-                    );
-                  })}
+                  {arrivals.length === 1 ? (
+                    <p className="m-0 flex min-h-[44px] w-full items-center border border-[var(--inv-accent-border)] bg-[var(--inv-bg-alt)] px-4 text-[13px] text-[var(--inv-text)]">
+                      Llegada:{" "}
+                      <span className="ml-1 font-medium">
+                        {arrivals[0].label || arrivals[0].code} (
+                        {arrivals[0].code})
+                      </span>
+                    </p>
+                  ) : (
+                    arrivals.map((item) => {
+                      const selected = item.code === destination;
+                      return (
+                        <button
+                          key={item.code}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => setArrivalCode(item.code)}
+                          className={`min-h-[44px] border px-4 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1B19] focus-visible:ring-offset-2 ${
+                            selected
+                              ? "border-[var(--inv-text)] bg-[var(--inv-text)] text-[var(--inv-on-accent)]"
+                              : "border-[var(--inv-accent-border)] bg-transparent text-[var(--inv-text-soft)] hover:border-[var(--inv-text)]"
+                          }`}
+                        >
+                          {item.label || item.code}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 

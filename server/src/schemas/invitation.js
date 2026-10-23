@@ -239,7 +239,6 @@ const DEFAULT_TRIP_ORIGINS = Object.freeze([
 
 const DEFAULT_TRIP_ARRIVALS = Object.freeze([
   Object.freeze({ code: "MAD", label: "Madrid" }),
-  Object.freeze({ code: "BCN", label: "Barcelona" }),
 ]);
 
 const DEFAULT_TRIP_MODE_PROVIDERS = Object.freeze({

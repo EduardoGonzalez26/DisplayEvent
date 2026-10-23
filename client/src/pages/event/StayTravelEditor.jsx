@@ -1,4 +1,4 @@
-import { lazy, Suspense, useId, useMemo } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo } from "react";
 import { Button } from "../../components/ui.jsx";
 import { getField, setField } from "../../invitation/schema/fields.js";
 import { DEFAULT_STAY_CARDS, withUid } from "../../invitation/schema/normalize.js";
@@ -36,10 +36,7 @@ const CUSTOM_PLATFORM = "custom";
 const DEFAULT_CENTER = { lat: 37.1761, lng: -3.5881 };
 const DEFAULT_ZONE_LABEL = "Alhambra, Granada";
 
-const ARRIVAL_OPTIONS = [
-  { code: "MAD", label: "Madrid" },
-  { code: "BCN", label: "Barcelona" },
-];
+const FIXED_ARRIVAL = { code: "MAD", label: "Madrid" };
 
 const TRIP_MODES = [
   {
@@ -47,7 +44,7 @@ const TRIP_MODES = [
     title: "Avión",
     toggleLabel: "Mostrar avión",
     notePlaceholder:
-      "Vuelo internacional a Madrid o Barcelona; desde ahí continúa a Granada.",
+      "Vuelo internacional a Madrid; desde ahí continúa a Granada.",
     providers: FLIGHT_PROVIDERS,
   },
   {
@@ -231,6 +228,22 @@ export default function StayTravelEditor({
   const updateField = (path, value) =>
     setForm((current) => setField(current, path, value));
 
+  // La llegada es única (Madrid). Al abrir el editor se corrige cualquier
+  // dato viejo (p. ej. una lista con varias ciudades) para que el formulario
+  // guarde solo Madrid, incluso si el usuario no toca esta sección.
+  useEffect(() => {
+    const isFixedArrival =
+      arrivals.length === 1 &&
+      str(arrivals[0]?.code).toUpperCase() === FIXED_ARRIVAL.code &&
+      str(arrivals[0]?.label) === FIXED_ARRIVAL.label;
+
+    if (!isFixedArrival) {
+      setForm((current) =>
+        setField(current, "trip.arrivals", [{ ...FIXED_ARRIVAL }])
+      );
+    }
+  }, [arrivals, setForm]);
+
   // Actualiza una lista leyendo siempre el estado más reciente del formulario.
   const updateList = (path, updater) =>
     setForm((current) => {
@@ -263,33 +276,6 @@ export default function StayTravelEditor({
       list.filter((_, i) => i !== index)
     );
 
-  const setArrival = (option, checked) =>
-    setForm((current) => {
-      const list = getField(current, "trip.arrivals");
-      const source = Array.isArray(list) ? list : [];
-      const code = option.code.toUpperCase();
-      const others = source.filter(
-        (arrival) => str(arrival?.code).toUpperCase() !== code
-      );
-      const selected = new Set(
-        source.map((arrival) => str(arrival?.code).toUpperCase())
-      );
-      if (checked) selected.add(code);
-      else selected.delete(code);
-
-      // Mantiene el orden Madrid/Barcelona y conserva llegadas desconocidas.
-      const known = ARRIVAL_OPTIONS.filter((item) =>
-        selected.has(item.code)
-      ).map((item) => ({ code: item.code, label: item.label }));
-      const unknown = others.filter(
-        (arrival) =>
-          !ARRIVAL_OPTIONS.some(
-            (item) => item.code === str(arrival?.code).toUpperCase()
-          )
-      );
-      return setField(current, "trip.arrivals", [...known, ...unknown]);
-    });
-
   const setMode = (modeId, patch) =>
     setForm((current) => {
       const currentMode = getField(current, `trip.modes.${modeId}`);
@@ -312,21 +298,12 @@ export default function StayTravelEditor({
   const validOrigins = origins.filter((origin) =>
     IATA_RE.test(str(origin?.code).toUpperCase())
   );
-  const arrivalCodes = useMemo(
-    () => new Set(arrivals.map((arrival) => str(arrival?.code).toUpperCase())),
-    [arrivals]
-  );
 
   const tripWarnings = [];
   if (trip.enabled) {
     if (validOrigins.length === 0) {
       tripWarnings.push(
         "La sección Viaje está activa pero no tiene orígenes válidos; los vuelos no mostrarán enlaces."
-      );
-    }
-    if (arrivals.length === 0) {
-      tripWarnings.push(
-        "La sección Viaje está activa pero no tiene ciudades de llegada."
       );
     }
     for (const modeDef of TRIP_MODES) {
@@ -581,27 +558,17 @@ export default function StayTravelEditor({
 
         <div className="mt-5 border-t border-gray-800 pt-5">
           <h3 className="text-sm font-semibold text-white mb-1">
-            Ciudades de llegada
+            Ciudad de llegada
           </h3>
-          <p className="text-sm text-gray-500 mb-3">
-            Ciudades que verá el invitado para elegir su llegada a España.
+          <p className="rounded-xl border border-gray-800 px-4 py-3 text-sm text-gray-200">
+            Ciudad de llegada:{" "}
+            <span className="font-medium text-white">
+              Madrid ({FIXED_ARRIVAL.code})
+            </span>
           </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {ARRIVAL_OPTIONS.map((option) => (
-              <label
-                key={option.code}
-                className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none"
-              >
-                <input
-                  type="checkbox"
-                  checked={arrivalCodes.has(option.code)}
-                  onChange={(e) => setArrival(option, e.target.checked)}
-                  className="h-4 w-4 accent-gold-400"
-                />
-                {option.label} ({option.code})
-              </label>
-            ))}
-          </div>
+          <p className="text-xs text-gray-500 mt-1.5">
+            La llegada está fijada a Madrid.
+          </p>
         </div>
 
         <div className="mt-5 border-t border-gray-800 pt-5">
