@@ -2,7 +2,7 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-10-23
+> **Última actualización:** 2026-10-24
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
@@ -14,6 +14,7 @@
 **DisplayEvent** es un organizador de eventos web. Permite:
 
 - Crear eventos y administrar invitados por **grupos** (con líder), con marcado de niños y registro de asistencia.
+- **Exportar el resumen de invitados a PDF** desde el panel de Invitados: resumen general, tabla por grupo con totales y detalle por invitado, con logo y paginación; se genera en el navegador con jsPDF + AutoTable y carga diferida (ver §14.1).
 - Organizar **mesas** con drag & drop (dnd-kit), colores por grupo, acompañantes en bloque y validación de capacidad en servidor.
 - Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<slug>/<token>`, con la ruta legacy `/invitacion/<token>` aún soportada) que muestra una invitación sin requerir sesión.
 - **Landing pública de marketing** en `/` (`client/src/landing/**`, visible con o sin sesión) y **panel admin** en `/eventos` (protegido con JWT en cookie httpOnly + verificación de correo). En un **dominio propio de evento**, la raíz muestra una **portada pública del evento** en lugar de la landing (ver §16).
@@ -342,6 +343,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] **Integración futura de disponibilidad/precios reales de Booking:** requiere API o programa de afiliados; hoy los enlaces son directos o búsquedas, sin disponibilidad en vivo.
 - [x] ~~**Commitear las features implementadas el 2026-10-04**: límite de edición del RSVP (`86be029`), copy del RSVP (`9d4bf71`) y popover informativo en la Mesa de Regalos de `alice_xv` (`6ca17df`)~~ → hecho; el mismo día se commitearon también el sobre "Toca para abrir" + Padres y Padrinos sin eyebrow (`1241bfd`) y el `CLIENT_URL` tolerante (`be5e9c6`).
 - [ ] **Buscador y filtros de grupos (`f2a179a`; ver §14):** verificado con `npm run build` (544 módulos) y aserciones del helper `groupFilters`; falta solo la **pasada visual en navegador**.
+- [ ] **Exportación del resumen de invitados a PDF (2026-10-24; ver §14.1):** implementación local correcta y verificada con datos sintéticos/API simulada; falta **commit/deploy** y la **prueba contra el backend real**. Los cambios locales ajenos (`BottomNav.jsx` eliminado, `publicDomain.js` y `package-lock.json` raíz modificados) siguen intactos.
 - [ ] **Corregir `CLIENT_URL` en Railway a una sola URL:** causa raíz del doble enlace de WhatsApp; el fix de código ya está en `be5e9c6` (ver §7). El host canónico definitivo está en decisión (`displayevent.com` vs `macarenayjorge.com`; ver §15). Los **mensajes ya guardados** y la **plantilla de Meta** podrían contener el texto viejo del enlace (no se tocaron). La portada de §16 **no cambió** esta decisión ni el valor de `CLIENT_URL`.
 - [ ] **Badge "Powered by Webi"** (solo invitación personalizada de `boda_jorge_macarena`): hoy se muestra también en dominio propio (`hideBrand` solo oculta la línea "DisplayEvent"); decidir si se oculta junto con la marca (ver §13.3). La portada de §16 no muestra marcas.
 - [ ] **Decidir `www` → apex** para el dominio personalizado: Railway no provee la redirección (Cloudflare Bulk Redirect o 301 del backend; ver §13.4). La portada de §16 resuelve `www` (normaliza el host) y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente.
@@ -622,6 +624,56 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 **Invariantes:** el modal de WhatsApp sigue recibiendo **TODOS** los grupos (no los filtrados) y las StatCards del Dashboard siguen siendo **globales**.
 
 **Verificación (reportada por el agente):** `npm run build` OK (**544 módulos**); **36+ aserciones** del helper `groupFilters` y render SSR de la barra con ARIA correcto. **Pendiente:** solo la pasada visual en navegador (ver §8).
+
+### 14.1 Exportación de invitados a PDF (2026-10-24)
+
+**Estado:** implementada **localmente, sin commit**. Pendiente el **commit/deploy** y la **prueba contra el backend real**. No hubo cambios de backend, BD ni API: el PDF se genera íntegramente en el navegador.
+
+**Archivos y dependencias:**
+
+| Archivo | Cambio |
+| ------- | ------ |
+| `client/src/pages/event/EventGuests.jsx` | Botón **"Exportar PDF"** en la cabecera (junto a "Enviar invitaciones" y "+ Nuevo grupo"), estado `exporting`, bloqueo de doble clic con ref (`exportingRef`), import dinámico de `guestsPdf.js`, toast de éxito/error y cabecera responsive (`flex-wrap`). |
+| `client/src/lib/guestsPdf.js` (**nuevo**) | `exportGuestsPdf({ event, groups, guests, eventId })`: construye el documento, dibuja el contenido y descarga el archivo. |
+| `client/package.json`, `client/package-lock.json` | Dependencias `jspdf@^4.2.1` y `jspdf-autotable@^5.0.9`. |
+
+**Comportamiento:**
+
+- El botón se deshabilita con `loading`, `exporting`, **sin grupos** o con error; muestra **"Generando PDF…"** mientras trabaja y un toast al terminar.
+- `guestsPdf.js` se importa con `await import(...)`: **jsPDF + AutoTable** quedan en un chunk aparte (**~431 kB**) y no afectan la carga inicial del panel.
+- Exporta **todos** los grupos e invitados del evento, **sin aplicar los filtros ni la búsqueda** activos (usa `groups` y `allGuests`).
+- PDF **A4 vertical**, claro e imprimible.
+
+**Contenido del PDF:**
+
+| Bloque | Detalle |
+| ------ | ------- |
+| Primera página | Título **"Resumen de invitados"**, nombre del evento, fecha/hora/lugar, logo + wordmark **DisplayEvent** y nota de generación. |
+| Resumen general | 8 tarjetas: **Grupos, Invitados, Adultos, Niños, Confirmados, No asistirán, Sin responder, Periqueras**. |
+| Nota de WhatsApp | **"Invitaciones enviadas: X de Y grupos por WhatsApp."** (grupos con `whatsapp_sent_at`). |
+| Resumen por grupo | Tabla de 7 columnas (**Grupo, Líder, Invitados, Confirmados, No asistirán, Sin responder, Niños / Periq.**) con fila de **totales** y nota "Periq. = periqueras." |
+| Detalle de invitados | Tabla **Grupo, Invitado, Estado, Detalle**; estados en color (Confirmado / No asistirá / Sin responder) y detalle **Líder / Niño / Acompañante de**. |
+| Cabeceras y pies | Se dibujan **al final** recorriendo las páginas, con **"Página X de Y"**; el logo aparece arriba a la derecha en **todas** las páginas. |
+
+- El logo (`client/public/logo.svg`) se **rasteriza a PNG con canvas** en el navegador porque jsPDF no inserta SVG; si falla, hay fallback textual **"DisplayEvent"**.
+- **Sin datos sensibles:** no incluye teléfonos, tokens, enlaces de invitación ni datos de pago.
+- Metadatos del PDF con `author`/`creator` **"DisplayEvent"**; nombre de archivo `resumen-invitados-<slug>.pdf` (`event.slug` → nombre normalizado → id).
+
+**Decisiones técnicas:**
+
+- **PDF descargable real** (no `window.print`) con **jsPDF + AutoTable**; `jspdf-autotable` se usa con la función `autoTable(doc, opciones)`.
+- **Carga diferida** del generador para que jsPDF/AutoTable no entren en el bundle inicial.
+- Se evitan glifos no soportados por las fuentes estándar de jsPDF (`★`, `✓`, `✗`, emojis); los estados se transmiten con texto y color.
+- **Sin backend:** no se añadieron endpoints ni consultas; los datos salen de los grupos e invitados ya cargados en la página.
+- `html2canvas` aparece como dependencia opcional transitiva de jsPDF y Vite genera un chunk separado; **la feature no lo usa**.
+
+**Verificación:**
+
+- `npm install` en `client`: correcto.
+- `npm run build` en `client`: correcto (**941 módulos**); chunk `guestsPdf` **~431 kB** con carga diferida.
+- Prueba E2E con datos sintéticos y API simulada: descarga, logo en todas las páginas, cabeceras/pies, tarjetas, tabla por grupo con totales, detalle con estados/colores, acentos, nombres/evento/lugar largos, paginación, fallback de logo, botón deshabilitado sin grupos, error de importación y vista móvil sin overflow.
+
+**Limitaciones:** no se probó contra el **backend real**; los nombres de grupo extremadamente largos aumentan la altura de fila. La feature sigue **sin commit**; los cambios locales ajenos (`client/src/invitation/boda_jorge_macarena/BottomNav.jsx` eliminado, `client/src/lib/publicDomain.js` y `package-lock.json` raíz modificados) **no se tocaron**.
 
 ---
 

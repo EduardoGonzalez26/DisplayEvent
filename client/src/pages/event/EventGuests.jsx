@@ -397,11 +397,13 @@ export default function EventGuests() {
   const [expanded, setExpanded] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState("error");
   const [confirm, setConfirm] = useState(null);
   const cancelledRef = useRef(false);
+  const exportingRef = useRef(false);
   const toastTimer = useRef(null);
 
   const notify = (message, type = "error") => {
@@ -436,6 +438,8 @@ export default function EventGuests() {
     setExpanded({});
     setLoading(true);
     setError("");
+    setExporting(false);
+    exportingRef.current = false;
     setModal(null);
     setToast("");
     setConfirm(null);
@@ -620,6 +624,24 @@ export default function EventGuests() {
     setModal({ mode: "whatsapp" });
   };
 
+  const handleExportPdf = async () => {
+    // El ref bloquea un segundo clic antes de que React re-renderice el botón.
+    if (exportingRef.current || loading || groups.length === 0 || error) return;
+    exportingRef.current = true;
+    setExporting(true);
+    try {
+      // Import dinámico: jsPDF y AutoTable se descargan solo al exportar.
+      const { exportGuestsPdf } = await import("../../lib/guestsPdf.js");
+      await exportGuestsPdf({ event, groups, guests: allGuests, eventId: id });
+      notify("PDF generado correctamente", "success");
+    } catch (err) {
+      notify(err.message || "No se pudo generar el PDF");
+    } finally {
+      exportingRef.current = false;
+      setExporting(false);
+    }
+  };
+
   // Índice de invitados por grupo para buscar por nombre (aunque el grupo esté
   // colapsado). Se reconstruye solo cuando cambia el índice completo.
   const guestsByGroupId = useMemo(() => indexGuestsByGroup(allGuests), [allGuests]);
@@ -631,12 +653,12 @@ export default function EventGuests() {
 
   return (
     <div className="animate-page-in">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-gray-50">
           Invitados
           <span className="text-sm font-normal text-gray-400 ml-2">({groups.length} grupos)</span>
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             variant="secondary"
             onClick={handleOpenWhatsApp}
@@ -651,6 +673,32 @@ export default function EventGuests() {
               <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Zm0 2a7 7 0 1 1-3.6 13l-.4-.2-2.2.6.6-2.1-.2-.4A7 7 0 0 1 12 5Zm-2.7 3.2c-.2 0-.5.1-.7.4-.2.3-.8 1-.8 2s.6 2 .8 2.2c.3.4 1.5 2.3 3.7 3.1 1.8.7 2.2.6 2.6.6.5 0 1.4-.5 1.6-1.1.2-.6.2-1 .2-1.1-.1-.2-.3-.2-.6-.3l-1.4-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.1-.2.2-.4.1a5.7 5.7 0 0 1-1.7-1 6.4 6.4 0 0 1-1.2-1.5c-.1-.2 0-.3.1-.4l.5-.6c.1-.2.2-.3.1-.5l-.6-1.5c-.2-.4-.3-.4-.5-.4h-.5Z" />
             </svg>
             Enviar invitaciones
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleExportPdf}
+            disabled={loading || exporting || groups.length === 0 || Boolean(error)}
+            aria-busy={exporting}
+            title="Descargar resumen de invitados en PDF"
+            aria-label="Descargar resumen de invitados en PDF"
+            className="inline-flex items-center gap-2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 text-indigo-400"
+              aria-hidden="true"
+            >
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+              <path d="M14 3v5h5" />
+              <path d="M12 18v-6" />
+              <path d="m9 15 3 3 3-3" />
+            </svg>
+            {exporting ? "Generando PDF…" : "Exportar PDF"}
           </Button>
           <Button onClick={() => setModal({ mode: "create-group" })}>+ Nuevo grupo</Button>
         </div>

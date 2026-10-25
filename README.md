@@ -100,6 +100,7 @@ Abre http://localhost:5173
 - **Pantalla de evento** con sidebar de secciones:
   - **Inicio**: resumen del evento y conteos rápidos.
   - **Invitados**: organización por grupos con líder; cada invitado se marca como niño y como "registrado". El líder del grupo cuenta automáticamente como invitado.
+  - **Exportar PDF del resumen de invitados**: botón en la cabecera de **Invitados** que descarga un PDF A4 con resumen general, tabla por grupo con totales y detalle de invitados (logo, cabeceras y paginación). Exporta todos los grupos sin aplicar los filtros activos; jsPDF/AutoTable se cargan de forma diferida.
   - **Mesas**: organizador visual con **drag & drop** (dnd-kit), búsqueda y filtro de sin asignar, mesas redondas/cuadradas/rectangulares con porcentaje de ocupación, colores por grupo, acompañantes que se mueven en bloque y validación de capacidad en el servidor. Solo invitados confirmados pueden sentarse. Exportación a lista imprimible y CSV.
   - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo.
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas genéricos — `xv`, `boda`, `cumpleanos`, `baby_shower` — y 2 plantillas especiales (`alice_xv`, `boda_jorge_macarena`), compuestas por un `Layout` + secciones propias; los genéricos reutilizan las secciones de `shared/`.
