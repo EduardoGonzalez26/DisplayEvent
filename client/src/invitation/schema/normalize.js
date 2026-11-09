@@ -64,12 +64,27 @@ function normalizeItinerary(v) {
 }
 
 // Ubicaciones: [{ label, place, url }].
+function normalizeLocationItem(l) {
+  return {
+    label: str(l.label),
+    place: str(l.place),
+    url: str(l.url),
+    description: str(l.description),
+    time_label: str(l.time_label),
+    time_value: str(l.time_value),
+    when_label: str(l.when_label),
+    when_value: str(l.when_value),
+    image: str(l.image),
+    map_image: str(l.map_image),
+  };
+}
+
 function normalizeLocations(v) {
   if (v == null) return [];
   if (!Array.isArray(v)) return v;
   return v
-    .filter((l) => l && typeof l === "object")
-    .map((l) => ({ label: str(l.label), place: str(l.place), url: str(l.url) }))
+    .filter((l) => l && typeof l === "object" && !Array.isArray(l))
+    .map(normalizeLocationItem)
     .filter((l) => l.place);
 }
 
@@ -78,7 +93,7 @@ function normalizeLegacyLocations(itinerary) {
   if (!Array.isArray(itinerary)) return [];
   return itinerary
     .filter((it) => it && typeof it === "object" && it.place)
-    .map((it) => ({ label: str(it.label), place: str(it.place), url: str(it.url) }))
+    .map(normalizeLocationItem)
     .filter((l) => l.place);
 }
 
@@ -188,8 +203,15 @@ function normalizeTravel(v) {
    - `lodging` y `travel` (legado) NO cambian de comportamiento.
 ----------------------------------------------------------------- */
 
-const STAY_DEFAULT_CHECKIN = "2027-06-08";
-const STAY_DEFAULT_CHECKOUT = "2027-06-12";
+const DEFAULT_ICEBREAKER_EYEBROW = "Antes del gran día";
+const DEFAULT_ICEBREAKER_TITLE = "Icebreaker";
+const DEFAULT_RECOMMENDATIONS_EYEBROW = "Para que todo salga perfecto";
+const DEFAULT_RECOMMENDATIONS_TITLE = "Recomendaciones";
+const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "stay"];
+const DEFAULT_RECOMMENDATION_ICON = "stay";
+const DEFAULT_STAY_QUOTE =
+  "«Dale limosna, mujer,\nque no hay en la vida nada\ncomo la pena de ser\nciego en Granada.»";
+const DEFAULT_STAY_QUOTE_AUTHOR = "Poeta mexicano: Francisco de Icaza";
 const TRIP_DEFAULT_DATE_FROM = "2027-06-08";
 const TRIP_DEFAULT_DATE_TO = "2027-06-12";
 const STAY_DEFAULT_ZONE = {
@@ -391,9 +413,56 @@ export function normalizeStay(raw) {
       radius_km: toRadius(zoneSource.radius_km, STAY_DEFAULT_ZONE.radius_km),
       label: str(zoneSource.label).slice(0, 120) || STAY_DEFAULT_ZONE.label,
     },
-    checkin: toDayString(source.checkin, STAY_DEFAULT_CHECKIN),
-    checkout: toDayString(source.checkout, STAY_DEFAULT_CHECKOUT),
+    checkin: toDayString(source.checkin, ""),
+    checkout: toDayString(source.checkout, ""),
     cards: normalizeStayCards(source.cards),
+    quote: str(source.quote) || DEFAULT_STAY_QUOTE,
+    quote_author: str(source.quote_author) || DEFAULT_STAY_QUOTE_AUTHOR,
+  };
+}
+
+// Icebreaker y recomendaciones (v3). Objetos siempre presentes.
+function normalizeIcebreaker(raw) {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(source.enabled, false),
+    eyebrow: str(source.eyebrow) || DEFAULT_ICEBREAKER_EYEBROW,
+    title: str(source.title) || DEFAULT_ICEBREAKER_TITLE,
+    text: str(source.text),
+    date_label: str(source.date_label),
+    time_place_label: str(source.time_place_label),
+    image: str(source.image),
+  };
+}
+
+function normalizeRecommendationIcon(value) {
+  const icon = str(value).toLowerCase();
+  return RECOMMENDATION_ICONS.includes(icon) ? icon : DEFAULT_RECOMMENDATION_ICON;
+}
+
+function normalizeRecommendations(raw) {
+  const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  let items = source.items;
+  if (items == null) {
+    items = [];
+  } else if (Array.isArray(items)) {
+    items = items
+      .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+      .map((item) => ({
+        icon: normalizeRecommendationIcon(item.icon),
+        title: str(item.title),
+        text: str(item.text),
+      }))
+      .filter((item) => item.title || item.text);
+  } else {
+    items = [];
+  }
+  return {
+    enabled: toBool(source.enabled, false),
+    eyebrow: str(source.eyebrow) || DEFAULT_RECOMMENDATIONS_EYEBROW,
+    title: str(source.title) || DEFAULT_RECOMMENDATIONS_TITLE,
+    image: str(source.image),
+    items,
   };
 }
 
@@ -417,8 +486,8 @@ export function normalizeTrip(raw) {
       DEFAULT_TRIP_ARRIVALS,
       TRIP_MAX_ARRIVALS
     ),
-    date_from: toDayString(source.date_from, TRIP_DEFAULT_DATE_FROM),
-    date_to: toDayString(source.date_to, TRIP_DEFAULT_DATE_TO),
+    date_from: toDayString(source.date_from, ""),
+    date_to: toDayString(source.date_to, ""),
     // Los links siempre llevan al menos 1 adulto.
     adults: Math.max(1, toNonNegInt(source.adults, 1)),
     modes: {
@@ -500,6 +569,18 @@ function normalizeBank(v) {
     bank_name: str(obj.bank_name),
     holder: str(obj.holder),
     account_number: str(obj.account_number),
+    clabe: str(obj.clabe),
+    concept: str(obj.concept),
+  };
+}
+
+function normalizeBankEur(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    bank_name: str(obj.bank_name),
+    holder: str(obj.holder),
+    iban: str(obj.iban),
     concept: str(obj.concept),
   };
 }
@@ -519,6 +600,7 @@ export function normalizeRegistry(raw) {
     // Link de pago externo de Stripe (Payment Link). Vacío = pago integrado.
     payment_link_url: str(source.payment_link_url),
     bank: normalizeBank(source.bank),
+    bank_eur: normalizeBankEur(source.bank_eur),
   };
 }
 
@@ -536,6 +618,7 @@ export function normalizeInvitation(raw) {
     version: 2,
     template,
     hero_image: str(source.hero_image),
+    og_image: str(source.og_image),
     kicker: str(source.kicker),
     tagline: str(source.tagline),
     message: str(source.message),
@@ -557,6 +640,8 @@ export function normalizeInvitation(raw) {
     // faltan, pero siempre con la estructura completa para el editor.
     stay: normalizeStay(source.stay),
     trip: normalizeTrip(source.trip),
+    icebreaker: normalizeIcebreaker(source.icebreaker),
+    recommendations: normalizeRecommendations(source.recommendations),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
     // Límite opcional para confirmar/editar el RSVP (ISO UTC; "" = sin límite).
@@ -598,6 +683,8 @@ export function normalizeInvitation(raw) {
     case "boda_jorge_macarena":
       out.couple = normalizeCouple(source.couple);
       out.registry_note = str(source.registry_note);
+      // El diseño v3 muestra como máximo dos hoteles recomendados.
+      if (Array.isArray(out.lodging)) out.lodging = out.lodging.slice(0, 2);
       break;
   }
 
@@ -636,7 +723,19 @@ export function withUid(item) {
 // Filas vacías por defecto (una por lista, como mostraba el editor).
 const EMPTY_ROWS = {
   itinerary: { label: "", time: "" },
-  locations: { label: "", place: "", url: "" },
+  locations: {
+    label: "",
+    place: "",
+    url: "",
+    description: "",
+    time_label: "",
+    time_value: "",
+    when_label: "",
+    when_value: "",
+    image: "",
+    map_image: "",
+  },
+  recommendation: { icon: "stay", title: "", text: "" },
   contacts: { name: "", phone: "" },
   lodging: { name: "", note: "", url: "" },
   travelRoute: { label: "", note: "" },
@@ -658,6 +757,7 @@ export function toFormState(raw) {
     version: c.version,
     template: c.template,
     hero_image: c.hero_image,
+    og_image: c.og_image,
     kicker: c.kicker,
     tagline: c.tagline,
     message: c.message,
@@ -683,6 +783,11 @@ export function toFormState(raw) {
     // `_uid` para que React tenga una clave estable al editar/reordenar y un
     // `id` de contrato si el JSONB legado no lo traía; `serializeForm`
     // descarta `_uid` porque rebuilda cada tarjeta.
+    icebreaker: { ...c.icebreaker },
+    recommendations: {
+      ...c.recommendations,
+      items: rows(c.recommendations.items, EMPTY_ROWS.recommendation),
+    },
     stay: {
       ...c.stay,
       zone: { ...c.stay.zone },
@@ -706,6 +811,7 @@ export function toFormState(raw) {
       suggested_mxn: c.registry.suggested_mxn.slice(),
       suggested_eur: c.registry.suggested_eur.slice(),
       bank: { ...c.registry.bank },
+      bank_eur: { ...c.registry.bank_eur },
     },
     rsvp_editable: c.rsvp_editable,
     // ISO UTC -> hora local del editor (datetime-local).

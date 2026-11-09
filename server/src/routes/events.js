@@ -159,6 +159,62 @@ router.put("/:id/invitation", async (req, res, next) => {
   }
 });
 
+// Lista de mensajes privados del evento, del más reciente al más antiguo.
+router.get("/:id/gift-messages", async (req, res, next) => {
+  try {
+    const owned = await query(
+      `SELECT id FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      [req.params.id, req.user.id]
+    );
+    if (owned.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
+
+    const rows = await query(
+      `SELECT ${GIFT_MESSAGE_COLUMNS}
+         FROM gift_messages
+        WHERE event_id = $1
+        ORDER BY created_at DESC, id DESC`,
+      [req.params.id]
+    );
+    res.json(rows.map(normalizeGiftMessageRow));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Marca/desmarca un mensaje como leído. Body: { read: boolean }.
+router.patch("/:id/gift-messages/:messageId", async (req, res, next) => {
+  const read = req.body?.read;
+  if (typeof read !== "boolean") {
+    return res.status(400).json({ error: 'El campo "read" debe ser booleano' });
+  }
+  const messageId = Number(req.params.messageId);
+  if (!Number.isInteger(messageId) || messageId <= 0) {
+    return res.status(404).json({ error: "Mensaje no encontrado" });
+  }
+
+  try {
+    const owned = await query(
+      `SELECT id FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      [req.params.id, req.user.id]
+    );
+    if (owned.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
+
+    const result = await pool.query(
+      `UPDATE gift_messages
+          SET read_at = CASE WHEN $1::boolean THEN NOW() ELSE NULL END
+        WHERE id = $2 AND event_id = $3
+        RETURNING ${GIFT_MESSAGE_COLUMNS}`,
+      [read, messageId, req.params.id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Mensaje no encontrado" });
+    }
+    res.json(normalizeGiftMessageRow(result.rows[0]));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const rows = await query(`SELECT * FROM events WHERE id = $1 AND user_id = $2 LIMIT 1`, [
@@ -193,6 +249,49 @@ function isValidTime(value) {
   if (typeof value !== "string" || !TIME_RE.test(value)) return false;
   const [h, mi] = value.split(":").map(Number);
   return h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
+}
+
+/* ------------------------------------------------------------------
+   Correo privado para avisos de la mesa de regalos
+   (`events.gift_message_email`).
+------------------------------------------------------------------ */
+
+const GIFT_EMAIL_MAX_LENGTH = 255;
+const SIMPLE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Interpreta `gift_message_email` con semántica de "conservar si ausente":
+//   undefined        -> { keep: true }  (no se toca el valor guardado)
+//   null / ""        -> { value: null } (borrar)
+//   string           -> { value } validado, o { error } si es inválido.
+function parseGiftMessageEmailInput(value) {
+  if (value === undefined) return { keep: true };
+  if (value === null) return { value: null };
+  if (typeof value !== "string") return { error: "El correo es inválido" };
+  const email = value.trim();
+  if (!email) return { value: null };
+  if (email.length > GIFT_EMAIL_MAX_LENGTH) {
+    return {
+      error: `El correo no puede superar los ${GIFT_EMAIL_MAX_LENGTH} caracteres`,
+    };
+  }
+  if (!SIMPLE_EMAIL_RE.test(email)) return { error: "El correo no es válido" };
+  return { value: email };
+}
+
+/* ------------------------------------------------------------------
+   Mensajes privados de la mesa de regalos (panel del organizador).
+------------------------------------------------------------------ */
+
+const GIFT_MESSAGE_COLUMNS = `id, group_id, sender_name, message, amount_minor,
+                              currency, channel, created_at, read_at`;
+
+// BIGINT llega como string desde pg; el tope validado en el endpoint público
+// (999999 * 100) entra sin pérdida en un number.
+function normalizeGiftMessageRow(row) {
+  return {
+    ...row,
+    amount_minor: row.amount_minor == null ? null : Number(row.amount_minor),
+  };
 }
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -432,6 +531,12 @@ router.put("/:id", async (req, res, next) => {
     const stripeInput = await parseStripeAccountInput(body.stripe_account_id, req.user.id);
     if (stripeInput.error) return res.status(400).json({ error: stripeInput.error });
 
+    // Correo privado de avisos: misma semántica "keep if absent".
+    const giftEmailInput = parseGiftMessageEmailInput(body.gift_message_email);
+    if (giftEmailInput.error) {
+      return res.status(400).json({ error: giftEmailInput.error });
+    }
+
     // Excluye el propio evento: si el slug no cambia se conserva tal cual y,
     // si está tomado por otro, se añade sufijo (-2, -3, ...).
     const slug = await generateUniqueSlug(requestedSlug || slugify(name), req.params.id);
@@ -448,6 +553,10 @@ router.put("/:id", async (req, res, next) => {
     if (!stripeInput.keep) {
       params.push(stripeInput.value ?? null);
       assignments.push(`stripe_account_id = $${params.length}`);
+    }
+    if (!giftEmailInput.keep) {
+      params.push(giftEmailInput.value ?? null);
+      assignments.push(`gift_message_email = $${params.length}`);
     }
     const idIndex = params.push(req.params.id);
     const userIndex = params.push(req.user.id);

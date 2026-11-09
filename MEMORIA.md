@@ -2,8 +2,10 @@
 
 > **Propósito:** Memoria persistente del proyecto. Fuente única de contexto para que cualquier agente o persona pueda retomar el trabajo sin re-descubrir el estado, las decisiones y los pendientes.
 >
-> **Última actualización:** 2026-10-24
+> **Última actualización:** 2026-11-09
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
+>
+> **Estado vigente (2026-11-09):** `boda_jorge_macarena` fue **reemplazada en sitio** por el diseño **v3** (papel de algodón, marco nazarí, granada en acuarela, letterpress). No hay plantilla nueva ni selector v2/v3. El detalle vive en **§18**; **§15** y el bloque histórico de **§16** describen el v2 como **histórico**. El cambio está en el **working tree, sin commit ni push**; el esquema/seed v3 **no se ejecutó contra Supabase producción**.
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
 
@@ -16,9 +18,9 @@
 - Crear eventos y administrar invitados por **grupos** (con líder), con marcado de niños y registro de asistencia.
 - **Exportar el resumen de invitados a PDF** desde el panel de Invitados: resumen general, tabla por grupo con totales y detalle por invitado, con logo y paginación; se genera en el navegador con jsPDF + AutoTable y carga diferida (ver §14.1).
 - Organizar **mesas** con drag & drop (dnd-kit), colores por grupo, acompañantes en bloque y validación de capacidad en servidor.
-- Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<slug>/<token>`, con la ruta legacy `/invitacion/<token>` aún soportada) que muestra una invitación sin requerir sesión.
+- Generar **invitaciones digitales multiformato**: cada grupo recibe un enlace público por token (`/invitacion/<slug>/<token>`, con la ruta legacy `/invitacion/<token>` aún soportada) que muestra una invitación sin requerir sesión. La plantilla especial `boda_jorge_macarena` usa el **diseño v3** vigente (ver §18).
 - **Landing pública de marketing** en `/` (`client/src/landing/**`, visible con o sin sesión) y **panel admin** en `/eventos` (protegido con JWT en cookie httpOnly + verificación de correo). En un **dominio propio de evento**, la raíz muestra una **portada pública del evento** en lugar de la landing (ver §16).
-- Editor de invitación dirigido por schema, con vista previa y plantillas reutilizables por usuario.
+- Editor de invitación dirigido por schema, con vista previa y plantillas reutilizables por usuario. La boda tiene editor dedicado v3 (`BodaJorgeMacarenaV3Editor.jsx`; ver §18).
 - **Mesa de Regalos reutilizable** por invitación: regalos monetarios por **depósito bancario** o **pago con tarjeta vía Stripe Connect**. El entorno verificado el **2026-10-22** ya usa claves **live**; la **cuenta Connect única por evento** se commiteó en `138fe3f` (base desplegada) y la **restricción visual** en `ff2b988`, local y pendiente de deploy (ver §15.1).
 
 ---
@@ -55,7 +57,7 @@ client/src/invitation/
 │   ├── Message.jsx, Gallery.jsx, DressCode.jsx, Countdown.jsx (exporta
 │   │   `useCountdown`), Itinerary.jsx, Locations.jsx, RegistryNote.jsx,
 │   │   Padrinos.jsx, Footer.jsx, Gifts.jsx,
-│   │   Rsvp.jsx      # única sección compartida por las plantillas ESPECIALES
+│   │   Rsvp.jsx      # RSVP compartido de los genéricos y alice_xv (la boda v3 tiene el suyo)
 │   └── util.jsx       # helpers: safeCssUrl, Ornament, escapeRegExp, loaders…
 ├── schema/            # Contrato de campos (espejo del backend)
 │   ├── fields.js      # COMMON_FIELDS, EXTRA_FIELDS, getField/setField (dot-path)
@@ -70,16 +72,19 @@ client/src/invitation/
 │   │   Gallery.jsx, DressCode.jsx, RegistryNote.jsx, Gifts.jsx,
 │   │   Padrinos.jsx, Footer.jsx
 │   └── (solo usa shared/Rsvp.jsx como sección compartida)
-├── boda_jorge_macarena/  # Plantilla ESPECIAL — rediseño v2 (2026-10-11; ver §15)
-│   ├── BodaJorgeMacarenaLayout.jsx  # motor de hojas apilables (sticky/tilt/shade)
-│   ├── Hero.jsx, Story.jsx, Locations.jsx, Itinerary.jsx, DressCode.jsx,
-│   │   Gifts.jsx, Travel.jsx, Stay.jsx, Footer.jsx   # secciones locales v2
-│   ├── ZoneMap.jsx                          # mapa Leaflet/OSM de la zona
-│   ├── MusicToggle.jsx                      # botón de música
-│   ├── EditorialEnvelope.jsx                # sobre editorial (lazy; envelopeVariant)
-│   ├── flora.jsx, Grain.jsx, helpers.js
-│   ├── SectionPhoto.jsx  # foto B&N por hoja, scrim claro del papel
-│   └── (solo usa shared/Rsvp.jsx + utilidades)
+├── boda_jorge_macarena/  # Plantilla ESPECIAL — diseño v3 vigente (2026-11-09; ver §18)
+│   ├── BodaJorgeMacarenaLayout.jsx  # monta las secciones v3 (hojas sticky/tilt/shade)
+│   ├── v3.css                       # sistema visual v3 (algodón, marco nazarí, letterpress)
+│   ├── v3/                          # componentes v3 (los monta el layout)
+│   │   ├── index.js, ui.jsx, assets.js
+│   │   ├── CoverSection.jsx, StorySection.jsx, IcebreakerSection.jsx,
+│   │   │   LocationSection.jsx, DressCodeSection.jsx, RecommendationsSection.jsx,
+│   │   │   TravelSection.jsx, StaySection.jsx, RsvpSection.jsx,
+│   │   │   GiftsSection.jsx, ClosingSection.jsx
+│   ├── MusicToggle.jsx, EditorialEnvelope.jsx, helpers.js
+│   └── Hero.jsx, Story.jsx, Locations.jsx, Itinerary.jsx, DressCode.jsx,
+│       Gifts.jsx, Travel.jsx, Stay.jsx, ZoneMap.jsx, Footer.jsx,
+│       SectionPhoto.jsx, flora.jsx, Grain.jsx  # v2 conservados, YA NO montados
 ├── 3d/                # Escenas WebGL RETIRADAS (inertes; re-agregar a pedido)
 │   └── RingsHero3D.jsx, RingsScene.jsx, XvPearlsHero3D.jsx, XvPearlsScene.jsx
 ├── envelope/          # EnvelopeLoader.jsx — sobre digital de apertura
@@ -101,38 +106,38 @@ client/src/invitation/
 
 ### 3.1 Plantillas "especiales" con componentes propios
 
-Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `shared/*` como secciones**: cada una mantiene componentes locales propios y solo comparten `shared/Rsvp.jsx` (más utilidades sueltas: `shared/util.jsx` → `safeCssUrl`/`escapeRegExp`/`InvitationLoader`; `shared/Countdown.jsx` → `useCountdown`).
+Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `shared/*` como secciones**: cada una mantiene componentes locales propios. `alice_xv` solo comparte `shared/Rsvp.jsx` (más utilidades sueltas); la **boda v3** usa un **RSVP propio** (`v3/RsvpSection.jsx`) y solo reutiliza `shared/Countdown.jsx` → `useCountdown` (además de `shared/util.jsx` en piezas heredadas).
 
-- ⚠️ **(2026-10-11) `boda_jorge_macarena` fue rediseñada por completo** al diseño v2 (ver §15): su set local es `BodaJorgeMacarenaLayout.jsx` (motor de hojas apilables), `Hero.jsx`, `Story.jsx`, `Locations.jsx`, `Itinerary.jsx`, `DressCode.jsx`, `Gifts.jsx`, `Travel.jsx`, `Stay.jsx`, `ZoneMap.jsx`, `Footer.jsx`, `MusicToggle.jsx`, `EditorialEnvelope.jsx`, `flora.jsx`, `Grain.jsx`, `helpers.js` y `SectionPhoto.jsx`. Se **eliminaron** `decor.jsx`, `SectionNav.jsx`, `Countdown.jsx`, `Message.jsx` y `RegistryNote.jsx` (antes, en `719f2b4`, ya había eliminado su `Gallery.jsx`). En el **commit `4773112`** (2026-10-22; ver §15.2) `Lodging.jsx` fue sustituido por `Travel.jsx` + `Stay.jsx`; `BottomNav.jsx` sigue eliminado en el working tree, pero es un **cambio ajeno** a la feature de Viaje/Hospedaje.
+- ⚠️ **(2026-11-09) `boda_jorge_macarena` fue reemplazada en sitio por el diseño v3** (ver §18). `BodaJorgeMacarenaLayout.jsx` ahora monta `v3/CoverSection`, `v3/StorySection`, `v3/IcebreakerSection`, `v3/LocationSection`, `v3/DressCodeSection`, `v3/RecommendationsSection`, `v3/TravelSection`, `v3/StaySection`, `v3/RsvpSection`, `v3/GiftsSection` y `v3/ClosingSection`, con el sistema visual de `v3.css`. **No hay plantilla nueva ni selector v2/v3.** Los archivos v2 (`Hero.jsx`, `Story.jsx`, `Locations.jsx`, `Itinerary.jsx`, `DressCode.jsx`, `Gifts.jsx`, `Travel.jsx`, `Stay.jsx`, `ZoneMap.jsx`, `Footer.jsx`, `SectionPhoto.jsx`, `flora.jsx`, `Grain.jsx`) siguen en disco pero **ya no se importan**; `EditorialEnvelope.jsx` y `MusicToggle.jsx` sí se conservan, adaptados a v3. Se eliminaron en su momento `decor.jsx`, `SectionNav.jsx`, `Countdown.jsx`, `Message.jsx`, `RegistryNote.jsx`, `Gallery.jsx` y `BottomNav.jsx`.
 - `alice_xv` **permanece intacta** (decisión del usuario) y conserva su set histórico: `decor.jsx` (exporta el kit de ornamentos `BotanicalCorner`, `BotanicalDivider`, `Flourish`, `WeddingSectionTitle`, `GoldFrame`), `Hero.jsx`, `Countdown.jsx`, `Message.jsx`, `Itinerary.jsx`, `Locations.jsx`, `Gallery.jsx`, `DressCode.jsx`, `RegistryNote.jsx`, `Gifts.jsx`, `Padrinos.jsx`, `Footer.jsx` y `SectionNav.jsx`. ⚠️ **NO tiene `SectionPhoto.jsx` ni fondos de foto**.
 - Los formatos genéricos (`xv`, `boda`, `cumpleanos`, `baby_shower`) siguen usando las secciones de `shared/`.
 
 ### 3.2 Efectos y comportamiento del layout
 
-> ⚠️ **(2026-10-11)** La **boda fue rediseñada** al v2 (ver §15): su layout ya no replica estos mecanismos. Los bullets siguientes describen el sistema vigente de **`alice_xv`**; donde digan «ambas especiales» debe leerse «`alice_xv`» (salvo `shared/Rsvp.jsx`, que sigue compartido). Mecanismos heredados, **replicados en `alice_xv/`** desde `boda_jorge_macarena` (commit `46f7628`):
+> ⚠️ **(2026-11-09)** La **boda usa el layout v3** (ver §18): no replica estos mecanismos. Los bullets siguientes describen el sistema vigente de **`alice_xv`**; donde digan «ambas especiales» debe leerse «`alice_xv`». Los detalles v2 de la boda que aparezcan abajo se conservan como **histórico**. Mecanismos heredados, **replicados en `alice_xv/`** desde `boda_jorge_macarena` (commit `46f7628`):
 
-- **Tarjetas apiladas** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta con **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`), sombra ascendente y `CardEdge` (hairline + rombo). El fondo y (si aplica) la foto viven en **capas `absolute` propias dentro del wrapper**, de modo que el `StackCard` **no** gana `backdrop-filter` y no se convierte en contenedor de posicionamiento para descendientes `fixed` (el modal de datos bancarios de `boda_jorge_macarena/Gifts.jsx` sigue anclado al viewport). Los `z`: Hero (z-0), Carta/Contador (z-10), Padres y Padrinos en `alice_xv` (z-15, justo después de la Carta), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40, solo `alice_xv`), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), RSVP (z-80), Footer (z-90).
+- **Tarjetas apiladas** (`StackCard` en cada `*Layout.jsx`): cada sección se envuelve en una tarjeta con **fondo opaco** (`bg-inv-bg`/`-alt`/`-alt2`), **z-index creciente**, esquinas superiores redondeadas (`rounded-t-[1.6rem]`), sombra ascendente y `CardEdge` (hairline + rombo). El fondo y (si aplica) la foto viven en **capas `absolute` propias dentro del wrapper**, de modo que el `StackCard` **no** gana `backdrop-filter` y no se convierte en contenedor de posicionamiento para descendientes `fixed` (en la boda v2 el modal de banco quedaba anclado al viewport; la boda v3 ya no usa este `StackCard`). Los `z`: Hero (z-0), Carta/Contador (z-10), Padres y Padrinos en `alice_xv` (z-15, justo después de la Carta), Itinerario (z-20), Ubicaciones (z-30), Galería (z-40, solo `alice_xv`), Dress Code (z-50), Nota de regalos (z-60), Mesa de Regalos (z-70), RSVP (z-80), Footer (z-90).
 - **Solo Hero y Footer quedan `sticky`; el resto pasa a `flow`** (boda: commit `a6447c7`; `alice_xv`: commit `ea36bdc`): la portada (Hero z-0) sigue `sticky top-0` con `min-h-[100dvh]` —efecto "carta desplegable": el contenido la tapa— y el cierre/Footer (z-90, con `SectionPhoto` en boda) también es sticky. Las secciones con contenido de altura variable pasan a **`flow`** (no sticky) porque `sticky top-0` + `min-h-[100dvh]` recortaba su parte inferior en móvil (sobre todo **Ubicaciones** al añadir los mapas): **Carta/Contador, Itinerario, Ubicaciones, Dress Code, Nota de regalos, Mesa de regalos y RSVP** (y la **Galería**, solo en `alice_xv`); en `alice_xv` también **Padres y Padrinos** (**z-15**, justo después de la Carta, antes del Itinerario). Fluyen normal manteniendo el acabado de tarjeta y, al cubrir a la anterior, conservan el efecto de apilado sin quedar clavadas. Resultado: el efecto "carta desplegable" queda **solo para la portada**; ninguna sección se recorta.
 - **Mapa embebido en Ubicaciones** (`Locations.jsx` de ambas especiales; boda: commit `d615457`; `alice_xv`: commit `ea36bdc`): cada ubicación embebe un **mapa de Google por `<iframe>` sin API key** (`mapSrc(it)` → `https://maps.google.com/maps?q=<encodeURIComponent(place||label)>&z=15&output=embed`, con `loading="lazy"`, `title`, `allowFullScreen` y `referrerPolicy`). **Layout adaptativo al número de ubicaciones**: 1 → tarjeta centrada a ancho completo (`max-w-3xl`); 2 → 2 columnas (`md:grid-cols-2`); 3+ → grid responsive 1/2/3 (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`). Se conservan los botones Google Maps/Waze (URLs seguras) y el `null` si no hay ubicaciones. El endpoint es un embed público no oficial de Google; con URLs custom el embed se centra por `place`/`label`.
 - **Navegación lateral** (`SectionNav.jsx`): dots a la izquierda con scrollspy + tooltip; botón de confirmaciones (sobre) a la derecha que se convierte en "volver arriba" cuando la sección activa es el RSVP. En **ambas especiales** ese botón queda **abajo a la derecha en móvil** (`bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4`, sin `translate`) y desde `md` conserva el centrado vertical derecho (`md:bottom-auto md:right-5 md:top-1/2 md:-translate-y-1/2`) —en `boda_jorge_macarena` desde el commit `ef3a63a`, en paridad con `alice_xv` (`3366f44`)—; **la columna de dots no cambió**. Para saltar una tarjeta sticky **clavada** usa `flowTop()` (suma de alturas de hermanos en flujo) porque `offsetTop` de un sticky clavado devuelve la posición visual, no la de flujo (**bug corregido**). `flowTop()` **ignora hermanos fuera de flujo** (`position: fixed`/`absolute`) al sumar alturas. Escucha `scroll` en fase de captura y respeta `prefers-reduced-motion`.
 - **Portada sticky + parallax** (`Hero.jsx`): `h-dvh`, `useScroll({ target, offset: ["start start", "end start"] })`; al ser tapada, el fondo hace parallax y el contenido hace fade/scale (`contentOpacity`, `contentScale`).
 - **Parallax** en Mensaje y Footer (y en la Galería **solo de `alice_xv`**; boda la eliminó en `719f2b4`) (`useScroll()` global, porque `useScroll({ target })` no refleja bien el pinning de las tarjetas sticky).
 - **Swipe en la Galería** (solo `alice_xv`; boda la eliminó en `719f2b4`): arrastre horizontal (`drag="x"` con umbral) y **wrap-around** entre fotos.
-- **Mesa de regalos local** (`boda_jorge_macarena/Gifts.jsx`): replica la lógica de `shared/Gifts.jsx` pero con **dropdowns nativos** de moneda/monto (opción "Monto libre"), **pago con tarjeta como CTA principal** y **depósito en modal** accesible (`BankModal`). Desde el commit `138fe3f`, si `allow_custom` está activo y `suggested_<moneda>` está vacío, muestra directamente moneda + input **"Monto"** (sin dropdown de "Monto libre"); sin sugeridos ni monto libre, muestra un aviso y **no ofrece el CTA de tarjeta** (el banco se conserva). ⚠️ **Ya NO se replica en `alice_xv`**: allí la sección es una versión local **informativa y sin Stripe** (2 opciones con medallón en arco; ver §3.3 y §6).
-- **Fondos de foto en todas las tarjetas — SOLO en `boda_jorge_macarena`** (`SectionPhoto.jsx`, commits `8878c88` y `719f2b4`): **UNA** foto de `cfg.gallery` **full-bleed** como fondo de cada tarjeta, en **blanco y negro** (`grayscale`) + **scrim** de degradado del `--inv-bg-alt2` (88% en bordes / 72% al centro) para legibilidad; `null` si no hay foto → cae a fondo sólido. `StackCard` acepta la prop `photo` (URL); `PHOTO_ORDER` fija la correspondencia id→foto por índice (`gallery[(i + offset) % length]`, con `offset=1` cuando la portada ya consumió `gallery[0]`), de modo que una sección condicional oculta no reasigna las fotos de las demás. La primera tarjeta (`carta`) carga la foto `priority` (eager); el resto, `lazy` + `decoding="async"`. Sustituye al antiguo `PhotoBackdrop.jsx` (fotos dispersas), **eliminado** en `8878c88`. ⚠️ **`alice_xv` NO tiene fondos de foto** (decisión del usuario): no existe `SectionPhoto.jsx` ni la prop `photo` allí. ⚠️ **(2026-10-11)** En la boda rediseñada el scrim ahora es **claro** (`--inv-photo-scrim`, el papel del tema) y `PHOTO_ORDER` cambió a los ids v2 (ver §15).
+- **Mesa de regalos local v2 (histórico, ya no montada)** (`boda_jorge_macarena/Gifts.jsx`): dropdowns nativos, CTA de tarjeta y modal de banco. En v3 la sección es `v3/GiftsSection.jsx` (Stripe embebido/payment link, CLABE/IBAN y mensaje a los novios; ver §18). ⚠️ **`alice_xv` no replica esta mesa**: allí es una versión local **informativa y sin Stripe** (2 opciones con medallón en arco; ver §3.3 y §6).
+- **Fondos de foto por tarjeta (v2 histórico; v3 ya no usa `gallery`)** (`SectionPhoto.jsx`, commits `8878c88` y `719f2b4`): **UNA** foto de `cfg.gallery` **full-bleed** como fondo de cada tarjeta, en **blanco y negro** + **scrim** del `--inv-bg-alt2`. `StackCard` aceptaba la prop `photo`; `PHOTO_ORDER` fijaba la correspondencia id→foto. ⚠️ **La boda v3 no usa este sistema**: los dibujos son assets fijos `.webp` del paquete (`v3/assets.js`) y el papel es de algodón. **`alice_xv` NO tiene fondos de foto** (decisión del usuario).
 
 ### 3.3 Mesa de Regalos (archivos)
 
 - **Frontend genérico** `client/src/invitation/shared/Gifts.jsx`: sección pública reutilizable (render condicional si `registry.enabled`). Detecta moneda (`navigator.language` + `timeZone` → `mxn`/`eur`) con selector manual MXN|EUR, chips de montos sugeridos + monto libre, depósito bancario con botones "copiar" y pago vía `@stripe/stripe-js` (`loadStripe(publishableKey)` + `redirectToCheckout`). Maneja `?payment=success|cancelled` al volver de Stripe. Desde el commit `138fe3f`: sin sugeridos y con `allow_custom`, el campo **"Monto"** se muestra directamente; sin sugeridos ni monto libre, muestra "La mesa de regalos aún no tiene montos configurados." y no ofrece CTA de tarjeta (el banco se conserva).
-- **Frontend especial** `client/src/invitation/boda_jorge_macarena/Gifts.jsx`: versión local con dropdowns/CTA Stripe/modal de depósito (ver §3.2); aplica la misma regla de monto libre sin sugeridos y de aviso sin opciones de monto. `client/src/invitation/alice_xv/Gifts.jsx`: versión local **informativa y sin Stripe** (2 tarjetas de opciones con medallón en arco; ver §6).
-- **Payment Link externo (por evento):** en `shared/Gifts.jsx` y `boda_jorge_macarena/Gifts.jsx`, con `stripe_enabled` + `registry.payment_link_url` el CTA de tarjeta es un `<a>` externo (pestaña nueva) y se ocultan los selectores de moneda/monto; el depósito bancario no cambia (ver §13.3).
-- **Propagación de clave pública:** `InvitationPage` lee `public_config.stripe_publishable_key` del GET y la propaga (nunca hardcodeada) por `InvitationView` → layouts → `<Gifts>`.
+- **Frontend especial v3** `client/src/invitation/boda_jorge_macarena/v3/GiftsSection.jsx`: mesa de regalos de la boda v3 (Stripe embebido o Payment Link, CLABE/IBAN, mensaje a los novios; ver §18). El antiguo `boda_jorge_macarena/Gifts.jsx` (v2) sigue en disco pero **no se monta**. `client/src/invitation/alice_xv/Gifts.jsx`: versión local **informativa y sin Stripe** (2 tarjetas de opciones con medallón en arco; ver §6).
+- **Payment Link externo (por evento):** en `shared/Gifts.jsx` y `boda_jorge_macarena/v3/GiftsSection.jsx`, con `stripe_enabled` + `registry.payment_link_url` el CTA de tarjeta es un `<a>` externo (pestaña nueva) y se ocultan los selectores de moneda/monto; el depósito bancario no cambia (ver §13.3 y §18).
+- **Propagación de clave pública:** `InvitationPage` lee `public_config.stripe_publishable_key` del GET y la propaga (nunca hardcodeada) por `InvitationView` → layouts → `<Gifts>` (genéricos/`alice_xv`) o `v3/GiftsSection` (boda).
 - **Editor** `client/src/pages/event/EventInvitation.jsx`: sección "Mesa de Regalos" con `AmountListEditor` (mínimo/sugeridos/cuenta/stripe). Bloque **"Pagos / Conectar Stripe"** con el selector **"Cuenta de Stripe para este evento"**: con una cuenta válida asignada muestra **solo esa cuenta** y **"Cambiar cuenta"** revela temporalmente el resto; **Automática** se oculta en modo restringido. Si la cuenta guardada es inválida/deshabilitada, se revelan todas. Cambio local `ff2b988`; ver §15.1. Aviso no bloqueante si el pago con tarjeta está activo pero falta alguna lista de sugeridos y `allow_custom` es false.
 - **Backend** `server/src/utils/stripe.js`: cliente **lazy** `getStripe()` (null si no hay `STRIPE_SECRET_KEY`), `stripePublishableKey()` (defensa en profundidad: solo expone claves `pk_`, omite `sk_`/`rk_`), `stripeWebhookSecret()`, `verifyStripeWebhook()` (`Stripe.webhooks.constructEvent`), `apiVersion: "2024-06-20"`.
 - **Backend** `server/src/routes/invitations.js`: `GET /:token` expone `public_config.stripe_publishable_key` y `payment_methods.card.{mxn,eur}`; con `events.stripe_account_id` seleccionado, ambas monedas comparten la misma disponibilidad (cuenta válida → `true/true`; inválida → `false/false`, sin fallback). `POST /:token/payment` (rate-limit 30/15min) valida `registry.enabled`/`stripe_enabled`, moneda (`mxn`|`eur`), entero ≥0, mínimo (2000/100), sugeridos si `allow_custom===false` y tope `MAX_AMOUNT=999_999`; resuelve el destino Connect (cuenta del evento o legacy por moneda) y crea Checkout Session **embebida** (`ui_mode:"embedded"`, `mode:"payment"`), devolviendo `{ client_secret }`. Responde `503` si no hay clave Stripe.
 - **Backend** `server/src/routes/events.js`: `PUT /:id` acepta `stripe_account_id` (ausente = conservar; `""`/`null` = limpiar; `acct_...` = validar cuenta propia con `charges_enabled`; inválida → `400`). Ver §15.1.
 - **Backend** `server/src/routes/webhooks.js`: `POST /api/webhooks/stripe` con `express.raw`, montado **antes** de CORS/JSON/CSRF; verifica firma con `STRIPE_WEBHOOK_SECRET` y en `checkout.session.completed` inserta en `gifts` con `ON CONFLICT DO NOTHING` (idempotente).
-- `<Gifts>` añadido a los 6 layouts (`xv`, `boda`, `cumpleanos`, `baby_shower`, `alice_xv`, `boda_jorge_macarena`); en `alice_xv` es la versión local informativa (sin pago en línea ni modal).
+- `<Gifts>` se añadió a los layouts de los formatos genéricos y `alice_xv`; en `alice_xv` es la versión local informativa (sin pago en línea ni modal). La boda **no** usa `shared/Gifts.jsx`: monta `v3/GiftsSection.jsx`.
 
 ---
 
@@ -143,9 +148,9 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 - API pública: `normalizeInvitation(raw)`, `parseInvitation(raw)` (lanza error para 400), `normalizeForRead(raw)` (GET, garantiza arrays, nunca lanza).
 - Esquema: `z.discriminatedUnion("template", [...])` con campos **comunes** + **específicos** por template. Descarta claves desconocidas y normaliza formas legacy.
 
-**Campos comunes:** `hero_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url}]`, `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `story` (≤4000), `music_url`, `lodging[{name,note,url?}]` (**legado**), `travel{title,airport_note,routes[{label,note}],closing_note}` (**legado**), `stay{...}` y `trip{...}` (**contrato nuevo de Viaje/Hospedaje; ver §15.2**), `registry{...}`, `rsvp_editable`, `rsvp_edit_deadline` (los 4 campos del rediseño v2 son de 2026-10-11; ver §15).
+**Campos comunes:** `hero_image`, `og_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url,description,time_label,time_value,when_label,when_value,image,map_image}]` (**extendido en v3**), `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `story` (≤4000), `music_url`, `lodging[{name,note,url?}]` (**en v3: hoteles recomendados, máx. 2**), `travel{title,airport_note,routes[{label,note}],closing_note}` (**legado**), `stay{...}` y `trip{...}` (contrato de Viaje/Hospedaje; ver §15.2 y §18), `icebreaker{...}`, `recommendations{...}`, `registry{...}` (con `bank.clabe` y `bank_eur`), `rsvp_editable`, `rsvp_edit_deadline`.
 
-> En `boda_jorge_macarena`, la UI del commit `4773112` **ya no renderiza** `lodging`/`travel`; se conservan en el JSONB (el evento 2 mantiene sus 2 hoteles en `lodging`) y el contrato nuevo vive en `stay`/`trip`. `normalizeInvitation` y `normalizeForRead` devuelven siempre ambos bloques con sus listas saneadas (ver §15.2).
+> **(2026-11-09) Contrato v3:** los campos nuevos son **aditivos** y el backend los normaliza/valida para los 6 templates, pero solo la UI de `boda_jorge_macarena` los consume. `normalizeInvitation`/`normalizeForRead` garantizan `icebreaker` y `recommendations` siempre presentes y `locations` con todos los strings. `og_image` se usa en el OG por token (prioridad sobre `hero_image`/`gallery[0]`; ver §18). `lodging` vuelve a renderizarse en la hoja de Hospedaje v3 (máximo 2); `travel` sigue como legado y `itinerary`/`gallery`/`hero_image`/`contacts`/`registry_note` **no se renderizan** en v3.
 
 **Campos específicos:**
 
@@ -156,7 +161,7 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 | `cumpleanos` | `age`, `theme_name` |
 | `baby_shower` | `parents[]`, `gender`, `registry_note` |
 | `alice_xv` | `celebrant_name`, `parents[]`, `padrinos[]`, `registry_note` |
-| `boda_jorge_macarena` | `couple{nameA,nameB}`, `registry_note` |
+| `boda_jorge_macarena` | `couple{nameA,nameB}`, `registry_note` (legado; v3 no lo renderiza) |
 
 **RSVP editable (`rsvp_editable`)** — campo común, **nuevo** (booleano, default `false`):
 - Se normaliza con `toBool(..., false)` en `commonFields` + `normalizeInvitation` del backend y su espejo en `client/src/invitation/schema/normalize.js` (`normalizeInvitation` + `toFormState`).
@@ -168,13 +173,13 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 - **Semántica:** `""` = **sin límite**; con valor, **ISO 8601 UTC con milisegundos** (`new Date(v).toISOString()`, ej. `"2026-11-01T05:59:00.000Z"`). **Solo aplica si `rsvp_editable === true`**; vencido = `Date.now() > Date.parse(...)`.
 - **Puente local↔ISO** en `client/src/invitation/schema/normalize.js`: `toIsoDate` (tolerante: no parseable → `""`; idempotente) e `isoToLocalInput` (exportado); `toFormState` precarga el input en **hora local** y `serializeForm`/`normalizeInvitation` persisten ISO UTC. `server/src/schemas/invitation.js` espeja `toIsoDate` + `z.string().default("")` en `commonFields`.
 - **Editor** (`EventInvitation.jsx`, "Confirmación de asistencia"): input `datetime-local` **visible solo con el toggle `rsvp_editable` activo**, label "Límite para confirmar o editar (opcional)" y botón **"Quitar límite"**; captura hora local y guarda ISO UTC.
-- **RSVP público** (`shared/Rsvp.jsx`, compartido por las 6 plantillas): con deadline vigente muestra la nota "Podrás confirmar o modificar tu respuesta antes del {fecha}" (flags `expired`/`editingOpen`); **vencido y sin respuesta** → tarjeta "El plazo de confirmación ha terminado" (con contactos, sin formulario); **vencido con respuesta** → resumen con "El plazo para modificar la confirmación terminó."; el modal y `SubmitConfirmation` usan texto condicional; `preview` intacto.
+- **RSVP público** (`shared/Rsvp.jsx`, compartido por los genéricos y `alice_xv`; la boda v3 usa `v3/RsvpSection.jsx`, ver §18): con deadline vigente muestra la nota "Podrás confirmar o modificar tu respuesta antes del {fecha}" (flags `expired`/`editingOpen`); **vencido y sin respuesta** → tarjeta "El plazo de confirmación ha terminado" (con contactos, sin formulario); **vencido con respuesta** → resumen con "El plazo para modificar la confirmación terminó."; el modal y `SubmitConfirmation` usan texto condicional; `preview` intacto.
 - **Copy de motivación (commit `9d4bf71`):** nueva línea bajo el saludo con override `theme?.labels?.rsvpHelp` y fallback "Ayúdanos a confirmar tu asistencia para la organización en el salón." (visible también en `preview`, antes de la nota del límite); la preposición del límite pasa de "hasta el {fecha}" a **"antes del {fecha}"** en las 4 ubicaciones (nota de cabecera, nota del formulario, modal de confirmación y `SubmitConfirmation`). Sin cambios en estados cerrados ni en la lógica `expired`/`editingOpen`.
 - **Servidor** (`server/src/routes/invitations.js`, `PUT /:token/rsvp`): **guarda 1** → `403` "El plazo para confirmar o modificar la asistencia ha terminado." si editable + deadline vencido; **guarda 2** → `403` "La confirmación ya no puede modificarse." si el grupo ya respondió y `rsvp_editable === false`; el resto del flujo intacto. La lectura de `guests` pasó a hacerse **antes de la transacción** (la respuesta del grupo se reconstruye desde esa lectura).
 
 > **Estado (2026-10-04):** límite implementado, verificado y **commiteado** (`86be029`); el copy se ajustó después en `9d4bf71`.
 
-**Nota del RSVP (`rsvp_note`, columna de `groups`)** — el formulario público (`shared/Rsvp.jsx`, compartido por las 6 plantillas) **ya no captura "Detalles / restricciones alimenticias"**: se retiraron el `textarea`, el estado `diet`/`setDiet` y su efecto de sincronización, y `SubmitConfirmation` ya no recibe `note` ni muestra la línea "Detalles recibidos: …". El payload del `PUT /:token/rsvp` **sigue enviando `note`** (prop que llega desde `group.rsvp_note` vía `InvitationPage` → `InvitationView` → `RsvpSection`) para **preservar las notas ya guardadas**; el backend guarda `NULL` si `note` no llega (`server/src/routes/invitations.js`). Enfoque intermedio descartado: `theme.rsvp.showDiet` (se revirtió sin commitear; el tema `alice_xv` volvió a su estado base).
+**Nota del RSVP (`rsvp_note`, columna de `groups`)** — el formulario público (`shared/Rsvp.jsx`, compartido por los genéricos y `alice_xv`; la boda v3 tiene su propio `RsvpSection`) **ya no captura "Detalles / restricciones alimenticias"**: se retiraron el `textarea`, el estado `diet`/`setDiet` y su efecto de sincronización, y `SubmitConfirmation` ya no recibe `note` ni muestra la línea "Detalles recibidos: …". El payload del `PUT /:token/rsvp` **sigue enviando `note`** (prop que llega desde `group.rsvp_note` vía `InvitationPage` → `InvitationView` → `RsvpSection`) para **preservar las notas ya guardadas**; el backend guarda `NULL` si `note` no llega (`server/src/routes/invitations.js`). Enfoque intermedio descartado: `theme.rsvp.showDiet` (se revirtió sin commitear; el tema `alice_xv` volvió a su estado base).
 
 **Mesa de regalos (`registry`)** — campo común, presente en todos los templates:
 - `enabled:false`, `allow_custom:true`, `stripe_enabled:false`, `payment_link_url:""` (URL del Payment Link externo; tope `PAYMENT_LINK_MAX_LENGTH = 500`; vacío = pago integrado; ver §13.2).
@@ -232,22 +237,18 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 > **Iteración del 2026-10-04 (commiteada en `1241bfd`):** el sobre de apertura (`envelope/EnvelopeLoader.jsx`) cambia su hint de "Toca o desliza hacia arriba para abrir" a **"Toca para abrir"** en todas las plantillas con sobre (`xv`, `boda`, `alice_xv`, `boda_jorge_macarena`); los gestos quedan intactos (tap, arrastre, teclado, `prefers-reduced-motion`). En `alice_xv`, **Padres y Padrinos pierde el eyebrow "Con amor"**: `Padrinos.jsx` ya no recibe la prop `eyebrow` y la label `padrinosEyebrow` se elimina de `themes/alice_xv.js`; en `alice_xv/decor.jsx`, `WeddingSectionTitle` **omite la fila ornamental (filetes + span) cuando no hay eyebrow** y mantiene el comportamiento con eyebrow, incluido el caso de `title` ausente donde el eyebrow es el `<h2>` (p. ej. la Mesa de Regalos).
 
-**`boda_jorge_macarena` — Boda de "Jorge & Macarena" (pedido especial):**
+**`boda_jorge_macarena` — Boda de "Jorge & Macarena" (pedido especial, diseño v3 vigente):**
 
-> ⚠️ **(2026-10-11) Rediseño v2 — ver §15.** Tema y secciones reescritos al diseño editorial sobre papel (Cormorant Garamond + Montserrat, fotos B&N con scrim claro, sobre editorial, hojas apilables, campos nuevos y OG por token). En el **commit `4773112`** (2026-10-22), Viaje y Hospedaje se separaron (`trip`/`stay`; ver **§15.2**). Los bullets siguientes documentan el diseño **nocturno anterior** (`719f2b4`) y se conservan como histórico.
+> ⚠️ **(2026-11-09) La plantilla fue reemplazada en sitio por el diseño v3** (ver **§18**). No hay plantilla nueva ni selector v2/v3. El v2 editorial (2026-10-11) y el diseño nocturno anterior (`719f2b4`) quedan como **histórico** en §15/§16. El cambio v3 está en el **working tree, sin commit ni push**.
 
-- Paleta **botánica nocturna** (commit `719f2b4`; ya no es "botánica vibrante sobre marfil"): fondos verde noche (`--inv-bg #0F1B15`, `--inv-bg-alt #14231B`, `--inv-bg-alt2 #0A130F`, `--inv-surface #182820`, `--inv-card #1C2E24`), texto marfil `#FDFBF7` (soft `#EAE4D6`, muted `#D0C7B7`) y acentos aclarados para brillar sobre la oscuridad (rosa `#E8799C`, botánico `#A9C3AF`, naranja granada `#E76F51`, amarillo `#E5B15D`); sombras base negra, sobre de apertura y portada nocturnos.
-- Fuentes **Playfair Display** + **Great Vibes** + **Lato**.
-- Ornamentos SVG de línea fina (granada, bugambilia, cempasúchil) en `decor.jsx`; sobre de apertura con paleta nocturna.
-- **Mapa embebido en Ubicaciones** (`Locations.jsx`) y **secciones en `flow`** (solo Hero y Footer sticky).
-- **Fondos de foto en TODAS las tarjetas** (`SectionPhoto.jsx`, solo boda): una foto B&N full-bleed + scrim oscuro (`--inv-bg-alt2`, 88% en bordes / 72% al centro) por tarjeta; `PHOTO_ORDER` fija la correspondencia id→foto por índice (`gallery[(i + offset) % length]`, con `offset=1` cuando la portada ya consumió `gallery[0]`), así una sección condicional oculta no le roba la foto a las demás. La primera tarjeta (`carta`) carga la foto `priority` (eager); el resto, `lazy` + `decoding="async"`. Sustituyó al antiguo `PhotoBackdrop` (commit `8878c88`).
-- **Portada** (`Hero.jsx`): `hero_image` manda; si no hay, usa `gallery[0]`; foto con velo oscuro (~64% de `--inv-bg` vía `color-mix`, reforzado en bordes) y fallback de degradado verde noche (`--inv-hero-fallback`).
-- **Galería eliminada** (commit `719f2b4`): se retiraron `Gallery.jsx` local y la sección/punto "Galería"; el tema ya no define las labels `gallery`/`galleryEyebrow`.
-- **Badge publicitario "Powered by Webi" en el cierre** (`Footer.jsx`, último elemento tras "DisplayEvent"): enlace a https://webi.mx en pestaña nueva (`target="_blank" rel="noopener noreferrer"`) + logo `client/public/webi/logo-light.svg` (24px de alto; antes `logo-dark.svg`), porque el fondo efectivo del cierre ahora es oscuro. Contenido de marca **FIJO**: no es dato configurable, no vive en `theme.labels` ni en el schema; **solo** esta plantilla lo muestra.
-- **Tarjeta RSVP sobre la foto:** el layout la envuelve con `contentClassName="[&>section]:bg-transparent"` para neutralizar el fondo opaco que `shared/Rsvp.jsx` pinta en su `<section>` raíz, sin tocar el componente compartido.
-- **Botón flotante de Confirmaciones** (`SectionNav.jsx`; **commiteado en `ef3a63a`**): replica exactamente la `className` de `alice_xv` (commit `3366f44`) — **mismo comportamiento**: en móvil (< `md`) queda **abajo a la derecha** (`bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] right-4`, sin `translate`) y desde `md` conserva el **centrado vertical derecho** (`md:bottom-auto md:right-5 md:top-1/2 md:-translate-y-1/2`), 48×48px. Tamaño/colores del tema, aria-labels ("Ir a confirmaciones" / "Volver arriba"), iconos, columna de dots y lógica de scrollspy **no cambian**.
-- ✅ Diseño botánico **completado** e iterado a **paleta nocturna + fotos de fondo en todas las tarjetas** (`d872a54` botánico → `719f2b4` nocturno).
-- ✅ El doc `INVITACION_BODA_JORGE_MACARENA.md` quedó **actualizado al v2** el 2026-10-11 (ver §15); describe este rediseño, no el anterior.
+- **Diseño v3:** papel de algodón (`.algodon`), **marco nazarí** (`NazariFrame`), **granada en acuarela** y dibujos `.webp` con `multiply`, **letterpress** y tipografías **Cormorant Upright + Nikolai Condensed** (fallback Noto Serif Display). El detalle visual y de componentes está en §18.
+- **Orden de tarjetas:** Portada · Granada, España · Icebreaker · Ceremonia · Celebración · Vestimenta · Recomendaciones · Viaje · Hospedaje · Confirmación · Regalo · Cierre. No se montan Itinerario, Galería ni Contactos.
+- **Componentes:** `BodaJorgeMacarenaLayout.jsx` monta `v3/*` y usa `v3.css`; `alice_xv` permanece intacta. Los archivos v2 siguen en disco pero **no se importan**.
+- **Editor:** `BodaJorgeMacarenaV3Editor.jsx` (historia/música, `og_image`, Icebreaker, Recomendaciones, ubicaciones extendidas, hoteles máx. 2, cita de Hospedaje, correo de mensajes) y `StayTravelEditor.jsx`; `EventInvitation.jsx` oculta las secciones genéricas cuando el template es la boda.
+- **RSVP v3:** `v3/RsvpSection.jsx` (familias reales, sin “Líder”, sin modal/contactos, contador en hora de España y estados enviado/plazo cerrado), con `rsvp_editable`/`rsvp_edit_deadline`.
+- **Regalo v3:** `v3/GiftsSection.jsx` (Stripe embebido o Payment Link, CLABE/IBAN, cuenta EUR y mensaje privado a los novios) + bandeja `/events/:id/mensajes`.
+- **Datos:** `server/src/scripts/update-event-macarena-v3.js` actualiza el evento 2 por merge (dry-run/`--apply`); **no ejecutado contra Supabase producción**.
+- ✅ El doc `INVITACION_BODA_JORGE_MACARENA.md` quedó **actualizado al v3** el 2026-11-09; describe este rediseño.
 
 ---
 
@@ -284,6 +285,8 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - Backfill v2: `npm run backfill-invitation-v2`.
 - ⚠️ **Stripe Connect (actualizado 2026-10-22):** `npm run init-db` crea la tabla `stripe_accounts`, las columnas legacy `events.stripe_account_mxn/eur` y la nueva **`events.stripe_account_id TEXT`** (nullable, **sin FK, sin índice y sin backfill**; SQL en `schema.sql`). La migración de `stripe_account_id` **se aplicó** el **2026-10-22** con `npm run init-db` en la **BD configurada en `server/.env` (Supabase remoto)**; el código que la usa se commiteó en `138fe3f` (base desplegada) y la restricción visual es `ff2b988`, local y pendiente de deploy. En **cualquier otra BD/entorno** hay que ejecutar `npm run init-db` **ANTES** de desplegar ese código: sin las columnas del bloque Connect, `GET /api/invitations/:token` responde **500** (verificado en local; ver §15.1).
 - **Tabla `gifts`** (regalos confirmados vía Stripe): `event_id`, `group_id`, `amount_minor` (BIGINT), `currency`, `status`, `stripe_payment_intent_id`, `created_at`. Índice único `idx_gifts_payment_intent` para idempotencia del webhook. **No tiene columna `livemode`**: no distingue cobros de prueba de live (ver §15.1). ⚠️ **Re-ejecutar `npm run init-db`** para aplicar el índice único (el agente de BD lo corrió antes de que SecDevOps añadiera el índice).
+- **Tabla `gift_messages` (v3, 2026-11-09):** mensajes privados de la mesa de regalos (`event_id`, `group_id`, `sender_name`, `message`, `amount_minor`, `currency`, `channel` transfer/card, `created_at`, `read_at`; índice `idx_gift_messages_event`). Se crea con `npm run init-db` (`server/src/db/schema.sql`) y **aún no se ejecutó contra Supabase producción**.
+- **`events.gift_message_email` (v3):** correo opcional del anfitrión para avisos de mensajes; `ALTER TABLE` idempotente en `schema.sql`. Se edita en el panel y se guarda con `PUT /api/events/:id` (semántica ausente = conservar; vacío = borrar). Tampoco está aplicado en producción todavía.
 - **Slug de eventos (`events.slug`)**: en BD existentes, `npm run init-db` es **requisito manual** para crear la columna y el índice único parcial (`schema.sql`/`init.js` son idempotentes). Ya aplicado en la BD local del usuario; **verificar al desplegar**.
 
 ### CORS
@@ -298,17 +301,27 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 
 ## 8. Decisiones / pendientes
 
+> ⚠️ **(2026-11-09) La plantilla vigente es la v3 (§18).** Los pendientes de esta sección que hablan de v2, `SectionPhoto`, IATA, `ff2b988`, `8d70217`/`efb424b` o del deploy de Viaje/Hospedaje se conservan como **histórico**. Los pendientes **reales de v3** son:
+>
+> - [ ] **Falta `client/public/fonts/Nikolai-Condensed.woff2`.** `v3.css` lo declara con `@font-face`; mientras no exista, la familia cae a `Noto Serif Display`/Georgia. El directorio `client/public/fonts/` está vacío.
+> - [ ] **El esquema/seed NO se ejecutó contra Supabase producción.** `npm run init-db` debe crear `gift_messages` y `events.gift_message_email`; el script `server/src/scripts/update-event-macarena-v3.js` (dry-run/`--apply`) tampoco se corrió contra producción.
+> - [ ] **La cuenta española (`registry.bank_eur`) queda deshabilitada** hasta configurarla desde el panel (el seed la deja `enabled:false`).
+> - [ ] **Verificar el build v3** (`npm run build`) y hacer smoke de la invitación/portada antes de commit/deploy.
+> - [ ] **Assets v3:** están en `client/public/invitations/macarena-jorge-v3/` (14 `.webp` + `og-v3.jpg` + `webi-logo.png`; el set que consume `v3/assets.js`). Confirmar que se despliegan con el build.
+>
+> **Decisiones v3 cerradas:** contactos ocultos; la música se mantiene y el botón solo aparece con `music_url`; **tren apagado**; **fidelidad de diseño sobre ajustes de contraste**; la portada del dominio propio también se actualizó a v3. Detalle en §18.
+
 - [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; marca/dominio `displayevent.com` commiteados en `c657c81`/`c7a3146`; rediseño posterior en `32cb71e`, ver §10 y §11.2).
 - [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
 - [x] ~~Reproducir `PhotoBackdrop` en `alice_xv`~~ → **descartado**: `alice_xv` **no** usa fondos de foto por sección (decisión del usuario). `PhotoBackdrop.jsx` fue **eliminado** (sustituido por `SectionPhoto.jsx`, solo boda).
 - [ ] **Actualizar `description` de `themes/alice_xv.js`** ("Lavanda y dorado" → rosa pastel + blanco + dorado).
-- [x] ~~**Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describía el diseño anterior azul noche/dorado)~~ → actualizado al v2 el 2026-10-11 (ver §15).
+- [x] ~~**Actualizar el doc `INVITACION_BODA_JORGE_MACARENA.md`** (describía el diseño anterior azul noche/dorado)~~ → actualizado al **v3** el 2026-11-09 (ver §18).
 - [x] ~~*(Rendimiento)* Evaluar el coste de `backdrop-blur`~~ → **ya no aplica**: las tarjetas no usan `backdrop-blur` (fondo opaco + foto en capas `absolute`).
-- [ ] *(Ajuste estético)* El **scrim del `SectionPhoto`** de la boda v2 es **claro** (88%/72% de `--inv-photo-scrim`, el papel del tema), así que la foto B&N se ve **sutil pero legible**; subir/disminuir opacidades si se quiere más/menos protagonismo (ver §15).
-- [ ] **Deuda Tailwind `@theme`** (`boda_jorge_macarena` v2; ver §15): `--color-inv-*: var(--inv-*)` declarado en `@theme` de `client/src/index.css` se resuelve una sola vez en `:root`, así que las utilidades `bg-inv-*`/`text-inv-*` ignoran el override anidado de `--inv-*` del tema (**bug preexistente, reproducido también en `alice_xv`**). El tema v2 lo puentea re-declarando `--color-inv-*`/`--font-inv-*` dentro de `theme.vars`; resolver de raíz en Fase B.
-- [ ] **Fase B (planificada; ver §15):** adoptar el diseño v2 (tema + secciones + campos) en `xv`, `cumpleanos` y `baby_shower`; **`alice_xv` intacta** (decisión del usuario). Incluye quitar el gating por template de "Nuestra historia y música" y del editor de **Viaje/Hospedaje** (`StayTravelEditor`).
-- [ ] **Fotos reales de la boda** (hoy placeholders editables desde el editor) + **smoke test del guardado real del editor con sesión** (los bloques nuevos no se han guardado E2E).
-- [ ] **Reemplazar el enlace de YouTube de `music_url`** del evento por un archivo subido desde el panel (la subida de audio ya está habilitada; ver §15).
+- [ ] *(Histórico v2)* ~~**Ajuste estético del scrim de `SectionPhoto`**~~ → la boda v3 ya no usa `gallery`/`SectionPhoto`; el papel y los dibujos son fijos (ver §18).
+- [ ] *(Histórico v2)* **Deuda Tailwind `@theme`** de la boda v2 (ver §15): la v3 usa mayormente CSS propio (`v3.css`), pero el puente `--color-inv-*`/`--font-inv-*` sigue en el tema v2 y afecta a piezas compartidas. Resolver de raíz en Fase B.
+- [ ] **Fase B (planificada; ver §18):** adoptar el diseño **v3** (tema + secciones + campos) en `xv`, `cumpleanos` y `baby_shower`; **`alice_xv` intacta** (decisión del usuario). Incluye quitar el gating por template del editor v3 y de **Viaje/Hospedaje** (`StayTravelEditor`).
+- [ ] **Smoke test del guardado real del editor v3 con sesión** (los bloques nuevos no se han guardado E2E).
+- [ ] **Verificar `music_url`** del evento: la música se mantiene, pero el botón solo se monta si hay URL; si sigue apuntando a YouTube, el `<audio>` nativo no lo reproduce (subir MP3/M4A/OGG desde el panel).
 - [x] ~~**Confirmar plataforma de despliegue real** (Railway vs Render)~~ → **Railway confirmado por el usuario (2026-10-11)**; `render.yaml` queda como legacy (ver §7 y §15).
 - [x] ~~**Commit + push pendientes de aprobación**~~ → hecho: la fase quedó commiteada (`a60d442`, `1ea314f`, `2718f6f`, `2abf462`) y **pusheada a `origin/main`**; el working tree de código quedó limpio **en ese momento**. La portada se commiteó en `fae3ca5`, los hoteles/scroll en `389403d`, **§15.2** (Viaje/Hospedaje) en **`4773112`** y sus ajustes en **`8d70217`** (Madrid) y **`efb424b`** (sin IATA); en el working tree siguen cambios ajenos (`BottomNav.jsx`, `publicDomain.js`, `package-lock.json` raíz).
 - [ ] **Cloudinary en producción:** activar `CLOUDINARY_*` (el disco de Railway es efímero) para persistir fotos/audio y para la imagen del OG; alternativa: volumen en `/app/server/uploads`; **sleep/serverless desactivado**.
@@ -576,7 +589,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | `lib/publicDomain.js` (**nuevo**) | `normalizeDomain` (misma semántica que el backend), `buildInviteUrl` (con dominio `https://<dominio>/invitacion/<token>`; sin dominio, origen + slug opcional + token) e `isCustomDomainActive` (tolera `www.` en ambos lados). |
 | `pages/event/EventInvitation.jsx` | Campo **"Dominio personalizado"** (misma `DOMAIN_RE`/`DOMAIN_MAX = 255` que el backend, normaliza en `onBlur`) que se guarda en el mismo `api.events.update` del slug (`custom_domain: domainValue`; `""` borra). Input **"Link de pago de Stripe"** (`setReg("payment_link_url", …)`), visible solo con `stripe_enabled`. |
 | `invitation/schema/normalize.js` | `payment_link_url` en `normalizeRegistry` (round-trip garantizado). |
-| `invitation/shared/Gifts.jsx` y `invitation/boda_jorge_macarena/Gifts.jsx` | Modo link (`stripe_enabled && payment_link_url`): el CTA "Pagar con tarjeta" es un `<a>` al Payment Link externo (`target="_blank"`, `rel="noopener noreferrer"`), se **ocultan** los selectores de moneda/monto (bloque `!linkMode`) y se muestra "Elegirás el monto en la pasarela segura de Stripe."; el depósito bancario **no cambia**. `alice_xv/Gifts.jsx` **sin tocar** (sigue siendo informativo, sin Stripe). |
+| `invitation/shared/Gifts.jsx` y `invitation/boda_jorge_macarena/Gifts.jsx` (v2; hoy la boda usa `v3/GiftsSection.jsx`) | Modo link (`stripe_enabled && payment_link_url`): el CTA "Pagar con tarjeta" es un `<a>` al Payment Link externo (`target="_blank"`, `rel="noopener noreferrer"`), se **ocultan** los selectores de moneda/monto (bloque `!linkMode`) y se muestra "Elegirás el monto en la pasarela segura de Stripe."; el depósito bancario **no cambia**. `alice_xv/Gifts.jsx` **sin tocar** (sigue siendo informativo, sin Stripe). |
 | `pages/event/EventGuests.jsx` | `handleCopyInvite` usa `buildInviteUrl` (enlace con dominio sin slug). |
 | `components/WhatsAppSendModal.jsx` | `inviteLink(event, token)` usa `buildInviteUrl`. |
 | `invitation/InvitationPage.jsx` | White-label: `hideBrand = isCustomDomainActive(public_config.custom_domain)` + `<meta name="robots" content="noindex">`; `hideBrand` viaja por `InvitationView` → **6 layouts** → **3 footers** (`shared`, `alice_xv`, `boda_jorge_macarena`), donde se oculta solo la línea "DisplayEvent". El **badge "Powered by Webi"** (solo boda) **no** se oculta hoy (decisión pendiente, ver §8). |
@@ -677,7 +690,9 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ---
 
-## 15. Boda Jorge & Macarena — rediseño v2 (Fase 1), campos nuevos y OG dinámico (2026-10-11)
+## 15. Boda Jorge & Macarena — rediseño v2 (HISTÓRICO; superado por v3) (2026-10-11)
+
+> ⚠️ **Superado (2026-11-09):** esta sección describe el **rediseño v2** y se conserva como historia. La plantilla vigente es el **diseño v3** (ver **§18**). El contrato `stay`/`trip` (§15.2) y la infraestructura Stripe (§15.1) siguen vigentes; las referencias visuales v2 (`hero_image`, `gallery`, `SectionPhoto`, Cormorant Garamond + Montserrat, hojas con foto B&N) **ya no aplican** a la boda v3.
 
 **Estado:** el rediseño v2, el OG dinámico y la subida de audio quedaron **commiteados** en `a60d442` ("Boda Macarena & Jorge: rediseñar la invitación (v2), OG dinámico por token y audio"; incluye también `MEMORIA.md`, `README.md` y `INVITACION_BODA_JORGE_MACARENA.md`). Después se commitearon **Stripe Connect** + el fix del guardado (`1ea314f`), el fix **`on_behalf_of`** cross-región (`2718f6f`) y el **fallback cross-currency "Plan B"** (`2abf462`, que incluye además la actualización de estos docs). **Working tree de código limpio y pusheado** (`origin/main`) al cierre de esa fase; esta corrección documental de `MEMORIA.md` queda para el próximo commit. ⚠️ (2026-10-19) La portada pública del dominio propio quedó **commiteada en `fae3ca5`** (ver §16). **Fase 1** = esta plantilla; **Fase B** = adopción en los formatos genéricos.
 
@@ -786,7 +801,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **2) Monto libre sin montos sugeridos**
 
-- **`client/src/invitation/boda_jorge_macarena/Gifts.jsx` y `client/src/invitation/shared/Gifts.jsx`:** si `allow_custom` está activo y `suggested_<moneda>` está vacío, **no** se ofrece "Monto libre" como opción de un dropdown: se muestra directamente el **selector de moneda + input numérico "Monto"** (en la boda, `AmountField`; en shared, el input libre con esa etiqueta).
+- **`client/src/invitation/boda_jorge_macarena/Gifts.jsx` (v2) y `client/src/invitation/shared/Gifts.jsx`:** si `allow_custom` está activo y `suggested_<moneda>` está vacío, **no** se ofrece "Monto libre" como opción de un dropdown: se muestra directamente el **selector de moneda + input numérico "Monto"** (en la boda, `AmountField`; en shared, el input libre con esa etiqueta). La **boda v3** (`v3/GiftsSection.jsx`) usa siempre monto libre y el editor fuerza `allow_custom:true`.
 - Si no hay sugeridos y `allow_custom` es **false**, se muestra **"La mesa de regalos aún no tiene montos configurados."** y **no se ofrece un CTA de tarjeta inutilizable**; el banco (si está configurado) se conserva. El **Payment Link externo** no cambia: sigue mostrando su CTA y ocultando los selectores.
 - **Editor:** advertencia **no bloqueante** cuando `stripe_enabled` está activo, falta alguna lista de sugeridos (`suggested_mxn`/`suggested_eur`) y `allow_custom` es false: "Sin montos sugeridos y sin monto libre, los invitados no podrán pagar con tarjeta en esa moneda." Solo avisa; el guardado no se bloquea.
 
@@ -810,7 +825,9 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 - [ ] **Decidir si se documenta/almacena `livemode` en `gifts`** para separar pruebas de cobros reales (hoy no existe la columna).
 - [ ] Verificar las variables live en el entorno desplegado (**Railway**) y aplicar `init-db` en cualquier BD distinta de la ya migrada.
 
-### 15.2 Viaje y Hospedaje independientes en `boda_jorge_macarena` (base `4773112` desplegada; ajustes de Viaje `8d70217`/`efb424b` locales, no desplegados)
+### 15.2 Viaje y Hospedaje independientes en `boda_jorge_macarena` (HISTÓRICO de UI v2; contrato `stay`/`trip` vigente) (base `4773112` desplegada; ajustes de Viaje `8d70217`/`efb424b` locales, no desplegados)
+
+> ⚠️ **(2026-11-09)** El **contrato** `stay`/`trip`, los defaults, el editor `StayTravelEditor` y los links siguen vigentes, pero la **UI v3** cambió: Viaje muestra **solo avión y autobús** (tren apagado y forzado a `false` desde el editor), la llegada está fijada a **Madrid** y Hospedaje usa **máximo 2 hoteles** de `lodging` + cuota (`stay.quote`/`quote_author`). Ver **§18**.
 
 **Estado:** la base de Viaje/Hospedaje quedó **commiteada en `4773112` y ya está desplegada** (el API de producción devuelve `stay`/`trip` y el bundle sirve el editor de Viaje/Hospedaje). Los ajustes **`8d70217`** (llegada fija a Madrid) y **`efb424b`** (quitar códigos IATA de la UI) están **commiteados en local y pendientes de push/deploy**; `ff2b988` (Stripe) es otro commit local, ver §15.1. La BD del evento 2 (**Supabase**) **ya está actualizada**: `trip.arrivals` solo Madrid, `trip.modes.flight.note` y `trip.intro` actualizados; `origins`, `stay`, `lodging` y `travel` intactos; la cuenta Stripe del evento 2 ya está asignada (ver §15.1). Mientras no se desplieguen, el backend desplegado conserva el default anterior para eventos nuevos y el bundle sigue mostrando el editor de la base `4773112` (con IATA); el evento 2 no se ve afectado porque su JSONB ya está corregido. Build del cliente OK (**557 módulos**) para `efb424b`. El working tree aún contiene cambios ajenos (eliminación de `BottomNav.jsx`, `publicDomain.js` y `package-lock.json` raíz) que **no forman parte** de esta feature.
 
@@ -918,18 +935,18 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ## 16. Portada pública del dominio propio, separada de la invitación (2026-10-19)
 
-**Estado:** portada base implementada, verificada y commiteada en `fae3ca5` (2026-10-19); la iteración de **"La estancia"/hoteles/scroll suave** (§16.1) quedó **commiteada en `389403d`**. La base de **Viaje/Hospedaje (`4773112`) ya está desplegada**; quedan los redeploys de **`8d70217`** y **`efb424b`** (Madrid y UI sin IATA). **No hay migración de BD:** el evento (id 2) ya tenía `events.custom_domain = "macarenayjorge.com"`; `npm run init-db` no es necesario para esta feature. Sustituye la decisión **2A** de §13.
+**Estado (2026-11-09):** la portada del dominio propio fue **actualizada al diseño v3** en el working tree (sin commit): monta `CoverSection`, `StorySection`, `LocationSection`, `DressCodeSection`, `TravelSection`, `StaySection` y `ClosingSection` de `v3/*` con `v3.css`, y ya no usa `hero_image`/`gallery`/flora v2. La base histórica se commiteó en `fae3ca5`/`389403d`; el contrato `GET /api/public/event`, la resolución por host y el SEO no cambian. **No hay migración de BD por la portada**. Ver **§18**.
 
-> ⚠️ **Actualización (2026-10-23):** la sección combinada de "La estancia" fue reemplazada por **Viaje (04)** y **Hospedaje (05)**, con el contrato `trip`/`stay`. La base `4773112` ya está desplegada; los ajustes **`8d70217`** (llegada solo a Madrid) y **`efb424b`** (UI sin IATA) **no están desplegados**, pero la BD del evento 2 ya tiene solo Madrid. Ver **§15.2**. El resto de esta sección (resolución por host, SEO, contrato público y arquitectura de la portada) sigue vigente.
+> ⚠️ **Histórico:** la descripción v2 de esta sección (papel/tinta, fotos B&N, Cormorant Garamond + Montserrat, "La estancia") quedó **superada** por el rediseño v3. La estructura de Viaje (04)/Hospedaje (05) se mantiene, ahora con los componentes v3 y tren apagado.
 
 **Objetivo y decisiones del usuario:**
 
 - `https://macarenayjorge.com/` muestra una **portada pública del evento**, sin token, visible para cualquier invitado. Es una página **independiente** de `InvitationView`/`InvitationPage`: **no** reutiliza la invitación en modo general.
 - La **invitación personalizada** de cada grupo sigue en `https://<dominio>/invitacion/<token>` (y su variante con slug), con su RSVP y su mesa de regalos.
 - Portada **fija** por ahora: **no se edita desde el panel**.
-- Mismo **lenguaje visual v2** de la boda (papel, tinta, Cormorant Garamond + Montserrat, fotos B&N, flora; ver §15).
-- Incluye el contenido relevante del evento **menos la mesa de regalos**. La base `4773112` ya está desplegada y sustituyó "La estancia" por **Viaje (04)** y **Hospedaje (05)** (ver §15.2). Los ajustes `8d70217` (llegada solo a Madrid) y `efb424b` (UI sin IATA) aún no están desplegados, pero la BD del evento 2 ya tiene solo Madrid, así que la portada y la invitación ya no muestran Barcelona.
-- Acceso a la invitación personal: instrucciones + contactos + input opcional para pegar el **enlace o token**. **Sin RSVP genérico**: la confirmación ocurre dentro de la invitación personal.
+- **Lenguaje visual v3** de la boda (papel de algodón, marco nazarí, granada en acuarela, letterpress, Cormorant Upright + Nikolai Condensed; ver §18).
+- Incluye el contenido relevante del evento **menos la mesa de regalos**: Portada, Granada, El gran día (ubicaciones), Vestimenta, Viaje (04) y Hospedaje (05), acceso a la invitación y Cierre. La portada **no** renderiza Icebreaker, Recomendaciones, RSVP, Regalo ni Mensajes.
+- Acceso a la invitación personal: instrucciones + input opcional para pegar el **enlace o token**. **Sin RSVP genérico** y **sin contactos** (decisión v3: contactos ocultos).
 - El contrato público **excluye `registry`** para no exponer datos bancarios; la invitación personalizada conserva el suyo.
 
 **Arquitectura y archivos:**
@@ -942,14 +959,14 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | Backend | `server/src/index.js` | `express.static(..., { index: false })`; catch-all que resuelve el host, inyecta marker/OG/robots y canonical; `/index.html` → 301; fallback estático si falla la BD. |
 | Backend | `server/src/routes/events.js` | Usa el util compartido de dominio; **sin cambio de comportamiento** en el CRUD. |
 | Backend | `server/src/utils/ogMeta.js` | `buildEventMeta`, `injectEventMeta` e `injectCustomDomainMarker`; reutiliza la inyección OG existente. |
-| Frontend | `client/src/wedding/MacarenaJorgeCover.jsx` (**nuevo**) | Portada independiente: hero, countdown, bienvenida, "El gran día", historia, **Viaje (04)** y **Hospedaje (05)** (base `4773112` desplegada; ajustes `8d70217`/`efb424b` pendientes; ver §15.2) y "Tu invitación"; sin mesa de regalos; footer sin marcas. |
+| Frontend | `client/src/wedding/MacarenaJorgeCover.jsx` (**actualizado a v3**) | Portada independiente: `CoverSection`, `StorySection`, `LocationSection`, `DressCodeSection`, `TravelSection`, `StaySection` y `ClosingSection` de `v3/*`; Viaje (04)/Hospedaje (05); acceso “Tu invitación”; sin mesa de regalos ni contactos; footer sin marcas. Usa `v3.css` y `v3/assets.js`. |
 | Frontend | `client/src/wedding/invitationLink.js` (**nuevo**) | Parser endurecido de enlace/token (URL completa, sin protocolo, token suelto y puntuación); navega siempre contra el origen actual. |
 | Frontend | `client/src/lib/customDomainHome.js` (**nuevo**) | Lee el marker `de-custom-domain` del documento; la SPA no deduce el host. |
 | Frontend | `client/src/App.jsx` | Rama `customHome` **antes** de la landing; carga `MacarenaJorgeCover` con `lazy` (chunk propio). |
 | Frontend | `client/src/api.js` | `api.public.event()`. |
 | Frontend | `client/index.html` | Limpio: sin meta temporal de la portada. |
 
-> La portada reutiliza el tema y piezas visuales de `boda_jorge_macarena` (`themes/boda_jorge_macarena.js`, `flora.jsx`, `Grain.jsx`, `helpers.js`), pero **no** monta su layout ni `InvitationView`: la composición es propia.
+> **v3 (2026-11-09):** la portada reutiliza las **secciones v3** (`v3/*`), `v3.css` y `v3/assets.js`; ya **no** usa `flora.jsx`, `Grain.jsx` ni `hero_image`/`gallery`. La nota histórica v2 era: reutilizaba el tema y piezas visuales de `boda_jorge_macarena` (`themes/boda_jorge_macarena.js`, `flora.jsx`, `Grain.jsx`, `helpers.js`), pero **no** montaba su layout ni `InvitationView`.
 
 **Contrato `GET /api/public/event`:**
 
@@ -978,7 +995,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | Host de plataforma (`displayevent.com`, `localhost`, etc.) | La landing y el comportamiento previo quedan intactos; un host no canónico conserva `X-Robots-Tag: noindex, nofollow`. |
 | Fallo de BD al resolver el host | Se sirve el HTML estático (sin marker): el sitio no se cae por esta feature. |
 
-**Verificación (2026-10-19):**
+**Verificación (2026-10-19, histórica; v3 pendiente de smoke):**
 
 - **Backend:** 27 aserciones con `Host` — raíz custom con marker/OG/robots y sin `noindex`; API `200`/`404`; `www`; `/invitacion/<token>` con `noindex`; landing intacta; sin campos privados.
 - **Frontend:** `npm run build` en `client` OK (**549 módulos**; chunk `MacarenaJorgeCover-*.js`); el chunk **no contiene `registry`**; parser **22/22** casos.
@@ -989,8 +1006,8 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Pendientes:**
 
-- **Deploy** de la portada: la base `fae3ca5`/`4773112` ya está desplegada; queda el redeploy de `8d70217`/`efb424b` (ver §8 y §15.2).
-- **Viaje/Hospedaje:** base `4773112` **desplegada**; ajustes `8d70217` (llegada fija a Madrid) y `efb424b` (UI sin IATA) **pendientes de redeploy** (ver §15.2). La antigua "La estancia/hoteles" (§16.1) queda como legado. Quedan la validación visual en el dominio y la integración futura con Booking (API/afiliado).
+- **Deploy v3:** la portada v3 está en el working tree, **sin commit ni push**; falta build, smoke en `macarenayjorge.com` y verificación del OG. La base histórica `fae3ca5`/`4773112` sí está desplegada.
+- **Viaje/Hospedaje:** contrato desplegado (`4773112`); la UI v3 (Madrid fijo, tren apagado, hoteles máx. 2) está en el working tree. La antigua "La estancia/hoteles" (§16.1) queda como legado. Quedan la validación visual en el dominio y la integración futura con Booking (API/afiliado).
 - **Verificar el OG con crawler** tras el deploy (raíz + invitación personalizada).
 - **`www`/apex:** la resolución tolera `www` y canonicaliza al dominio guardado, pero la redirección operativa sigue pendiente (ver §13.4 y §8).
 - **`CLIENT_URL`:** decisión abierta y sin cambios por esta feature (ver §8/§15).
@@ -1000,7 +1017,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Estado:** cambios **commiteados en `389403d`** (2026-10-19); **deploy pendiente**. **Sin migración de BD:** solo se actualizó el JSONB `events.invitation` del evento id 2 (`custom_domain = "macarenayjorge.com"`); `npm run init-db` no aplica.
 
-> ⚠️ **Histórico/superado (2026-10-23):** esta sección describe la **antigua** "La estancia" combinada (hoteles + cómo llegar). Fue reemplazada por **Viaje** y **Hospedaje** independientes (base `4773112` desplegada; ajustes `8d70217`/`efb424b` pendientes; ver **§15.2**). `Lodging.jsx` y `lodgingLinks.js` fueron eliminados en `4773112`; `FeaturedHotel`/`SecondaryHotel`/`StayAction`/`hotelLinks` ya no existen. Los hoteles de abajo quedan como **datos legado** en `invitation.lodging` (el evento 2 los conserva) y la UI nueva no los renderiza.
+> ⚠️ **Histórico/superado (2026-11-09):** esta sección describe la **antigua** "La estancia" combinada (hoteles + cómo llegar). Fue reemplazada por **Viaje** y **Hospedaje** independientes (base `4773112` desplegada; la UI v3 está en el working tree; ver **§18**). `Lodging.jsx` y `lodgingLinks.js` fueron eliminados en `4773112`; `FeaturedHotel`/`SecondaryHotel`/`StayAction`/`hotelLinks` ya no existen. Los hoteles de abajo se conservan en `invitation.lodging` (el evento 2 mantiene 2) y **v3 sí los renderiza** como “Hotel recomendado” (máx. 2).
 
 **Diseño histórico de la sección ("La estancia", antes "Hospedaje y viaje"):**
 
@@ -1058,14 +1075,14 @@ Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlac
 - `README.md` — guía general (setup, scripts, API completa). Menciona **Railway** para el dominio personalizado (correcto; plataforma confirmada el 2026-10-11; ver §7).
 - `AUDITORIA.md` — auditoría de bugs del panel y de la landing/SEO, y su estado (resueltos/abiertos; §4.5 = hallazgos del 2026-09-11).
 - `PLAN_INVITACIONES_MULTIFORMATO.md` — plan de la reestructuración multiformato.
-- `INVITACION_BODA_JORGE_MACARENA.md` — doc de datos dinámicos de la plantilla, **actualizado al diseño v2** (2026-10-11) y, el **2026-10-22**, con la cuenta Connect única por evento, la UI de monto libre sin sugeridos (§15.1) y el contrato **Viaje/Hospedaje `trip`/`stay`** (§15.2).
-- `Invitación Macarena & Jorge/` — mock de referencia del rediseño v2 (`.dc.html` + `Flor`/`Ramillete` + `support.js`; **sin seguimiento en git** al 2026-10-11).
+- `INVITACION_BODA_JORGE_MACARENA.md` — doc de datos dinámicos de la plantilla, **actualizado al diseño v3** (2026-11-09): reemplazo en sitio, contrato extendido (`og_image`, `icebreaker`, `recommendations`, `locations`, `bank.clabe`, `bank_eur`, `stay.quote`), RSVP/Regalo v3, endpoints de mensajes y pendientes.
+- `Invitación Macarena & Jorge/` — mock de referencia del rediseño v2 (`.dc.html` + `Flor`/`Ramillete` + `support.js`; **sin seguimiento en git** al 2026-10-11). El paquete v3 vive en `invitacion-macarena-jorge-v3/` (+ `.zip`), también sin seguimiento.
 - `FORMATO LISTA DE INVITADOS 2026.xlsx` — archivo de cliente (git-ignored por patrón `*.xlsx`).
 - `render.yaml` — definición **legacy de Render** (Railway no la usa; se conserva o se borra por decisión humana).
 
 ### Historial reciente relevante (git)
 
-> El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`** (ver §15.1).
+> El trabajo de **§18** (rediseño v3) está en el **working tree, sin commit ni push** al 2026-11-09: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`** (ver §15.1).
 
 | Commit | Descripción |
 | ------ | ----------- |
@@ -1115,3 +1132,114 @@ Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlac
 | `ce94101` | Docs: README/PLAN/AUDITORIA (PostgreSQL/Supabase + post-reestructuración). |
 | `9387c15` | Invitación: secciones unificadas en `shared/`, temas como datos, editor schema-driven, retiro de 3D. |
 | `b56f86d` | Invitación: contrato formal (zod) + normalización + backfill v2. |
+
+---
+
+## 18. Boda Jorge & Macarena — rediseño v3 (2026-11-09, working tree)
+
+**Estado y alcance**
+
+- La plantilla **`boda_jorge_macarena` fue reemplazada en sitio** por el diseño **v3**. **No hay plantilla nueva ni selector v2/v3**: el mismo `template` y el mismo `BodaJorgeMacarenaLayout.jsx` montan ahora las secciones v3.
+- El cambio está en el **working tree, sin commit ni push** al 2026-11-09. El v2 (§15) y el diseño nocturno anterior (§6/§16 histórico) quedan como referencia.
+- **No se tocó `alice_xv`**. Los archivos v2 de la boda siguen en disco (`Hero.jsx`, `Story.jsx`, `Locations.jsx`, `Itinerary.jsx`, `DressCode.jsx`, `Gifts.jsx`, `Travel.jsx`, `Stay.jsx`, `ZoneMap.jsx`, `Footer.jsx`, `SectionPhoto.jsx`, `flora.jsx`, `Grain.jsx`), pero el layout **ya no los importa**.
+- La **portada del dominio propio** (`MacarenaJorgeCover.jsx`) también se actualizó a v3 (ver §16).
+
+**Diseño**
+
+- **Papel de algodón** (`.algodon`): fondo `#F5F4F1` con texturas SVG de ruido/fibra y sombra interior; hoja con marco y acabado **letterpress** (`text-shadow` claro/oscuro).
+- **Marco nazarí** (`NazariFrame` + reglas `.nzx`/`.nzy`/`.nzc`): greca superior/inferior, laterales y esquinas geométricas.
+- **Granada en acuarela** (`.granada`, SVG con turbulencia/desplazamiento y `mix-blend-mode: multiply`) y **dibujos `.webp` con multiply** (`.mj-drawing`), de modo que el papel se transparenta.
+- **Tipografías:** **Cormorant Upright** (display; fallback Cormorant Garamond/Georgia) y **Nikolai Condensed** (labels; fallback Nikolai/Noto Serif Display/Georgia). `v3.css` importa Cormorant Upright y Noto Serif Display desde Google Fonts; Nikolai se declara con `@font-face` local en `/fonts/Nikolai-Condensed.woff2`.
+- **Orden de tarjetas:** Portada · Granada, España · Icebreaker · Ceremonia · Celebración · Vestimenta · Recomendaciones · Viaje · Hospedaje · Confirmación · Regalo · Cierre.
+- **No se montan:** Itinerario, Galería, Contactos, portada genérica (`hero_image`/`kicker`/`tagline`) ni fondos de foto por sección. `gallery`, `hero_image` y `contacts` quedan vacíos en el seed.
+- **Sobre editorial v3** (`EditorialEnvelope.jsx`): papel blanco/algodón, sello gris “M&J”, secuencia solapa → sello → carta → pantalla completa → fundido; conserva el bloqueo de scroll y `prefers-reduced-motion`.
+- **Música** (`MusicToggle.jsx`): se mantiene; el botón solo se monta si `cfg.music_url` tiene valor. Sin autoplay y en loop.
+- **Revelado** (`useV3Reveal`): `[data-rv]`/`[data-foto]` con `IntersectionObserver`, umbral 0.12 y respeto a `prefers-reduced-motion`.
+
+**Componentes nuevos (`client/src/invitation/boda_jorge_macarena/v3/`)**
+
+| Archivo | Rol |
+| ------- | --- |
+| `index.js` | Re-exporta `ui.jsx`. |
+| `ui.jsx` | Primitivas y defaults: `DEFAULT_STORY`, `DEFAULT_ICEBREAKER_TEXT`, `DEFAULT_RECOMMENDATIONS`, `DEFAULT_LOCATION_EYEBROWS`, `DEFAULT_LODGING`, `DEFAULT_DRESS`, `DEFAULT_STAY_QUOTE`, `WEDDING_TARGET`, `RSVP_DEADLINE_DEFAULT`; `NazariFrame`, `OrnamentRule`, `Eyebrow`, `InfoCard`, `PaperCard`, `Button`, `Drawing`, `useV3Reveal`, copiado. |
+| `assets.js` | `V3_DIR`, `v3Asset`, `resolveInvitationImage` (http(s), `/uploads`, `invitations/…`; rechaza valores inseguros) y mapa `V3` de los `.webp` + `og` + `webiLogo`. |
+| `CoverSection.jsx` | Portada: nombres, fecha sobre el dibujo, cuenta regresiva (`useCountdown`) y “Desliza”. |
+| `StorySection.jsx` | “Granada, España”: dibujo y relato (`story`; párrafos separados por línea en blanco). |
+| `IcebreakerSection.jsx` | Tarjeta previa con fecha/horario y dibujo configurable. |
+| `LocationSection.jsx` | Una hoja por ubicación: eyebrow (Ceremonia/Celebración), descripción, hora/cuándo, dibujo y mapa estático; enlace a Google Maps. |
+| `DressCodeSection.jsx` | Vestimenta: etiquetas + nota + dibujo. |
+| `RecommendationsSection.jsx` | Lista de recomendaciones con iconos `shoe`/`weather`/`transport`/`stay`. |
+| `TravelSection.jsx` | Viaje: llegada fija Madrid, origen por `trip.origins`, fechas, avión/autobús y proveedores (incluye Iberia/Aeroméxico); **sin tren**. |
+| `StaySection.jsx` | Hospedaje: máximo 2 hoteles de `lodging`, mapa estático del Albaicín, fechas, tarjetas de plataforma y cita (`stay.quote`/`quote_author`). |
+| `RsvpSection.jsx` | RSVP propio v3 (ver abajo). |
+| `GiftsSection.jsx` | Regalo v3 (ver abajo). |
+| `ClosingSection.jsx` | Cierre: dibujo, frase, monograma, lugar/fecha, badge Webi y “DisplayEvent” salvo `hideBrand`. |
+
+El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`** (scope `.mjv3` y `[data-invitation-theme="boda_jorge_macarena"]`), importado por el layout, el sobre y la portada del dominio.
+
+**Editor**
+
+- **`client/src/pages/event/BodaJorgeMacarenaV3Editor.jsx`** (visible solo con `template === "boda_jorge_macarena"`), integrado en `EventInvitation.jsx`. Agrupa:
+  - “Granada, España · relato y música”: `story`, `music_url` (URL + subida de audio) y `og_image` (subida o URL).
+  - **Icebreaker:** `icebreaker.enabled/eyebrow/title/text/date_label/time_place_label/image`.
+  - **Recomendaciones:** `recommendations.enabled/eyebrow/title/image/items[]` (`icon`, `title`, `text`; iconos shoe/weather/transport/stay).
+  - **Ceremonia y celebración:** `locations[]` extendidas (`label`, `place`, `url`, `description`, `time_label`, `time_value`, `when_label`, `when_value`, `image`, `map_image`); la primera se rotula ceremonia y la segunda celebración.
+  - **Hoteles recomendados:** `lodging[]` (máximo 2) con `name`, `note`, `url`.
+  - **Hospedaje · cita:** `stay.quote`, `stay.quote_author`.
+  - **Correo para mensajes de los novios:** `gift_message_email` (nivel evento; se guarda con `PUT /api/events/:id`, no en el JSONB de invitación).
+  - **Viaje/Hospedaje:** reutiliza `StayTravelEditor.jsx`.
+- **Ocultamiento en `EventInvitation.jsx` cuando `isV3`:** Portada genérica (Hero), Itinerario, Ubicaciones genéricas, Galería y Contactos. También se retiró `registry_note` de los campos del formato. `CUSTOM_EXTRA_KEYS` excluye de la grilla genérica `story`, `music_url`, `og_image`, `lodging`, `travel`, `stay`, `trip`, `icebreaker.*`, `recommendations.*`, `stay.quote*`, `registry.bank.clabe` y `registry.bank_eur.*`.
+- Al guardar la boda v3 se fuerza `registry.allow_custom = true` (el diseño usa monto libre; evita que una configuración vieja bloquee la pasarela).
+- `StayTravelEditor.jsx` fuerza `trip.modes.train.enabled = false` al abrir la boda v3 y no ofrece el modo tren en la UI.
+
+**RSVP v3 (`v3/RsvpSection.jsx`)**
+
+- Usa **familias reales** (`family` → “Familia X”) y la lista de `guests` del grupo; **no muestra “Líder”** ni el modal/contactos de `shared/Rsvp.jsx` (la boda ya no usa el RSVP compartido).
+- **Plazo:** `rsvp_editable` + `rsvp_edit_deadline`; la fecha se muestra en **hora de España** (`Europe/Madrid`) y hay contador días/horas/min. Estados:
+  - **Enviado:** sobre animado + “¡Gracias, Familia X!”; botón **“Modificar respuesta”** si sigue editable.
+  - **Plazo cerrado:** “El plazo de confirmación ha terminado” si no hay respuesta; si ya respondió, resumen y “El plazo para modificar la confirmación terminó.”
+  - **Edición:** permitida mientras `rsvp_editable` y no vencido; el formulario precarga las respuestas.
+- Envío a `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids` y `note` (preserva la nota existente). El botón queda deshabilitado hasta responder por todos los pases; `preview` no envía.
+
+**Regalo v3 (`v3/GiftsSection.jsx`)**
+
+- Moneda **MXN/EUR** y monto libre (sin chips de sugeridos). El banco cambia de bloque según moneda: **México** (banco, titular, cuenta, **CLABE**, concepto) y **España** (banco, titular, **IBAN**, concepto); títulos “Desde México”/“Desde España”.
+- **Stripe:** si `registry.payment_link_url` existe, el CTA abre el **Payment Link** externo; si no, crea una **Checkout Session embebida** (`POST /api/invitations/:token/payment` → `client_secret`; `createEmbeddedCheckoutPage`/`initEmbeddedCheckout`). Maneja `?payment=success|cancelled`, errores y reintento. `payment_methods.card[moneda]` sigue gobernando la disponibilidad.
+- **Mensaje a los novios:** el textarea **solo aparece tras copiar la CLABE (MXN) o el IBAN (EUR) o tocar “Pagar con tarjeta”**; se envía a `POST /api/invitations/:token/gift-message` con `message`, `currency`, `channel` (`transfer`/`card`) y `amount` opcional. Se guarda siempre; el correo es best-effort. La confirmación es “¡Gracias! Vuestro mensaje ya está en camino a los novios.”
+- La cuenta EUR queda **deshabilitada** por defecto (`registry.bank_eur.enabled:false`) hasta configurarla en el panel.
+
+**Backend y datos**
+
+- **BD** (`server/src/db/schema.sql`): tabla **`gift_messages`** (`id`, `event_id` FK, `group_id` FK nullable, `sender_name`, `message`, `amount_minor` BIGINT, `currency`, `channel`, `created_at`, `read_at`) + índice `idx_gift_messages_event` + RLS. Columna **`events.gift_message_email`** (`VARCHAR(255)`). Ambas se crean con `npm run init-db`, **aún no ejecutado contra Supabase producción**.
+- **Endpoints:**
+  - `POST /api/invitations/:token/gift-message` (público, rate limit 10/15 min): mensaje ≤1000; `amount` entero ≥0 y ≤`MAX_AMOUNT`; `currency` mxn/eur; `channel` transfer/card. Guarda en `gift_messages`; responde `{ ok:true }` aunque falle el correo.
+  - `GET /api/events/:id/gift-messages` (dueño): lista del más reciente al más antiguo.
+  - `PATCH /api/events/:id/gift-messages/:messageId` (dueño): `{ read: boolean }`; set/clear `read_at`.
+  - `PUT /api/events/:id`: acepta `gift_message_email` (ausente = conservar; `""`/`null` = borrar; valida formato y longitud).
+- **Correo** (`server/src/utils/mailer.js`): `sendGiftMessageEmail` usa Brevo o SMTP; destinatario `gift_message_email` con **fallback al email del dueño**; asunto “Nuevo mensaje para {evento}”; incluye familia/grupo, líder si existe, monto (“No indicó monto” si vacío), canal, fecha en **hora de España** y enlace al panel `/events/:id/mensajes`. Los fallos se loguean y no rompen la respuesta pública.
+- **OG** (`server/src/utils/ogMeta.js`): prioridad de imagen `og_image` → `hero_image` → `gallery[0]` → `og-image.png`. `findInvitationByToken` incluye `gift_message_email` solo para el envío privado; **no se expone** en respuestas públicas.
+- **Panel:** `EventMessages.jsx` + ruta `/events/:id/mensajes` + entrada “Mensajes” en el sidebar; `api.events.giftMessages` / `markGiftMessageRead` y `api.invitations.giftMessage`.
+
+**Datos (`server/src/scripts/update-event-macarena-v3.js`)**
+
+- Script **idempotente y no destructivo** (merge del JSONB `invitation`) para el evento id 2 (o nombre Macarena+Jorge, con verificación). Por defecto **dry-run**; escribe solo con **`--apply`**. No toca `gift_message_email` (columna del evento).
+- Actualiza: `template/version/couple`; `story`; `icebreaker` (enabled, textos, fecha “Martes 8 de junio”, “Por confirmar”); `recommendations` (4 items); `locations` (San Pedro y San Pablo / Carmen de los Chapiteles, con descripción, horas, imágenes y mapas); `dress_code` Formal + nota; `itinerary: []`; `gallery: []`; `hero_image: ""`; `contacts: []`; `og_image: invitations/macarena-jorge-v3/og-v3.jpg`; `lodging` (Hotel Alhambra Palace y Parador de Granada, máx. 2); `stay` (Albaicín, 2027-06-08/12, tarjetas Booking/Airbnb/Trivago/Google Hotels, cita de Icaza); `trip` (4 orígenes, llegada Madrid, fechas, 1 adulto, avión y autobús on, **tren off**); `registry` (allow_custom, mínimos, BBVA + CLABE, `bank_eur` deshabilitada, conserva `enabled/stripe_enabled/payment_link_url/sugeridos`); `rsvp_editable: true`; `rsvp_edit_deadline: 2027-02-21T14:00:00+01:00`. Conserva `music_url`.
+- **No ejecutado contra Supabase producción.** El esquema (`init-db`) también está pendiente allí.
+
+**Decisiones v3**
+
+- **Contactos ocultos:** ni la portada ni el RSVP ni el cierre muestran `contacts`/`contact_note`; el seed los vacía.
+- **Música:** se conserva `music_url`; el botón solo aparece si hay URL.
+- **Tren apagado:** `trip.modes.train.enabled = false`; Viaje solo muestra avión y autobús.
+- **Fidelidad de diseño sobre contraste:** se mantiene la paleta baja en contraste del prototipo (tinta `#585C62`, títulos `#74787E`, papel `#F5F4F1`) y el letterpress; no se ajustaron colores para AA.
+- **Portada del dominio también v3:** `MacarenaJorgeCover.jsx` reutiliza los componentes v3 y los dibujos del paquete, no `gallery`/`hero_image`.
+- **Sin plantilla nueva ni selector v2/v3:** el reemplazo es en sitio.
+
+**Pendientes reales**
+
+- [ ] **Falta `client/public/fonts/Nikolai-Condensed.woff2`** (el directorio existe vacío); mientras no se suba, Nikolai cae al fallback.
+- [ ] **`npm run init-db` y el seed `--apply` no se ejecutaron contra Supabase producción.** La tabla `gift_messages` y `events.gift_message_email` no existen allí todavía; la bandeja y el aviso por correo fallarán hasta aplicarlos.
+- [ ] **Cuenta española deshabilitada** (`registry.bank_eur.enabled:false`) hasta configurarla en el panel.
+- [ ] **Assets:** `client/public/invitations/macarena-jorge-v3/` contiene **15 imágenes** (14 `.webp` + `og-v3.jpg`) + `webi-logo.png`; confirmar que entran al build/deploy.
+- [ ] **Commit/deploy + smoke:** no hay commit v3; falta `npm run build`, smoke de la invitación/portada, OG con crawler y verificación de la bandeja de mensajes.
+- [ ] **Verificar el guardado real del editor con sesión** (bloques nuevos) y la subida de audio/OG.

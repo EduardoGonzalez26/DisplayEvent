@@ -180,34 +180,24 @@ export const EXTRA_FIELDS = {
     {
       key: "couple.nameA",
       label: "Nombre del novio",
-      placeholder: "Andrés",
+      placeholder: "Jorge",
       type: "text",
       required: true,
     },
     {
       key: "couple.nameB",
       label: "Nombre de la novia",
-      placeholder: "María",
+      placeholder: "Macarena",
       type: "text",
       required: true,
     },
-    {
-      key: "registry_note",
-      label: "Mesa de regalos",
-      placeholder:
-        "Ej. Compartiremos una mesa de regalos. Si desean apoyarnos con un detalle, será bienvenido.",
-      type: "textarea",
-      required: false,
-    },
-    // Campos congelados del rediseño editorial v2. La historia y la música
-    // se editan en una sección propia del editor; hospedaje y viaje tienen
-    // editor dedicado (tipos `lodging`/`travel`, con UI a medida). Aquí se
-    // declaran para que el contrato quede documentado junto al resto.
+    // Campos v3. El editor dedicado los renderiza con UI a medida; aquí
+    // quedan documentados junto al contrato y fuera de la grilla genérica
+    // "Datos del formato" (solo nombres de la pareja).
     {
       key: "story",
-      label: "Nuestra historia",
-      placeholder:
-        "Cuenten su historia… Los saltos de línea se respetan en la invitación.",
+      label: "Granada, España (relato)",
+      placeholder: "El relato se separa en párrafos con una línea en blanco.",
       type: "textarea",
       required: false,
     },
@@ -219,15 +209,123 @@ export const EXTRA_FIELDS = {
       required: false,
     },
     {
+      key: "og_image",
+      label: "Imagen para compartir (OG)",
+      placeholder: "https://…",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "icebreaker.enabled",
+      label: "Activar Icebreaker",
+      type: "boolean",
+      required: false,
+    },
+    {
+      key: "icebreaker.eyebrow",
+      label: "Icebreaker · eyebrow",
+      placeholder: "Antes del gran día",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "icebreaker.title",
+      label: "Icebreaker · título",
+      placeholder: "Icebreaker",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "icebreaker.text",
+      label: "Icebreaker · texto",
+      type: "textarea",
+      required: false,
+    },
+    {
+      key: "icebreaker.date_label",
+      label: "Icebreaker · fecha",
+      placeholder: "Martes 8 de junio",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "icebreaker.time_place_label",
+      label: "Icebreaker · horario y lugar",
+      placeholder: "Por confirmar",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "recommendations.enabled",
+      label: "Activar recomendaciones",
+      type: "boolean",
+      required: false,
+    },
+    {
+      key: "recommendations.items",
+      label: "Recomendaciones",
+      itemLabel: "Recomendación",
+      type: "recommendations",
+      required: false,
+    },
+    {
       key: "lodging",
-      label: "Hospedaje (hoteles)",
+      label: "Hoteles recomendados",
       itemLabel: "Hotel",
       type: "lodging",
       required: false,
     },
     {
+      key: "stay.quote",
+      label: "Hospedaje · cita",
+      type: "textarea",
+      required: false,
+    },
+    {
+      key: "stay.quote_author",
+      label: "Hospedaje · autor de la cita",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "registry.bank.clabe",
+      label: "CLABE (MXN)",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "registry.bank_eur.enabled",
+      label: "Activar cuenta en euros",
+      type: "boolean",
+      required: false,
+    },
+    {
+      key: "registry.bank_eur.bank_name",
+      label: "Cuenta EUR · banco",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "registry.bank_eur.holder",
+      label: "Cuenta EUR · titular",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "registry.bank_eur.iban",
+      label: "Cuenta EUR · IBAN",
+      type: "text",
+      required: false,
+    },
+    {
+      key: "registry.bank_eur.concept",
+      label: "Cuenta EUR · concepto",
+      type: "text",
+      required: false,
+    },
+    {
       key: "travel",
-      label: "Viaje",
+      label: "Viaje (legado)",
       type: "travel",
       required: false,
     },

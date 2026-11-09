@@ -11,12 +11,14 @@ import {
   resolveStripeDestination,
 } from "../utils/stripeDestination.js";
 import { clientUrl } from "../utils/clientUrl.js";
+import { sendGiftMessageEmail } from "../utils/mailer.js";
 
 const router = Router();
 
 const invitationViewLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 120 });
 const rsvpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
 const paymentLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+const giftMessageLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 
 const SUPPORTED_CURRENCIES = ["mxn", "eur"];
 
@@ -178,6 +180,110 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
       note: cleanNote ?? null,
       guests: updatedGuests,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ------------------------------------------------------------------
+   Mensaje privado para los novios (v3).
+
+   Público (token de invitación). El mensaje SIEMPRE se guarda; el aviso
+   por correo es best-effort: si no hay canal, destinatario o el envío
+   falla, se loguea y el invitado recibe igualmente `{ ok: true }`.
+------------------------------------------------------------------ */
+
+router.post("/:token/gift-message", giftMessageLimiter, async (req, res, next) => {
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+  if (!message) {
+    return res.status(400).json({ error: "El mensaje no puede estar vacío" });
+  }
+  if (message.length > 1000) {
+    return res.status(400).json({ error: "El mensaje no puede superar los 1000 caracteres" });
+  }
+
+  // QA: el frontend puede enviar `amount: 0` cuando el invitado deja el monto
+  // vacío. Se trata como "sin monto": no se exige moneda, no se guarda
+  // `amount_minor`/`currency` y el correo recibe `null` ("No indicó monto").
+  // Los montos negativos, decimales o de tipo inválido siguen dando 400.
+  const hasAmount =
+    body.amount !== undefined && body.amount !== null && body.amount !== 0;
+  let amountMinor = null;
+  let currency = null;
+  if (hasAmount) {
+    if (!Number.isInteger(body.amount) || body.amount < 0) {
+      return res.status(400).json({ error: "El monto debe ser un entero mayor o igual a 0" });
+    }
+    if (body.amount > MAX_AMOUNT) {
+      return res.status(400).json({ error: `El monto máximo es ${MAX_AMOUNT}` });
+    }
+    if (!SUPPORTED_CURRENCIES.includes(body.currency)) {
+      return res.status(400).json({ error: 'Moneda inválida: usa "mxn" o "eur"' });
+    }
+    amountMinor = body.amount * 100;
+    currency = body.currency;
+  }
+
+  const channel =
+    body.channel === undefined || body.channel === null ? "transfer" : body.channel;
+  if (channel !== "transfer" && channel !== "card") {
+    return res.status(400).json({ error: 'Canal inválido: usa "transfer" o "card"' });
+  }
+
+  try {
+    const inv = await findInvitationByToken(req.params.token);
+    if (!inv) return res.status(404).json({ error: "Invitación no encontrada" });
+
+    const senderName =
+      typeof inv.name === "string" ? inv.name.trim().slice(0, 255) : "";
+
+    await query(
+      `INSERT INTO gift_messages
+         (event_id, group_id, sender_name, message, amount_minor, currency, channel)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [inv.event_id, inv.group_id, senderName, message, amountMinor, currency, channel]
+    );
+
+    // Aviso por correo: privado (gift_message_email) con respaldo en el email
+    // del dueño del evento. Cualquier fallo aquí no afecta la respuesta.
+    try {
+      let recipient =
+        typeof inv.gift_message_email === "string" ? inv.gift_message_email.trim() : "";
+      if (!recipient && inv.owner_user_id) {
+        const owners = await query(`SELECT email FROM users WHERE id = $1 LIMIT 1`, [
+          inv.owner_user_id,
+        ]);
+        recipient = owners[0]?.email ? String(owners[0].email).trim() : "";
+      }
+
+      if (!recipient) {
+        console.warn(
+          "[gift-message] Mensaje guardado sin aviso: no hay correo configurado",
+          { event_id: inv.event_id }
+        );
+      } else {
+        await sendGiftMessageEmail({
+          to: recipient,
+          eventName: inv.event_name,
+          senderName,
+          senderLeader: inv.leader_name || "",
+          message,
+          amount: hasAmount ? body.amount : null,
+          currency,
+          channel,
+          eventId: inv.event_id,
+        });
+      }
+    } catch (mailErr) {
+      console.error(
+        "[gift-message] No se pudo enviar el aviso por correo:",
+        mailErr.message
+      );
+    }
+
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

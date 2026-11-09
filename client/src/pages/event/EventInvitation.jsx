@@ -15,7 +15,8 @@ import {
   serializeForm,
   withUid,
 } from "../../invitation/schema/normalize.js";
-import StayTravelEditor from "./StayTravelEditor.jsx";
+import BodaJorgeMacarenaV3Editor from "./BodaJorgeMacarenaV3Editor.jsx";
+import { FileUploader } from "./editorFields.jsx";
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SLUG_MIN = 3;
@@ -28,10 +29,27 @@ const SLUG_MAX = 60;
 const CUSTOM_EXTRA_KEYS = new Set([
   "story",
   "music_url",
+  "og_image",
   "lodging",
   "travel",
   "stay",
   "trip",
+  "icebreaker.enabled",
+  "icebreaker.eyebrow",
+  "icebreaker.title",
+  "icebreaker.text",
+  "icebreaker.date_label",
+  "icebreaker.time_place_label",
+  "recommendations.enabled",
+  "recommendations.items",
+  "stay.quote",
+  "stay.quote_author",
+  "registry.bank.clabe",
+  "registry.bank_eur.enabled",
+  "registry.bank_eur.bank_name",
+  "registry.bank_eur.holder",
+  "registry.bank_eur.iban",
+  "registry.bank_eur.concept",
 ]);
 
 /* ------------------------------------------------------------------
@@ -124,173 +142,6 @@ function domainFormatError(domain) {
   return "";
 }
 
-/* ------------------------------------------------------------------
-   Subida de archivos del editor (imágenes y audio) vía POST /api/uploads.
-   El endpoint acepta imágenes (JPG/PNG/WEBP/GIF, 8 MB) y audio
-   (MP3/M4A/OGG, 15 MB), y responde { url }. La configuración por tipo
-   (accept, mimes, límite y textos) vive en `UPLOAD_KINDS`; el componente
-   se usa igual para la foto de portada (kind="image", por defecto) y para
-   el archivo de música (kind="audio").
------------------------------------------------------------------- */
-
-// Extensión -> mimetype esperado. Se usa SOLO como respaldo cuando el
-// navegador no reporta `file.type` (evita rechazar audios válidos) y para
-// re-envolver el archivo con el mime correcto antes de subirlo.
-const EXT_TO_MIME = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  mp3: "audio/mpeg",
-  m4a: "audio/mp4",
-  ogg: "audio/ogg",
-};
-
-const UPLOAD_KINDS = {
-  image: {
-    accept: "image/jpeg,image/png,image/webp,image/gif",
-    mimes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-    maxBytes: 8 * 1024 * 1024,
-    emptyText: "Sin imagen",
-    idleLabel: "Subir imagen",
-    replaceLabel: "Reemplazar imagen",
-    mimeError: "Solo se permiten imágenes JPG, PNG, WEBP o GIF",
-    sizeError: "La imagen supera el tamaño máximo de 8 MB",
-    help: "Se almacena vía API de subida (Cloudinary o disco local). Sube la imagen directamente, sin URL.",
-  },
-  audio: {
-    accept: ".mp3,.m4a,.ogg,audio/*",
-    mimes: ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg"],
-    maxBytes: 15 * 1024 * 1024,
-    emptyText: "Sin audio",
-    idleLabel: "Subir audio",
-    replaceLabel: "Reemplazar audio",
-    mimeError: "Solo se permiten audios MP3, M4A u OGG",
-    sizeError: "El audio supera el tamaño máximo de 15 MB",
-    help: "MP3, M4A u OGG · máx. 15 MB.",
-  },
-};
-
-// Extensión en minúsculas de un nombre de archivo ("" si no tiene).
-function fileExt(name) {
-  const parts = String(name || "").split(".");
-  return parts.length > 1 ? parts.pop().toLowerCase() : "";
-}
-
-/* Valida tamaño y tipo ANTES de subir (espejo del endpoint). El mime que
-   reporta el navegador manda; si viene vacío se infiere por extensión y, en
-   ese caso, se re-envuelve el File con el mime inferido para que el backend
-   lo acepte con su content-type correcto. Devuelve `{ file }` o `{ error }`. */
-function validateUploadFile(file, config) {
-  if (file.size > config.maxBytes) return { error: config.sizeError };
-  const inferred = EXT_TO_MIME[fileExt(file.name)] || "";
-  const mime = file.type || inferred;
-  if (mime && !config.mimes.includes(mime)) return { error: config.mimeError };
-  if (!file.type && inferred && config.mimes.includes(inferred)) {
-    try {
-      return { file: new File([file], file.name, { type: inferred }) };
-    } catch {
-      /* noop: navegadores sin constructor File conservan el original */
-    }
-  }
-  return { file };
-}
-
-/* Ícono de nota musical (estado "audio cargado"). */
-function MusicNoteIcon({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={className}
-    >
-      <path d="M9 18V6l10-2v12" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="16.5" cy="16" r="2.5" />
-    </svg>
-  );
-}
-
-function FileUploader({ label, value, onChange, kind = "image", onUploadingChange }) {
-  const config = UPLOAD_KINDS[kind] || UPLOAD_KINDS.image;
-  const inputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleFiles = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setError("");
-    const { file: safeFile, error: validationError } = validateUploadFile(file, config);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setUploading(true);
-    // Avisa al editor: mientras haya una subida en curso, "Guardar cambios"
-    // se deshabilita para no persistir el valor anterior del campo.
-    onUploadingChange?.(true);
-    try {
-      const { url } = await api.upload(safeFile);
-      onChange(url);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setUploading(false);
-      onUploadingChange?.(false);
-    }
-  };
-
-  return (
-    <div>
-      <div className="flex items-start gap-3">
-        {value ? (
-          kind === "audio" ? (
-            <div className="w-28 h-20 shrink-0 rounded-lg border border-gold-400/30 grid place-items-center text-gold-300">
-              <MusicNoteIcon className="w-6 h-6" />
-            </div>
-          ) : (
-            <img src={value} alt={label} className="w-28 h-20 shrink-0 rounded-lg border border-gold-400/30 object-cover" />
-          )
-        ) : (
-          <div className="w-28 h-20 shrink-0 rounded-lg border border-dashed border-gray-700 grid place-items-center text-gray-600 text-xs">
-            {config.emptyText}
-          </div>
-        )}
-        <div className="flex-1">
-          <span className="text-sm text-gray-400 mb-1.5 block">{label}</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={config.accept}
-            className="hidden"
-            onChange={handleFiles}
-          />
-          <div className="flex gap-2 items-center">
-            <Button type="button" variant="secondary" disabled={uploading} onClick={() => inputRef.current?.click()}>
-              {uploading ? "Subiendo…" : value ? config.replaceLabel : config.idleLabel}
-            </Button>
-            {value && (
-              <button type="button" onClick={() => onChange("")} className="text-sm text-red-500 hover:text-red-400">
-                Quitar
-              </button>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1.5">{config.help}</p>
-        </div>
-      </div>
-      {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
-    </div>
-  );
-}
-
 // Editor de lista de montos (suggested_mxn / suggested_eur). Los valores se
 // editan como strings y `normalizeRegistry` los coerce a enteros al guardar.
 function AmountListEditor({ inputCls, label, values, onChange }) {
@@ -349,6 +200,8 @@ export default function EventInvitation() {
     setFileUploading(fileUploadsRef.current > 0);
   };
   const [event, setEvent] = useState(null);
+  // Correo (nivel evento) que recibe los mensajes de la sección Regalo.
+  const [giftMessageEmail, setGiftMessageEmail] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -434,6 +287,7 @@ export default function EventInvitation() {
 
   useEffect(() => {
     setEvent(null);
+    setGiftMessageEmail("");
     setSlug("");
     setCustomDomain("");
     setStripeAccountId("");
@@ -447,6 +301,7 @@ export default function EventInvitation() {
         setSlug(ev?.slug || slugify(ev?.name || ""));
         setCustomDomain(ev?.custom_domain || "");
         setStripeAccountId(ev?.stripe_account_id || "");
+        setGiftMessageEmail(ev?.gift_message_email || "");
       })
       .catch(() => setEvent(null));
     api.templates.list().then(setTemplates).catch(() => setTemplates([]));
@@ -567,6 +422,8 @@ export default function EventInvitation() {
   // dot-path reutiliza `setField`; las listas de montos se editan como arrays.
   const setReg = (key, value) => setForm((f) => setField(f, `registry.${key}`, value));
   const setBank = (key, value) => setForm((f) => setField(f, `registry.bank.${key}`, value));
+  const setBankEur = (key, value) =>
+    setForm((f) => setField(f, `registry.bank_eur.${key}`, value));
 
   const listOf = (cfg, key) =>
     Array.isArray(getField(cfg, key)) ? getField(cfg, key) : [];
@@ -677,6 +534,15 @@ export default function EventInvitation() {
       setError(`El dominio personalizado ${domainError}.`);
       return;
     }
+    const emailValue = String(giftMessageEmail || "").trim();
+    if (
+      form.template === "boda_jorge_macarena" &&
+      emailValue &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)
+    ) {
+      setError("El correo para mensajes no tiene un formato válido.");
+      return;
+    }
     const missing = templateFields.filter((f) => {
       const value = getField(form, f.key);
       if (f.type === "list") {
@@ -695,6 +561,15 @@ export default function EventInvitation() {
     setError("");
     try {
       const payload = serializeForm(form);
+      // El diseño v3 usa siempre monto libre: el backend rechaza importes
+      // fuera de suggested_* si allow_custom es false. Se fuerza al guardar
+      // para que una configuración vieja no bloquee la pasarela.
+      if (form.template === "boda_jorge_macarena") {
+        payload.registry = {
+          ...(payload.registry || {}),
+          allow_custom: true,
+        };
+      }
       const requests = [api.events.setInvitation(id, payload)];
       let updatedEvent = null;
       // El slug y el dominio personalizado viven en el evento (no en la config
@@ -708,6 +583,7 @@ export default function EventInvitation() {
           place: event.place,
           slug: slugValue,
           custom_domain: domainValue,
+          gift_message_email: emailValue,
         };
         // Si la cuenta guardada ya no está habilitada o no aparece en la lista,
         // se omite la clave para que el backend conserve el valor almacenado y
@@ -736,6 +612,9 @@ export default function EventInvitation() {
         if (typeof updatedEvent.custom_domain === "string") {
           setCustomDomain(updatedEvent.custom_domain);
         }
+        if (typeof updatedEvent.gift_message_email === "string") {
+          setGiftMessageEmail(updatedEvent.gift_message_email);
+        }
       }
       if (finalSlug && finalSlug !== slugValue) {
         setSlug(finalSlug);
@@ -757,6 +636,7 @@ export default function EventInvitation() {
   if (loading) return <p className="text-gray-400">Cargando…</p>;
 
   const templateFields = getFieldsForTemplate(form.template);
+  const isV3 = form.template === "boda_jorge_macarena";
 
   const inputCls =
     "w-full rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gold-400";
@@ -789,10 +669,13 @@ export default function EventInvitation() {
   const registryCfg = form.registry || {};
   const hasPaymentLink =
     String(registryCfg.payment_link_url || "").trim() !== "";
+  // El diseño v3 usa siempre monto libre; no se ofrece la configuración de
+  // montos sugeridos ni el toggle (se fuerza allow_custom=true al guardar).
+  const allowCustomEffective = isV3 ? true : !!registryCfg.allow_custom;
   const missingSuggestedAmounts =
     !!registryCfg.stripe_enabled &&
     !hasPaymentLink &&
-    !registryCfg.allow_custom &&
+    !allowCustomEffective &&
     ["suggested_mxn", "suggested_eur"].some((key) => {
       const list = registryCfg[key];
       return (
@@ -800,6 +683,23 @@ export default function EventInvitation() {
         list.every((value) => String(value ?? "").trim() === "")
       );
     });
+  // Equivalencia en hora de España del límite local del input. El valor se
+  // guarda como instante ISO UTC en `serializeForm`.
+  const deadlineSpainLabel = (() => {
+    const raw = form.rsvp_edit_deadline;
+    if (!raw) return "";
+    const timestamp = Date.parse(raw);
+    if (!Number.isFinite(timestamp)) return "";
+    try {
+      return new Intl.DateTimeFormat("es-ES", {
+        timeZone: "Europe/Madrid",
+        dateStyle: "long",
+        timeStyle: "short",
+      }).format(new Date(timestamp));
+    } catch {
+      return "";
+    }
+  })();
 
   return (
     <div>
@@ -1079,6 +979,7 @@ export default function EventInvitation() {
           </section>
         )}
 
+        {!isV3 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-4">Portada (Hero)</h2>
           <div className="grid gap-3">
@@ -1113,7 +1014,9 @@ export default function EventInvitation() {
             </label>
           </div>
         </section>
+        )}
 
+        {!isV3 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Itinerario</h2>
@@ -1134,7 +1037,9 @@ export default function EventInvitation() {
             ))}
           </div>
         </section>
+        )}
 
+        {!isV3 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Ubicaciones</h2>
@@ -1159,70 +1064,17 @@ export default function EventInvitation() {
             ))}
           </div>
         </section>
+        )}
 
-        {form.template === "boda_jorge_macarena" && (
-          <>
-            <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-              <h2 className="text-base font-semibold text-white mb-1">
-                Nuestra historia y música
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Relato de la sección "Nuestra historia" y audio de fondo
-                (opcional, sin autoplay).
-              </p>
-              <label className="block">
-                <span className="text-sm text-gray-400 mb-1 block">
-                  Nuestra historia
-                </span>
-                <textarea
-                  className={inputCls}
-                  rows={5}
-                  value={form.story || ""}
-                  onChange={(e) => set("story", e.target.value)}
-                  placeholder={"Cuenten su historia…\nLos saltos de línea se respetan."}
-                />
-                <span className="block text-xs text-gray-500 mt-1.5">
-                  Si la dejas vacía, se usa el "Mensaje de bienvenida" de la
-                  portada.
-                </span>
-              </label>
-              <div className="mt-4">
-                <label className="block">
-                  <span className="text-sm text-gray-400 mb-1 block">
-                    Música (URL del audio)
-                  </span>
-                  <input
-                    className={inputCls}
-                    value={form.music_url || ""}
-                    onChange={(e) => set("music_url", e.target.value)}
-                    placeholder="https://… (MP3 / M4A)"
-                    inputMode="url"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </label>
-                <div className="mt-3">
-                  <FileUploader
-                    label="Archivo de audio"
-                    value={form.music_url || ""}
-                    onChange={(url) => set("music_url", url)}
-                    kind="audio"
-                    onUploadingChange={onFileUploadingChange}
-                  />
-                </div>
-                <span className="block text-xs text-gray-500 mt-1.5">
-                  Se reproduce en bucle al tocar el botón de música. Sin URL, el
-                  botón se oculta.
-                </span>
-              </div>
-            </section>
-
-            <StayTravelEditor
-              form={form}
-              setForm={setForm}
-              inputCls={inputCls}
-            />
-          </>
+        {isV3 && (
+          <BodaJorgeMacarenaV3Editor
+            form={form}
+            setForm={setForm}
+            inputCls={inputCls}
+            onFileUploadingChange={onFileUploadingChange}
+            giftMessageEmail={giftMessageEmail}
+            setGiftMessageEmail={setGiftMessageEmail}
+          />
         )}
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
@@ -1234,6 +1086,7 @@ export default function EventInvitation() {
           </label>
         </section>
 
+        {!isV3 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Contactos (RSVP)</h2>
@@ -1261,6 +1114,7 @@ export default function EventInvitation() {
             <input className={inputCls} value={form.contact_note} onChange={(e) => set("contact_note", e.target.value)} placeholder="Ej. Escríbenos o llámanos si tienes dudas" />
           </label>
         </section>
+        )}
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-1">
@@ -1303,6 +1157,16 @@ export default function EventInvitation() {
                 ni modificar su respuesta. Déjalo vacío para permitir cambios en
                 cualquier momento.
               </p>
+              <p className="text-xs text-gray-500 mt-1.5">
+                Se guarda como un instante (ISO UTC). El cierre de referencia del
+                prototipo es el 21 de febrero de 2027 a las 14:00, hora de España.
+              </p>
+              {deadlineSpainLabel && (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  Equivale a <span className="text-gray-300">{deadlineSpainLabel}</span> en
+                  hora de España.
+                </p>
+              )}
               {form.rsvp_edit_deadline ? (
                 <Button
                   type="button"
@@ -1317,6 +1181,7 @@ export default function EventInvitation() {
           )}
         </section>
 
+        {!isV3 && (
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Galería de fotos</h2>
@@ -1345,12 +1210,16 @@ export default function EventInvitation() {
             </div>
           )}
         </section>
+        )}
 
         <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
           <h2 className="text-base font-semibold text-white mb-1">Mesa de Regalos</h2>
           <p className="text-sm text-gray-500 mb-4">
-            Regalos monetarios: montos sugeridos, depósito bancario y/o pago con
-            tarjeta (Stripe). Disponible en todos los formatos.
+            Regalos monetarios:{" "}
+            {isV3
+              ? "monto libre, depósito bancario y/o pago con tarjeta (Stripe)."
+              : "montos sugeridos, depósito bancario y/o pago con tarjeta (Stripe)."}{" "}
+            Disponible en todos los formatos.
           </p>
 
           <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -1365,15 +1234,28 @@ export default function EventInvitation() {
 
           {form.registry?.enabled && (
             <div className="mt-5 space-y-5 pl-6 border-l border-gray-800">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={!!form.registry?.allow_custom}
-                  onChange={(e) => setReg("allow_custom", e.target.checked)}
-                  className="h-4 w-4 accent-gold-400"
-                />
-                <span className="text-sm text-gray-300">Permitir monto libre</span>
-              </label>
+              {isV3 ? (
+                <div className="rounded-xl border border-gray-800 bg-gray-950/40 px-4 py-3">
+                  <p className="text-sm text-gray-300">
+                    El diseño v3 usa siempre monto libre.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Se guardará <code className="text-gray-300">allow_custom = true</code>{" "}
+                    y el invitado podrá escribir cualquier importe (respetando el
+                    mínimo configurado).
+                  </p>
+                </div>
+              ) : (
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!form.registry?.allow_custom}
+                    onChange={(e) => setReg("allow_custom", e.target.checked)}
+                    className="h-4 w-4 accent-gold-400"
+                  />
+                  <span className="text-sm text-gray-300">Permitir monto libre</span>
+                </label>
+              )}
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <label className="block">
@@ -1400,18 +1282,22 @@ export default function EventInvitation() {
                 </label>
               </div>
 
-              <AmountListEditor
-                inputCls={inputCls}
-                label="Montos sugeridos (MXN)"
-                values={form.registry?.suggested_mxn || []}
-                onChange={(next) => setReg("suggested_mxn", next)}
-              />
-              <AmountListEditor
-                inputCls={inputCls}
-                label="Montos sugeridos (EUR)"
-                values={form.registry?.suggested_eur || []}
-                onChange={(next) => setReg("suggested_eur", next)}
-              />
+              {!isV3 && (
+                <>
+                  <AmountListEditor
+                    inputCls={inputCls}
+                    label="Montos sugeridos (MXN)"
+                    values={form.registry?.suggested_mxn || []}
+                    onChange={(next) => setReg("suggested_mxn", next)}
+                  />
+                  <AmountListEditor
+                    inputCls={inputCls}
+                    label="Montos sugeridos (EUR)"
+                    values={form.registry?.suggested_eur || []}
+                    onChange={(next) => setReg("suggested_eur", next)}
+                  />
+                </>
+              )}
 
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
@@ -1487,12 +1373,21 @@ export default function EventInvitation() {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-sm text-gray-400 mb-1 block">Número de cuenta / CLABE</span>
+                      <span className="text-sm text-gray-400 mb-1 block">Número de cuenta</span>
                       <input
                         className={inputCls}
                         value={form.registry?.bank?.account_number || ""}
                         onChange={(e) => setBank("account_number", e.target.value)}
-                        placeholder="Ej. 0123456789"
+                        placeholder="Ej. 0461843389"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-400 mb-1 block">CLABE (18 dígitos)</span>
+                      <input
+                        className={inputCls}
+                        value={form.registry?.bank?.clabe || ""}
+                        onChange={(e) => setBank("clabe", e.target.value)}
+                        placeholder="Ej. 012180004618433892"
                       />
                     </label>
                     <label className="block">
@@ -1501,12 +1396,73 @@ export default function EventInvitation() {
                         className={inputCls}
                         value={form.registry?.bank?.concept || ""}
                         onChange={(e) => setBank("concept", e.target.value)}
-                        placeholder="Ej. Regalo para Alice"
+                        placeholder="Ej. Regalo Jorge Macarena"
                       />
                     </label>
                   </div>
                 )}
               </div>
+
+              {isV3 && (
+                <div className="rounded-xl border border-gray-800 p-4 space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!form.registry?.bank_eur?.enabled}
+                      onChange={(e) => setBankEur("enabled", e.target.checked)}
+                      className="h-4 w-4 accent-gold-400"
+                    />
+                    <span className="text-sm text-gray-300 font-medium">
+                      Cuenta en euros (España)
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    Mientras esté desactivada, en EUR no se muestra la
+                    transferencia: solo el pago con tarjeta.
+                  </p>
+
+                  {form.registry?.bank_eur?.enabled && (
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="text-sm text-gray-400 mb-1 block">Banco</span>
+                        <input
+                          className={inputCls}
+                          value={form.registry?.bank_eur?.bank_name || ""}
+                          onChange={(e) => setBankEur("bank_name", e.target.value)}
+                          placeholder="Ej. BBVA"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-400 mb-1 block">Titular</span>
+                        <input
+                          className={inputCls}
+                          value={form.registry?.bank_eur?.holder || ""}
+                          onChange={(e) => setBankEur("holder", e.target.value)}
+                          placeholder="Ej. Macarena Pérez"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-400 mb-1 block">IBAN / Cuenta</span>
+                        <input
+                          className={inputCls}
+                          value={form.registry?.bank_eur?.iban || ""}
+                          onChange={(e) => setBankEur("iban", e.target.value)}
+                          placeholder="ES00 0000 0000 0000 0000 0000"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-400 mb-1 block">Concepto</span>
+                        <input
+                          className={inputCls}
+                          value={form.registry?.bank_eur?.concept || ""}
+                          onChange={(e) => setBankEur("concept", e.target.value)}
+                          placeholder="Ej. Regalo Jorge Macarena"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </section>

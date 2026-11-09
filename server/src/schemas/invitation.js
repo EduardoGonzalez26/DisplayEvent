@@ -24,6 +24,22 @@ export const TEMPLATES = [
 ];
 
 /* ------------------------------------------------------------------
+   Defaults del contrato v3 de boda_jorge_macarena (aditivos y comunes:
+   se mantienen también para el resto de templates sin cambiar su
+   comportamiento visible).
+------------------------------------------------------------------ */
+
+const DEFAULT_ICEBREAKER_EYEBROW = "Antes del gran día";
+const DEFAULT_ICEBREAKER_TITLE = "Icebreaker";
+const DEFAULT_RECOMMENDATIONS_EYEBROW = "Para que todo salga perfecto";
+const DEFAULT_RECOMMENDATIONS_TITLE = "Recomendaciones";
+const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "stay"];
+const DEFAULT_RECOMMENDATION_ICON = "stay";
+const DEFAULT_STAY_QUOTE =
+  "«Dale limosna, mujer, que no hay en la vida nada como la pena de ser ciego en Granada.»";
+const DEFAULT_STAY_QUOTE_AUTHOR = "Poeta mexicano: Francisco de Icaza";
+
+/* ------------------------------------------------------------------
    Helpers de normalización (tolerantes, idempotentes, nunca lanzan).
 ------------------------------------------------------------------ */
 
@@ -77,13 +93,30 @@ function normalizeItinerary(v) {
     .filter((it) => it.label || it.time);
 }
 
-// Ubicaciones: [{ label, place, url }].
+// Ubicaciones: contrato v3. Conserva los campos base (`label`, `place`,
+// `url`) y todos los extendidos que usa el diseño (descripción, horarios,
+// cuándo y las dos imágenes). Todos string con default "".
+function normalizeLocationItem(l) {
+  return {
+    label: str(l.label),
+    place: str(l.place),
+    url: str(l.url),
+    description: str(l.description),
+    time_label: str(l.time_label),
+    time_value: str(l.time_value),
+    when_label: str(l.when_label),
+    when_value: str(l.when_value),
+    image: str(l.image),
+    map_image: str(l.map_image),
+  };
+}
+
 function normalizeLocations(v) {
   if (v == null) return [];
   if (!Array.isArray(v)) return v;
   return v
-    .filter((l) => l && typeof l === "object")
-    .map((l) => ({ label: str(l.label), place: str(l.place), url: str(l.url) }))
+    .filter((l) => l && typeof l === "object" && !Array.isArray(l))
+    .map(normalizeLocationItem)
     .filter((l) => l.place);
 }
 
@@ -92,7 +125,7 @@ function normalizeLegacyLocations(itinerary) {
   if (!Array.isArray(itinerary)) return [];
   return itinerary
     .filter((it) => it && typeof it === "object" && it.place)
-    .map((it) => ({ label: str(it.label), place: str(it.place), url: str(it.url) }))
+    .map(normalizeLocationItem)
     .filter((l) => l.place);
 }
 
@@ -329,6 +362,56 @@ function normalizeStay(raw) {
     checkin: str(obj.checkin),
     checkout: str(obj.checkout),
     cards: normalizeStayCards(obj.cards),
+    quote: str(obj.quote) || DEFAULT_STAY_QUOTE,
+    quote_author: str(obj.quote_author) || DEFAULT_STAY_QUOTE_AUTHOR,
+  };
+}
+
+/* ------------------------------------------------------------------
+   Icebreaker y recomendaciones (v3). Objetos siempre presentes y
+   saneados; `recommendations.items` se conserva no-array solo para que
+   la validación zod lo rechace (igual que `gallery` o `travel.routes`).
+------------------------------------------------------------------ */
+
+function normalizeIcebreaker(raw) {
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    eyebrow: str(obj.eyebrow) || DEFAULT_ICEBREAKER_EYEBROW,
+    title: str(obj.title) || DEFAULT_ICEBREAKER_TITLE,
+    text: str(obj.text),
+    date_label: str(obj.date_label),
+    time_place_label: str(obj.time_place_label),
+    image: str(obj.image),
+  };
+}
+
+function normalizeRecommendationIcon(v) {
+  const icon = str(v).toLowerCase();
+  return RECOMMENDATION_ICONS.includes(icon) ? icon : DEFAULT_RECOMMENDATION_ICON;
+}
+
+function normalizeRecommendations(raw) {
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  let items = obj.items;
+  if (items == null) {
+    items = [];
+  } else if (Array.isArray(items)) {
+    items = items
+      .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+      .map((item) => ({
+        icon: normalizeRecommendationIcon(item.icon),
+        title: str(item.title),
+        text: str(item.text),
+      }))
+      .filter((item) => item.title || item.text);
+  }
+  return {
+    enabled: toBool(obj.enabled, false),
+    eyebrow: str(obj.eyebrow) || DEFAULT_RECOMMENDATIONS_EYEBROW,
+    title: str(obj.title) || DEFAULT_RECOMMENDATIONS_TITLE,
+    image: str(obj.image),
+    items,
   };
 }
 
@@ -454,7 +537,7 @@ function toIntArray(v, dflt) {
   return out;
 }
 
-// Datos bancarios (depósito/transferencia).
+// Datos bancarios (depósito/transferencia). `clabe` es aditivo v3.
 function normalizeBank(v) {
   const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
   return {
@@ -462,6 +545,19 @@ function normalizeBank(v) {
     bank_name: str(obj.bank_name),
     holder: str(obj.holder),
     account_number: str(obj.account_number),
+    clabe: str(obj.clabe),
+    concept: str(obj.concept),
+  };
+}
+
+// Cuenta bancaria en euros (v3). Objeto siempre presente y saneado.
+function normalizeBankEur(v) {
+  const obj = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return {
+    enabled: toBool(obj.enabled, false),
+    bank_name: str(obj.bank_name),
+    holder: str(obj.holder),
+    iban: str(obj.iban),
     concept: str(obj.concept),
   };
 }
@@ -480,6 +576,7 @@ export function normalizeRegistry(raw) {
     stripe_enabled: toBool(source.stripe_enabled, false),
     payment_link_url: str(source.payment_link_url).slice(0, PAYMENT_LINK_MAX_LENGTH),
     bank: normalizeBank(source.bank),
+    bank_eur: normalizeBankEur(source.bank_eur),
   };
 }
 
@@ -496,6 +593,13 @@ const locationItemSchema = z.object({
   label: z.string().default(""),
   place: z.string().default(""),
   url: z.string().default(""),
+  description: z.string().default(""),
+  time_label: z.string().default(""),
+  time_value: z.string().default(""),
+  when_label: z.string().default(""),
+  when_value: z.string().default(""),
+  image: z.string().default(""),
+  map_image: z.string().default(""),
 });
 
 const dressCodeItemSchema = z.object({
@@ -549,6 +653,32 @@ export const staySchema = z.object({
   checkin: z.string().default(""),
   checkout: z.string().default(""),
   cards: z.array(stayCardSchema).max(STAY_MAX_CARDS).default(cloneStayCards),
+  quote: z.string().default(DEFAULT_STAY_QUOTE),
+  quote_author: z.string().default(DEFAULT_STAY_QUOTE_AUTHOR),
+});
+
+const icebreakerSchema = z.object({
+  enabled: z.boolean().default(false),
+  eyebrow: z.string().default(DEFAULT_ICEBREAKER_EYEBROW),
+  title: z.string().default(DEFAULT_ICEBREAKER_TITLE),
+  text: z.string().default(""),
+  date_label: z.string().default(""),
+  time_place_label: z.string().default(""),
+  image: z.string().default(""),
+});
+
+const recommendationItemSchema = z.object({
+  icon: z.enum(RECOMMENDATION_ICONS).default(DEFAULT_RECOMMENDATION_ICON),
+  title: z.string().default(""),
+  text: z.string().default(""),
+});
+
+const recommendationsSchema = z.object({
+  enabled: z.boolean().default(false),
+  eyebrow: z.string().default(DEFAULT_RECOMMENDATIONS_EYEBROW),
+  title: z.string().default(DEFAULT_RECOMMENDATIONS_TITLE),
+  image: z.string().default(""),
+  items: z.array(recommendationItemSchema).default([]),
 });
 
 export const tripOriginSchema = z.object({
@@ -600,6 +730,15 @@ const bankSchema = z.object({
   bank_name: z.string().default(""),
   holder: z.string().default(""),
   account_number: z.string().default(""),
+  clabe: z.string().default(""),
+  concept: z.string().default(""),
+});
+
+const bankEurSchema = z.object({
+  enabled: z.boolean().default(false),
+  bank_name: z.string().default(""),
+  holder: z.string().default(""),
+  iban: z.string().default(""),
   concept: z.string().default(""),
 });
 
@@ -613,11 +752,13 @@ const registrySchema = z.object({
   stripe_enabled: z.boolean().default(false),
   payment_link_url: z.string().max(PAYMENT_LINK_MAX_LENGTH).default(""),
   bank: bankSchema.default({}),
+  bank_eur: bankEurSchema.default({}),
 });
 
 const commonFields = {
   version: z.number().int().nonnegative().default(2),
   hero_image: z.string().default(""),
+  og_image: z.string().default(""),
   kicker: z.string().default(""),
   tagline: z.string().default(""),
   message: z.string().default(""),
@@ -635,6 +776,8 @@ const commonFields = {
   travel: travelSchema.default({}),
   stay: staySchema.default({}),
   trip: tripSchema.default({}),
+  icebreaker: icebreakerSchema.default({}),
+  recommendations: recommendationsSchema.default({}),
   registry: registrySchema.default({}),
   rsvp_editable: z.boolean().default(false),
   rsvp_edit_deadline: z.string().default(""),
@@ -719,6 +862,7 @@ export function normalizeInvitation(raw) {
     version: 2,
     template,
     hero_image: str(source.hero_image),
+    og_image: str(source.og_image),
     kicker: str(source.kicker),
     tagline: str(source.tagline),
     message: str(source.message),
@@ -736,6 +880,8 @@ export function normalizeInvitation(raw) {
     travel: normalizeTravel(source.travel),
     stay: normalizeStay(source.stay),
     trip: normalizeTrip(source.trip),
+    icebreaker: normalizeIcebreaker(source.icebreaker),
+    recommendations: normalizeRecommendations(source.recommendations),
     registry: normalizeRegistry(source.registry),
     rsvp_editable: toBool(source.rsvp_editable, false),
     rsvp_edit_deadline: toIsoDate(source.rsvp_edit_deadline),
@@ -823,6 +969,11 @@ export function normalizeForRead(raw) {
   for (const mode of Object.values(out.trip.modes)) {
     if (!Array.isArray(mode.providers)) mode.providers = [];
   }
+  // `icebreaker` y `recommendations` siempre presentes y saneados; la lista
+  // de recomendaciones nunca es null/string en lectura.
+  out.icebreaker = normalizeIcebreaker(out.icebreaker);
+  out.recommendations = normalizeRecommendations(out.recommendations);
+  if (!Array.isArray(out.recommendations.items)) out.recommendations.items = [];
   // `registry` siempre presente, con subestructuras saneadas para lectura.
   if (!out.registry || typeof out.registry !== "object" || Array.isArray(out.registry)) {
     out.registry = normalizeRegistry(null);
@@ -832,9 +983,8 @@ export function normalizeForRead(raw) {
     if (typeof out.registry.payment_link_url !== "string") {
       out.registry.payment_link_url = str(out.registry.payment_link_url).slice(0, PAYMENT_LINK_MAX_LENGTH);
     }
-    if (!out.registry.bank || typeof out.registry.bank !== "object" || Array.isArray(out.registry.bank)) {
-      out.registry.bank = normalizeBank(null);
-    }
+    out.registry.bank = normalizeBank(out.registry.bank);
+    out.registry.bank_eur = normalizeBankEur(out.registry.bank_eur);
   }
   if (out.template === "xv" || out.template === "alice_xv" || out.template === "baby_shower") {
     if (!Array.isArray(out.parents)) out.parents = [];

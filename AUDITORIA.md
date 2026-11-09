@@ -1,5 +1,7 @@
 # Auditoría técnica — DisplayEvent
 
+> **Actualización (2026-11-09):** la plantilla especial **`boda_jorge_macarena` fue reemplazada en sitio por el diseño v3** (papel de algodón, marco nazarí, granada en acuarela, letterpress, RSVP/Regalo propios y mensajes de regalo). No hay plantilla nueva ni selector v2/v3; el detalle está en `MEMORIA.md` §18 y en `INVITACION_BODA_JORGE_MACARENA.md`. Los hallazgos de esta auditoría que mencionan “boda” se refieren al **tema genérico `boda`** o al estado **previo (v2/nocturno)** de la plantilla especial, no al v3.
+
 > **Actualización (post-auditoría, septiembre 2026):** la sección de invitaciones fue reestructurada. Se resolvió la duplicación 4× unificando las secciones en `client/src/invitation/shared/` (Gallery/DressCode/Message/etc. dejaron de vivir copiadas por formato), se añadió un contrato de datos formal (zod en `server/src/schemas/invitation.js` + espejo en `client/src/invitation/schema/`, con validación en `events.js`/`invitations.js` y backfill `backfill-invitation-v2`) y el editor quedó schema-driven. Se retiraron los ornamentos WebGL 3D (perlas XV / anillos boda), que permanecen inertes en `client/src/invitation/3d/`. Lo señalado en las secciones siguientes es el estado **previo** a esta reestructuración.
 
 > **Actualización (2026-09-11):** se añadió la **landing pública de marketing** en `/` (el panel pasó a `/eventos`), **URLs bonitas** de invitación (`/invitacion/<slug>/<token>`) y **SEO** (canonical/OG/robots/sitemap). Nueva revisión de la landing con hallazgos abiertos en §4.5. La deuda de §6.1 (multiformato sin commitear) quedó **resuelta** (`9387c15` y siguientes).
@@ -140,7 +142,7 @@
 |---|---|---|---|
 | 🟠 Alto | **XSS vía `href`**: `it.url` se usa directo en `<a href>` sin validar `http(s)://`; un `javascript:alert(1)` se ejecuta al hacer clic | `shared/Locations.jsx:18-19, 72` | ✅ Hecho — `safeUrl()` solo acepta URLs absolutas `http:`/`https:` (`Locations.jsx:18-27`); `javascript:`, `data:` y relativas → `null` (commit pendiente) |
 | 🟠 Alto | El **sobre digital es imposible de abrir por teclado**: solo `onTap`/drag, sin `tabIndex`/`role="button"`/`onKeyDown` | `envelope/EnvelopeLoader.jsx:95-120` |
-| 🟡 Medio | Boda: el hero anima **detrás del sobre** (no recibe `reveal`) — al abrir el sobre la animación ya pasó; el velo de XV tampoco espera | `boda/BodaLayout.jsx:19`; `boda/Hero.jsx:74-77`; `xv/Hero.jsx:118-126` |
+| 🟡 Medio | **Boda genérica** (`boda/`): el hero anima **detrás del sobre** (no recibe `reveal`) — al abrir el sobre la animación ya pasó; el velo de XV tampoco espera | `boda/BodaLayout.jsx:19`; `boda/Hero.jsx:74-77`; `xv/Hero.jsx:118-126` |
 | 🟡 Medio | **Fallback roto de ubicaciones**: si no hay `locations`, cae a `itinerary` y renderiza tarjetas "Ubicación N" vacías | `shared/Locations.jsx:6-7, 64-90` |
 | 🟡 Medio | **Inyección CSS** por `hero_image` interpolada en `url('…')` sin escapar | `cumpleanos/Hero.jsx:38-41`; `baby_shower/Hero.jsx:47-50` |
 | 🟡 Medio | Countdown con fecha inválida → `NaN` en pantalla | `shared/Countdown.jsx:56-59`; `xv/GlassCountdown.jsx:41-44` |

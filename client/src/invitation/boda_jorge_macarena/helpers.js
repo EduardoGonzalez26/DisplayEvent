@@ -34,6 +34,7 @@ export function parseEventDate(date) {
   if (Number.isNaN(d.getTime())) return null;
   return {
     day: d.getDate(),
+    monthNumber: d.getMonth() + 1,
     month: cap(d.toLocaleDateString("es-MX", { month: "long" })),
     year: d.getFullYear(),
     weekday: cap(d.toLocaleDateString("es-MX", { weekday: "long" })),

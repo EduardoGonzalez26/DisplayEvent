@@ -80,9 +80,7 @@ export default function MusicToggle({ url, reveal = true, labels = {} }) {
         aria-label={label}
         title={label}
         aria-pressed={playing}
-        className={`fixed right-3.5 top-[max(14px,env(safe-area-inset-top))] z-[60] flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[rgba(250,247,242,0.5)] bg-[rgba(28,27,25,0.42)] text-[#FAF7F2] backdrop-blur-[8px] transition-opacity duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAF7F2] focus-visible:ring-offset-2 ${
-          reveal ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`mjv3-music ${reveal ? "" : "mjv3-music--hidden"}`}
       >
         <MusicIcon off={!playing} />
       </button>

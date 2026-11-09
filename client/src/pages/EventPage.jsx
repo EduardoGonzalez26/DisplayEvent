@@ -18,6 +18,9 @@ const ICONS = {
   Invitación: (
     <path d="M4 6h16v11.2a.8.8 0 0 1-.8.8H4.8a.8.8 0 0 1-.8-.8V6Zm0 3 8 4 8-4" />
   ),
+  Mensajes: (
+    <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 5h10M7 13h6" />
+  ),
 };
 
 const NAV = [
@@ -26,6 +29,7 @@ const NAV = [
   { to: "mesas", label: "Mesas" },
   { to: "dashboard", label: "Dashboard" },
   { to: "invitacion", label: "Invitación" },
+  { to: "mensajes", label: "Mensajes" },
 ];
 
 export default function EventPage() {

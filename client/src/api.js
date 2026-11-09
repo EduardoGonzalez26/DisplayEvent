@@ -49,6 +49,12 @@ export const api = {
     stats: (id) => request(`/events/${id}/stats`),
     invitation: (id) => request(`/events/${id}/invitation`),
     setInvitation: (id, payload) => request(`/events/${id}/invitation`, { method: "PUT", body: JSON.stringify(payload) }),
+    giftMessages: (id) => request(`/events/${id}/gift-messages`),
+    markGiftMessageRead: (id, messageId) =>
+      request(`/events/${id}/gift-messages/${messageId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ read: true }),
+      }),
     create: (payload) => request("/events", { method: "POST", body: JSON.stringify(payload) }),
     update: (id, payload) => request(`/events/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (id) => request(`/events/${id}`, { method: "DELETE" }),
@@ -103,6 +109,11 @@ export const api = {
     get: (token) => request(`/invitations/${token}`),
     rsvp: (token, payload) => request(`/invitations/${token}/rsvp`, { method: "PUT", body: JSON.stringify(payload) }),
     payment: (token, payload) => request(`/invitations/${token}/payment`, { method: "POST", body: JSON.stringify(payload) }),
+    giftMessage: (token, payload) =>
+      request(`/invitations/${token}/gift-message`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
   },
   stripe: {
     // Cuentas Connect del usuario (el GET refresca los flags desde Stripe).

@@ -1,58 +1,31 @@
 import { useEffect, useRef } from "react";
-import { GrainOverlay } from "./Grain.jsx";
-import Hero from "./Hero.jsx";
-import Story from "./Story.jsx";
-import LocationSection from "./Locations.jsx";
-import Itinerary from "./Itinerary.jsx";
-import DressCode from "./DressCode.jsx";
-import Gifts from "./Gifts.jsx";
-import Travel from "./Travel.jsx";
-import Stay from "./Stay.jsx";
-import Footer from "./Footer.jsx";
+import CoverSection from "./v3/CoverSection.jsx";
+import StorySection from "./v3/StorySection.jsx";
+import IcebreakerSection from "./v3/IcebreakerSection.jsx";
+import LocationSection from "./v3/LocationSection.jsx";
+import DressCodeSection from "./v3/DressCodeSection.jsx";
+import RecommendationsSection from "./v3/RecommendationsSection.jsx";
+import TravelSection from "./v3/TravelSection.jsx";
+import StaySection from "./v3/StaySection.jsx";
+import RsvpSection from "./v3/RsvpSection.jsx";
+import GiftsSection from "./v3/GiftsSection.jsx";
+import ClosingSection from "./v3/ClosingSection.jsx";
 import MusicToggle from "./MusicToggle.jsx";
-import SectionPhoto from "./SectionPhoto.jsx";
-import Rsvp from "../shared/Rsvp.jsx";
-import { safeCssUrl } from "../shared/util.jsx";
-import { mapsSearchUrl, safeHttpUrl } from "./helpers.js";
+import { NazariFrame, useV3Reveal } from "./v3/index.js";
+import { V3 } from "./v3/assets.js";
+import "./v3.css";
 
 /* ------------------------------------------------------------------
-   Orden FIJO de las tarjetas con fondo de foto. La POSICIÓN en esta
-   lista decide qué foto de `cfg.gallery` le toca a cada id:
-   `gallery[(i + offset) % length]`. Al ser un orden por id, una sección
-   condicional oculta NO le roba la foto a las demás. Si la portada
-   consume `gallery[0]` (sin `hero_image`), `offset` vale 1.
------------------------------------------------------------------- */
-const PHOTO_ORDER = [
-  "historia",
-  "ceremonia",
-  "recepcion",
-  "itinerario",
-  "vestimenta",
-  "regalo",
-  "confirmar",
-  "viaje",
-  "hospedaje",
-  "cierre",
-];
-
-/* ------------------------------------------------------------------
-   Motor de hojas apiladas (equivalente al `frame()` del mock v2):
-
-   - Cada sección `[data-sheet]` es un contenedor sticky; la hoja interior
-     `[data-paper]` es la que se inclina/entra y se hunde/sale.
-   - Cuando una sección es más alta que el viewport, se ajusta su `top`
-     sticky a `vh - alto` (queda "clavada" pegada al fondo) para que todo
-     su contenido sea alcanzable — como el mock.
-   - La hoja entrante entra inclinada y se endereza; la anterior se hunde,
-     gira levemente, se escala y se oscurece (`[data-shade]`).
-   - Al estar la hoja en reposo (activa, sin vecina encima) se retira el
-     `transform` por completo: así los descendientes `position: fixed`
-     (modales de RSVP/Mesa de regalos) se anclan al viewport y no a la
-     hoja. Con `prefers-reduced-motion` nunca se aplica transform.
-   - Escucha `scroll` en fase de captura: funciona con scroll de ventana
-     y con contenedores internos (vista previa del editor).
------------------------------------------------------------------- */
-function useStackedSheets() {
+   Motor de hojas apiladas (idéntico al v2, que ya funciona en producción):
+   - Cada sección `[data-sheet]` es sticky; la hoja `[data-paper]` entra
+     inclinada, se endereza y la anterior se hunde/oscurece.
+   - En reposo se retira el `transform` para que los descendientes
+     `position: fixed` (checkout de Stripe) se anclen al viewport.
+   - `prefers-reduced-motion`: nunca se aplica transform.
+   - Escucha scroll en fase de captura (ventana y contenedores internos,
+     como la vista previa del editor).
+------------------------------------------------------------------- */
+function useStackedSheets(layoutKey) {
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -130,7 +103,6 @@ function useStackedSheets() {
     };
 
     onScroll();
-    // Fase de captura: capta scroll de ventana Y de contenedores internos.
     document.addEventListener("scroll", onScroll, { passive: true, capture: true });
     window.addEventListener("resize", onScroll);
     let ro = null;
@@ -144,58 +116,21 @@ function useStackedSheets() {
       ro?.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [layoutKey]);
 
   return rootRef;
 }
 
-/* ------------------------------------------------------------------
-   Hoja apilable (v2): sección sticky con padding lateral fluido; dentro,
-   el papel (máx. 1200px) con fondo opaco claro, sombra ascendente,
-   filete interior y pluma superior (gradiente cálido). Capas:
-     1. Fondo opaco del papel.
-     2. `SectionPhoto` — foto B&N con scrim claro del tema (opcional).
-     3. `[data-shade]` — oscurecimiento por la hoja entrante.
-     4. Marco interior + pluma (z-8/9) y contenido (z-10).
------------------------------------------------------------------- */
-function StackCard({
-  id,
-  zIndex,
-  bg = "bg-inv-bg-alt",
-  photo,
-  photoPriority = false,
-  contentAlign = "center",
-  contentClassName = "",
-  children,
-}) {
+function StackCard({ id, zIndex, children }) {
   return (
-    <section data-sheet id={id} className="sticky top-0" style={{ zIndex }}>
-      <div className="px-[clamp(8px,3vw,56px)]">
-        <div
-          data-paper
-          className={`relative mx-auto flex min-h-[100svh] max-w-[1200px] flex-col overflow-hidden will-change-transform ${bg} shadow-[0_-22px_44px_-14px_rgba(0,0,0,0.5)]`}
-        >
+    <section data-sheet id={id} className="mjv3-sheet" style={{ zIndex }}>
+      <div className="mjv3-sheet-pad">
+        <div data-paper className="mjv3-paper algodon">
+          <div data-shade className="mjv3-shade" aria-hidden="true" />
+          <NazariFrame />
           <div
-            data-shade
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-[6] bg-[#0E0D0C] opacity-0"
-          />
-          {photo ? <SectionPhoto src={photo} priority={photoPriority} /> : null}
-
-          {/* Marco interior (hairline a 12px) y pluma superior cálida */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-3 z-[8] border border-[var(--inv-card-frame,#E2DACD)]"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 z-[9] h-[34px] bg-[linear-gradient(to_bottom,rgba(60,40,20,0.08),rgba(60,40,20,0))]"
-          />
-
-          <div
-            className={`relative z-10 flex flex-1 flex-col ${
-              contentAlign === "center" ? "justify-center" : ""
-            } ${contentClassName}`}
+            data-rv={id}
+            className="mjv3-sheet-content"
           >
             {children}
           </div>
@@ -205,19 +140,22 @@ function StackCard({
   );
 }
 
-/* ------------------------------------------------------------------
-   Boda de Jorge & Macarena (rediseño v2): sobre editorial en
-   InvitationView y, al abrirse, la página queda compuesta por hojas
-   apiladas en el orden del mock:
+function StackCardBare({ id, zIndex, children }) {
+  return (
+    <section data-sheet id={id} className="mjv3-sheet" style={{ zIndex }}>
+      <div className="mjv3-sheet-pad">
+        <div data-paper className="mjv3-paper algodon">
+          <div data-shade className="mjv3-shade" aria-hidden="true" />
+          <NazariFrame />
+          <div data-rv={id} className="mjv3-sheet-content mjv3-sheet-content--bare">
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-     Portada · Nuestra historia · Ceremonia/Recepción (una hoja por
-     `cfg.locations`) · Itinerario · Vestimenta · Regalo ·
-     Confirmación · Viaje · Hospedaje · Cierre
-
-   Sin navegación inferior flotante; el botón de música (arriba a la
-   derecha) se mantiene. RSVP, Gifts y el badge Webi conservan su
-   lógica original.
------------------------------------------------------------------- */
 export default function BodaJorgeMacarenaLayout({
   event,
   family,
@@ -228,229 +166,138 @@ export default function BodaJorgeMacarenaLayout({
   token,
   publishableKey,
   hideBrand = false,
-  // `payment_methods` de la respuesta pública ({ card: { mxn, eur } }).
   paymentMethods = null,
 }) {
-  const containerRef = useStackedSheets();
-
-  // Fotos de `cfg.gallery` como fondo de las hojas. `offset` = 1 cuando la
-  // portada ya consume `gallery[0]` (no hay `hero_image` válida).
-  const gallery = (cfg.gallery || []).filter(
-    (s) => typeof s === "string" && s.trim()
+  const locations = (cfg?.locations || []).filter(
+    (item) => item && (String(item.label || "").trim() || String(item.place || "").trim())
   );
-  const photoOffset = !safeCssUrl(cfg.hero_image) && gallery.length > 0 ? 1 : 0;
-  const photoFor = (name) => {
-    const i = PHOTO_ORDER.indexOf(name);
-    if (i === -1 || gallery.length === 0) return undefined;
-    return gallery[(i + photoOffset) % gallery.length];
-  };
-  // Foto de cada hoja de ubicación (ceremonia, recepción y extra).
-  const photoForLocation = (i) => {
-    if (gallery.length === 0) return undefined;
-    return gallery[(1 + i + photoOffset) % gallery.length];
-  };
+  const musicUrl = String(cfg?.music_url || "").trim();
+  const showIcebreaker = !!cfg?.icebreaker?.enabled;
+  const showRecommendations = !!cfg?.recommendations?.enabled;
+  const showTravel = !!cfg?.trip?.enabled;
+  const showStay = !!cfg?.stay?.enabled;
+  const showGifts = !!cfg?.registry?.enabled;
+  const preview = !!rsvp?.preview;
+  // En la vista previa del editor las secciones se activan/desactivan en vivo.
+  // El motor de hojas y el observador de revelado deben reconstruirse cuando
+  // cambia la composición, o las secciones nuevas quedan sin observar/sticky.
+  const layoutKey = [
+    showIcebreaker,
+    showRecommendations,
+    showTravel,
+    showStay,
+    showGifts,
+    locations.length,
+  ].join("|");
 
-  // Réplicas de los `return null` de cada sección para no crear hojas
-  // vacías de 100dvh.
-  const locations = (cfg.locations || []).filter(
-    (l) =>
-      l &&
-      (String(l.label || "").trim() || String(l.place || "").trim())
-  );
-  const itineraryItems = (cfg.itinerary || []).filter(
-    (it) =>
-      it && (String(it.label || "").trim() || String(it.time || "").trim())
-  );
-  const dressItems = (() => {
-    const raw = cfg.dress_code || [];
-    if (Array.isArray(raw)) {
-      return raw
-        .map((d) => (typeof d === "object" && d ? String(d.label || "") : String(d || "")))
-        .filter((s) => s.trim());
-    }
-    return String(raw)
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  })();
-  const showGifts = !!(cfg.registry && cfg.registry.enabled);
-  const showRegistryNote = String(cfg.registry_note || "").trim().length > 0;
-  const showGiftSection = showGifts || showRegistryNote;
-  // Viaje y Hospedaje son secciones independientes (contrato `trip`/`stay`).
-  // `lodging`/`travel` quedan como legado y no se renderizan en esta plantilla.
-  const trip = cfg.trip || {};
-  const tripModes = trip.modes || {};
-  const showTravel = !!(
-    trip.enabled &&
-    (String(trip.intro || "").trim() ||
-      (Array.isArray(trip.origins) && trip.origins.length > 0) ||
-      (Array.isArray(trip.arrivals) && trip.arrivals.length > 0) ||
-      Object.values(tripModes).some(
-        (mode) =>
-          mode &&
-          mode.enabled &&
-          (String(mode.note || "").trim() ||
-            (Array.isArray(mode.providers) && mode.providers.length > 0))
-      ))
-  );
-  const showStay = !!cfg.stay?.enabled;
+  const containerRef = useStackedSheets(layoutKey);
+  useV3Reveal(containerRef, layoutKey);
 
-  const musicUrl = String(cfg.music_url || "").trim();
-
-  // z-index creciente de las hojas (por debajo del chrome fijo z-60).
-  const zHistoria = 2;
-  const zLocations = 3; // 3, 4, 5…
-  const zItinerary = zLocations + Math.max(locations.length, 0);
-  const zDress = zItinerary + 1;
-  const zGift = zDress + 1;
-  const zRsvp = zGift + 1;
-  const zTravel = zRsvp + 1;
-  const zStay = zTravel + 1;
-  const zClosing = zStay + 1;
+  let z = 1;
+  const zCover = z++;
+  const zStory = z++;
+  const zIcebreaker = showIcebreaker ? z++ : z;
+  const zLocations = z;
+  z += Math.max(locations.length, 0);
+  const zDress = z++;
+  const zRecommendations = showRecommendations ? z++ : z;
+  const zTravel = showTravel ? z++ : z;
+  const zStay = showStay ? z++ : z;
+  const zRsvp = z++;
+  const zGifts = showGifts ? z++ : z;
+  const zClosing = z++;
 
   return (
-    <div ref={containerRef} className="isolate bg-[#1A1918]">
-      {/* Hoja 1 — Portada */}
-      <Hero event={event} cfg={cfg} reveal={reveal} theme={theme} />
-
-      {/* Hoja 2 — Nuestra historia */}
-      <StackCard
-        id="historia"
-        zIndex={zHistoria}
-        bg="bg-inv-bg-alt"
+    <div
+      ref={containerRef}
+      className="mjv3"
+      data-invitation-theme="boda_jorge_macarena"
+    >
+      <section
+        data-sheet
+        id="portada"
+        className="mjv3-sheet"
+        style={{ zIndex: zCover }}
       >
-        <Story
-          cfg={cfg}
-          family={family}
-          event={event}
-          theme={theme}
-          photo={photoFor("historia")}
-        />
+        <div data-paper className="mjv3-paper mjv3-paper--cover algodon">
+          <div data-shade className="mjv3-shade" aria-hidden="true" />
+          <NazariFrame cover />
+          <CoverSection event={event} cfg={cfg} drawing={V3.portada} reveal={reveal} />
+        </div>
+      </section>
+
+      <StackCard id="historia" zIndex={zStory}>
+        <StorySection cfg={cfg} />
       </StackCard>
 
-      {/* Hojas 3+ — Ceremonia / Recepción (una por ubicación) */}
-      {locations.map((item, i) => (
+      {showIcebreaker && (
+        <StackCard id="icebreaker" zIndex={zIcebreaker}>
+          <IcebreakerSection cfg={cfg} />
+        </StackCard>
+      )}
+
+      {locations.map((item, index) => (
         <StackCard
-          key={`ubicacion-${i}`}
-          id={`ubicacion-${i}`}
-          zIndex={zLocations + i}
-          bg={i % 2 === 0 ? "bg-inv-bg-alt2" : "bg-inv-bg-alt"}
-          photo={photoForLocation(i)}
+          key={`location-${index}`}
+          id={index === 0 ? "ceremonia" : index === 1 ? "recepcion" : `ubicacion-${index}`}
+          zIndex={zLocations + index}
         >
           <LocationSection
             item={item}
-            index={i}
+            index={index}
             event={event}
-            theme={theme}
-            linkUrl={
-              safeHttpUrl(item.url) ||
-              (String(item.place || "").trim()
-                ? mapsSearchUrl(item.place)
-                : null)
-            }
+            themeLabels={theme?.labels}
           />
         </StackCard>
       ))}
 
-      {/* Itinerario */}
-      {itineraryItems.length > 0 && (
-        <StackCard
-          id="itinerario"
-          zIndex={zItinerary}
-          bg="bg-inv-bg-alt2"
-          photo={photoFor("itinerario")}
-        >
-          <Itinerary cfg={cfg} theme={theme} />
+      <StackCard id="vestimenta" zIndex={zDress}>
+        <DressCodeSection cfg={cfg} />
+      </StackCard>
+
+      {showRecommendations && (
+        <StackCard id="recomendaciones" zIndex={zRecommendations}>
+          <RecommendationsSection cfg={cfg} />
         </StackCard>
       )}
 
-      {/* Vestimenta */}
-      {dressItems.length > 0 && (
-        <StackCard
-          id="vestimenta"
-          zIndex={zDress}
-          bg="bg-inv-bg-alt"
-          photo={photoFor("vestimenta")}
-        >
-          <DressCode cfg={cfg} theme={theme} />
+      {showTravel && (
+        <StackCard id="viaje" zIndex={zTravel}>
+          <TravelSection cfg={cfg} />
         </StackCard>
       )}
 
-      {/* Regalo (nota + Mesa de Regalos) */}
-      {showGiftSection && (
-        <StackCard
-          id="regalo"
-          zIndex={zGift}
-          bg="bg-inv-bg-alt2"
-          photo={photoFor("regalo")}
-        >
-          <Gifts
+      {showStay && (
+        <StackCard id="hospedaje" zIndex={zStay}>
+          <StaySection cfg={cfg} />
+        </StackCard>
+      )}
+
+      <StackCard id="confirmar" zIndex={zRsvp}>
+        <RsvpSection rsvp={rsvp} />
+      </StackCard>
+
+      {showGifts && (
+        <StackCard id="regalo" zIndex={zGifts}>
+          <GiftsSection
             cfg={cfg}
-            theme={theme}
             token={token}
             publishableKey={publishableKey}
             paymentMethods={paymentMethods}
+            preview={preview}
           />
         </StackCard>
       )}
 
-      {/* Confirmación (shared/Rsvp): su <section> raíz pinta fondo opaco;
-          se neutraliza SOLO desde el wrapper local. */}
-      <StackCard
-        id="confirmar"
-        zIndex={zRsvp}
-        bg="bg-inv-bg-alt"
-        photo={photoFor("confirmar")}
-        contentClassName="[&>section]:bg-transparent"
-      >
-        <Rsvp {...rsvp} />
-      </StackCard>
+      <StackCardBare id="cierre" zIndex={zClosing}>
+        <ClosingSection event={event} cfg={cfg} hideBrand={hideBrand} />
+      </StackCardBare>
 
-      {/* Viaje */}
-      {showTravel && (
-        <StackCard
-          id="viaje"
-          zIndex={zTravel}
-          bg="bg-inv-bg-alt2"
-          photo={photoFor("viaje")}
-        >
-          <Travel cfg={cfg} theme={theme} />
-        </StackCard>
-      )}
+      {musicUrl ? (
+        <MusicToggle url={musicUrl} reveal={reveal} labels={theme?.labels} />
+      ) : null}
 
-      {/* Hospedaje */}
-      {showStay && (
-        <StackCard
-          id="hospedaje"
-          zIndex={zStay}
-          bg="bg-inv-bg-alt"
-          photo={photoFor("hospedaje")}
-        >
-          <Stay cfg={cfg} theme={theme} />
-        </StackCard>
-      )}
-
-      {/* Cierre */}
-      <StackCard
-        id="cierre"
-        zIndex={zClosing}
-        bg="bg-inv-bg-alt"
-        contentAlign="stretch"
-      >
-        <Footer
-          event={event}
-          theme={theme}
-          cfg={cfg}
-          hideBrand={hideBrand}
-          photo={photoFor("cierre")}
-        />
-      </StackCard>
-
-      {/* Botón de música (aparece al abrir el sobre) */}
-      <MusicToggle url={musicUrl} reveal={reveal} labels={theme?.labels} />
-
-      {/* Textura de papel del diseño (grano fino sobre todo) */}
-      <GrainOverlay />
+      <div className="mjv3-grain" aria-hidden="true" />
     </div>
   );
 }

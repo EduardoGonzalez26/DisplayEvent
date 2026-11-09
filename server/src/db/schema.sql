@@ -126,6 +126,23 @@ CREATE INDEX IF NOT EXISTS idx_gifts_event ON gifts(event_id);
 -- regalos duplicados cuando Stripe reenvía el mismo evento.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_gifts_payment_intent ON gifts(stripe_payment_intent_id);
 
+-- Mensajes que los invitados dejan junto a su regalo (transferencia o tarjeta).
+-- El evento los consulta desde el panel; `read_at` marca el mensaje como leído.
+CREATE TABLE IF NOT EXISTS gift_messages (
+  id SERIAL PRIMARY KEY,
+  event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  group_id INT REFERENCES "groups"(id) ON DELETE SET NULL,
+  sender_name VARCHAR(255) NOT NULL DEFAULT '',
+  message TEXT NOT NULL,
+  amount_minor BIGINT,
+  currency VARCHAR(3),
+  channel VARCHAR(20) NOT NULL DEFAULT 'transfer',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_gift_messages_event ON gift_messages(event_id, created_at DESC);
+
 -- Cuentas Connect (Stripe Express) del anfitrión, para cobrar a invitados y
 -- transferir el 100% al anfitrión. Multi-moneda: una fila por cuenta; el
 -- destino del pago se elige por `default_currency` (mxn/eur) y `charges_enabled`.
@@ -165,6 +182,8 @@ ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
+-- Correo (opcional) al que se avisa cuando un invitado deja un mensaje de regalo.
+ALTER TABLE events ADD COLUMN IF NOT EXISTS gift_message_email VARCHAR(255);
 
 -- 2.2b) Destino Connect del evento (`acct_...` de stripe_accounts).
 --       TEXT (no FK): el ID es externo a Postgres y Stripe puede alargar su
@@ -239,4 +258,5 @@ ALTER TABLE "tables" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitation_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gifts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gift_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stripe_accounts ENABLE ROW LEVEL SECURITY;

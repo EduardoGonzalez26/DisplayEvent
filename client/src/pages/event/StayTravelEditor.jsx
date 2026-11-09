@@ -193,6 +193,10 @@ export default function StayTravelEditor({
 }) {
   const uid = useId();
 
+  const isV3 = form?.template === "boda_jorge_macarena";
+  const visibleTripModes = isV3
+    ? TRIP_MODES.filter((mode) => mode.id !== "train")
+    : TRIP_MODES;
   const stay = form?.stay || {};
   const zone = stay.zone || {};
   const cards = Array.isArray(stay.cards) ? stay.cards : [];
@@ -234,6 +238,18 @@ export default function StayTravelEditor({
       );
     }
   }, [arrivals, setForm]);
+
+  // El diseño v3 no muestra tren: el dato debe quedar deshabilitado para que
+  // la invitación y la portada pública no ofrezcan ese modo.
+  useEffect(() => {
+    if (!isV3) return;
+    const train = trip.modes?.train;
+    if (train?.enabled) {
+      setForm((current) =>
+        setField(current, "trip.modes.train.enabled", false)
+      );
+    }
+  }, [isV3, trip.modes, setForm]);
 
   // Actualiza una lista leyendo siempre el estado más reciente del formulario.
   const updateList = (path, updater) =>
@@ -296,7 +312,7 @@ export default function StayTravelEditor({
         "La sección Viaje está activa pero no tiene orígenes seleccionados; los vuelos no mostrarán enlaces."
       );
     }
-    for (const modeDef of TRIP_MODES) {
+    for (const modeDef of visibleTripModes) {
       const mode = modes[modeDef.id] || {};
       const providers = Array.isArray(mode.providers) ? mode.providers : [];
       const hasKnownProvider = providers.some(
@@ -562,7 +578,7 @@ export default function StayTravelEditor({
           )}
           {(!tripDateFrom || !tripDateTo) && (
             <p className="text-xs text-gray-500 mt-2">
-              Si una fecha queda vacía, al guardar se usan las fechas por
+              Si una fecha queda vacía, los enlaces usarán las fechas por
               defecto de la boda (8–12 de junio de 2027).
             </p>
           )}
@@ -575,10 +591,11 @@ export default function StayTravelEditor({
           <p className="text-sm text-gray-500 mb-3">
             Activa cada medio de transporte y elige los proveedores cuyos
             enlaces se mostrarán.
+            {isV3 ? " El diseño v3 no incluye el modo Tren." : ""}
           </p>
 
           <div className="space-y-3">
-            {TRIP_MODES.map((modeDef) => {
+            {visibleTripModes.map((modeDef) => {
               const mode = modes[modeDef.id] || {};
               const providers = Array.isArray(mode.providers)
                 ? mode.providers
@@ -788,7 +805,9 @@ export default function StayTravelEditor({
               />
               <span className="text-xs text-gray-500 mt-1.5 block">
                 Se usa para los links de búsqueda. Si la dejas vacía, se usará
-                “{DEFAULT_ZONE_LABEL}”.
+                “{DEFAULT_ZONE_LABEL}”. El mapa que ve el invitado es la
+                ilustración fija del paquete; esta etiqueta solo alimenta los
+                buscadores de hospedaje.
               </span>
             </label>
           </div>
@@ -840,8 +859,8 @@ export default function StayTravelEditor({
           )}
           {stayDatesMissing && (
             <DateWarning id={stayDateWarningId}>
-              Faltan fechas de llegada o salida; al guardar se usarán las fechas
-              por defecto de la boda.
+              Faltan fechas de llegada o salida; los enlaces usarán las fechas por
+              defecto de la boda.
             </DateWarning>
           )}
         </div>

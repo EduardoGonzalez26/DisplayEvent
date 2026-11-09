@@ -70,9 +70,11 @@ function buildTitle(cfg, eventName) {
   return name || null;
 }
 
-// Imagen: hero_image -> gallery[0]. "" cuando no hay (se conserva el
-// fallback `og-image.png` de la plantilla).
+// Imagen: og_image -> hero_image -> gallery[0]. "" cuando no hay (se conserva
+// el fallback `og-image.png` de la plantilla).
 function buildImage(cfg, req) {
+  const ogImage = absoluteUrl(cfg?.og_image, req);
+  if (ogImage) return ogImage;
   const hero = absoluteUrl(cfg?.hero_image, req);
   if (hero) return hero;
   const gallery = Array.isArray(cfg?.gallery) ? cfg.gallery : [];

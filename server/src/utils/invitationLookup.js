@@ -9,8 +9,9 @@ import { query } from "../db/index.js";
    y `custom_domain` porque la URL canónica de los metadatos se construye
    igual que los enlaces de WhatsApp (`buildInvitationUrl`); `owner_user_id`
    y los destinos Connect (`stripe_account_id` y los legacy
-   `stripe_account_mxn/eur`) alimentan la resolución del pago. Excluye tokens
-   revocados.
+   `stripe_account_mxn/eur`) alimentan la resolución del pago. `gift_message_email`
+   es privado: lo consume únicamente el envío del aviso de mensajes; las
+   respuestas públicas nunca lo exponen. Excluye tokens revocados.
 ------------------------------------------------------------------- */
 
 export async function findInvitationByToken(token) {
@@ -18,6 +19,7 @@ export async function findInvitationByToken(token) {
     `SELECT g.id AS group_id, g.event_id, g.name AS name,
             g.leader_name, g.rsvp_note,
             e.name AS event_name, e.date, e.time, e.place, e.invitation,
+            e.gift_message_email,
             e.slug, e.custom_domain, e.user_id AS owner_user_id,
             e.stripe_account_id,
             e.stripe_account_mxn, e.stripe_account_eur

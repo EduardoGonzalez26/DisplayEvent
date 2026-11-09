@@ -41,7 +41,7 @@ export const boda_jorge_macarena = {
   id: "boda_jorge_macarena",
   label: "Boda de Jorge & Macarena",
   description:
-    "Editorial sobre papel: Cormorant Garamond, fotos B&N y flora de Granada (dalia, bugambilia y granado).",
+    "Diseño v3 sobre papel de algodón: marco nazarí, granada en acuarela, dibujos a color y tipografía Cormorant Upright + Nikolai Condensed.",
   vars: {
     // Tipografías del diseño v2: Cormorant Garamond para display/títulos
     // (incluye la itálica como "script") y Montserrat para el cuerpo.
