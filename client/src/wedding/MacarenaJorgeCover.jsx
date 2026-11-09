@@ -402,7 +402,7 @@ export default function MacarenaJorgeCover() {
       </div>
 
       <section
-        className="mjv3-paper mjv3-paper--cover algodon"
+        className="mjv3-paper mjv3-paper--cover mjv3-coverpage-closing algodon"
         style={{ minHeight: "auto" }}
       >
         <NazariFrame cover />
