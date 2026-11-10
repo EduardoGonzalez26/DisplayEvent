@@ -11,6 +11,7 @@ import {
 import { Modal, Field, inputClass, Button } from "../../components/ui.jsx";
 import GroupFiltersBar from "../../components/GroupFiltersBar.jsx";
 import WhatsAppSendModal from "../../components/WhatsAppSendModal.jsx";
+import ExportGuestsPdfModal from "../../components/ExportGuestsPdfModal.jsx";
 
 function GroupForm({ initial, onSubmit, onCancel }) {
   const [name, setName] = useState(initial?.name ?? "");
@@ -413,13 +414,11 @@ export default function EventGuests() {
   const [expanded, setExpanded] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [exporting, setExporting] = useState(false);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState("error");
   const [confirm, setConfirm] = useState(null);
   const cancelledRef = useRef(false);
-  const exportingRef = useRef(false);
   const toastTimer = useRef(null);
 
   const notify = (message, type = "error") => {
@@ -454,8 +453,6 @@ export default function EventGuests() {
     setExpanded({});
     setLoading(true);
     setError("");
-    setExporting(false);
-    exportingRef.current = false;
     setModal(null);
     setToast("");
     setConfirm(null);
@@ -640,24 +637,6 @@ export default function EventGuests() {
     setModal({ mode: "whatsapp" });
   };
 
-  const handleExportPdf = async () => {
-    // El ref bloquea un segundo clic antes de que React re-renderice el botón.
-    if (exportingRef.current || loading || groups.length === 0 || error) return;
-    exportingRef.current = true;
-    setExporting(true);
-    try {
-      // Import dinámico: jsPDF y AutoTable se descargan solo al exportar.
-      const { exportGuestsPdf } = await import("../../lib/guestsPdf.js");
-      await exportGuestsPdf({ event, groups, guests: allGuests, eventId: id });
-      notify("PDF generado correctamente", "success");
-    } catch (err) {
-      notify(err.message || "No se pudo generar el PDF");
-    } finally {
-      exportingRef.current = false;
-      setExporting(false);
-    }
-  };
-
   // Índice de invitados por grupo para buscar por nombre (aunque el grupo esté
   // colapsado). Se reconstruye solo cuando cambia el índice completo.
   const guestsByGroupId = useMemo(() => indexGuestsByGroup(allGuests), [allGuests]);
@@ -692,11 +671,10 @@ export default function EventGuests() {
           </Button>
           <Button
             variant="secondary"
-            onClick={handleExportPdf}
-            disabled={loading || exporting || groups.length === 0 || Boolean(error)}
-            aria-busy={exporting}
-            title="Descargar resumen de invitados en PDF"
-            aria-label="Descargar resumen de invitados en PDF"
+            onClick={() => setModal({ mode: "export-pdf" })}
+            disabled={loading || groups.length === 0 || Boolean(error)}
+            title="Exportar invitados en PDF"
+            aria-label="Exportar invitados en PDF"
             className="inline-flex items-center gap-2"
           >
             <svg
@@ -714,7 +692,7 @@ export default function EventGuests() {
               <path d="M12 18v-6" />
               <path d="m9 15 3 3 3-3" />
             </svg>
-            {exporting ? "Generando PDF…" : "Exportar PDF"}
+            Exportar PDF
           </Button>
           <Button onClick={() => setModal({ mode: "create-group" })}>+ Nuevo grupo</Button>
         </div>
@@ -806,6 +784,19 @@ export default function EventGuests() {
             setModal(null);
             refreshGroups();
             notify(message || "Invitaciones actualizadas", type || "success");
+          }}
+        />
+      )}
+      {modal?.mode === "export-pdf" && (
+        <ExportGuestsPdfModal
+          event={event}
+          eventId={id}
+          groups={groups}
+          guests={allGuests}
+          onClose={() => setModal(null)}
+          onDone={(message, type) => {
+            setModal(null);
+            notify(message || "PDF generado correctamente", type || "success");
           }}
         />
       )}

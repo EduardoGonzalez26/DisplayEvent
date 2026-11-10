@@ -5,6 +5,13 @@
    barra final). Con dominio propio, el enlace público de cada grupo es
    https://<dominio>/invitacion/<token> (SIN slug). Sin dominio se
    conserva el formato actual: origen + slug opcional + token.
+
+   En entornos locales (localhost, loopback, redes privadas, *.local y
+   *.test) el enlace de vista previa apunta al origen actual para poder
+   ver los cambios sin desplegar. `canonical: true` fuerza el dominio
+   público: lo usan los mensajes a invitados, que deben llevar SIEMPRE
+   la URL pública (nunca un localhost). La lógica de envío del servidor
+   no cambia: dominio propio si existe; si no, CLIENT_URL.
 ------------------------------------------------------------------ */
 
 // Normaliza un dominio escrito por el usuario: minúsculas, sin protocolo,

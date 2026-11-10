@@ -1,9 +1,10 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 
-// Genera un resumen imprimible de los invitados del evento. El módulo se carga
-// de forma dinámica desde EventGuests para que jsPDF/AutoTable queden en un
-// chunk aparte y no afecten la carga inicial del panel.
+// Genera un PDF imprimible de los invitados del evento: solo resumen de grupos,
+// solo detalle nominal o ambos. El módulo se carga de forma dinámica desde el
+// modal de exportación para que jsPDF/AutoTable queden en un chunk aparte y no
+// afecten la carga inicial del panel.
 
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
@@ -104,9 +105,15 @@ function normalizeSlug(value) {
     .replace(/-+$/g, "");
 }
 
-function buildFileName(event, eventId) {
+function buildFileName(event, eventId, mode) {
   const base = normalizeSlug(event?.slug) || normalizeSlug(event?.name) || normalizeSlug(eventId);
-  return `resumen-invitados-${base || "evento"}.pdf`;
+  const prefix =
+    mode === "summary"
+      ? "resumen-invitados"
+      : mode === "detail"
+        ? "detalle-invitados"
+        : "resumen-y-detalle-invitados";
+  return `${prefix}-${base || "evento"}.pdf`;
 }
 
 function ellipsize(doc, text, maxWidth) {
@@ -182,12 +189,13 @@ function drawFallbackBrand(doc) {
 }
 
 function drawFirstPageHeader(doc, context) {
-  const { eventName, eventDate, eventTime, eventPlace, logoPng, generatedAt } = context;
+  const { title, eventName, eventDate, eventTime, eventPlace, logoPng, generatedAt, scopeNote } =
+    context;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(19);
   doc.setTextColor(...COLORS.text);
-  doc.text("Resumen de invitados", MARGIN_LEFT, 18);
+  doc.text(title, MARGIN_LEFT, 18);
 
   if (eventName) {
     doc.setFont("helvetica", "normal");
@@ -211,11 +219,7 @@ function drawFirstPageHeader(doc, context) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  doc.text(
-    `Generado el ${generatedAt} · Incluye todos los grupos e invitados`,
-    MARGIN_LEFT,
-    43
-  );
+  doc.text(`Generado el ${generatedAt} · ${scopeNote}`, MARGIN_LEFT, 43);
 
   const placed = Boolean(logoPng) && addLogo(doc, logoPng, 175, 8, 21, 17);
   if (placed) {
@@ -231,12 +235,12 @@ function drawFirstPageHeader(doc, context) {
 }
 
 function drawContinuationHeader(doc, context) {
-  const { eventName, logoPng } = context;
+  const { title, eventName, logoPng } = context;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.text);
-  doc.text("Resumen de invitados", MARGIN_LEFT, 15);
+  doc.text(title, MARGIN_LEFT, 15);
 
   if (eventName) {
     doc.setFont("helvetica", "normal");
@@ -316,10 +320,22 @@ function sumByStatus(guests, status) {
 }
 
 /**
- * Genera y descarga el resumen de invitados en PDF.
+ * Genera y descarga el PDF de invitados en el modo indicado.
+ * Modos: "summary" (solo resumen), "detail" (solo detalle) o "both".
  * Devuelve el nombre del archivo generado.
  */
-export async function exportGuestsPdf({ event = null, groups = [], guests = [], eventId = "" } = {}) {
+export async function exportGuestsPdf({
+  event = null,
+  groups = [],
+  guests = [],
+  eventId = "",
+  mode = "both",
+} = {}) {
+  // Cualquier valor desconocido cae en el comportamiento completo.
+  const safeMode = mode === "summary" || mode === "detail" ? mode : "both";
+  const includeSummary = safeMode === "summary" || safeMode === "both";
+  const includeDetail = safeMode === "detail" || safeMode === "both";
+
   const safeGroups = Array.isArray(groups) ? groups : [];
   const safeGuests = Array.isArray(guests) ? guests : [];
   const eventName = typeof event?.name === "string" ? event.name.trim() : "";
@@ -363,151 +379,76 @@ export async function exportGuestsPdf({ event = null, groups = [], guests = [], 
   const sentInvitations = safeGroups.filter((group) => Boolean(group?.whatsapp_sent_at)).length;
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const documentTitle =
+    safeMode === "summary"
+      ? "Resumen de invitados"
+      : safeMode === "detail"
+        ? "Detalle de invitados"
+        : "Resumen y detalle de invitados";
   doc.setProperties({
-    title: eventName ? `Resumen de invitados — ${eventName}` : "Resumen de invitados",
-    subject: "Resumen de invitados",
+    title: eventName ? `${documentTitle} — ${eventName}` : documentTitle,
+    subject: documentTitle,
     author: "DisplayEvent",
     creator: "DisplayEvent",
   });
 
-  // Resumen general ---------------------------------------------------------
   let y = FIRST_CONTENT_Y;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(...COLORS.text);
-  doc.text("Resumen general", MARGIN_LEFT, y);
 
-  y = drawSummaryCards(doc, y + 6, [
-    { label: "Grupos", value: totals.groups },
-    { label: "Invitados", value: totals.guests },
-    { label: "Adultos", value: totals.adults },
-    { label: "Niños", value: totals.children },
-    { label: "Confirmados", value: totals.confirmed },
-    { label: "No asistirán", value: totals.declined },
-    { label: "Sin responder", value: totals.pending },
-    { label: "Periqueras", value: totals.highChairs },
-  ]);
+  // Resumen (general + por grupo) -------------------------------------------
+  if (includeSummary) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...COLORS.text);
+    doc.text("Resumen general", MARGIN_LEFT, y);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...COLORS.muted);
-  doc.text(
-    `Invitaciones enviadas: ${sentInvitations} de ${safeGroups.length} grupos por WhatsApp.`,
-    MARGIN_LEFT,
-    y + 6
-  );
-  y += 13;
+    y = drawSummaryCards(doc, y + 6, [
+      { label: "Grupos", value: totals.groups },
+      { label: "Invitados", value: totals.guests },
+      { label: "Adultos", value: totals.adults },
+      { label: "Niños", value: totals.children },
+      { label: "Confirmados", value: totals.confirmed },
+      { label: "No asistirán", value: totals.declined },
+      { label: "Sin responder", value: totals.pending },
+      { label: "Periqueras", value: totals.highChairs },
+    ]);
 
-  // Resumen por grupo -------------------------------------------------------
-  y = addSectionTitle(doc, y, "Resumen por grupo");
-
-  const groupTableBody = groupSummaries.map((summary) => [
-    summary.group.name || "-",
-    summary.group.leader_name || "-",
-    summary.total,
-    summary.confirmed,
-    summary.declined,
-    summary.pending,
-    `${summary.children} / ${summary.highChairs}`,
-  ]);
-
-  groupTableBody.push([
-    "Total",
-    "",
-    totals.guests,
-    totals.confirmed,
-    totals.declined,
-    totals.pending,
-    `${totals.children} / ${totals.highChairs}`,
-  ]);
-
-  autoTable(doc, {
-    startY: y,
-    head: [["Grupo", "Líder", "Invitados", "Confirmados", "No asistirán", "Sin responder", "Niños / Periq."]],
-    body: groupTableBody,
-    margin: {
-      top: MARGIN_TOP,
-      right: MARGIN_RIGHT,
-      bottom: MARGIN_BOTTOM,
-      left: MARGIN_LEFT,
-    },
-    tableWidth: CONTENT_WIDTH,
-    styles: {
-      font: "helvetica",
-      fontSize: 8,
-      textColor: COLORS.text,
-      lineColor: COLORS.border,
-      lineWidth: 0.1,
-      cellPadding: 2,
-      valign: "middle",
-      overflow: "linebreak",
-    },
-    headStyles: {
-      fillColor: COLORS.accent,
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-      lineColor: COLORS.accent,
-      // 7.5 pt y padding horizontal ajustado para que "Confirmados" no se
-      // parta a mitad de palabra en su columna de 20 mm.
-      fontSize: 7.5,
-      cellPadding: { top: 2, right: 1.5, bottom: 2, left: 1.5 },
-    },
-    alternateRowStyles: {
-      fillColor: COLORS.alternate,
-    },
-    columnStyles: {
-      0: { cellWidth: 44 },
-      1: { cellWidth: 44 },
-      2: { cellWidth: 16, halign: "center" },
-      3: { cellWidth: 20, halign: "center" },
-      4: { cellWidth: 20, halign: "center" },
-      5: { cellWidth: 20, halign: "center" },
-      6: { cellWidth: 18, halign: "center" },
-    },
-    didParseCell: (data) => {
-      if (data.section === "head") {
-        data.cell.styles.halign = data.column.index < 2 ? "left" : "center";
-      }
-      if (data.section === "body" && data.row.index === groupTableBody.length - 1) {
-        data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fillColor = COLORS.soft;
-      }
-    },
-  });
-
-  y = (doc.lastAutoTable?.finalY ?? y) + 4;
-  y = ensureSpace(doc, y, 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...COLORS.muted);
-  doc.text("Periq. = periqueras.", MARGIN_LEFT, y);
-  y += 8;
-
-  // Detalle de invitados ----------------------------------------------------
-  y = addSectionTitle(doc, y, "Detalle de invitados");
-
-  const detailBody = [];
-  groupSummaries.forEach((summary) => {
-    summary.guests.forEach((guest) => {
-      detailBody.push([
-        summary.group.name || "-",
-        guest.name || "-",
-        guestStatus(guest),
-        buildGuestDetail(guest, guestsById),
-      ]);
-    });
-  });
-
-  if (detailBody.length === 0) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(...COLORS.muted);
-    doc.text("Sin invitados registrados.", MARGIN_LEFT, y + 2);
-  } else {
+    doc.text(
+      `Invitaciones enviadas: ${sentInvitations} de ${safeGroups.length} grupos por WhatsApp.`,
+      MARGIN_LEFT,
+      y + 6
+    );
+    y += 13;
+
+    // Resumen por grupo -----------------------------------------------------
+    y = addSectionTitle(doc, y, "Resumen por grupo");
+
+    const groupTableBody = groupSummaries.map((summary) => [
+      summary.group.name || "-",
+      summary.group.leader_name || "-",
+      summary.total,
+      summary.confirmed,
+      summary.declined,
+      summary.pending,
+      `${summary.children} / ${summary.highChairs}`,
+    ]);
+
+    groupTableBody.push([
+      "Total",
+      "",
+      totals.guests,
+      totals.confirmed,
+      totals.declined,
+      totals.pending,
+      `${totals.children} / ${totals.highChairs}`,
+    ]);
+
     autoTable(doc, {
       startY: y,
-      head: [["Grupo", "Invitado", "Estado", "Detalle"]],
-      body: detailBody,
+      head: [["Grupo", "Líder", "Invitados", "Confirmados", "No asistirán", "Sin responder", "Niños / Periq."]],
+      body: groupTableBody,
       margin: {
         top: MARGIN_TOP,
         right: MARGIN_RIGHT,
@@ -526,35 +467,138 @@ export async function exportGuestsPdf({ event = null, groups = [], guests = [], 
         overflow: "linebreak",
       },
       headStyles: {
-        fillColor: COLORS.detailHead,
-        textColor: COLORS.detailHeadText,
+        fillColor: COLORS.accent,
+        textColor: [255, 255, 255],
         fontStyle: "bold",
-        lineColor: COLORS.border,
+        lineColor: COLORS.accent,
+        // 7.5 pt y padding horizontal ajustado para que "Confirmados" no se
+        // parta a mitad de palabra en su columna de 20 mm.
+        fontSize: 7.5,
+        cellPadding: { top: 2, right: 1.5, bottom: 2, left: 1.5 },
       },
       alternateRowStyles: {
         fillColor: COLORS.alternate,
       },
       columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 58 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 56 },
+        0: { cellWidth: 44 },
+        1: { cellWidth: 44 },
+        2: { cellWidth: 16, halign: "center" },
+        3: { cellWidth: 20, halign: "center" },
+        4: { cellWidth: 20, halign: "center" },
+        5: { cellWidth: 20, halign: "center" },
+        6: { cellWidth: 18, halign: "center" },
       },
       didParseCell: (data) => {
-        if (data.section === "body" && data.column.index === 2) {
+        if (data.section === "head") {
+          data.cell.styles.halign = data.column.index < 2 ? "left" : "center";
+        }
+        if (data.section === "body" && data.row.index === groupTableBody.length - 1) {
           data.cell.styles.fontStyle = "bold";
-          const value = String(data.cell.raw ?? "");
-          if (value === STATUS.confirmed) data.cell.styles.textColor = COLORS.confirmed;
-          if (value === STATUS.declined) data.cell.styles.textColor = COLORS.declined;
-          if (value === STATUS.pending) data.cell.styles.textColor = COLORS.pending;
+          data.cell.styles.fillColor = COLORS.soft;
         }
       },
     });
+
+    y = (doc.lastAutoTable?.finalY ?? y) + 4;
+    y = ensureSpace(doc, y, 8);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.muted);
+    doc.text("Periq. = periqueras.", MARGIN_LEFT, y);
+    y += 8;
+  }
+
+  // Detalle de invitados ----------------------------------------------------
+  if (includeDetail) {
+    if (safeMode === "detail") {
+      // La cabecera ya titula el documento: solo se añade el alcance.
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...COLORS.muted);
+      doc.text(`${totals.guests} invitados en ${totals.groups} grupos.`, MARGIN_LEFT, y);
+      y += 8;
+    } else {
+      y = addSectionTitle(doc, y, "Detalle de invitados");
+    }
+
+    const detailBody = [];
+    groupSummaries.forEach((summary) => {
+      summary.guests.forEach((guest) => {
+        detailBody.push([
+          summary.group.name || "-",
+          guest.name || "-",
+          guestStatus(guest),
+          buildGuestDetail(guest, guestsById),
+        ]);
+      });
+    });
+
+    if (detailBody.length === 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...COLORS.muted);
+      // En modo detalle la línea contextual ya dejó el espacio vertical.
+      doc.text("Sin invitados registrados.", MARGIN_LEFT, safeMode === "detail" ? y : y + 2);
+    } else {
+      autoTable(doc, {
+        startY: y,
+        head: [["Grupo", "Invitado", "Estado", "Detalle"]],
+        body: detailBody,
+        margin: {
+          top: MARGIN_TOP,
+          right: MARGIN_RIGHT,
+          bottom: MARGIN_BOTTOM,
+          left: MARGIN_LEFT,
+        },
+        tableWidth: CONTENT_WIDTH,
+        styles: {
+          font: "helvetica",
+          fontSize: 8,
+          textColor: COLORS.text,
+          lineColor: COLORS.border,
+          lineWidth: 0.1,
+          cellPadding: 2,
+          valign: "middle",
+          overflow: "linebreak",
+        },
+        headStyles: {
+          fillColor: COLORS.detailHead,
+          textColor: COLORS.detailHeadText,
+          fontStyle: "bold",
+          lineColor: COLORS.border,
+        },
+        alternateRowStyles: {
+          fillColor: COLORS.alternate,
+        },
+        columnStyles: {
+          0: { cellWidth: 40 },
+          1: { cellWidth: 58 },
+          2: { cellWidth: 28 },
+          3: { cellWidth: 56 },
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 2) {
+            data.cell.styles.fontStyle = "bold";
+            const value = String(data.cell.raw ?? "");
+            if (value === STATUS.confirmed) data.cell.styles.textColor = COLORS.confirmed;
+            if (value === STATUS.declined) data.cell.styles.textColor = COLORS.declined;
+            if (value === STATUS.pending) data.cell.styles.textColor = COLORS.pending;
+          }
+        },
+      });
+    }
   }
 
   // Cabeceras y pies al final: así se conoce el total de páginas y no se
   // duplican adornos sobre el contenido.
   const headerContext = {
+    title: safeMode === "detail" ? "Detalle de invitados" : "Resumen de invitados",
+    scopeNote:
+      safeMode === "summary"
+        ? "Incluye todos los grupos del evento"
+        : safeMode === "detail"
+          ? "Incluye todos los invitados del evento"
+          : "Incluye todos los grupos e invitados",
     eventName,
     eventDate: formatEventDate(event?.date),
     eventTime: formatEventTime(event?.time),
@@ -570,7 +614,7 @@ export async function exportGuestsPdf({ event = null, groups = [], guests = [], 
     drawFooter(doc, page, totalPages, eventName);
   }
 
-  const fileName = buildFileName(event, eventId);
+  const fileName = buildFileName(event, eventId, safeMode);
   doc.save(fileName);
   return fileName;
 }

@@ -156,3 +156,12 @@ graphify-out/
 
 # Config local de opencode (agentes/plugins locales, no se versiona)
 .opencode/
+
+# Paquetes de diseño de invitaciones (referencia local, no se versionan)
+invitacion-macarena-jorge-v3/
+invitacion-macarena-jorge-v4/
+invitacion-macarena-jorge-v3.zip
+
+# Temporales de pruebas locales y PDFs generados
+client/.tmp-*/
+resumen-invitados-*.pdf
