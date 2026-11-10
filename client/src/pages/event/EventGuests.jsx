@@ -102,7 +102,23 @@ function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
           )}
         </button>
       )}
-      <span className={`flex-1 truncate ${guest.is_child ? "text-sky-400 font-medium" : ""}`}>{guest.name}</span>
+      <div className="min-w-0 flex-1">
+        <span className={`block truncate ${guest.is_child ? "text-sky-400 font-medium" : ""}`}>
+          {guest.name}
+        </span>
+        {guest.allergy === true ? (
+          <span
+            className="block truncate text-[10px] text-amber-200"
+            title={`Alergia: ${String(guest.allergy_notes || "").trim() || "Sí"}`}
+          >
+            Alergia: {String(guest.allergy_notes || "").trim() || "Sí"}
+          </span>
+        ) : guest.registered && guest.allergy == null ? (
+          <span className="block truncate text-[10px] text-gray-500">
+            Alergia sin registrar
+          </span>
+        ) : null}
+      </div>
       {guest.is_leader ? (
         <span className="shrink-0 text-[10px] uppercase tracking-wide text-amber-300 bg-amber-900/40 rounded-full px-2 py-0.5">
           Líder

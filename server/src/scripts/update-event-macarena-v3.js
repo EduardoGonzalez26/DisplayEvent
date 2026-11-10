@@ -46,6 +46,12 @@ const RECOMMENDATIONS = [
     text: "Por los acontecimientos recientes, de momento no recomendamos viajar en tren. Os sugerimos avión, autobús o alquilar un coche.",
   },
   {
+    icon: "taxi",
+    title: "Moverse por Granada",
+    text: "Dentro de la ciudad es más práctico usar **PideTaxi**, el servicio de taxis por WhatsApp, que Uber. Teléfono: {phone}. También podéis bajar su app en App Store o Google Play.",
+    phone: "+34 958 28 00 00",
+  },
+  {
     icon: "stay",
     title: "Alojamiento",
     text: "Os recomendamos alojaros en el Albaicín o sus alrededores: estaréis a un paseo de la iglesia y del Carmen.",
@@ -206,6 +212,7 @@ function buildPatch(current) {
       enabled: true,
       eyebrow: "Para que todo salga perfecto",
       title: "Recomendaciones",
+      image: `${IMAGES}/c-p10.webp`,
       items: RECOMMENDATIONS,
     },
     locations: LOCATIONS,
@@ -298,7 +305,15 @@ function verifyResult(invitation) {
     couple: asObject(cfg.couple).nameA === "Jorge" && asObject(cfg.couple).nameB === "Macarena",
     story: typeof cfg.story === "string" && cfg.story.includes("El tequila y la cerveza Alhambra"),
     icebreaker: asObject(cfg.icebreaker).enabled === true,
-    recommendations: asObject(cfg.recommendations).items?.length === 4,
+    recommendations:
+      asObject(cfg.recommendations).image === `${IMAGES}/c-p10.webp` &&
+      asObject(cfg.recommendations).items?.length === 5 &&
+      asObject(cfg.recommendations).items?.some(
+        (item) =>
+          item.icon === "taxi" &&
+          item.title === "Moverse por Granada" &&
+          item.phone === "+34 958 28 00 00"
+      ),
     locations: Array.isArray(cfg.locations) && cfg.locations.length === 2,
     dress_code: Array.isArray(cfg.dress_code) && cfg.dress_code[0]?.label === "Formal",
     lodging: Array.isArray(cfg.lodging) && cfg.lodging.length === 2,

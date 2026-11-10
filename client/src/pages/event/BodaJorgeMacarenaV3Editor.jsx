@@ -15,6 +15,7 @@ const RECOMMENDATION_ICONS = [
   { value: "shoe", label: "Calzado" },
   { value: "weather", label: "Clima" },
   { value: "transport", label: "Transporte" },
+  { value: "taxi", label: "Moverse por Granada" },
   { value: "stay", label: "Alojamiento" },
 ];
 
@@ -34,7 +35,7 @@ function emptyLocation() {
 }
 
 function emptyRecommendation() {
-  return withUid({ icon: "stay", title: "", text: "" });
+  return withUid({ icon: "stay", title: "", text: "", phone: "" });
 }
 
 function emptyLodging() {
@@ -272,7 +273,9 @@ export default function BodaJorgeMacarenaV3Editor({
           </Button>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          Cuatro consejos con icono (calzado, clima, transporte y alojamiento).
+          Cinco consejos con icono (calzado, clima, transporte, taxi y
+          alojamiento). Puedes usar <code className="text-gray-300">**negrita**</code>{" "}
+          y <code className="text-gray-300">{"{phone}"}</code> en el texto.
         </p>
 
         <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -374,6 +377,20 @@ export default function BodaJorgeMacarenaV3Editor({
                       onChange={(e) =>
                         setRecommendation(index, { text: e.target.value })
                       }
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-gray-400 mb-1 block">
+                      Teléfono (opcional)
+                    </span>
+                    <input
+                      className={inputCls}
+                      value={item.phone || ""}
+                      onChange={(e) =>
+                        setRecommendation(index, { phone: e.target.value })
+                      }
+                      placeholder="+34 958 28 00 00"
+                      inputMode="tel"
                     />
                   </label>
                 </div>

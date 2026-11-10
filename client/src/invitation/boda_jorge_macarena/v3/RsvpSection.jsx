@@ -12,6 +12,23 @@ function buildAnswers(guests) {
   return map;
 }
 
+function buildAllergies(guests) {
+  const map = {};
+  for (const guest of guests) {
+    map[guest.id] =
+      guest.allergy === true ? true : guest.allergy === false ? false : null;
+  }
+  return map;
+}
+
+function buildAllergyText(guests) {
+  const map = {};
+  for (const guest of guests) {
+    map[guest.id] = String(guest.allergy_notes || "");
+  }
+  return map;
+}
+
 function pad2(value) {
   return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
 }
@@ -80,6 +97,8 @@ export default function RsvpSection({ rsvp }) {
   })();
 
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
+  const [allergies, setAllergies] = useState(() => buildAllergies(guests));
+  const [allergyText, setAllergyText] = useState(() => buildAllergyText(guests));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
@@ -91,6 +110,8 @@ export default function RsvpSection({ rsvp }) {
 
   useEffect(() => {
     setAnswers(buildAnswers(guests));
+    setAllergies(buildAllergies(guests));
+    setAllergyText(buildAllergyText(guests));
   }, [guests]);
 
   useEffect(() => {
@@ -140,13 +161,23 @@ export default function RsvpSection({ rsvp }) {
   const expired = hasDeadline && now > deadlineMs;
   const canEdit = editable && !expired;
 
-  const answeredCount = guests.filter((guest) => answers[guest.id]).length;
-  const pending = Math.max(0, guests.length - answeredCount);
+  const pending = guests.filter((guest) => {
+    const answer = answers[guest.id];
+    if (answer !== "yes" && answer !== "no") return true;
+    if (answer === "yes") {
+      return typeof allergies[guest.id] !== "boolean";
+    }
+    return false;
+  }).length;
   const allAnswered = isFamilyGroup(guests) && pending === 0;
   const yesCount = guests.filter((guest) => answers[guest.id] === "yes").length;
 
   const setAnswer = (id, value) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
+  const setAllergy = (id, value) =>
+    setAllergies((prev) => ({ ...prev, [id]: value }));
+  const setAllergyTextFor = (id, value) =>
+    setAllergyText((prev) => ({ ...prev, [id]: value }));
 
   const runEnvelope = () => {
     timers.current.forEach((timer) => window.clearTimeout(timer));
@@ -181,6 +212,21 @@ export default function RsvpSection({ rsvp }) {
         declining_ids: guests
           .filter((guest) => answers[guest.id] === "no")
           .map((guest) => guest.id),
+        // La pregunta de alergia solo aplica a quienes asisten; para el
+        // resto se envía null y notas vacías.
+        allergies: guests.map((guest) => {
+          const attending = answers[guest.id] === "yes";
+          const hasAllergy = allergies[guest.id];
+          return {
+            guest_id: guest.id,
+            has_allergy:
+              attending && typeof hasAllergy === "boolean" ? hasAllergy : null,
+            notes:
+              attending && hasAllergy === true
+                ? String(allergyText[guest.id] || "").trim()
+                : "",
+          };
+        }),
         note,
       });
       setSubmitted(true);
@@ -280,6 +326,8 @@ export default function RsvpSection({ rsvp }) {
                   setEditing(true);
                   setTStage(4);
                   setAnswers(buildAnswers(guests));
+                  setAllergies(buildAllergies(guests));
+                  setAllergyText(buildAllergyText(guests));
                 }}
               >
                 Modificar respuesta
@@ -370,6 +418,44 @@ export default function RsvpSection({ rsvp }) {
                         No asistirá
                       </button>
                     </div>
+                    {answers[guest.id] === "yes" ? (
+                      <div className="mjv3-allergy">
+                        <div className="mjv3-allergy-question">
+                          <span>¿Alguna alergia alimentaria?</span>
+                          <span className="mjv3-allergy-actions">
+                            <button
+                              type="button"
+                              className="mjv3-answer mjv3-answer--sm"
+                              aria-pressed={allergies[guest.id] === true}
+                              onClick={() => setAllergy(guest.id, true)}
+                            >
+                              Sí
+                            </button>
+                            <button
+                              type="button"
+                              className="mjv3-answer mjv3-answer--no mjv3-answer--sm"
+                              aria-pressed={allergies[guest.id] === false}
+                              onClick={() => setAllergy(guest.id, false)}
+                            >
+                              No
+                            </button>
+                          </span>
+                        </div>
+                        {allergies[guest.id] === true ? (
+                          <input
+                            type="text"
+                            className="mjv3-field mjv3-allergy-input"
+                            aria-label="¿Cuál alergia?"
+                            placeholder="¿Cuál?"
+                            maxLength={500}
+                            value={allergyText[guest.id] || ""}
+                            onChange={(event) =>
+                              setAllergyTextFor(guest.id, event.target.value)
+                            }
+                          />
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </>

@@ -31,6 +31,12 @@ export const DEFAULT_RECOMMENDATIONS = [
     text: "Por los acontecimientos recientes, de momento no recomendamos viajar en tren. Os sugerimos avión, autobús o alquilar un coche.",
   },
   {
+    icon: "taxi",
+    title: "Moverse por Granada",
+    text: "Dentro de la ciudad es más práctico usar **PideTaxi**, el servicio de taxis por WhatsApp, que Uber. Teléfono: {phone}. También podéis bajar su app en App Store o Google Play.",
+    phone: "+34 958 28 00 00",
+  },
+  {
     icon: "stay",
     title: "Alojamiento",
     text: "Os recomendamos alojaros en el Albaicín o sus alrededores: estaréis a un paseo de la iglesia y del Carmen.",

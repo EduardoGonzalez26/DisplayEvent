@@ -29,12 +29,71 @@ const MAX_AMOUNT = 999_999;
 
 async function getGuests(groupId) {
   return query(
-    `SELECT id, name, is_child, is_leader, registered, declined, companion_id
+    `SELECT id, name, is_child, is_leader, registered, declined, companion_id,
+            allergy, allergy_notes
      FROM guests
      WHERE group_id = $1
      ORDER BY is_leader DESC, id ASC`,
     [groupId]
   );
+}
+
+/* ------------------------------------------------------------------
+   Alergias alimentarias del RSVP (v4).
+
+   Array opcional `allergies: [{ guest_id, has_allergy, notes }]`.
+   `has_allergy` debe ser boolean o null; `notes` string (máx. 500).
+------------------------------------------------------------------ */
+
+const RSVP_ALLERGY_NOTES_MAX = 500;
+
+// Devuelve { present, entries } o { error }. `present` indica si el cliente
+// v4 envió el array; si no viene (undefined/null), no se tocan las columnas.
+function parseAllergiesInput(value) {
+  if (value === undefined || value === null) return { present: false, entries: [] };
+  if (!Array.isArray(value)) {
+    return { error: 'El campo "allergies" debe ser un arreglo' };
+  }
+
+  const entries = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return { error: `allergies[${index}] es inválido` };
+    }
+
+    const guestId = Number(item.guest_id);
+    if (!Number.isInteger(guestId) || guestId <= 0) {
+      return { error: `allergies[${index}].guest_id es inválido` };
+    }
+
+    if (
+      item.has_allergy !== true &&
+      item.has_allergy !== false &&
+      item.has_allergy !== null
+    ) {
+      return { error: `allergies[${index}].has_allergy debe ser boolean o null` };
+    }
+
+    const rawNotes = item.notes == null ? "" : item.notes;
+    if (typeof rawNotes !== "string") {
+      return { error: `allergies[${index}].notes debe ser texto` };
+    }
+    const notes = rawNotes.trim();
+    if (notes.length > RSVP_ALLERGY_NOTES_MAX) {
+      return {
+        error: `allergies[${index}].notes no puede superar los ${RSVP_ALLERGY_NOTES_MAX} caracteres`,
+      };
+    }
+
+    entries.push({
+      guest_id: guestId,
+      has_allergy: item.has_allergy,
+      notes,
+    });
+  }
+
+  return { present: true, entries };
 }
 
 // Disponibilidad de pago con tarjeta POR MONEDA (extensión del contrato
@@ -97,8 +156,8 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
 
     const cfg = normalizeForRead(inv.invitation);
 
-    // Lectura única de pases: alimenta ambas guardas y, tras la transacción,
-    // la respuesta (el update es determinista sobre estas mismas filas).
+    // Lectura previa de pases: alimenta las guardas de plazo/congelado. La
+    // respuesta se relee de la BD después de la transacción.
     const guests = await getGuests(inv.group_id);
     const hasResponded = guests.some((g) => g.registered || g.declined);
 
@@ -119,7 +178,18 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
 
     const allowIds = Array.isArray(attending_ids) ? attending_ids.map(Number) : [];
     const declineIds = Array.isArray(declining_ids) ? declining_ids.map(Number) : [];
-    const allIds = [...allowIds, ...declineIds];
+
+    const allergyInput = parseAllergiesInput(req.body.allergies);
+    if (allergyInput.error) {
+      return res.status(400).json({ error: allergyInput.error });
+    }
+    const allergyEntries = allergyInput.entries;
+
+    const allIds = [
+      ...allowIds,
+      ...declineIds,
+      ...allergyEntries.map((entry) => entry.guest_id),
+    ];
 
     if (allIds.length > 0) {
       const owned = await query(
@@ -132,6 +202,11 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
         return res.status(400).json({ error: "Algunos pases no pertenecen a esta invitación" });
       }
     }
+
+    // Sets de asistencia: "no asistirá" gana ante un id duplicado, igual que
+    // el orden de los UPDATE de asistencia dentro de la transacción.
+    const allowSet = new Set(allowIds);
+    const declineSet = new Set(declineIds);
 
     const cleanNote = await transaction(async (conn) => {
       // Pases que asisten: registrados. Pases que no asisten: declinados.
@@ -153,6 +228,26 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
         );
       }
 
+      // Alergias: solo si el cliente v4 envió el array. Cada entrada sigue la
+      // asistencia resultante: sin asistencia (o has_allergy null) => NULL.
+      if (allergyInput.present) {
+        for (const entry of allergyEntries) {
+          const attends = allowSet.has(entry.guest_id) && !declineSet.has(entry.guest_id);
+          let allergy = null;
+          let allergyNotes = null;
+          if (attends && typeof entry.has_allergy === "boolean") {
+            allergy = entry.has_allergy;
+            if (entry.has_allergy) allergyNotes = entry.notes;
+          }
+          await conn.query(
+            `UPDATE guests
+                SET allergy = $1, allergy_notes = $2
+              WHERE id = $3 AND group_id = $4`,
+            [allergy, allergyNotes, entry.guest_id, inv.group_id]
+          );
+        }
+      }
+
       const noteStr = typeof note === "string" ? note.trim().slice(0, 500) : null;
       await conn.query(`UPDATE "groups" SET rsvp_note = $1 WHERE id = $2`, [
         noteStr,
@@ -161,16 +256,9 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
       return noteStr;
     });
 
-    // Refleja en la lectura previa el resultado exacto de la transacción
-    // (reset + marcas enviadas; "no asistirá" gana ante un id duplicado),
-    // sin una segunda consulta.
-    const allowSet = new Set(allowIds);
-    const declineSet = new Set(declineIds);
-    const updatedGuests = guests.map((g) => {
-      const id = Number(g.id);
-      const declined = declineSet.has(id);
-      return { ...g, registered: !declined && allowSet.has(id), declined };
-    });
+    // Relee los pases: la respuesta refleja exactamente la asistencia y las
+    // alergias persistidas (no una reconstrucción en memoria).
+    const updatedGuests = await getGuests(inv.group_id);
 
     res.json({
       ok: true,

@@ -207,7 +207,7 @@ const DEFAULT_ICEBREAKER_EYEBROW = "Antes del gran día";
 const DEFAULT_ICEBREAKER_TITLE = "Icebreaker";
 const DEFAULT_RECOMMENDATIONS_EYEBROW = "Para que todo salga perfecto";
 const DEFAULT_RECOMMENDATIONS_TITLE = "Recomendaciones";
-const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "stay"];
+const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "taxi", "stay"];
 const DEFAULT_RECOMMENDATION_ICON = "stay";
 const DEFAULT_STAY_QUOTE =
   "«Dale limosna, mujer,\nque no hay en la vida nada\ncomo la pena de ser\nciego en Granada.»";
@@ -452,6 +452,7 @@ function normalizeRecommendations(raw) {
         icon: normalizeRecommendationIcon(item.icon),
         title: str(item.title),
         text: str(item.text),
+        phone: str(item.phone),
       }))
       .filter((item) => item.title || item.text);
   } else {

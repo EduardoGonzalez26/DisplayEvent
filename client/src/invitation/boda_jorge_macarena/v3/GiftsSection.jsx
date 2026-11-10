@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { api } from "../../../api.js";
 import {
@@ -506,8 +507,14 @@ export default function GiftsSection({
         <p className="mjv3-gift-status">Pago cancelado. No se realizó ningún cargo.</p>
       ) : null}
 
-      {checkoutOpen ? (
-        <div className="mjv3-checkout-backdrop" role="presentation" onClick={closeCheckout}>
+      {checkoutOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="mjv3 mjv3-checkout-backdrop"
+              data-invitation-theme="boda_jorge_macarena"
+              role="presentation"
+              onClick={closeCheckout}
+            >
           <div
             className="mjv3-checkout"
             role="dialog"
@@ -590,9 +597,11 @@ export default function GiftsSection({
                 </p>
               </>
             )}
-          </div>
-        </div>
-      ) : null}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

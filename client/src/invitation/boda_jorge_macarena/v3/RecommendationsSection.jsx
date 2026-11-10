@@ -2,6 +2,28 @@ import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3, resolveInvitationImage } from "./assets.js";
 import { DEFAULT_RECOMMENDATIONS } from "./index.js";
 
+/* Texto enriquecido mínimo del prototipo v4: **negrita** y {phone}. */
+function renderRichText(text, phone) {
+  const source = String(text || "");
+  const phoneHref = String(phone || "").replace(/[^\d+]/g, "");
+  const tokens = source.split(/(\*\*[^*]+\*\*|\{phone\})/g);
+  return tokens.map((token, index) => {
+    if (!token) return null;
+    if (token.startsWith("**") && token.endsWith("**")) {
+      return <strong key={`b-${index}`}>{token.slice(2, -2)}</strong>;
+    }
+    if (token === "{phone}") {
+      if (!phone) return null;
+      return (
+        <a key={`t-${index}`} className="mjv3-rec-phone" href={`tel:${phoneHref}`}>
+          {phone}
+        </a>
+      );
+    }
+    return token;
+  });
+}
+
 function RecommendationIcon({ icon }) {
   switch (icon) {
     case "shoe":
@@ -25,6 +47,16 @@ function RecommendationIcon({ icon }) {
           <path d="M5 10h14M8 19l-2 2M16 19l2 2M3 3l18 18" />
         </svg>
       );
+    case "taxi":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 11l1.5-4.5h11L19 11" />
+          <rect x="3" y="11" width="18" height="6" rx="1.5" />
+          <path d="M6.5 17v2M17.5 17v2M9 4h6" />
+          <circle cx="7.5" cy="14" r="0.8" />
+          <circle cx="16.5" cy="14" r="0.8" />
+        </svg>
+      );
     case "stay":
     default:
       return (
@@ -43,15 +75,15 @@ export default function RecommendationsSection({ cfg }) {
   const items = Array.isArray(recommendations.items) && recommendations.items.length
     ? recommendations.items
     : DEFAULT_RECOMMENDATIONS;
-  const image = resolveInvitationImage(recommendations.image, V3.p2);
+  const image = resolveInvitationImage(recommendations.image, V3.p10);
 
   return (
     <div className="mjv3-split mjv3-split--reverse">
       <div className="mjv3-split-media">
         <Drawing
           src={image}
-          alt="Macarena y Jorge en Versalles"
-          ratio="3 / 4"
+          alt="Macarena y Jorge en el Real Alcázar"
+          ratio="4 / 3"
           rotate={-1.3}
         />
       </div>
@@ -69,7 +101,9 @@ export default function RecommendationsSection({ cfg }) {
               </span>
               <div>
                 <div className="mjv3-rec-title">{item.title}</div>
-                {item.text ? <p className="mjv3-rec-text">{item.text}</p> : null}
+                {item.text ? (
+                  <p className="mjv3-rec-text">{renderRichText(item.text, item.phone)}</p>
+                ) : null}
               </div>
             </div>
           ))}

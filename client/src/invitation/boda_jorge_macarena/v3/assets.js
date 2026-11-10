@@ -39,10 +39,23 @@ export const V3 = {
   alhambra: v3Asset("c-alhambra.webp"),
   p7: v3Asset("c-p7.webp"),
   p2: v3Asset("c-p2.webp"),
+  p10: v3Asset("c-p10.webp"),
   p9: v3Asset("c-p9.webp"),
   p3: v3Asset("c-p3.webp"),
   p1: v3Asset("c-p1.webp"),
   p5: v3Asset("c-p5.webp"),
+  ideas: {
+    ellos: [
+      v3Asset("idea-ellos-1.jpg"),
+      v3Asset("idea-ellos-2.jpg"),
+      v3Asset("idea-ellos-3.jpg"),
+    ],
+    ellas: [
+      v3Asset("idea-ellas-1.jpg"),
+      v3Asset("idea-ellas-2.jpg"),
+      v3Asset("idea-ellas-3.jpg"),
+    ],
+  },
   mapaCeremonia: v3Asset("m-ceremonia.webp"),
   mapaRecepcion: v3Asset("m-recepcion.webp"),
   mapaAlbaicin: v3Asset("m-albaicin.webp"),

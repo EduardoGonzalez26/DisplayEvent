@@ -33,7 +33,7 @@ const DEFAULT_ICEBREAKER_EYEBROW = "Antes del gran día";
 const DEFAULT_ICEBREAKER_TITLE = "Icebreaker";
 const DEFAULT_RECOMMENDATIONS_EYEBROW = "Para que todo salga perfecto";
 const DEFAULT_RECOMMENDATIONS_TITLE = "Recomendaciones";
-const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "stay"];
+const RECOMMENDATION_ICONS = ["shoe", "weather", "transport", "stay", "taxi"];
 const DEFAULT_RECOMMENDATION_ICON = "stay";
 const DEFAULT_STAY_QUOTE =
   "«Dale limosna, mujer, que no hay en la vida nada como la pena de ser ciego en Granada.»";
@@ -403,6 +403,7 @@ function normalizeRecommendations(raw) {
         icon: normalizeRecommendationIcon(item.icon),
         title: str(item.title),
         text: str(item.text),
+        phone: str(item.phone),
       }))
       .filter((item) => item.title || item.text);
   }
@@ -671,6 +672,7 @@ const recommendationItemSchema = z.object({
   icon: z.enum(RECOMMENDATION_ICONS).default(DEFAULT_RECOMMENDATION_ICON),
   title: z.string().default(""),
   text: z.string().default(""),
+  phone: z.string().default(""),
 });
 
 const recommendationsSchema = z.object({
