@@ -273,6 +273,9 @@ html.de-invitation::-webkit-scrollbar-thumb:hover {
 html.de-invitation {
   scrollbar-color: #2c4c3b transparent;
   scrollbar-width: thin;
+  /* Reserva siempre el ancho del scrollbar: evita el salto horizontal al
+     bloquear/desbloquear el scroll durante la apertura del sobre. */
+  scrollbar-gutter: stable;
 }
 
 /* Bloqueo de scroll mientras el sobre digital está presente (la clase
@@ -283,6 +286,11 @@ html.de-envelope-lock,
 html.de-envelope-lock body {
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Mismo ancho reservado mientras el sobre bloquea el scroll. */
+html.de-envelope-lock {
+  scrollbar-gutter: stable;
 }
 
 /* Refuerzo iOS: bajo el sobre no hay gestos nativos de scroll/zoom.

@@ -53,9 +53,16 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen })
     const body = document.body;
     const scrollbarWidth = window.innerWidth - root.clientWidth;
     const prevPaddingRight = body.style.paddingRight;
+    // `scrollbar-gutter: stable` reserva el hueco del scrollbar en navegadores
+    // modernos. El padding manual solo se usa como fallback legacy; si se
+    // aplicara junto al gutter, el contenido se desplazaría al abrir/cerrar.
+    const supportsStableGutter =
+      typeof CSS !== "undefined" &&
+      typeof CSS.supports === "function" &&
+      CSS.supports("scrollbar-gutter", "stable");
 
     root.classList.add("de-envelope-lock");
-    if (scrollbarWidth > 0) {
+    if (!supportsStableGutter && scrollbarWidth > 0) {
       const current = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
       body.style.paddingRight = `${current + scrollbarWidth}px`;
     }
