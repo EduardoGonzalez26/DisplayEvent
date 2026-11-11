@@ -134,6 +134,15 @@
 
 /* ------------------------------- Sobre ------------------------------ */
 
+/* El sobre no debe aportar altura al documento: es una capa fija sobre la
+   página. Así `body.scrollHeight` no cambia al desmontarlo. */
+.mjv3-envelope-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+}
+
 .mjv3-overlay {
   position: fixed;
   inset: 0;

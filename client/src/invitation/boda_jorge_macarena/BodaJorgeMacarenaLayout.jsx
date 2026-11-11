@@ -222,7 +222,7 @@ export default function BodaJorgeMacarenaLayout({
         <div data-paper className="mjv3-paper mjv3-paper--cover algodon">
           <div data-shade className="mjv3-shade" aria-hidden="true" />
           <NazariFrame cover />
-          <CoverSection event={event} cfg={cfg} drawing={V3.portada} reveal={reveal} />
+          <CoverSection event={event} cfg={cfg} drawing={V3.portada} />
         </div>
       </section>
 

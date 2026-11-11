@@ -51,20 +51,64 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen })
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
+    // Medimos el ancho del scrollbar ANTES de bloquear el scroll.
     const scrollbarWidth = window.innerWidth - root.clientWidth;
     const prevPaddingRight = body.style.paddingRight;
-    // `scrollbar-gutter: stable` reserva el hueco del scrollbar en navegadores
-    // modernos. El padding manual solo se usa como fallback legacy; si se
-    // aplicara junto al gutter, el contenido se desplazaría al abrir/cerrar.
-    const supportsStableGutter =
-      typeof CSS !== "undefined" &&
-      typeof CSS.supports === "function" &&
-      CSS.supports("scrollbar-gutter", "stable");
+    // La CSS global de la invitación reserva `scrollbar-gutter: stable`.
+    // Durante el bloqueo lo neutralizamos inline: así el fallback de padding
+    // compensa exactamente el hueco del scrollbar y no se reserva dos veces.
+    // Se restaura en el cleanup sin cambiar la secuencia del sobre.
+    const prevGutter = root.style.scrollbarGutter;
+    root.style.scrollbarGutter = "auto";
 
     root.classList.add("de-envelope-lock");
-    if (!supportsStableGutter && scrollbarWidth > 0) {
+    // Después del bloqueo comprobamos si el navegador ya reservó el hueco.
+    const reserved = window.innerWidth - root.clientWidth;
+    let paddingApplied = false;
+    const applyPadding = (width) => {
+      if (paddingApplied || width <= 0) return;
       const current = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
-      body.style.paddingRight = `${current + scrollbarWidth}px`;
+      body.style.paddingRight = `${current + width}px`;
+      paddingApplied = true;
+    };
+    if (scrollbarWidth > 0 && reserved === 0) {
+      applyPadding(scrollbarWidth);
+    }
+
+    // El Layout de la invitación se carga de forma perezosa y puede montar
+    // después del sobre. Si en ese primer frame todavía no había contenido
+    // desplazable, volvemos a comprobar cuando el body cambie de tamaño.
+    let raf = 0;
+    const measureNativeScrollbar = () => {
+      const probe = document.createElement("div");
+      probe.setAttribute("aria-hidden", "true");
+      probe.style.cssText =
+        "position:fixed;top:-9999px;left:-9999px;width:100px;height:100px;" +
+        "overflow:scroll;visibility:hidden;pointer-events:none;";
+      document.body.appendChild(probe);
+      const width = probe.offsetWidth - probe.clientWidth;
+      probe.remove();
+      return width;
+    };
+    const compensateWhenContentReady = () => {
+      raf = 0;
+      if (paddingApplied) return;
+      if (document.documentElement.scrollHeight <= window.innerHeight) return;
+      const nativeScrollbar = measureNativeScrollbar();
+      if (nativeScrollbar <= 0) return;
+      if (body.getBoundingClientRect().width >= window.innerWidth - 0.5) {
+        applyPadding(nativeScrollbar);
+      }
+    };
+    const scheduleCheck = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(compensateWhenContentReady);
+    };
+    scheduleCheck();
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(scheduleCheck);
+      resizeObserver.observe(body);
     }
 
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -72,8 +116,11 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen })
     window.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
-      root.classList.remove("de-envelope-lock");
+      resizeObserver?.disconnect();
+      if (raf) cancelAnimationFrame(raf);
       body.style.paddingRight = prevPaddingRight;
+      root.classList.remove("de-envelope-lock");
+      root.style.scrollbarGutter = prevGutter;
       window.removeEventListener("wheel", onWheel);
       timers.current.forEach((timer) => window.clearTimeout(timer));
       timers.current = [];
@@ -126,7 +173,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen })
   return (
     <>
       <div
-        className="mjv3"
+        className="mjv3 mjv3-envelope-root"
         data-invitation-theme="boda_jorge_macarena"
       >
         {stage >= 3 ? (
