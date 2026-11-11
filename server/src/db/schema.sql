@@ -182,6 +182,8 @@ ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 -- Alergias alimentarias por invitado (NULL = aún no respondido).
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS allergy BOOLEAN;
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS allergy_notes VARCHAR(500);
+-- Edad declarada por el invitado (NULL = aún no registrada).
+ALTER TABLE guests ADD COLUMN IF NOT EXISTS age SMALLINT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);

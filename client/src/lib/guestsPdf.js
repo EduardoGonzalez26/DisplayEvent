@@ -312,6 +312,10 @@ function buildGuestDetail(guest, guestsById) {
     const companion = guestsById.get(groupKey(guest.companion_id));
     details.push(companion ? `Acompañante de ${companion.name}` : "Acompañante");
   }
+  if (guest?.age != null) details.push(`Edad: ${guest.age}`);
+  if (guest?.allergy === true) {
+    details.push(`Alergia: ${guest.allergy_notes || "Sí"}`);
+  }
   return details.length > 0 ? details.join(" · ") : "-";
 }
 

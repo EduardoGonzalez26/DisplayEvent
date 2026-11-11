@@ -30,7 +30,7 @@ const MAX_AMOUNT = 999_999;
 async function getGuests(groupId) {
   return query(
     `SELECT id, name, is_child, is_leader, registered, declined, companion_id,
-            allergy, allergy_notes
+            allergy, allergy_notes, age
      FROM guests
      WHERE group_id = $1
      ORDER BY is_leader DESC, id ASC`,
@@ -91,6 +91,53 @@ function parseAllergiesInput(value) {
       has_allergy: item.has_allergy,
       notes,
     });
+  }
+
+  return { present: true, entries };
+}
+
+/* ------------------------------------------------------------------
+   Edad por invitado en el RSVP (solo la usa boda_jorge_macarena; el
+   endpoint es compartido y el campo es opcional).
+
+   Array opcional `ages: [{ guest_id, age }]`. `age` entero 0..120 o null.
+------------------------------------------------------------------ */
+
+const RSVP_AGE_MIN = 0;
+const RSVP_AGE_MAX = 120;
+
+// Devuelve { present, entries } o { error }. `present` indica si el cliente
+// envió el array; si no viene (undefined/null), no se toca la columna `age`.
+function parseAgesInput(value) {
+  if (value === undefined || value === null) return { present: false, entries: [] };
+  if (!Array.isArray(value)) {
+    return { error: 'El campo "ages" debe ser un arreglo' };
+  }
+
+  const entries = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return { error: `ages[${index}] es inválido` };
+    }
+
+    const guestId = Number(item.guest_id);
+    if (!Number.isInteger(guestId) || guestId <= 0) {
+      return { error: `ages[${index}].guest_id es inválido` };
+    }
+
+    if (
+      item.age !== null &&
+      (!Number.isInteger(item.age) ||
+        item.age < RSVP_AGE_MIN ||
+        item.age > RSVP_AGE_MAX)
+    ) {
+      return {
+        error: `ages[${index}].age debe ser un entero entre ${RSVP_AGE_MIN} y ${RSVP_AGE_MAX} o null`,
+      };
+    }
+
+    entries.push({ guest_id: guestId, age: item.age });
   }
 
   return { present: true, entries };
@@ -185,10 +232,17 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
     }
     const allergyEntries = allergyInput.entries;
 
+    const ageInput = parseAgesInput(req.body.ages);
+    if (ageInput.error) {
+      return res.status(400).json({ error: ageInput.error });
+    }
+    const ageEntries = ageInput.entries;
+
     const allIds = [
       ...allowIds,
       ...declineIds,
       ...allergyEntries.map((entry) => entry.guest_id),
+      ...ageEntries.map((entry) => entry.guest_id),
     ];
 
     if (allIds.length > 0) {
@@ -244,6 +298,19 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
                 SET allergy = $1, allergy_notes = $2
               WHERE id = $3 AND group_id = $4`,
             [allergy, allergyNotes, entry.guest_id, inv.group_id]
+          );
+        }
+      }
+
+      // Edad: solo si el cliente envió el array. Si no asiste o la edad es
+      // null, la columna queda en NULL.
+      if (ageInput.present) {
+        for (const entry of ageEntries) {
+          const attends = allowSet.has(entry.guest_id) && !declineSet.has(entry.guest_id);
+          const age = attends && entry.age !== null ? entry.age : null;
+          await conn.query(
+            `UPDATE guests SET age = $1 WHERE id = $2 AND group_id = $3`,
+            [age, entry.guest_id, inv.group_id]
           );
         }
       }

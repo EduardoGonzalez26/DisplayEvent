@@ -4,7 +4,7 @@
 >
 > **Plantilla:** `boda_jorge_macarena` · **Diseño vigente (v3 + delta v4, 2026-11-10):** papel de algodón, marco nazarí, granada en acuarela, letterpress y dibujos `.webp` con `multiply`. Tipografías **Cormorant Upright** (display) y **Nikolai Condensed** (labels; fallback Noto Serif Display). El v2 editorial (2026-10-11) y el diseño nocturno anterior quedan como **histórico** en `MEMORIA.md` §15/§16.
 >
-> **Estado (2026-11-10):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y alergias en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia) y el seed v4 del evento 2 ya están aplicados. Pendientes: fuente Nikolai y deploy.
+> **Estado (2026-11-10):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y **alergias + edad** en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia y **`guests.age`**) y el seed v4 del evento 2 ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL**. Pendientes: fuente Nikolai y deploy.
 >
 > **Archivos clave:**
 > - Vista pública: `client/src/invitation/InvitationPage.jsx` (obtiene datos por token).
@@ -35,7 +35,7 @@ La invitación se publica con un token único por grupo de invitados (`/invitaci
 | ------ | ------------ | ------ |
 | `event` | Los datos generales del evento | `{ name, date, time, place, invitation }` |
 | `group` | El grupo invitado | `{ name, leader_name, rsvp_note }` |
-| `guests` | Los invitados de ese grupo | lista de `{ id, name, is_leader, is_child, registered, declined, allergy, allergy_notes }` |
+| `guests` | Los invitados de ese grupo | lista de `{ id, name, is_leader, is_child, registered, declined, allergy, allergy_notes, age }` |
 | `public_config` | Config pública | `{ stripe_publishable_key, custom_domain }` |
 | `payment_methods` | Disponibilidad de pago con tarjeta | `{ card: { mxn, eur } }` — solo aplica con la mesa habilitada, `stripe_enabled` y Stripe configurado. Con una **cuenta Connect válida para el evento** (`events.stripe_account_id`) ambas monedas comparten la misma cuenta: `true/true` si está habilitada y `false/false` si no. Sin cuenta de evento se conserva la resolución **legacy** por moneda |
 
@@ -193,15 +193,15 @@ Campos **aditivos** al contrato común. `enabled` decide si la sección se rende
 | Dato | Qué es |
 | ---- | ------ |
 | `family` | Nombre del grupo invitado (p. ej. "Pérez"). v3 lo muestra como **“Familia Pérez”** en el RSVP y el sobre |
-| `guests[]` | Cada invitado con `name`, `is_leader`, `is_child`, `registered`, `declined`, `allergy` (BOOLEAN/null) y `allergy_notes` (≤500) |
+| `guests[]` | Cada invitado con `name`, `is_leader`, `is_child`, `registered`, `declined`, `allergy` (BOOLEAN/null), `allergy_notes` (≤500) y `age` (SMALLINT/null) |
 | `rsvpNote` | Nota previa del grupo; se reenvía para preservarla |
 
 - El RSVP v3 + v4 es **propio** (`v3/RsvpSection.jsx`), no `shared/Rsvp.jsx`. **No muestra “Líder”**, no usa modal y **no muestra contactos**.
 - **Plazo:** `rsvp_editable` + `rsvp_edit_deadline`; la fecha visible se calcula en **hora de España** (`Europe/Madrid`) y hay contador días/horas/min.
 - **Estados:** formulario → **enviado** (sobre animado + “¡Gracias, Familia X!” + “Modificar respuesta” si sigue editable) → **plazo cerrado** (“El plazo de confirmación ha terminado” o “El plazo para modificar la confirmación terminó.”).
-- **Alergias (v4):** al marcar “Sí asistirá” aparece “¿Alguna alergia alimentaria?” (Sí/No) y, si es Sí, un campo de texto (máx. 500). El submit exige respuesta de alergia para cada asistente; a quien no asiste no se le pregunta.
-- **Envío:** `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids`, `note` y `allergies: [{ guest_id, has_allergy, notes }]`; el backend valida, persiste en la **misma transacción** y **relee `guests`** para devolver `allergy`/`allergy_notes` actualizados. El botón se habilita cuando todos los pases tienen respuesta (y alergia los asistentes). `preview` no envía.
-- **Panel:** `EventGuests.jsx` muestra “Alergia: …” / “Alergia sin registrar”.
+- **Alergias y edad (v4):** al marcar “Sí asistirá” aparece **Edad** (obligatoria, entero 0..120) y “¿Alguna alergia alimentaria?” (Sí/No; si es Sí, un campo de texto ≤500). El submit se bloquea hasta completar **asistencia + alergia + edad** de cada asistente; a quien no asiste no se le piden. **Solo `boda_jorge_macarena` pide edad**; el endpoint es compartido y `ages` es opcional para compatibilidad.
+- **Envío:** `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids`, `note`, `allergies: [{ guest_id, has_allergy, notes }]` y `ages: [{ guest_id, age }]` (entero 0..120 o null; opcional). El backend valida, persiste en la **misma transacción** (asistencia + alergias + edad) y **relee `guests`** para devolver `allergy`/`allergy_notes`/`age` actualizados. El botón se habilita cuando todos los pases tienen respuesta, alergia y edad. `preview` no envía.
+- **Panel:** `EventGuests.jsx` muestra “Edad: X”/“Edad sin registrar” y “Alergia: …”/“Alergia sin registrar”. El **PDF de detalle** añade `Edad: X` y `Alergia: …` cuando existen.
 
 ---
 
@@ -218,7 +218,7 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 7. **Recomendaciones** (`v3/RecommendationsSection.jsx`): 5 consejos con iconos (incluye “Moverse por Granada”, icono `taxi`, PideTaxi, teléfono +34 958 28 00 00 y mención a App Store/Google Play), imagen `c-p10.webp` (4/3, Real Alcázar) y texto enriquecido (`**negrita**`, `{phone}` → `tel:`). Se omite si `enabled` es false.
 8. **Viaje** (`v3/TravelSection.jsx`): llegada fija a Madrid, origen, fechas y tarjetas de avión/autobús (sin tren).
 9. **Hospedaje** (`v3/StaySection.jsx`): hoteles (máx. 2), mapa estático del Albaicín, fechas, plataformas y cita.
-10. **Confirmación** (`v3/RsvpSection.jsx`): RSVP v3 + v4, con alergias por asistente (ver §4).
+10. **Confirmación** (`v3/RsvpSection.jsx`): RSVP v3 + v4, con **edad y alergias** por asistente (ver §4).
 11. **Regalo** (`v3/GiftsSection.jsx`): mesa de regalos + mensaje privado (ver §2.3).
 12. **Cierre** (`v3/ClosingSection.jsx`): dibujo, frase, monograma, `event.place · fecha`, badge **“Powered by Webi”** y “DisplayEvent” salvo `hideBrand`.
 
@@ -243,14 +243,14 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 - **Alcance:** evento id 2 (o nombre que contenga Macarena y Jorge, con verificación). Hace **merge** del JSONB `invitation` y conserva las claves no listadas (incluida `music_url`). No toca `gift_message_email` (columna del evento).
 - **Actualiza:** `template/version/couple`, `story`, `icebreaker`, `recommendations` (**5 items**, `image: invitations/macarena-jorge-v3/c-p10.webp`, nueva recomendación `taxi` “Moverse por Granada” con `phone`), `locations` (2), `dress_code`/`dress_note`, `itinerary: []`, `gallery: []`, `hero_image: ""`, `contacts: []`, `og_image`, `lodging` (2 hoteles), `stay` (Albaicín, fechas y cita), `trip` (4 orígenes, Madrid, fechas, 1 adulto, avión/autobús on, **tren off**), `registry` (monto libre, mínimos, BBVA + CLABE, `bank_eur` deshabilitada; conserva `enabled`/`stripe_enabled`/`payment_link_url`/sugeridos), `rsvp_editable: true` y `rsvp_edit_deadline: 2027-02-21T14:00:00+01:00`.
 - **Verificación posterior:** comprueba template, versión, pareja, historia, Icebreaker, **5 recomendaciones** (incluida la `taxi` con teléfono), `recommendations.image = c-p10`, 2 ubicaciones, vestimenta, 2 hoteles, `stay`, `trip`, CLABE, RSVP y `og_image`.
-- **Aplicado:** el seed v4 del evento 2 y las columnas de alergia (`init-db`) ya están aplicados. El correo de mensajes del evento 2 está configurado y existe **1 mensaje guardado** (actividad externa; no tocar).
+- **Aplicado:** el seed v4 del evento 2 y las columnas de alergia/edad (`init-db`) ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL**. El correo de mensajes del evento 2 está configurado y existe **1 mensaje guardado** (actividad externa; no tocar).
 
 ---
 
 ## 8. Pendientes / oportunidades
 
 - [ ] **Subir `client/public/fonts/Nikolai-Condensed.woff2`** (hoy falta; el directorio está vacío).
-- [ ] **Commit/deploy del v4** y smoke en la invitación y en la portada del dominio (incluye “Ver ideas”, recomendaciones, alergias, OG con crawler y bandeja `/events/:id/mensajes`).
+- [ ] **Commit/deploy del v4** y smoke en la invitación y en la portada del dominio (incluye “Ver ideas”, recomendaciones, **alergias/edad**, PDF, OG con crawler y bandeja `/events/:id/mensajes`).
 - [ ] **Probar el guardado real del editor con sesión** (Icebreaker, Recomendaciones, ubicaciones, hoteles, cita, CLABE/IBAN, `gift_message_email`).
 - [ ] **Confirmar que los assets v4 entran al build** (`client/public/invitations/macarena-jorge-v3/`: 15 `.webp` + 6 `idea-*.jpg` + `og-v3.jpg` + `webi-logo.png`).
 - [ ] **Música:** si `music_url` sigue apuntando a YouTube, el `<audio>` nativo no lo reproduce; subir MP3/M4A/OGG desde el editor.
@@ -266,6 +266,6 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 3. **Usa las primitivas v3** (`v3/ui.jsx`: `NazariFrame`, `OrnamentRule`, `Eyebrow`, `InfoCard`, `PaperCard`, `Button`, `Drawing`) y las clases de `v3.css`; no reintroduzcas `--inv-*` ni `SectionPhoto` en esta plantilla.
 4. **Assets:** usa `V3`/`v3Asset` de `v3/assets.js`; los dibujos deben ser `.webp` con transparencia para el `multiply` y las ideas de vestimenta viven en `V3.ideas`. No vuelvas a `gallery`/`hero_image` en v3.
 5. **Editor schema-driven:** si agregas un campo, actualiza `server/src/schemas/invitation.js`, `client/src/invitation/schema/normalize.js`, `fields.js` y `BodaJorgeMacarenaV3Editor.jsx` (o el editor dedicado que corresponda).
-6. **RSVP:** mantén el contrato de `v3/RsvpSection.jsx` con `rsvp` (`token`, `family`, `guests`, `attending`, `declining`, `note`, `cfg`, `preview`, `onDone`) y el envío a `PUT /api/invitations/:token/rsvp`; conserva `allergies` para los asistentes y la respuesta con `guests[]` actualizados.
+6. **RSVP:** mantén el contrato de `v3/RsvpSection.jsx` con `rsvp` (`token`, `family`, `guests`, `attending`, `declining`, `note`, `cfg`, `preview`, `onDone`) y el envío a `PUT /api/invitations/:token/rsvp`; conserva `allergies` y `ages` para los asistentes y la respuesta con `guests[]` actualizados.
 7. **Regalo:** el mensaje a los novios solo se desbloquea al copiar CLABE/IBAN o tocar pagar; no lo muestres antes. Mantén el guardado + correo best-effort + bandeja.
 8. **Contactos ocultos, tren apagado y música opcional** son decisiones cerradas del v3. El v4 añade **“Ver ideas”**, **5 recomendaciones** (taxi/PideTaxi) y **alergias**; no las elimines al rediseñar.

@@ -29,6 +29,24 @@ function buildAllergyText(guests) {
   return map;
 }
 
+function buildAges(guests) {
+  const map = {};
+  for (const guest of guests) {
+    map[guest.id] = guest.age == null ? "" : String(guest.age);
+  }
+  return map;
+}
+
+// Devuelve la edad como entero válido 0..120, o null si está vacía/inválida.
+// El 0 es una edad válida.
+function validAge(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const age = Number(raw);
+  if (!Number.isInteger(age) || age < 0 || age > 120) return null;
+  return age;
+}
+
 function pad2(value) {
   return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
 }
@@ -99,6 +117,7 @@ export default function RsvpSection({ rsvp }) {
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
   const [allergies, setAllergies] = useState(() => buildAllergies(guests));
   const [allergyText, setAllergyText] = useState(() => buildAllergyText(guests));
+  const [ages, setAges] = useState(() => buildAges(guests));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
@@ -112,6 +131,7 @@ export default function RsvpSection({ rsvp }) {
     setAnswers(buildAnswers(guests));
     setAllergies(buildAllergies(guests));
     setAllergyText(buildAllergyText(guests));
+    setAges(buildAges(guests));
   }, [guests]);
 
   useEffect(() => {
@@ -165,7 +185,8 @@ export default function RsvpSection({ rsvp }) {
     const answer = answers[guest.id];
     if (answer !== "yes" && answer !== "no") return true;
     if (answer === "yes") {
-      return typeof allergies[guest.id] !== "boolean";
+      if (typeof allergies[guest.id] !== "boolean") return true;
+      return validAge(ages[guest.id]) === null;
     }
     return false;
   }).length;
@@ -178,6 +199,8 @@ export default function RsvpSection({ rsvp }) {
     setAllergies((prev) => ({ ...prev, [id]: value }));
   const setAllergyTextFor = (id, value) =>
     setAllergyText((prev) => ({ ...prev, [id]: value }));
+  const setAge = (id, value) =>
+    setAges((prev) => ({ ...prev, [id]: value }));
 
   const runEnvelope = () => {
     timers.current.forEach((timer) => window.clearTimeout(timer));
@@ -225,6 +248,13 @@ export default function RsvpSection({ rsvp }) {
               attending && hasAllergy === true
                 ? String(allergyText[guest.id] || "").trim()
                 : "",
+          };
+        }),
+        ages: guests.map((guest) => {
+          const attending = answers[guest.id] === "yes";
+          return {
+            guest_id: guest.id,
+            age: attending ? validAge(ages[guest.id]) : null,
           };
         }),
         note,
@@ -328,6 +358,7 @@ export default function RsvpSection({ rsvp }) {
                   setAnswers(buildAnswers(guests));
                   setAllergies(buildAllergies(guests));
                   setAllergyText(buildAllergyText(guests));
+                  setAges(buildAges(guests));
                 }}
               >
                 Modificar respuesta
@@ -419,8 +450,27 @@ export default function RsvpSection({ rsvp }) {
                       </button>
                     </div>
                     {answers[guest.id] === "yes" ? (
-                      <div className="mjv3-allergy">
-                        <div className="mjv3-allergy-question">
+                      <div className="mjv3-guest-extra">
+                        <label className="mjv3-age">
+                          <span className="mjv3-age-label">Edad</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={120}
+                            step={1}
+                            inputMode="numeric"
+                            className="mjv3-field mjv3-age-input"
+                            aria-label="Edad"
+                            placeholder="Edad"
+                            required
+                            value={ages[guest.id] ?? ""}
+                            onChange={(event) =>
+                              setAge(guest.id, event.target.value)
+                            }
+                          />
+                        </label>
+                        <div className="mjv3-allergy">
+                          <div className="mjv3-allergy-question">
                           <span>¿Alguna alergia alimentaria?</span>
                           <span className="mjv3-allergy-actions">
                             <button
@@ -453,7 +503,8 @@ export default function RsvpSection({ rsvp }) {
                               setAllergyTextFor(guest.id, event.target.value)
                             }
                           />
-                        ) : null}
+                          ) : null}
+                        </div>
                       </div>
                     ) : null}
                   </div>

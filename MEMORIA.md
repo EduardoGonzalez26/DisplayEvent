@@ -5,7 +5,7 @@
 > **Última actualización:** 2026-11-10
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
-> **Estado vigente (2026-11-10):** `boda_jorge_macarena` usa el diseño **v3 + delta v4**. El v4 añade “Ver ideas” en Vestimenta, la 5.ª recomendación “Moverse por Granada”, alergias alimentarias en el RSVP y nuevos assets; el esquema/seed v4 ya se aplicaron con `init-db`/script. No hay plantilla nueva ni selector v2/v3/v4. El detalle vive en **§18** (incluye **§18.1 Delta v4**); **§15** y el bloque histórico de **§16** describen el v2 como **histórico**. El código v4 está en el **working tree, sin commit ni push**. Pendientes: **fuente Nikolai** y **deploy**.
+> **Estado vigente (2026-11-10):** `boda_jorge_macarena` usa el diseño **v3 + delta v4**. El v4 añade “Ver ideas” en Vestimenta, la 5.ª recomendación “Moverse por Granada”, alergias alimentarias y **edad por invitado** en el RSVP, y nuevos assets; el esquema/seed v4 (incluida `guests.age`) ya se aplicaron con `init-db`/script. No hay plantilla nueva ni selector v2/v3/v4. El detalle vive en **§18** (incluye **§18.1 Delta v4**); **§15** y el bloque histórico de **§16** describen el v2 como **histórico**. El código v4 está en el **working tree, sin commit ni push**. Pendientes: **fuente Nikolai** y **deploy**.
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
 
@@ -150,9 +150,9 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 
 **Campos comunes:** `hero_image`, `og_image`, `kicker`, `tagline`, `message`, `celebrants`, `itinerary[{label,time}]`, `locations[{label,place,url,description,time_label,time_value,when_label,when_value,image,map_image}]` (**extendido en v3**), `gallery[string]`, `dress_code[{label,icon?}]`, `dress_note`, `contacts[{name,phone}]`, `contact_note`, `story` (≤4000), `music_url`, `lodging[{name,note,url?}]` (**en v3: hoteles recomendados, máx. 2**), `travel{title,airport_note,routes[{label,note}],closing_note}` (**legado**), `stay{...}` y `trip{...}` (contrato de Viaje/Hospedaje; ver §15.2 y §18), `icebreaker{...}`, `recommendations{...}` (items `{icon,title,text,phone?}`; iconos shoe/weather/transport/taxi/stay), `registry{...}` (con `bank.clabe` y `bank_eur`), `rsvp_editable`, `rsvp_edit_deadline`.
 
-**Alergias en `guests` (v4):** columnas `allergy BOOLEAN` (NULL = sin responder) y `allergy_notes VARCHAR(500)`. El RSVP acepta `allergies: [{guest_id, has_allergy, notes}]`, valida pertenencia al grupo y persiste en la misma transacción; solo aplica a asistentes y la respuesta relee `guests` con `allergy`/`allergy_notes`. El panel muestra “Alergia: …” o “Alergia sin registrar”.
+**Alergias y edad en `guests` (v4):** `allergy BOOLEAN` (NULL = sin responder), `allergy_notes VARCHAR(500)` y **`age SMALLINT`** (NULL = sin registrar). El RSVP acepta `allergies: [{guest_id, has_allergy, notes}]` y `ages: [{guest_id, age}]` (entero 0..120 o null; opcional). Ambos se validan contra el grupo y se persisten en la misma transacción que la asistencia; solo aplican a asistentes y la respuesta relee `guests` con `allergy`/`allergy_notes`/`age`. El panel muestra “Alergia: …”/“Alergia sin registrar” y “Edad: X”/“Edad sin registrar”. Solo `boda_jorge_macarena` pide edad en la UI; el endpoint es compartido y el array es opcional.
 
-> **(2026-11-09) Contrato v3 + v4:** los campos nuevos son **aditivos** y el backend los normaliza/valida para los 6 templates, pero solo la UI de `boda_jorge_macarena` los consume. `normalizeInvitation`/`normalizeForRead` garantizan `icebreaker` y `recommendations` siempre presentes y `locations` con todos los strings. `og_image` se usa en el OG por token (prioridad sobre `hero_image`/`gallery[0]`; ver §18). `lodging` vuelve a renderizarse en la hoja de Hospedaje v3 (máximo 2); `travel` sigue como legado y `itinerary`/`gallery`/`hero_image`/`contacts`/`registry_note` **no se renderizan** en v3. El delta v4 añade `phone` a las recomendaciones y las alergias por invitado (ver §18.1).
+> **(2026-11-09) Contrato v3 + v4:** los campos nuevos son **aditivos** y el backend los normaliza/valida para los 6 templates, pero solo la UI de `boda_jorge_macarena` los consume. `normalizeInvitation`/`normalizeForRead` garantizan `icebreaker` y `recommendations` siempre presentes y `locations` con todos los strings. `og_image` se usa en el OG por token (prioridad sobre `hero_image`/`gallery[0]`; ver §18). `lodging` vuelve a renderizarse en la hoja de Hospedaje v3 (máximo 2); `travel` sigue como legado y `itinerary`/`gallery`/`hero_image`/`contacts`/`registry_note` **no se renderizan** en v3. El delta v4 añade `phone` a las recomendaciones, las alergias por invitado y la **edad** (`guests.age`/`ages`; ver §18.1).
 
 **Campos específicos:**
 
@@ -247,9 +247,9 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - **Orden de tarjetas:** Portada · Granada, España · Icebreaker · Ceremonia · Celebración · Vestimenta · Recomendaciones · Viaje · Hospedaje · Confirmación · Regalo · Cierre. No se montan Itinerario, Galería ni Contactos.
 - **Componentes:** `BodaJorgeMacarenaLayout.jsx` monta `v3/*` y usa `v3.css`; `alice_xv` permanece intacta. Los archivos v2 siguen en disco pero **no se importan**.
 - **Editor:** `BodaJorgeMacarenaV3Editor.jsx` (historia/música, `og_image`, Icebreaker, Recomendaciones —incluido `phone`—, ubicaciones extendidas, hoteles máx. 2, cita de Hospedaje, correo de mensajes) y `StayTravelEditor.jsx`; `EventInvitation.jsx` oculta las secciones genéricas cuando el template es la boda.
-- **RSVP v3 + v4:** `v3/RsvpSection.jsx` (familias reales, sin “Líder”, sin modal/contactos, contador en hora de España, estados enviado/plazo cerrado y **alergias por asistente**), con `rsvp_editable`/`rsvp_edit_deadline`.
+- **RSVP v3 + v4:** `v3/RsvpSection.jsx` (familias reales, sin “Líder”, sin modal/contactos, contador en hora de España, estados enviado/plazo cerrado y **alergias + edad por asistente**), con `rsvp_editable`/`rsvp_edit_deadline`.
 - **Regalo v3:** `v3/GiftsSection.jsx` (Stripe embebido o Payment Link, CLABE/IBAN, cuenta EUR y mensaje privado a los novios) + bandeja `/events/:id/mensajes`; el correo del evento 2 ya está configurado y hay 1 mensaje guardado.
-- **Datos:** `server/src/scripts/update-event-macarena-v3.js` actualiza el evento 2 por merge (dry-run/`--apply`) con **5 recomendaciones** y `c-p10`; el seed v4 y las columnas de alergia ya están aplicados.
+- **Datos:** `server/src/scripts/update-event-macarena-v3.js` actualiza el evento 2 por merge (dry-run/`--apply`) con **5 recomendaciones** y `c-p10`; el seed v4 y las columnas de alergia/**edad** ya están aplicados (198 `age` NULL al momento).
 - ✅ El doc `INVITACION_BODA_JORGE_MACARENA.md` quedó **actualizado al v4** el 2026-11-10; describe este rediseño.
 
 ---
@@ -306,10 +306,10 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 > ⚠️ **(2026-11-10) La plantilla vigente es v3 + delta v4 (§18/§18.1).** Los pendientes de esta sección que hablan de v2, `SectionPhoto`, IATA, `ff2b988`, `8d70217`/`efb424b` o del deploy de Viaje/Hospedaje se conservan como **histórico**. Los pendientes **reales v4** son:
 >
 > - [ ] **Falta `client/public/fonts/Nikolai-Condensed.woff2`.** `v3.css` lo declara con `@font-face`; mientras no exista, la familia cae a `Noto Serif Display`/Georgia. El directorio `client/public/fonts/` está vacío.
-> - [ ] **Commit/deploy + smoke:** no hay commit v4; falta `npm run build`, smoke de Vestimenta/Recomendaciones/RSVP y verificación de la bandeja de mensajes en el dominio.
+> - [ ] **Commit/deploy + smoke:** no hay commit v4; falta `npm run build`, smoke de Vestimenta/Recomendaciones/RSVP (asistencia + alergia + edad), PDF y verificación de la bandeja de mensajes en el dominio.
 > - [ ] **Assets v4:** confirmar que `c-p10.webp`, los 6 `idea-*.jpg` y el `c-p1.webp` actualizado entran al build/deploy.
 >
-> **Estado aplicado v4:** `npm run init-db` aplicó las columnas de alergia (`guests.allergy`, `guests.allergy_notes`) y el esquema de mensajes; el seed del evento 2 ya tiene 5 recomendaciones con `recommendations.image = invitations/macarena-jorge-v3/c-p10.webp`. El **correo de mensajes del evento 2 ya está configurado** en el panel y existe **1 mensaje guardado** (actividad externa: no tocar). Las decisiones v3 siguen vigentes (contactos ocultos, música opcional, tren apagado, fidelidad de diseño, portada del dominio v3). Detalle del delta en §18.1.
+> **Estado aplicado v4:** `npm run init-db` aplicó las columnas de alergia (`guests.allergy`, `guests.allergy_notes`), **`guests.age`** y el esquema de mensajes; el seed del evento 2 ya tiene 5 recomendaciones con `recommendations.image = invitations/macarena-jorge-v3/c-p10.webp`. **Al momento de este ajuste hay 198 invitados con `age` NULL.** El **correo de mensajes del evento 2 ya está configurado** en el panel y existe **1 mensaje guardado** (actividad externa: no tocar). Las decisiones v3 siguen vigentes (contactos ocultos, música opcional, tren apagado, fidelidad de diseño, portada del dominio v3). Detalle del delta en §18.1.
 
 - [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; marca/dominio `displayevent.com` commiteados en `c657c81`/`c7a3146`; rediseño posterior en `32cb71e`, ver §10 y §11.2).
 - [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
@@ -1199,9 +1199,9 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
   - **Enviado:** sobre animado + “¡Gracias, Familia X!”; botón **“Modificar respuesta”** si sigue editable.
   - **Plazo cerrado:** “El plazo de confirmación ha terminado” si no hay respuesta; si ya respondió, resumen y “El plazo para modificar la confirmación terminó.”
   - **Edición:** permitida mientras `rsvp_editable` y no vencido; el formulario precarga las respuestas.
-- **Alergias (v4):** por cada invitado que asiste se pregunta **“¿Alguna alergia alimentaria?”** (Sí/No) y, si es Sí, un campo de texto (máx. 500). El submit exige respuesta de alergia para los asistentes (`pending` incluye `typeof allergies[id] !== "boolean"`). No se piden alergias a quien no asiste.
-- Envío a `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids`, `note` y **`allergies: [{ guest_id, has_allergy, notes }]`**. El backend valida, persiste en la **misma transacción** (solo para asistentes; `false` guarda `allergy=false` y notas vacías; `null`/no asistente deja `NULL`) y **relee `guests`** para devolver `allergy`/`allergy_notes` actualizados. `preview` no envía.
-- El **panel de Invitados** muestra bajo el nombre “Alergia: {notas}” (o “Alergia: Sí”) y “Alergia sin registrar” cuando el invitado ya confirmó pero `allergy` sigue `NULL`.
+- **Alergias y edad (v4):** por cada invitado que asiste se pregunta **“¿Alguna alergia alimentaria?”** (Sí/No, con notas ≤500) y se pide **Edad** (obligatoria, entero 0..120). El submit exige respuesta de alergia **y** edad válida para los asistentes (`pending` incluye `typeof allergies[id] !== "boolean"` y `validAge(ages[id]) === null`). No se piden a quien no asiste. Solo `boda_jorge_macarena` muestra estos campos.
+- Envío a `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids`, `note`, **`allergies: [{ guest_id, has_allergy, notes }]`** y **`ages: [{ guest_id, age }]`**. El backend valida ambos arrays (edad entero 0..120 o null; `ages` opcional), persiste en la **misma transacción** (solo para asistentes; `false` guarda `allergy=false` y notas vacías; `null`/no asistente deja `NULL`) y **relee `guests`** para devolver `allergy`/`allergy_notes`/`age` actualizados. `preview` no envía.
+- El **panel de Invitados** muestra bajo el nombre “Edad: X”/“Edad sin registrar” y “Alergia: {notas}”/“Alergia: Sí”/“Alergia sin registrar”. El **PDF de detalle** añade `Edad: X` y `Alergia: …` cuando existen.
 
 **Regalo v3 (`v3/GiftsSection.jsx`)**
 
@@ -1212,7 +1212,7 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 
 **Backend y datos**
 
-- **BD** (`server/src/db/schema.sql`): tabla **`gift_messages`** (`id`, `event_id` FK, `group_id` FK nullable, `sender_name`, `message`, `amount_minor` BIGINT, `currency`, `channel`, `created_at`, `read_at`) + índice `idx_gift_messages_event` + RLS. Columnas **`events.gift_message_email`** (`VARCHAR(255)`), **`guests.allergy`** (`BOOLEAN`, NULL = sin responder) y **`guests.allergy_notes`** (`VARCHAR(500)`). El esquema se aplica con `npm run init-db`; en la BD del evento 2 ya está aplicado (el correo de mensajes está configurado y hay 1 mensaje guardado).
+- **BD** (`server/src/db/schema.sql`): tabla **`gift_messages`** (`id`, `event_id` FK, `group_id` FK nullable, `sender_name`, `message`, `amount_minor` BIGINT, `currency`, `channel`, `created_at`, `read_at`) + índice `idx_gift_messages_event` + RLS. Columnas **`events.gift_message_email`** (`VARCHAR(255)`), **`guests.allergy`** (`BOOLEAN`, NULL = sin responder), **`guests.allergy_notes`** (`VARCHAR(500)`) y **`guests.age`** (`SMALLINT`, NULL = sin registrar). El esquema se aplica con `npm run init-db`; en la BD del evento 2 ya está aplicado (el correo de mensajes está configurado y hay 1 mensaje guardado).
 - **Endpoints:**
   - `POST /api/invitations/:token/gift-message` (público, rate limit 10/15 min): mensaje ≤1000; `amount` entero ≥0 y ≤`MAX_AMOUNT`; `currency` mxn/eur; `channel` transfer/card. Guarda en `gift_messages`; responde `{ ok:true }` aunque falle el correo.
   - `GET /api/events/:id/gift-messages` (dueño): lista del más reciente al más antiguo.
@@ -1226,7 +1226,7 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 
 - Script **idempotente y no destructivo** (merge del JSONB `invitation`) para el evento id 2 (o nombre Macarena+Jorge, con verificación). Por defecto **dry-run**; escribe solo con **`--apply`**. No toca `gift_message_email` (columna del evento).
 - Actualiza: `template/version/couple`; `story`; `icebreaker` (enabled, textos, fecha “Martes 8 de junio”, “Por confirmar”); `recommendations` (**5 items**, `image: invitations/macarena-jorge-v3/c-p10.webp` y la nueva “Moverse por Granada” con icono `taxi`, teléfono +34 958 28 00 00 y texto con `**negrita**`/`{phone}`); `locations` (San Pedro y San Pablo / Carmen de los Chapiteles, con descripción, horas, imágenes y mapas); `dress_code` Formal + nota; `itinerary: []`; `gallery: []`; `hero_image: ""`; `contacts: []`; `og_image: invitations/macarena-jorge-v3/og-v3.jpg`; `lodging` (Hotel Alhambra Palace y Parador de Granada, máx. 2); `stay` (Albaicín, 2027-06-08/12, tarjetas Booking/Airbnb/Trivago/Google Hotels, cita de Icaza); `trip` (4 orígenes, llegada Madrid, fechas, 1 adulto, avión y autobús on, **tren off**); `registry` (allow_custom, mínimos, BBVA + CLABE, `bank_eur` deshabilitada, conserva `enabled/stripe_enabled/payment_link_url/sugeridos`); `rsvp_editable: true`; `rsvp_edit_deadline: 2027-02-21T14:00:00+01:00`. Conserva `music_url`.
-- **Aplicado:** el seed v4 del evento 2 está aplicado (5 recomendaciones + `c-p10`). El esquema (`init-db`) también está aplicado, incluidas las columnas de alergia.
+- **Aplicado:** el seed v4 del evento 2 está aplicado (5 recomendaciones + `c-p10`). El esquema (`init-db`) también está aplicado, incluidas las columnas de alergia y **`guests.age`** (198 invitados con `age` NULL al momento).
 
 **Decisiones v3**
 
@@ -1240,11 +1240,11 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 **Pendientes reales**
 
 - [ ] **Falta `client/public/fonts/Nikolai-Condensed.woff2`** (el directorio existe vacío); mientras no se suba, Nikolai cae al fallback.
-- [ ] **Commit/deploy + smoke:** no hay commit v4; falta `npm run build`, smoke de la invitación/portada, “Ver ideas”, recomendaciones, alergias, OG con crawler y bandeja de mensajes.
+- [ ] **Commit/deploy + smoke:** no hay commit v4; falta `npm run build`, smoke de la invitación/portada, “Ver ideas”, recomendaciones, **alergias/edad**, PDF, OG con crawler y bandeja de mensajes.
 - [ ] **Assets v4:** `client/public/invitations/macarena-jorge-v3/` contiene ahora 15 `.webp` (incluye `c-p10` y `c-p1` actualizado), 6 `idea-*.jpg`, `og-v3.jpg` y `webi-logo.png`; confirmar que entran al build/deploy.
 - [ ] **Verificar el guardado real del editor con sesión** (bloques nuevos, `phone` de recomendaciones y subida de audio/OG).
 
-### 18.1 Delta v4 (2026-11-10)
+### 18.1 Delta v4 + edad por invitado (2026-11-10)
 
 **Estado:** implementado sobre la base v3 en el **working tree** (sin commit ni push). El esquema y el seed v4 ya están aplicados; solo quedan **fuente Nikolai** y **deploy**.
 
@@ -1260,13 +1260,13 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 - El texto enriquecido admite **`**negrita**`** y **`{phone}`** (el segundo se sustituye por el teléfono con `href="tel:..."`); el editor permite editar `phone`.
 - El contrato/normalización acepta `recommendations.items[].phone` y el icono `taxi` en cliente y servidor. `DEFAULT_RECOMMENDATIONS` pasa a **5** elementos.
 
-**3) RSVP — alergias alimentarias**
+**3) RSVP — alergias alimentarias y edad por invitado (ajuste de edad)**
 
-- **BD:** `guests.allergy BOOLEAN` (NULL = sin responder) y `guests.allergy_notes VARCHAR(500)`, aplicadas con `init-db` (`schema.sql`).
-- **UI:** al marcar “Sí asistirá” aparece “¿Alguna alergia alimentaria?” (Sí/No) y, si es Sí, un input libre (máx. 500). El submit exige respuesta de alergia para **cada asistente**; a quien no asiste no se le pregunta.
-- **Payload:** `allergies: [{ guest_id, has_allergy, notes }]` junto a `attending_ids`/`declining_ids`/`note`.
-- **Backend:** valida estructura, boolean/null y notas ≤500; verifica pertenencia al grupo; persiste **en la misma transacción** del RSVP; solo asistentes conservan valor (`false` → `allergy=false`, notas vacías; `true` → notas; no asistente/null → `NULL`). Después **relee `guests`** y responde con `guests[]` actualizados (incluye `allergy`/`allergy_notes`).
-- **Panel:** `EventGuests.jsx` muestra “Alergia: …” (o “Alergia: Sí”) bajo el nombre y “Alergia sin registrar” si el invitado ya confirmó pero `allergy` sigue `NULL`.
+- **BD:** `guests.allergy BOOLEAN` (NULL = sin responder), `guests.allergy_notes VARCHAR(500)` y **`guests.age SMALLINT`** (NULL = sin registrar), aplicadas con `init-db` (`schema.sql`). Al momento de este ajuste hay **198 invitados con `age` NULL**.
+- **UI (solo `boda_jorge_macarena`):** al marcar “Sí asistirá” aparecen **Edad** (obligatoria, entero 0..120) y “¿Alguna alergia alimentaria?” (Sí/No; si es Sí, input libre ≤500). El submit queda bloqueado hasta completar **asistencia + alergia + edad** de cada asistente; a quien no asiste no se le piden. El endpoint es compartido y `ages` es opcional para compatibilidad, pero solo esta plantilla lo envía.
+- **Payload:** `allergies: [{ guest_id, has_allergy, notes }]` y **`ages: [{ guest_id, age }]`** (entero 0..120 o null; opcional) junto a `attending_ids`/`declining_ids`/`note`.
+- **Backend:** valida estructura, boolean/null, notas ≤500 y edad entera 0..120/null; verifica pertenencia al grupo; persiste **en la misma transacción** del RSVP (asistencia + alergias + edad); solo asistentes conservan valor (`false` → `allergy=false`, notas vacías; `true` → notas; edad null/no asistente → `NULL`). Después **relee `guests`** y responde con `guests[]` actualizados (incluye `allergy`/`allergy_notes`/`age`).
+- **Panel:** `EventGuests.jsx` muestra “Edad: X”/“Edad sin registrar” y “Alergia: …”/“Alergia sin registrar” bajo el nombre. El **PDF de detalle** añade `Edad: X` y `Alergia: …` cuando existen.
 
 **4) Assets**
 
@@ -1275,7 +1275,7 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 **5) Seed y datos**
 
 - `server/src/scripts/update-event-macarena-v3.js` (mismo nombre) se actualizó al delta v4: **5 recomendaciones**, `recommendations.image = invitations/macarena-jorge-v3/c-p10.webp`, nueva recomendación taxi y verificación posterior acorde.
-- El evento 2 ya tiene el seed v4 aplicado; las columnas de alergia se aplicaron con `init-db`.
+- El evento 2 ya tiene el seed v4 aplicado; las columnas de alergia y **edad** se aplicaron con `init-db` (198 invitados con `age` NULL al momento).
 - **Correo de mensajes del evento 2:** ya está configurado en el panel y existe **1 mensaje guardado** (actividad externa; **no tocar**).
 
 **6) Pendientes**

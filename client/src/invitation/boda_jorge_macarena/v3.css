@@ -2680,7 +2680,7 @@ textarea.mjv3-field {
 
 /* --------------------- Alergias en Confirmación -------------------- */
 
-.mjv3-allergy {
+.mjv3-guest-extra {
   flex-basis: 100%;
   min-width: 0;
   display: flex;
@@ -2689,6 +2689,40 @@ textarea.mjv3-field {
   padding-top: 10px;
   border-top: 1px solid var(--mj-card-border);
   animation: aparecer 0.6s ease both;
+}
+
+.mjv3-age {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mjv3-age-label {
+  flex: none;
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mj-accent);
+}
+
+.mjv3-age-input {
+  flex: 1 1 100px;
+  width: 100%;
+  max-width: 140px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 18px;
+}
+
+.mjv3-allergy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .mjv3-allergy-question {
@@ -2735,7 +2769,7 @@ textarea.mjv3-field {
 
 @media (prefers-reduced-motion: reduce) {
   .mjv3-ideas-backdrop,
-  .mjv3-allergy {
+  .mjv3-guest-extra {
     animation: none !important;
   }
 }

@@ -107,6 +107,15 @@ function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
         <span className={`block truncate ${guest.is_child ? "text-sky-400 font-medium" : ""}`}>
           {guest.name}
         </span>
+        {guest.age != null ? (
+          <span className="block truncate text-[10px] text-gray-400">
+            Edad: {guest.age}
+          </span>
+        ) : guest.registered && guest.age == null ? (
+          <span className="block truncate text-[10px] text-gray-500">
+            Edad sin registrar
+          </span>
+        ) : null}
         {guest.allergy === true ? (
           <span
             className="block truncate text-[10px] text-amber-200"
