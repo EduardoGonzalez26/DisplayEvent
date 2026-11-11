@@ -22,7 +22,7 @@ function familyLine(value) {
   return /^familia\b/i.test(family) ? family : `la Familia ${family}`;
 }
 
-export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen }) {
+export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, onReveal }) {
   const reduced = useReducedMotion();
   const config = opening?.editorial || {};
   const kicker = config.kicker || "Una invitación para";
@@ -145,7 +145,10 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen })
         requestAnimationFrame(() => setSheetFull(true))
       );
     }, 1850 * R);
-    later(() => setStage(4), 2850 * R);
+    later(() => {
+      setStage(4);
+      onReveal?.();
+    }, 2850 * R);
     later(() => {
       setStage(5);
       onOpen?.();

@@ -141,6 +141,7 @@
   inset: 0;
   z-index: 100;
   overflow: hidden;
+  background: transparent;
 }
 
 .mjv3-overlay {

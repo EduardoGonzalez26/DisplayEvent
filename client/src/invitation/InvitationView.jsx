@@ -48,10 +48,13 @@ export default function InvitationView({
   // Experiencia de apertura (sobre digital) configurada por plantilla.
   const opening = theme.opening;
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  const [envelopeRevealing, setEnvelopeRevealing] = useState(false);
   const showEnvelope = !preview && !!opening?.envelope && !envelopeOpen;
   // Marca el momento en que la invitación "se abre" para disparar las
-  // transiciones de entrada (monograma, seda, perlas).
-  const reveal = preview || !opening?.envelope || envelopeOpen;
+  // transiciones de entrada (monograma, seda, perlas). `envelopeRevealing`
+  // arranca en stage 4, mientras el overlay aún se desvanece.
+  const reveal =
+    preview || !opening?.envelope || envelopeOpen || envelopeRevealing;
   // Sobre del tema (variante dedicada) o el sobre compartido.
   const Envelope =
     (opening?.envelopeVariant && ENVELOPE_VARIANTS[opening.envelopeVariant]) ||
@@ -101,6 +104,7 @@ export default function InvitationView({
             monogram={opening?.cardText?.(cfg) || "&"}
             seal={opening?.sealText?.(cfg) || "&"}
             onOpen={() => setEnvelopeOpen(true)}
+            onReveal={() => setEnvelopeRevealing(true)}
           />
         </Suspense>
       )}
