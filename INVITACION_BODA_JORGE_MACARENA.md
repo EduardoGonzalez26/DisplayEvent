@@ -4,7 +4,7 @@
 >
 > **Plantilla:** `boda_jorge_macarena` · **Diseño vigente (v3 + delta v4, 2026-11-10):** papel de algodón, marco nazarí, granada en acuarela, letterpress y dibujos `.webp` con `multiply`. Tipografías **Cormorant Upright** (display) y **Nikolai Condensed** (labels; fallback Noto Serif Display). El v2 editorial (2026-10-11) y el diseño nocturno anterior quedan como **histórico** en `MEMORIA.md` §15/§16.
 >
-> **Estado (2026-11-10):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y **alergias + edad** en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia y **`guests.age`**) y el seed v4 del evento 2 ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL**. Pendientes: fuente Nikolai y deploy.
+> **Estado (2026-11-10):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y **alergias + edad** en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia, **`guests.age`** y **`events.age_ranges`**) y el seed v4 del evento 2 ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL**. Pendientes: fuente Nikolai y deploy.
 >
 > **Archivos clave:**
 > - Vista pública: `client/src/invitation/InvitationPage.jsx` (obtiene datos por token).
@@ -185,6 +185,7 @@ Campos **aditivos** al contrato común. `enabled` decide si la sección se rende
 | `event.place` | string | Lugar de la portada/cierre (“Granada, España” si vacío) |
 | `events.gift_message_email` | string (privado) | Correo que recibe los mensajes de la mesa de regalos (columna del evento, no de `cfg`); en el evento 2 ya está configurado y hay 1 mensaje guardado |
 | `events.custom_domain` | string | Dominio propio; activa el white-label (`hideBrand`) |
+| `events.age_ranges` | JSONB/null | Rangos de edad del **dashboard** (`[{label,min,max}]`), por evento; `NULL` = defaults en UI hasta guardar. No se usa en la invitación |
 
 ---
 
@@ -202,6 +203,8 @@ Campos **aditivos** al contrato común. `enabled` decide si la sección se rende
 - **Alergias y edad (v4):** al marcar “Sí asistirá” aparece **Edad** (obligatoria, entero 0..120) y “¿Alguna alergia alimentaria?” (Sí/No; si es Sí, un campo de texto ≤500). El submit se bloquea hasta completar **asistencia + alergia + edad** de cada asistente; a quien no asiste no se le piden. **Solo `boda_jorge_macarena` pide edad**; el endpoint es compartido y `ages` es opcional para compatibilidad.
 - **Envío:** `PUT /api/invitations/:token/rsvp` con `attending_ids`, `declining_ids`, `note`, `allergies: [{ guest_id, has_allergy, notes }]` y `ages: [{ guest_id, age }]` (entero 0..120 o null; opcional). El backend valida, persiste en la **misma transacción** (asistencia + alergias + edad) y **relee `guests`** para devolver `allergy`/`allergy_notes`/`age` actualizados. El botón se habilita cuando todos los pases tienen respuesta, alergia y edad. `preview` no envía.
 - **Panel:** `EventGuests.jsx` muestra “Edad: X”/“Edad sin registrar” y “Alergia: …”/“Alergia sin registrar”. El **PDF de detalle** añade `Edad: X` y `Alergia: …` cuando existen.
+
+- **Rangos de edad (dashboard, v4):** son **por evento** (`events.age_ranges`), no un campo de `cfg`. Solo esta plantilla captura `guest.age` en el RSVP; el Dashboard muestra el bloque “Rangos de edad” debajo de las StatCards con defaults **Bebé 0–3, Niño 3–12, Adolescente 12–18, Adulto 18+**, edición (agregar/quitar, label/desde/hasta, restaurar ejemplo, guardar/cancelar), total/confirmados por rango y “Sin edad registrada”/“Sin rango”. `max` es exclusivo y puede ser `null` solo en el último rango.
 
 ---
 
@@ -243,7 +246,7 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 - **Alcance:** evento id 2 (o nombre que contenga Macarena y Jorge, con verificación). Hace **merge** del JSONB `invitation` y conserva las claves no listadas (incluida `music_url`). No toca `gift_message_email` (columna del evento).
 - **Actualiza:** `template/version/couple`, `story`, `icebreaker`, `recommendations` (**5 items**, `image: invitations/macarena-jorge-v3/c-p10.webp`, nueva recomendación `taxi` “Moverse por Granada” con `phone`), `locations` (2), `dress_code`/`dress_note`, `itinerary: []`, `gallery: []`, `hero_image: ""`, `contacts: []`, `og_image`, `lodging` (2 hoteles), `stay` (Albaicín, fechas y cita), `trip` (4 orígenes, Madrid, fechas, 1 adulto, avión/autobús on, **tren off**), `registry` (monto libre, mínimos, BBVA + CLABE, `bank_eur` deshabilitada; conserva `enabled`/`stripe_enabled`/`payment_link_url`/sugeridos), `rsvp_editable: true` y `rsvp_edit_deadline: 2027-02-21T14:00:00+01:00`.
 - **Verificación posterior:** comprueba template, versión, pareja, historia, Icebreaker, **5 recomendaciones** (incluida la `taxi` con teléfono), `recommendations.image = c-p10`, 2 ubicaciones, vestimenta, 2 hoteles, `stay`, `trip`, CLABE, RSVP y `og_image`.
-- **Aplicado:** el seed v4 del evento 2 y las columnas de alergia/edad (`init-db`) ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL**. El correo de mensajes del evento 2 está configurado y existe **1 mensaje guardado** (actividad externa; no tocar).
+- **Aplicado:** el seed v4 del evento 2 y las columnas de alergia/edad + `events.age_ranges` (`init-db`) ya están aplicados; al momento de este ajuste hay **198 invitados con `age` NULL** y los eventos existentes tienen `age_ranges = NULL` (defaults en la UI hasta guardar). El correo de mensajes del evento 2 está configurado y existe **1 mensaje guardado** (actividad externa; no tocar).
 
 ---
 
@@ -268,4 +271,4 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 5. **Editor schema-driven:** si agregas un campo, actualiza `server/src/schemas/invitation.js`, `client/src/invitation/schema/normalize.js`, `fields.js` y `BodaJorgeMacarenaV3Editor.jsx` (o el editor dedicado que corresponda).
 6. **RSVP:** mantén el contrato de `v3/RsvpSection.jsx` con `rsvp` (`token`, `family`, `guests`, `attending`, `declining`, `note`, `cfg`, `preview`, `onDone`) y el envío a `PUT /api/invitations/:token/rsvp`; conserva `allergies` y `ages` para los asistentes y la respuesta con `guests[]` actualizados.
 7. **Regalo:** el mensaje a los novios solo se desbloquea al copiar CLABE/IBAN o tocar pagar; no lo muestres antes. Mantén el guardado + correo best-effort + bandeja.
-8. **Contactos ocultos, tren apagado y música opcional** son decisiones cerradas del v3. El v4 añade **“Ver ideas”**, **5 recomendaciones** (taxi/PideTaxi) y **alergias**; no las elimines al rediseñar.
+8. **Contactos ocultos, tren apagado y música opcional** son decisiones cerradas del v3. El v4 añade **“Ver ideas”**, **5 recomendaciones** (taxi/PideTaxi), **alergias** y **edad**; no las elimines al rediseñar. Los **rangos de edad** son del dashboard/evento (`events.age_ranges`), no de `cfg`.

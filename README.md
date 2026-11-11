@@ -67,8 +67,8 @@ DisplayEvent/
 
 2. Crea el esquema (tablas, índices y backfills; es idempotente) y normaliza las
    invitaciones existentes al contrato v2. El `init-db` actual también crea
-   `gift_messages`, `events.gift_message_email` y las columnas de alergia/edad
-   `guests.allergy`/`guests.allergy_notes`/`guests.age` (`SMALLINT`, NULL = sin registrar; mensajes de regalo y RSVP v4):
+   `gift_messages`, `events.gift_message_email`, `events.age_ranges` y las columnas de alergia/edad
+   `guests.allergy`/`guests.allergy_notes`/`guests.age` (`SMALLINT`, NULL = sin registrar; mensajes de regalo, RSVP v4 y rangos de edad):
 
    ```bash
    cd server
@@ -105,7 +105,7 @@ Abre http://localhost:5173
   - **Invitados**: organización por grupos con líder; cada invitado se marca como niño y como "registrado". El líder del grupo cuenta automáticamente como invitado.
   - **Exportar PDF del resumen de invitados**: botón en la cabecera de **Invitados** que descarga un PDF A4 con resumen general, tabla por grupo con totales y detalle de invitados (logo, cabeceras y paginación; el detalle incluye **Edad** y **Alergia** cuando existen). Exporta todos los grupos sin aplicar los filtros activos; jsPDF/AutoTable se cargan de forma diferida.
   - **Mesas**: organizador visual con **drag & drop** (dnd-kit), búsqueda y filtro de sin asignar, mesas redondas/cuadradas/rectangulares con porcentaje de ocupación, colores por grupo, acompañantes que se mueven en bloque y validación de capacidad en el servidor. Solo invitados confirmados pueden sentarse. Exportación a lista imprimible y CSV.
-  - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo.
+  - **Dashboard**: estadísticas detalladas del evento (invitados, niños, adultos, registrados) con desglose por grupo y bloque **“Rangos de edad”** debajo de las StatCards (defaults Bebé 0–3, Niño 3–12, Adolescente 12–18, Adulto 18+; editable, con total/confirmados por rango y “Sin edad registrada”/“Sin rango”).
 - **Invitación pública multiformato**: cada grupo recibe un enlace con token (`/invitacion/<token>`) que muestra la invitación sin requerir sesión. Cuenta con 4 temas genéricos — `xv`, `boda`, `cumpleanos`, `baby_shower` — y 2 plantillas especiales (`alice_xv`, `boda_jorge_macarena`), compuestas por un `Layout` + secciones propias; los genéricos reutilizan las secciones de `shared/`. La boda usa el **diseño v3 + delta v4** vigente (ver abajo).
 - **Dominio personalizado por evento**: cada evento puede definir su propio hostname (p. ej. `macarenayjorge.com`). La raíz `https://<dominio>/` muestra una **portada pública del evento** (general, sin token y sin mesa de regalos; portada fija por ahora), mientras que la invitación personalizada de cada grupo sigue en `https://<dominio>/invitacion/<token>` (sin slug). La marca "DisplayEvent" se oculta en ese host; la invitación personalizada se marca `noindex` y la portada de la raíz es indexable. La portada incluye **Viaje (04)** y **Hospedaje (05)**; la llegada está fijada a Madrid. La base `4773112` está desplegada; el rediseño **v3** de la portada y de la invitación está en el **working tree, sin commit ni push** (ver abajo).
 - **Editor de invitación**: selector de formato, campos específicos por formato, vista previa (preview) y plantillas de usuario reutilizables. La plantilla `boda_jorge_macarena` usa un editor dedicado v3 (`BodaJorgeMacarenaV3Editor.jsx`) con historia/música, `og_image`, Icebreaker, Recomendaciones, ubicaciones extendidas, hoteles, cita de Hospedaje, correo de mensajes y Viaje/Hospedaje (`StayTravelEditor.jsx`); las secciones genéricas de Portada/Itinerario/Ubicaciones/Galería/Contactos se ocultan en esa plantilla.
@@ -127,6 +127,7 @@ La plantilla fue **reemplazada en sitio** por el diseño **v3**; el **delta v4**
 - **RSVP v3 + v4:** familias reales, sin “Líder”, sin modal/contactos, plazo en hora de España (`Europe/Madrid`) y estados enviado/plazo cerrado/edición. Solo esta plantilla pide **edad**; cada asistente responde **alergia alimentaria** (Sí/No + notas ≤500) y **edad** (obligatoria, 0..120); el submit se bloquea hasta completar asistencia + alergia + edad. Se envían `allergies: [{ guest_id, has_allergy, notes }]` y `ages: [{ guest_id, age }]` (opcional para compatibilidad); el backend persiste en la misma transacción y relee. El panel muestra “Edad: X”/“Edad sin registrar” y “Alergia: …”/“Alergia sin registrar”; el PDF de detalle añade ambas.
 - **Regalo v3:** Stripe embebido o Payment Link, depósito MXN con CLABE y cuenta EUR con IBAN, y mensaje privado a los novios que aparece solo tras copiar CLABE/IBAN o tocar pagar. Se guarda en `gift_messages`, se avisa por correo (`events.gift_message_email`) y se consulta en **Mensajes** (`/events/:id/mensajes`).
 - **Datos:** `server/src/scripts/update-event-macarena-v3.js` (dry-run por defecto; `--apply` escribe) actualiza el evento 2 con **5 recomendaciones**, `recommendations.image = .../c-p10.webp`, historia, Icebreaker, ubicaciones, hoteles, Hospedaje, Viaje (tren apagado), CLABE, RSVP editable/deadline y `og_image`; limpia `gallery`/`hero_image`/`contacts`. El seed v4 y las columnas de alergia/edad ya están aplicados con `init-db`; al momento de este ajuste hay **198 invitados con `age` NULL**.
+- **Rangos de edad (dashboard):** solo esta plantilla captura `guest.age`; los rangos son por evento (`events.age_ranges`, `NULL` por defecto) y el conteo usa `guest.age` + `registered`. La UI aplica los defaults hasta guardar.
 - **Estado del evento 2:** el correo de mensajes ya está configurado en el panel y existe **1 mensaje guardado** (actividad externa; no modificar).
 - **Pendientes:** subir `client/public/fonts/Nikolai-Condensed.woff2` (hoy falta) y hacer commit/deploy con smoke final.
 
@@ -140,7 +141,7 @@ Dos secciones independientes que sustituyen a la antigua hoja combinada "Hospeda
 - **Links** (`client/src/wedding/stayTravelLinks.js`): generador puro. Booking usa `lat`/`lng`/`radius_km`; Airbnb usa un bbox; Trivago y Google Hotels usan la etiqueta. Vuelos con origen/destino por código interno (la UI muestra nombres); autobús desde Madrid a Granada. Fechas prellenadas en Booking/Airbnb/Trivago/Google Hotels/vuelos/Omio/FlixBus; ALSA no acepta fecha estable y muestra "Selecciona la fecha en el proveedor". `CITY_SLUGS` conserva `BCN` solo para leer datos legados.
 - **Editor** (`client/src/pages/event/StayTravelEditor.jsx`, integrado en `EventInvitation.jsx`): activa/desactiva cada sección, edita intro, fechas, modos/proveedores, zona (mapa + slider 0.5–20 km + etiqueta) y tarjetas (auto/manual, URL manual y "Probar link"). Los orígenes son checkboxes con **nombres** del catálogo de 20 aeropuertos; MEX/NLU/GDL/MTY quedan preseleccionados y no se editan códigos. La llegada es una fila estática **“Ciudad de llegada: Madrid”**. En la boda v3 + v4 el modo tren se oculta y se fuerza a `false`; las advertencias son no bloqueantes.
 - **Contrato**: `stay` y `trip` se normalizan/validan en `server/src/schemas/invitation.js` y en `client/src/invitation/schema/normalize.js`. `lodging` se usa como hoteles recomendados (máx. 2); `travel` sigue como **legado** y no se renderiza.
-- **Estado**: la base `4773112` está desplegada; el código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`) y el seed v4 del evento 2 ya están aplicados, incluidas las migraciones de alergias y edad (`guests.age`). La cuenta Stripe del evento 2 sigue asignada (`acct_1UPr9eC0wYMF53iO`).
+- **Estado**: la base `4773112` está desplegada; el código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`) y el seed v4 del evento 2 ya están aplicados, incluidas las migraciones de alergias/edad (`guests.age`) y `events.age_ranges`. La cuenta Stripe del evento 2 sigue asignada (`acct_1UPr9eC0wYMF53iO`).
 
 ## API
 
@@ -162,8 +163,9 @@ Dos secciones independientes que sustituyen a la antigua hoja combinada "Hospeda
 | GET | `/api/public/event` | Portada pública del dominio propio: resuelve el evento por `Host` (sin token) y devuelve solo datos de portada (incluye `stay`/`trip` cuando están en el JSONB); excluye `registry` y datos privados |
 | GET | `/api/events` | Lista eventos con conteos |
 | POST | `/api/events` | Crea un evento |
-| GET | `/api/events/:id` | Detalle de un evento |
+| GET | `/api/events/:id` | Detalle de un evento (incluye `age_ranges`) |
 | PUT | `/api/events/:id` | Edita un evento; acepta `stripe_account_id` (ausente = conservar; `""`/`null` = limpiar; `acct_...` = cuenta propia con cobros habilitados; inválida → 400) y `gift_message_email` (ausente = conservar; vacío = borrar; valida formato) |
+| PUT | `/api/events/:id/age-ranges` | Guarda los rangos de edad del dashboard (solo dueño; `{ ranges }`; máx. 20, `max` exclusivo o `null`, sin solapamientos, abierto solo al final); devuelve `{ ok:true, age_ranges }` |
 | DELETE | `/api/events/:id` | Elimina un evento (y sus grupos/invitados) |
 | GET | `/api/events/:id/stats` | Estadísticas del evento |
 | GET | `/api/events/:id/invitation` | Configuración de la invitación del evento |

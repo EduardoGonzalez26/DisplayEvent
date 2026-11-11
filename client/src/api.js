@@ -57,6 +57,11 @@ export const api = {
       }),
     create: (payload) => request("/events", { method: "POST", body: JSON.stringify(payload) }),
     update: (id, payload) => request(`/events/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+    updateAgeRanges: (id, ranges) =>
+      request(`/events/${id}/age-ranges`, {
+        method: "PUT",
+        body: JSON.stringify({ ranges }),
+      }),
     remove: (id) => request(`/events/${id}`, { method: "DELETE" }),
   },
   groups: {

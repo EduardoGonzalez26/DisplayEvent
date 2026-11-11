@@ -5,7 +5,7 @@
 > **Última actualización:** 2026-11-10
 > **Repositorio:** `D:\Proyectos\DisplayEvent` (monorepo `client/` + `server/`, git)
 >
-> **Estado vigente (2026-11-10):** `boda_jorge_macarena` usa el diseño **v3 + delta v4**. El v4 añade “Ver ideas” en Vestimenta, la 5.ª recomendación “Moverse por Granada”, alergias alimentarias y **edad por invitado** en el RSVP, y nuevos assets; el esquema/seed v4 (incluida `guests.age`) ya se aplicaron con `init-db`/script. No hay plantilla nueva ni selector v2/v3/v4. El detalle vive en **§18** (incluye **§18.1 Delta v4**); **§15** y el bloque histórico de **§16** describen el v2 como **histórico**. El código v4 está en el **working tree, sin commit ni push**. Pendientes: **fuente Nikolai** y **deploy**.
+> **Estado vigente (2026-11-10):** `boda_jorge_macarena` usa el diseño **v3 + delta v4**. El v4 añade “Ver ideas” en Vestimenta, la 5.ª recomendación “Moverse por Granada”, alergias alimentarias y **edad por invitado** en el RSVP, **rangos de edad del dashboard** y nuevos assets; el esquema/seed v4 (incluidas `guests.age` y `events.age_ranges`) ya se aplicaron con `init-db`/script. No hay plantilla nueva ni selector v2/v3/v4. El detalle vive en **§18** (incluye **§18.1 Delta v4**); **§15** y el bloque histórico de **§16** describen el v2 como **histórico**. El código v4 está en el **working tree, sin commit ni push**. Pendientes: **fuente Nikolai** y **deploy**.
 >
 > ⚠️ Este archivo **no contiene secretos**. Los valores reales viven en `server/.env` (git-ignored). Usa siempre nombres de variable, nunca valores.
 
@@ -201,6 +201,13 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 - `client/src/pages/event/EventDashboard.jsx`: tarjeta **"No asistirán"** (rosa) + chip por grupo; "Sin confirmar" pasó a **"Sin responder"**.
 - **Buscador y filtros de grupos (2026-10-04, `f2a179a`):** compartidos entre Invitados y Dashboard con semántica única (`client/src/lib/groupFilters.js`); detalle en §14.
 
+### 4.2 Rangos de edad del dashboard (v4)
+
+- **BD:** `events.age_ranges JSONB` nullable (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, aplicado con `init-db`). Contrato: array de `{ label, min, max }`; `max` es **exclusivo** (0–3 cubre 0,1,2; 3–12 cubre 3..11) y `max:null` = abierto. Los eventos existentes quedan con `age_ranges = NULL` y la UI usa los defaults hasta guardar.
+- **API:** `PUT /api/events/:id/age-ranges` con `{ ranges }` (auth + ownership). Valida máximo **20** rangos, `label` 1..40, `min` 0..120, `max > min` y ≤120 o `null`; sin solapamientos; rango abierto solo al final; permite huecos; ordena por `min`. Devuelve `{ ok:true, age_ranges }`. `GET /api/events/:id` ya devuelve `age_ranges` (SELECT *).
+- **UI:** `client/src/pages/event/AgeRangesSection.jsx` + `client/src/lib/ageRanges.js`, montado en **Dashboard** debajo de las StatCards. Defaults: **Bebé 0–3, Niño 3–12, Adolescente 12–18, Adulto 18+**. Permite editar (agregar/quitar, label/desde/hasta), **Restaurar ejemplo**, Guardar/Cancelar y valida en cliente con las mismas reglas. Tarjetas con **total** y **confirmados** por rango, más **“Sin edad registrada”** y **“Sin rango”**.
+- **Alcance:** solo `boda_jorge_macarena` captura `guest.age` en el RSVP; los rangos son **por evento** y el conteo usa `guest.age` + `registered` (total = invitados con edad en el rango; confirmados = además `registered`). `client/src/api.js` expone `events.updateAgeRanges`.
+
 ---
 
 ## 5. Reestructuración completada (Fases 0–4) — ya commiteada
@@ -289,6 +296,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - **Tabla `gifts`** (regalos confirmados vía Stripe): `event_id`, `group_id`, `amount_minor` (BIGINT), `currency`, `status`, `stripe_payment_intent_id`, `created_at`. Índice único `idx_gifts_payment_intent` para idempotencia del webhook. **No tiene columna `livemode`**: no distingue cobros de prueba de live (ver §15.1). ⚠️ **Re-ejecutar `npm run init-db`** para aplicar el índice único (el agente de BD lo corrió antes de que SecDevOps añadiera el índice).
 - **Tabla `gift_messages` (v3, 2026-11-09):** mensajes privados de la mesa de regalos (`event_id`, `group_id`, `sender_name`, `message`, `amount_minor`, `currency`, `channel` transfer/card, `created_at`, `read_at`; índice `idx_gift_messages_event`). Se crea con `npm run init-db` (`server/src/db/schema.sql`); en la BD del evento 2 ya está aplicada (el correo está configurado y hay 1 mensaje guardado).
 - **`events.gift_message_email` (v3):** correo opcional del anfitrión para avisos de mensajes; `ALTER TABLE` idempotente en `schema.sql`. Se edita en el panel y se guarda con `PUT /api/events/:id` (semántica ausente = conservar; vacío = borrar). Ya está aplicado en la BD del evento 2 (correo configurado; 1 mensaje guardado).
+- **`events.age_ranges` (v4):** JSONB nullable con `[{ label, min, max }]`; los eventos existentes quedan en `NULL` y el dashboard aplica los defaults hasta guardar. Migración aplicada con `init-db` (ver §4.2 y §18.1).
 - **Slug de eventos (`events.slug`)**: en BD existentes, `npm run init-db` es **requisito manual** para crear la columna y el índice único parcial (`schema.sql`/`init.js` son idempotentes). Ya aplicado en la BD local del usuario; **verificar al desplegar**.
 
 ### CORS
@@ -309,7 +317,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 > - [ ] **Commit/deploy + smoke:** no hay commit v4; falta `npm run build`, smoke de Vestimenta/Recomendaciones/RSVP (asistencia + alergia + edad), PDF y verificación de la bandeja de mensajes en el dominio.
 > - [ ] **Assets v4:** confirmar que `c-p10.webp`, los 6 `idea-*.jpg` y el `c-p1.webp` actualizado entran al build/deploy.
 >
-> **Estado aplicado v4:** `npm run init-db` aplicó las columnas de alergia (`guests.allergy`, `guests.allergy_notes`), **`guests.age`** y el esquema de mensajes; el seed del evento 2 ya tiene 5 recomendaciones con `recommendations.image = invitations/macarena-jorge-v3/c-p10.webp`. **Al momento de este ajuste hay 198 invitados con `age` NULL.** El **correo de mensajes del evento 2 ya está configurado** en el panel y existe **1 mensaje guardado** (actividad externa: no tocar). Las decisiones v3 siguen vigentes (contactos ocultos, música opcional, tren apagado, fidelidad de diseño, portada del dominio v3). Detalle del delta en §18.1.
+> **Estado aplicado v4:** `npm run init-db` aplicó las columnas de alergia (`guests.allergy`, `guests.allergy_notes`), **`guests.age`**, **`events.age_ranges`** y el esquema de mensajes; el seed del evento 2 ya tiene 5 recomendaciones con `recommendations.image = invitations/macarena-jorge-v3/c-p10.webp`. **Al momento de este ajuste hay 198 invitados con `age` NULL; los eventos existentes tienen `age_ranges = NULL` (defaults en la UI hasta guardar).** El **correo de mensajes del evento 2 ya está configurado** en el panel y existe **1 mensaje guardado** (actividad externa: no tocar). Las decisiones v3 siguen vigentes (contactos ocultos, música opcional, tren apagado, fidelidad de diseño, portada del dominio v3). Detalle del delta en §18.1.
 
 - [x] ~~Landing pública de marketing en `/` (panel en `/eventos`) + SEO~~ → hecho (`19a9a4d`; marca/dominio `displayevent.com` commiteados en `c657c81`/`c7a3146`; rediseño posterior en `32cb71e`, ver §10 y §11.2).
 - [x] ~~URLs bonitas `/invitacion/<slug>/<token>`~~ → hecho (`1b69831`); la ruta legacy `/invitacion/<token>` se mantiene.
@@ -1278,7 +1286,13 @@ El sistema visual está en **`client/src/invitation/boda_jorge_macarena/v3.css`*
 - El evento 2 ya tiene el seed v4 aplicado; las columnas de alergia y **edad** se aplicaron con `init-db` (198 invitados con `age` NULL al momento).
 - **Correo de mensajes del evento 2:** ya está configurado en el panel y existe **1 mensaje guardado** (actividad externa; **no tocar**).
 
-**6) Pendientes**
+**7) Rangos de edad del dashboard**
+
+- **BD/API:** `events.age_ranges JSONB` nullable; `PUT /api/events/:id/age-ranges` con `{ ranges }` (auth/ownership, máximo 20, label 1..40, `min` 0..120, `max` exclusivo > min y ≤120 o `null`, sin solapamientos, abierto solo al final, permite huecos y ordena por `min`); responde `{ ok:true, age_ranges }`. `GET /api/events/:id` ya los devuelve.
+- **UI:** `AgeRangesSection.jsx` en Dashboard, debajo de StatCards. Defaults **Bebé 0–3, Niño 3–12, Adolescente 12–18, Adulto 18+**; edición con agregar/quitar, label/desde/hasta, **Restaurar ejemplo**, Guardar/Cancelar y validación cliente. Tarjetas con total y confirmados por rango + **“Sin edad registrada”** y **“Sin rango”**.
+- **Alcance:** los rangos son por evento; solo `boda_jorge_macarena` captura `guest.age`. El conteo usa `guest.age` + `registered`. Los eventos existentes tienen `age_ranges = NULL` y la UI muestra los defaults hasta guardar.
+
+**8) Pendientes**
 
 - [ ] Fuente **`client/public/fonts/Nikolai-Condensed.woff2`**.
 - [ ] **Commit/deploy** y smoke final.

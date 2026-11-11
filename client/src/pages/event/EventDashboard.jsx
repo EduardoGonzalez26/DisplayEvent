@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api } from "../../api.js";
 import { StatCard, Button } from "../../components/ui.jsx";
 import GroupFiltersBar from "../../components/GroupFiltersBar.jsx";
+import AgeRangesSection from "./AgeRangesSection.jsx";
 import {
   DEFAULT_GROUP_FILTERS,
   applyGroupFilters,
@@ -13,6 +14,7 @@ import {
 export default function EventDashboard() {
   const { id } = useParams();
   const [stats, setStats] = useState(null);
+  const [event, setEvent] = useState(null);
   const [groupStats, setGroupStats] = useState([]);
   // Índice completo de invitados (api.guests.list) para buscar por nombre.
   const [allGuests, setAllGuests] = useState([]);
@@ -22,6 +24,7 @@ export default function EventDashboard() {
 
   useEffect(() => {
     setStats(null);
+    setEvent(null);
     setGroupStats([]);
     setAllGuests([]);
     setFilters(DEFAULT_GROUP_FILTERS);
@@ -30,13 +33,15 @@ export default function EventDashboard() {
     let cancelled = false;
     const load = async () => {
       try {
-        const [s, g, guests] = await Promise.all([
+        const [s, g, guests, ev] = await Promise.all([
           api.events.stats(id),
           api.groups.list(id),
           api.guests.list(id),
+          api.events.get(id),
         ]);
         if (cancelled) return;
         setStats(s);
+        setEvent(ev);
         setGroupStats(g);
         setAllGuests(guests);
         setError("");
@@ -87,6 +92,15 @@ export default function EventDashboard() {
             accent="text-amber-400"
           />
         </div>
+      )}
+
+      {event && (
+        <AgeRangesSection
+          key={event.id || id}
+          eventId={id}
+          initialRanges={event.age_ranges}
+          guests={allGuests}
+        />
       )}
 
       {groupStats.length > 0 && (

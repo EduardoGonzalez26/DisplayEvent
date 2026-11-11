@@ -189,6 +189,9 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
 -- Correo (opcional) al que se avisa cuando un invitado deja un mensaje de regalo.
 ALTER TABLE events ADD COLUMN IF NOT EXISTS gift_message_email VARCHAR(255);
+-- Rangos de edad configurables para el dashboard del evento.
+-- Array JSON: [{ label, min, max }]; max null = rango abierto.
+ALTER TABLE events ADD COLUMN IF NOT EXISTS age_ranges JSONB;
 
 -- 2.2b) Destino Connect del evento (`acct_...` de stripe_accounts).
 --       TEXT (no FK): el ID es externo a Postgres y Stripe puede alargar su
