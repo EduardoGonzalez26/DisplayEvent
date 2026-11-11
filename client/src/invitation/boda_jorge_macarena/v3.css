@@ -2693,13 +2693,12 @@ textarea.mjv3-field {
 
 .mjv3-age {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
 }
 
 .mjv3-age-label {
-  flex: none;
   font-family: var(--mj-label);
   font-stretch: 62.5%;
   font-size: 13px;
@@ -2709,14 +2708,84 @@ textarea.mjv3-field {
   color: var(--mj-accent);
 }
 
-.mjv3-age-input {
-  flex: 1 1 100px;
-  width: 100%;
-  max-width: 140px;
+.mjv3-age-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   min-width: 0;
-  min-height: 48px;
+}
+
+.mjv3-age-option {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 44px;
   padding: 0 12px;
-  font-size: 18px;
+  border: 1px solid var(--mj-line);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--mj-ink);
+  font-family: var(--mj-serif);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.mjv3-age-option:hover {
+  border-color: var(--mj-accent);
+}
+
+.mjv3-age-option[aria-checked="true"] {
+  background: var(--mj-ink);
+  border-color: var(--mj-ink);
+  color: #f7f6f3;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.mjv3-age-checkbox {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--mj-line);
+  border-radius: 1px;
+  background: #ffffff;
+  color: var(--mj-ink);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.mjv3-age-option[aria-checked="true"] .mjv3-age-checkbox {
+  background: #f7f6f3;
+  border-color: #f7f6f3;
+  color: var(--mj-ink);
+}
+
+.mjv3-age-option-label {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.mjv3-age-option-range {
+  flex: none;
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--mj-accent);
+}
+
+.mjv3-age-option[aria-checked="true"] .mjv3-age-option-range {
+  color: rgba(247, 246, 243, 0.8);
 }
 
 .mjv3-allergy {

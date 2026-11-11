@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../../api.js";
+import { formatRange } from "../../../lib/ageRanges.js";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3 } from "./assets.js";
+
+const EMPTY_AGE_RANGES = Object.freeze([]);
 
 function buildAnswers(guests) {
   const map = {};
@@ -29,22 +32,36 @@ function buildAllergyText(guests) {
   return map;
 }
 
-function buildAges(guests) {
-  const map = {};
-  for (const guest of guests) {
-    map[guest.id] = guest.age == null ? "" : String(guest.age);
-  }
-  return map;
+function rangeMatchesAge(age, range) {
+  const min = Number(range?.min);
+  if (!Number.isFinite(min)) return false;
+  if (range?.max === null || range?.max === undefined) return age >= min;
+  const max = Number(range.max);
+  return Number.isFinite(max) && age >= min && age < max;
 }
 
-// Devuelve la edad como entero válido 0..120, o null si está vacía/inválida.
-// El 0 es una edad válida.
-function validAge(value) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return null;
-  const age = Number(raw);
-  if (!Number.isInteger(age) || age < 0 || age > 120) return null;
-  return age;
+function buildAgeSelections(guests, ranges) {
+  const map = {};
+  const list = Array.isArray(ranges) ? ranges : [];
+  for (const guest of guests) {
+    const stored =
+      guest.age_range_id == null ? "" : String(guest.age_range_id).trim();
+    if (stored) {
+      const match = list.find((range) => String(range.id) === stored);
+      map[guest.id] = match ? stored : "";
+      continue;
+    }
+    if (guest.age != null) {
+      const age = Number(guest.age);
+      if (Number.isFinite(age)) {
+        const match = list.find((range) => rangeMatchesAge(age, range));
+        map[guest.id] = match ? String(match.id) : "";
+        continue;
+      }
+    }
+    map[guest.id] = "";
+  }
+  return map;
 }
 
 function pad2(value) {
@@ -97,10 +114,15 @@ export default function RsvpSection({ rsvp }) {
     note = "",
     cfg = {},
     preview = false,
+    ageRanges = EMPTY_AGE_RANGES,
     onDone,
   } = rsvp || {};
 
   const familyLabel = familyLabelOf(family);
+  const ageRangesList = Array.isArray(ageRanges) ? ageRanges : EMPTY_AGE_RANGES;
+  const ageRangesKey = ageRangesList
+    .map((range) => `${range.id}:${range.min}:${range.max}:${range.label}`)
+    .join("|");
   const editable = !!cfg.rsvp_editable;
   const deadlineRaw = String(cfg.rsvp_edit_deadline || "").trim();
   const parsedDeadline = editable && deadlineRaw ? Date.parse(deadlineRaw) : NaN;
@@ -117,7 +139,9 @@ export default function RsvpSection({ rsvp }) {
   const [answers, setAnswers] = useState(() => buildAnswers(guests));
   const [allergies, setAllergies] = useState(() => buildAllergies(guests));
   const [allergyText, setAllergyText] = useState(() => buildAllergyText(guests));
-  const [ages, setAges] = useState(() => buildAges(guests));
+  const [ageSelections, setAgeSelections] = useState(() =>
+    buildAgeSelections(guests, ageRangesList)
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
@@ -131,8 +155,8 @@ export default function RsvpSection({ rsvp }) {
     setAnswers(buildAnswers(guests));
     setAllergies(buildAllergies(guests));
     setAllergyText(buildAllergyText(guests));
-    setAges(buildAges(guests));
-  }, [guests]);
+    setAgeSelections(buildAgeSelections(guests, ageRangesList));
+  }, [guests, ageRangesKey]);
 
   useEffect(() => {
     const hasAnswer = attending > 0 || declining > 0;
@@ -186,7 +210,11 @@ export default function RsvpSection({ rsvp }) {
     if (answer !== "yes" && answer !== "no") return true;
     if (answer === "yes") {
       if (typeof allergies[guest.id] !== "boolean") return true;
-      return validAge(ages[guest.id]) === null;
+      if (ageRangesList.length === 0) return false;
+      const selected = String(ageSelections[guest.id] || "");
+      return !ageRangesList.some(
+        (range) => String(range.id) === selected
+      );
     }
     return false;
   }).length;
@@ -199,8 +227,8 @@ export default function RsvpSection({ rsvp }) {
     setAllergies((prev) => ({ ...prev, [id]: value }));
   const setAllergyTextFor = (id, value) =>
     setAllergyText((prev) => ({ ...prev, [id]: value }));
-  const setAge = (id, value) =>
-    setAges((prev) => ({ ...prev, [id]: value }));
+  const selectAgeRange = (id, rangeId) =>
+    setAgeSelections((prev) => ({ ...prev, [id]: rangeId }));
 
   const runEnvelope = () => {
     timers.current.forEach((timer) => window.clearTimeout(timer));
@@ -250,13 +278,13 @@ export default function RsvpSection({ rsvp }) {
                 : "",
           };
         }),
-        ages: guests.map((guest) => {
-          const attending = answers[guest.id] === "yes";
-          return {
-            guest_id: guest.id,
-            age: attending ? validAge(ages[guest.id]) : null,
-          };
-        }),
+        age_selections: guests.map((guest) => ({
+          guest_id: guest.id,
+          range_id:
+            answers[guest.id] === "yes"
+              ? ageSelections[guest.id] || null
+              : null,
+        })),
         note,
       });
       setSubmitted(true);
@@ -358,7 +386,7 @@ export default function RsvpSection({ rsvp }) {
                   setAnswers(buildAnswers(guests));
                   setAllergies(buildAllergies(guests));
                   setAllergyText(buildAllergyText(guests));
-                  setAges(buildAges(guests));
+                  setAgeSelections(buildAgeSelections(guests, ageRangesList));
                 }}
               >
                 Modificar respuesta
@@ -451,24 +479,54 @@ export default function RsvpSection({ rsvp }) {
                     </div>
                     {answers[guest.id] === "yes" ? (
                       <div className="mjv3-guest-extra">
-                        <label className="mjv3-age">
-                          <span className="mjv3-age-label">Edad</span>
-                          <input
-                            type="number"
-                            min={0}
-                            max={120}
-                            step={1}
-                            inputMode="numeric"
-                            className="mjv3-field mjv3-age-input"
-                            aria-label="Edad"
-                            placeholder="Edad"
-                            required
-                            value={ages[guest.id] ?? ""}
-                            onChange={(event) =>
-                              setAge(guest.id, event.target.value)
-                            }
-                          />
-                        </label>
+                        {ageRangesList.length > 0 ? (
+                          <div className="mjv3-age">
+                            <div className="mjv3-age-label">Edad</div>
+                            <div
+                              className="mjv3-age-options"
+                              role="radiogroup"
+                              aria-label={`Rango de edad de ${guest.name}`}
+                            >
+                              {ageRangesList.map((range) => {
+                                const selected =
+                                  String(ageSelections[guest.id] || "") ===
+                                  String(range.id);
+                                return (
+                                  <button
+                                    key={range.id}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={selected}
+                                    className="mjv3-age-option"
+                                    onClick={() =>
+                                      selectAgeRange(
+                                        guest.id,
+                                        String(range.id)
+                                      )
+                                    }
+                                  >
+                                    <span
+                                      className="mjv3-age-checkbox"
+                                      aria-hidden="true"
+                                    >
+                                      {selected ? "✓" : ""}
+                                    </span>
+                                    <span className="mjv3-age-option-label">
+                                      {range.label || formatRange(range)}
+                                    </span>
+                                    <span className="mjv3-age-option-range">
+                                      {formatRange(range)}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mjv3-muted-note">
+                            Los rangos de edad se configuran en el panel.
+                          </p>
+                        )}
                         <div className="mjv3-allergy">
                           <div className="mjv3-allergy-question">
                           <span>¿Alguna alergia alimentaria?</span>

@@ -182,8 +182,13 @@ ALTER TABLE "groups" ADD COLUMN IF NOT EXISTS whatsapp_sent_at TIMESTAMPTZ;
 -- Alergias alimentarias por invitado (NULL = aún no respondido).
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS allergy BOOLEAN;
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS allergy_notes VARCHAR(500);
--- Edad declarada por el invitado (NULL = aún no registrada).
+-- Edad declarada por el invitado (NULL = aún no registrada). Legado: la v4
+-- guarda el rango elegido en age_range_id/age_range_label.
 ALTER TABLE guests ADD COLUMN IF NOT EXISTS age SMALLINT;
+-- Rango de edad elegido por el invitado (id + etiqueta snapshot).
+ALTER TABLE guests ADD COLUMN IF NOT EXISTS age_range_id VARCHAR(80);
+ALTER TABLE guests ADD COLUMN IF NOT EXISTS age_range_label VARCHAR(40);
+CREATE INDEX IF NOT EXISTS idx_guest_age_range ON guests(age_range_id);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);

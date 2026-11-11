@@ -12,8 +12,10 @@ import {
 let rowSeq = 0;
 
 function makeRow(range = {}) {
+  const key = ++rowSeq;
   return {
-    _key: ++rowSeq,
+    _key: key,
+    id: String(range.id ?? "").trim() || `range-${Date.now()}-${key}`,
     label: String(range.label ?? ""),
     min: range.min == null ? "" : String(range.min),
     max: range.max == null ? "" : String(range.max),
@@ -84,6 +86,7 @@ export default function AgeRangesSection({
     setMessage("");
 
     const candidate = draft.map((row) => ({
+      id: row.id,
       label: row.label,
       min: row.min,
       max: String(row.max).trim() === "" ? null : row.max,
@@ -95,6 +98,7 @@ export default function AgeRangesSection({
     }
 
     const payload = candidate.map((row) => ({
+      id: String(row.id).trim(),
       label: String(row.label).trim(),
       min: Number(row.min),
       max: row.max === null ? null : Number(row.max),
@@ -206,7 +210,7 @@ export default function AgeRangesSection({
           {draft.length === 0 && (
             <p className="text-sm text-gray-500 py-2">
               No hay rangos configurados. Todos los invitados con edad quedarán
-              en “Sin rango”.
+              en “Rango no configurado”.
             </p>
           )}
 
@@ -289,21 +293,21 @@ export default function AgeRangesSection({
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-700 p-6 text-center text-sm text-gray-400">
               No hay rangos configurados. Todos los invitados con edad quedarán
-              en “Sin rango”.
+              en “Rango no configurado”.
             </div>
           )}
 
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-800 bg-gray-900/60 px-4 py-3">
               <span className="text-sm text-gray-400">
-                Sin edad registrada
+                Sin rango de edad
               </span>
               <span className="text-lg font-semibold text-gray-50">
                 {stats.withoutAge}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-800 bg-gray-900/60 px-4 py-3">
-              <span className="text-sm text-gray-400">Sin rango</span>
+              <span className="text-sm text-gray-400">Rango no configurado</span>
               <span className="text-lg font-semibold text-gray-50">
                 {stats.unclassified}
               </span>

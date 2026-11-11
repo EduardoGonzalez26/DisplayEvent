@@ -7,6 +7,7 @@ import {
   isReservedCustomDomain,
   normalizeCustomDomain,
 } from "../utils/customDomain.js";
+import { parseAgeRangesInput } from "../utils/ageRanges.js";
 
 const router = Router();
 
@@ -218,86 +219,11 @@ router.patch("/:id/gift-messages/:messageId", async (req, res, next) => {
 /* ------------------------------------------------------------------
    Rangos de edad editables del evento (`events.age_ranges`, JSONB).
 
-   Body: { ranges: [{ label, min, max }] }. Se guardan ordenados por `min`
-   y sin solapamientos. `max` es EXCLUSIVO: `0–3` cubre 0,1,2 y `3–12`
-   cubre 3..11, por lo que el siguiente `min` puede ser igual al `max`
-   anterior (contiguo) pero no menor. Un `max: null` solo puede quedar al
-   final.
+   Body: { ranges: [{ id?, label, min, max }] }. La validación/saneado vive
+   en `utils/ageRanges.js` (misma fuente que usa el RSVP): `max` exclusivo,
+   ids únicos (autogenerados si faltan), orden por `min`, sin solapamientos
+   y `max: null` solo al final.
 ------------------------------------------------------------------ */
-
-const AGE_RANGES_MAX_COUNT = 20;
-const AGE_RANGE_LABEL_MAX = 40;
-const AGE_RANGE_MIN = 0;
-const AGE_RANGE_MAX = 120;
-
-// Devuelve { ranges } saneados o { error } con un mensaje claro.
-function parseAgeRangesInput(value) {
-  if (!Array.isArray(value)) {
-    return { error: 'El campo "ranges" debe ser un arreglo' };
-  }
-  if (value.length > AGE_RANGES_MAX_COUNT) {
-    return { error: `No se permiten más de ${AGE_RANGES_MAX_COUNT} rangos de edad` };
-  }
-
-  const ranges = [];
-  for (let index = 0; index < value.length; index += 1) {
-    const item = value[index];
-    if (!item || typeof item !== "object" || Array.isArray(item)) {
-      return { error: `ranges[${index}] es inválido` };
-    }
-
-    if (typeof item.label !== "string") {
-      return { error: `ranges[${index}].label debe ser texto` };
-    }
-    const label = item.label.trim();
-    if (!label) {
-      return { error: `ranges[${index}].label es obligatorio` };
-    }
-    if (label.length > AGE_RANGE_LABEL_MAX) {
-      return {
-        error: `ranges[${index}].label no puede superar los ${AGE_RANGE_LABEL_MAX} caracteres`,
-      };
-    }
-
-    if (
-      !Number.isInteger(item.min) ||
-      item.min < AGE_RANGE_MIN ||
-      item.min > AGE_RANGE_MAX
-    ) {
-      return {
-        error: `ranges[${index}].min debe ser un entero entre ${AGE_RANGE_MIN} y ${AGE_RANGE_MAX}`,
-      };
-    }
-
-    if (
-      item.max !== null &&
-      (!Number.isInteger(item.max) ||
-        item.max <= item.min ||
-        item.max > AGE_RANGE_MAX)
-    ) {
-      return {
-        error: `ranges[${index}].max debe ser un entero mayor que min y menor o igual a ${AGE_RANGE_MAX}, o null (el máximo es exclusivo)`,
-      };
-    }
-
-    ranges.push({ label, min: item.min, max: item.max });
-  }
-
-  ranges.sort((a, b) => a.min - b.min);
-
-  for (let index = 1; index < ranges.length; index += 1) {
-    const previous = ranges[index - 1];
-    if (previous.max === null) {
-      return { error: "Un rango con max null solo puede ser el último" };
-    }
-    // `max` exclusivo: min === max es contiguo (válido); solo min < max solapa.
-    if (ranges[index].min < previous.max) {
-      return { error: "Los rangos de edad no pueden solaparse (el máximo es exclusivo)" };
-    }
-  }
-
-  return { ranges };
-}
 
 router.put("/:id/age-ranges", async (req, res, next) => {
   const parsed = parseAgeRangesInput(req.body?.ranges);

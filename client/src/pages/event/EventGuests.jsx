@@ -79,6 +79,10 @@ function GroupForm({ initial, onSubmit, onCancel }) {
 }
 
 function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
+  const ageLabel =
+    String(guest.age_range_label || "").trim() ||
+    (guest.age != null ? String(guest.age) : "");
+
   return (
     <li className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-colors">
       {guest.is_leader ? (
@@ -107,13 +111,13 @@ function GuestRow({ guest, onToggleChild, onToggleRegistered, onDelete }) {
         <span className={`block truncate ${guest.is_child ? "text-sky-400 font-medium" : ""}`}>
           {guest.name}
         </span>
-        {guest.age != null ? (
+        {ageLabel ? (
           <span className="block truncate text-[10px] text-gray-400">
-            Edad: {guest.age}
+            Edad: {ageLabel}
           </span>
-        ) : guest.registered && guest.age == null ? (
+        ) : guest.registered ? (
           <span className="block truncate text-[10px] text-gray-500">
-            Edad sin registrar
+            Rango de edad sin registrar
           </span>
         ) : null}
         {guest.allergy === true ? (

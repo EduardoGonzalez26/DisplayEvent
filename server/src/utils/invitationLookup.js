@@ -19,7 +19,7 @@ export async function findInvitationByToken(token) {
     `SELECT g.id AS group_id, g.event_id, g.name AS name,
             g.leader_name, g.rsvp_note,
             e.name AS event_name, e.date, e.time, e.place, e.invitation,
-            e.gift_message_email,
+            e.gift_message_email, e.age_ranges,
             e.slug, e.custom_domain, e.user_id AS owner_user_id,
             e.stripe_account_id,
             e.stripe_account_mxn, e.stripe_account_eur

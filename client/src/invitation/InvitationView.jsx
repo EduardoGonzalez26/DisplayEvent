@@ -34,6 +34,7 @@ export default function InvitationView({
   hideBrand = false,
   onRsvpDone,
   publishableKey,
+  ageRanges = [],
   // `payment_methods` de la respuesta pública: { card: { mxn, eur } }.
   // `null` (respuestas viejas o vista previa del editor) = disponible.
   paymentMethods = null,
@@ -86,6 +87,7 @@ export default function InvitationView({
             theme,
             cfg,
             preview,
+            ageRanges,
             onDone: onRsvpDone,
           }}
         />

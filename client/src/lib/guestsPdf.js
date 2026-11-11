@@ -312,7 +312,14 @@ function buildGuestDetail(guest, guestsById) {
     const companion = guestsById.get(groupKey(guest.companion_id));
     details.push(companion ? `Acompañante de ${companion.name}` : "Acompañante");
   }
-  if (guest?.age != null) details.push(`Edad: ${guest.age}`);
+  const ageLabel =
+    String(guest?.age_range_label || "").trim() ||
+    (guest?.age != null ? String(guest.age) : "");
+  if (ageLabel) {
+    details.push(`Edad: ${ageLabel}`);
+  } else if (guest?.registered) {
+    details.push("Rango de edad sin registrar");
+  }
   if (guest?.allergy === true) {
     details.push(`Alergia: ${guest.allergy_notes || "Sí"}`);
   }

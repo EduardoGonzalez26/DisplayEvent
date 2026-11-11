@@ -12,6 +12,12 @@ import {
 } from "../utils/stripeDestination.js";
 import { clientUrl } from "../utils/clientUrl.js";
 import { sendGiftMessageEmail } from "../utils/mailer.js";
+import {
+  AGE_RANGE_ID_MAX,
+  findAgeRange,
+  normalizeAgeRangeId,
+  normalizeAgeRanges,
+} from "../utils/ageRanges.js";
 
 const router = Router();
 
@@ -30,7 +36,7 @@ const MAX_AMOUNT = 999_999;
 async function getGuests(groupId) {
   return query(
     `SELECT id, name, is_child, is_leader, registered, declined, companion_id,
-            allergy, allergy_notes, age
+            allergy, allergy_notes, age, age_range_id, age_range_label
      FROM guests
      WHERE group_id = $1
      ORDER BY is_leader DESC, id ASC`,
@@ -143,6 +149,56 @@ function parseAgesInput(value) {
   return { present: true, entries };
 }
 
+/* ------------------------------------------------------------------
+   Selección de rango de edad (v5).
+
+   Array opcional `age_selections: [{ guest_id, range_id }]`. `range_id`
+   debe ser string (1..80) o null. La existencia del rango se valida solo
+   cuando el pase asiste, contra los rangos normalizados del evento.
+------------------------------------------------------------------ */
+
+function parseAgeSelectionsInput(value) {
+  if (value === undefined || value === null) return { present: false, entries: [] };
+  if (!Array.isArray(value)) {
+    return { error: 'El campo "age_selections" debe ser un arreglo' };
+  }
+
+  const entries = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return { error: `age_selections[${index}] es inválido` };
+    }
+
+    const guestId = Number(item.guest_id);
+    if (!Number.isInteger(guestId) || guestId <= 0) {
+      return { error: `age_selections[${index}].guest_id es inválido` };
+    }
+
+    let rangeId = null;
+    if (item.range_id !== null) {
+      if (typeof item.range_id !== "string") {
+        return {
+          error: `age_selections[${index}].range_id debe ser texto o null`,
+        };
+      }
+      rangeId = normalizeAgeRangeId(item.range_id);
+      if (!rangeId) {
+        return { error: `age_selections[${index}].range_id es inválido` };
+      }
+      if (rangeId.length > AGE_RANGE_ID_MAX) {
+        return {
+          error: `age_selections[${index}].range_id no puede superar los ${AGE_RANGE_ID_MAX} caracteres`,
+        };
+      }
+    }
+
+    entries.push({ guest_id: guestId, range_id: rangeId });
+  }
+
+  return { present: true, entries };
+}
+
 // Disponibilidad de pago con tarjeta POR MONEDA (extensión del contrato
 // público `payment_methods.card.{mxn,eur}`). Solo aplica cuando la mesa de
 // regalos tiene el pago en línea habilitado y Stripe está configurado; luego
@@ -184,6 +240,10 @@ router.get("/:token", invitationViewLimiter, async (req, res, next) => {
       },
       group: { name: inv.name, leader_name: inv.leader_name, rsvp_note: inv.rsvp_note },
       guests,
+      // Contrato elegido: `age_ranges` va en el nivel raíz de la respuesta
+      // (junto a event/group/guests), no dentro de `event`. Son datos no
+      // sensibles que alimentan el selector de edad del RSVP.
+      age_ranges: normalizeAgeRanges(inv.age_ranges),
       public_config: {
         stripe_publishable_key: stripePublishableKey(),
         custom_domain: inv.custom_domain || null,
@@ -202,6 +262,7 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
     if (!inv) return res.status(404).json({ error: "Invitación no encontrada" });
 
     const cfg = normalizeForRead(inv.invitation);
+    const invitationAgeRanges = normalizeAgeRanges(inv.age_ranges);
 
     // Lectura previa de pases: alimenta las guardas de plazo/congelado. La
     // respuesta se relee de la BD después de la transacción.
@@ -238,11 +299,18 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
     }
     const ageEntries = ageInput.entries;
 
+    const ageSelectionInput = parseAgeSelectionsInput(req.body.age_selections);
+    if (ageSelectionInput.error) {
+      return res.status(400).json({ error: ageSelectionInput.error });
+    }
+    const ageSelectionEntries = ageSelectionInput.entries;
+
     const allIds = [
       ...allowIds,
       ...declineIds,
       ...allergyEntries.map((entry) => entry.guest_id),
       ...ageEntries.map((entry) => entry.guest_id),
+      ...ageSelectionEntries.map((entry) => entry.guest_id),
     ];
 
     if (allIds.length > 0) {
@@ -261,6 +329,23 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
     // el orden de los UPDATE de asistencia dentro de la transacción.
     const allowSet = new Set(allowIds);
     const declineSet = new Set(declineIds);
+
+    // El rango solo debe existir si el pase asiste; para quien no asiste se
+    // ignora y las columnas quedan en NULL.
+    if (ageSelectionInput.present) {
+      for (const entry of ageSelectionEntries) {
+        const attends = allowSet.has(entry.guest_id) && !declineSet.has(entry.guest_id);
+        if (
+          attends &&
+          entry.range_id !== null &&
+          !findAgeRange(invitationAgeRanges, entry.range_id)
+        ) {
+          return res.status(400).json({
+            error: `El rango de edad "${entry.range_id}" no existe para este evento`,
+          });
+        }
+      }
+    }
 
     const cleanNote = await transaction(async (conn) => {
       // Pases que asisten: registrados. Pases que no asisten: declinados.
@@ -311,6 +396,29 @@ router.put("/:token/rsvp", rsvpLimiter, async (req, res, next) => {
           await conn.query(
             `UPDATE guests SET age = $1 WHERE id = $2 AND group_id = $3`,
             [age, entry.guest_id, inv.group_id]
+          );
+        }
+      }
+
+      // Selección de rango: solo si el cliente envió el array. Se guarda el
+      // id y el label actual del rango; sin asistencia o range_id null => NULL.
+      if (ageSelectionInput.present) {
+        for (const entry of ageSelectionEntries) {
+          const attends = allowSet.has(entry.guest_id) && !declineSet.has(entry.guest_id);
+          let rangeId = null;
+          let rangeLabel = null;
+          if (attends && entry.range_id !== null) {
+            const range = findAgeRange(invitationAgeRanges, entry.range_id);
+            if (range) {
+              rangeId = range.id;
+              rangeLabel = range.label;
+            }
+          }
+          await conn.query(
+            `UPDATE guests
+                SET age_range_id = $1, age_range_label = $2
+              WHERE id = $3 AND group_id = $4`,
+            [rangeId, rangeLabel, entry.guest_id, inv.group_id]
           );
         }
       }

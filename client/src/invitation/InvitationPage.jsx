@@ -54,6 +54,7 @@ export default function InvitationPage() {
       token={token}
       hideBrand={hideBrand}
       rsvpNote={group.rsvp_note}
+      ageRanges={data.age_ranges || []}
       publishableKey={public_config?.stripe_publishable_key || null}
       // Disponibilidad de tarjeta por moneda (puede faltar en respuestas
       // viejas: se trata como "disponible", comportamiento anterior).

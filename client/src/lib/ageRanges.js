@@ -1,22 +1,24 @@
 /* ------------------------------------------------------------------
-   Rangos de edad del dashboard.
+   Rangos de edad del dashboard y del RSVP.
 
-   Contrato: cada rango es { label, min, max }. `max` es EXCLUSIVO y
+   Contrato: cada rango es { id, label, min, max }. `max` es EXCLUSIVO y
    `max: null` significa abierto (sin límite superior). El backend valida
-   y persiste el array tal cual; aquí se normaliza, valida y calculan los
-   conteos para la UI.
+   y persiste el array; aquí se normaliza, valida y calculan los conteos
+   para la UI.
 ------------------------------------------------------------------- */
 
 export const DEFAULT_AGE_RANGES = Object.freeze([
-  Object.freeze({ label: "Bebé", min: 0, max: 3 }),
-  Object.freeze({ label: "Niño", min: 3, max: 12 }),
-  Object.freeze({ label: "Adolescente", min: 12, max: 18 }),
-  Object.freeze({ label: "Adulto", min: 18, max: null }),
+  Object.freeze({ id: "baby", label: "Bebé", min: 0, max: 3 }),
+  Object.freeze({ id: "child", label: "Niño", min: 3, max: 12 }),
+  Object.freeze({ id: "teen", label: "Adolescente", min: 12, max: 18 }),
+  Object.freeze({ id: "adult", label: "Adulto", min: 18, max: null }),
 ]);
 
 const MAX_RANGES = 20;
 const MIN_AGE = 0;
 const MAX_AGE = 120;
+const MAX_ID_LENGTH = 80;
+const MAX_LABEL_LENGTH = 40;
 
 function cloneDefaults() {
   return DEFAULT_AGE_RANGES.map((range) => ({ ...range }));
@@ -39,13 +41,20 @@ function toMax(value) {
   return Number.isFinite(number) ? number : NaN;
 }
 
+function fallbackRangeId(index) {
+  return `range-${index + 1}`;
+}
+
 /* null/undefined -> defaults; [] se respeta. Un valor no-array se sanea a []. */
 export function normalizeAgeRanges(raw) {
   if (raw === undefined || raw === null) return cloneDefaults();
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((item) => item && typeof item === "object" && !Array.isArray(item))
-    .map((item) => {
+    .map((item, index) => {
+      const label = String(item.label ?? "").trim();
+      const id =
+        String(item.id ?? "").trim() || fallbackRangeId(index);
       const min = Number(item.min);
       const maxValue = item.max;
       const max =
@@ -53,7 +62,8 @@ export function normalizeAgeRanges(raw) {
           ? null
           : Number(maxValue);
       return {
-        label: String(item.label ?? "").trim(),
+        id,
+        label,
         min: Number.isFinite(min) ? Math.trunc(min) : 0,
         max:
           max === null
@@ -73,22 +83,28 @@ export function validateAgeRanges(ranges) {
   }
 
   const parsed = [];
+  const seenIds = new Set();
   for (let index = 0; index < ranges.length; index += 1) {
     const range = ranges[index] || {};
+    const id = String(range.id ?? "").trim();
+    if (!id || id.length > MAX_ID_LENGTH) {
+      return `El rango ${index + 1} necesita un id de 1 a ${MAX_ID_LENGTH} caracteres.`;
+    }
+    if (seenIds.has(id)) {
+      return `El id "${id}" está repetido entre los rangos.`;
+    }
+    seenIds.add(id);
+
     const label = String(range.label ?? "").trim();
     if (!label) {
       return `El rango ${index + 1} necesita una etiqueta.`;
     }
-    if (label.length > 40) {
-      return `La etiqueta "${label}" no puede superar los 40 caracteres.`;
+    if (label.length > MAX_LABEL_LENGTH) {
+      return `La etiqueta "${label}" no puede superar los ${MAX_LABEL_LENGTH} caracteres.`;
     }
 
     const min = toInteger(range.min);
-    if (
-      !Number.isInteger(min) ||
-      min < MIN_AGE ||
-      min > MAX_AGE
-    ) {
+    if (!Number.isInteger(min) || min < MIN_AGE || min > MAX_AGE) {
       return `El "desde" de "${label}" debe ser un entero entre ${MIN_AGE} y ${MAX_AGE}.`;
     }
 
@@ -96,7 +112,10 @@ export function validateAgeRanges(ranges) {
     if (Number.isNaN(max)) {
       return `El "hasta" de "${label}" debe ser un número o quedar vacío.`;
     }
-    if (max !== null && (!Number.isInteger(max) || max > MAX_AGE)) {
+    if (
+      max !== null &&
+      (!Number.isInteger(max) || max > MAX_AGE)
+    ) {
       return `El "hasta" de "${label}" debe ser un entero menor o igual a ${MAX_AGE} o quedar vacío.`;
     }
     if (max !== null && max <= min) {
@@ -106,7 +125,7 @@ export function validateAgeRanges(ranges) {
       return `El rango abierto "${label}" debe ser el último.`;
     }
 
-    parsed.push({ label, min, max });
+    parsed.push({ id, label, min, max });
   }
 
   for (let i = 0; i < parsed.length; i += 1) {
@@ -141,39 +160,58 @@ function inRange(age, range) {
   return age >= min && age < max;
 }
 
+function rangeForGuest(guest, ranges) {
+  const storedId = guest?.age_range_id;
+  const hasStoredId =
+    storedId !== null &&
+    storedId !== undefined &&
+    String(storedId).trim() !== "";
+
+  if (hasStoredId) {
+    return (
+      ranges.find((range) => String(range.id) === String(storedId).trim()) ||
+      null
+    );
+  }
+
+  const age = numericAge(guest?.age);
+  if (age === null) return null;
+  return ranges.find((range) => inRange(age, range)) || null;
+}
+
 export function computeAgeRangeStats(guests, ranges) {
   const guestList = Array.isArray(guests) ? guests : [];
   const rangeList = Array.isArray(ranges) ? ranges : [];
+  const matches = guestList.map((guest) => rangeForGuest(guest, rangeList));
 
   const rangeStats = rangeList.map((range) => {
     let total = 0;
     let confirmed = 0;
-    for (const guest of guestList) {
-      const age = numericAge(guest?.age);
-      if (age === null) continue;
-      if (!inRange(age, range)) continue;
+    guestList.forEach((guest, index) => {
+      const match = matches[index];
+      if (!match || String(match.id) !== String(range.id)) return;
       total += 1;
       if (guest.registered) confirmed += 1;
-    }
+    });
     return { ...range, total, confirmed };
   });
 
   let withoutAge = 0;
   let unclassified = 0;
-  for (const guest of guestList) {
-    if (guest?.age === null || guest?.age === undefined) {
+  guestList.forEach((guest, index) => {
+    const storedId = guest?.age_range_id;
+    const hasStoredId =
+      storedId !== null &&
+      storedId !== undefined &&
+      String(storedId).trim() !== "";
+    const age = numericAge(guest?.age);
+
+    if (!hasStoredId && age === null) {
       withoutAge += 1;
-      continue;
+      return;
     }
-    const age = numericAge(guest.age);
-    if (age === null) {
-      unclassified += 1;
-      continue;
-    }
-    if (!rangeList.some((range) => inRange(age, range))) {
-      unclassified += 1;
-    }
-  }
+    if (!matches[index]) unclassified += 1;
+  });
 
   return { ranges: rangeStats, withoutAge, unclassified };
 }
