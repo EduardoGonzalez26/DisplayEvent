@@ -43,6 +43,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
   const [sheetFull, setSheetFull] = useState(false);
   const letterRef = useRef(null);
   const timers = useRef([]);
+  const releaseLockRef = useRef(null);
 
   const later = (fn, ms) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -115,12 +116,24 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
     const onWheel = (event) => event.preventDefault();
     window.addEventListener("wheel", onWheel, { passive: false });
 
-    return () => {
+    let released = false;
+    const releaseLock = () => {
+      if (released) return;
+      released = true;
       resizeObserver?.disconnect();
       if (raf) cancelAnimationFrame(raf);
+      raf = 0;
       body.style.paddingRight = prevPaddingRight;
       root.classList.remove("de-envelope-lock");
       root.style.scrollbarGutter = prevGutter;
+      root.classList.add("de-envelope-fade");
+    };
+    releaseLockRef.current = releaseLock;
+
+    return () => {
+      releaseLock();
+      root.classList.remove("de-envelope-fade");
+      releaseLockRef.current = null;
       window.removeEventListener("wheel", onWheel);
       timers.current.forEach((timer) => window.clearTimeout(timer));
       timers.current = [];
@@ -146,6 +159,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
       );
     }, 1850 * R);
     later(() => {
+      releaseLockRef.current?.();
       setStage(4);
       onReveal?.();
     }, 2850 * R);

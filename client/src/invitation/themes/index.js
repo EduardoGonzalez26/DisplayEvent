@@ -32,24 +32,36 @@ export function getTheme(templateId) {
   return xv;
 }
 
+// Layouts lazy hoisteados a nivel de módulo. Crear un `lazy()` dentro de
+// `getThemeLayout` devolvía un tipo de componente distinto en cada render y
+// React desmontaba/remontaba todo el Layout (parpadeo al abrir el sobre).
+const LazyBoda = lazy(() => import("../boda/BodaLayout.jsx"));
+const LazyCumpleanos = lazy(() => import("../cumpleanos/CumpleanosLayout.jsx"));
+const LazyBabyShower = lazy(() => import("../baby_shower/BabyShowerLayout.jsx"));
+const LazyAliceXv = lazy(() => import("../alice_xv/AliceXvLayout.jsx"));
+const LazyBodaJorgeMacarena = lazy(() =>
+  import("../boda_jorge_macarena/BodaJorgeMacarenaLayout.jsx")
+);
+const LazyXv = lazy(() => import("../xv/XvLayout.jsx"));
+
 // Layout (componente de composición) por plantilla. Se carga perezosamente
 // para que el bundle del editor/admin nunca arrastre las secciones de la
-// invitación pública.
+// invitación pública. Siempre devuelve la misma referencia por template.
 export function getThemeLayout(templateId) {
   switch (templateId) {
     case "boda":
-      return lazy(() => import("../boda/BodaLayout.jsx"));
+      return LazyBoda;
     case "cumpleanos":
-      return lazy(() => import("../cumpleanos/CumpleanosLayout.jsx"));
+      return LazyCumpleanos;
     case "baby_shower":
-      return lazy(() => import("../baby_shower/BabyShowerLayout.jsx"));
+      return LazyBabyShower;
     case "alice_xv":
-      return lazy(() => import("../alice_xv/AliceXvLayout.jsx"));
+      return LazyAliceXv;
     case "boda_jorge_macarena":
-      return lazy(() => import("../boda_jorge_macarena/BodaJorgeMacarenaLayout.jsx"));
+      return LazyBodaJorgeMacarena;
     case "xv":
     default:
-      return lazy(() => import("../xv/XvLayout.jsx"));
+      return LazyXv;
   }
 }
 

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { getTheme, getThemeLayout } from "./themes/index.js";
 import { motion } from "motion/react";
 import { InvitationLoader } from "./shared/util.jsx";
@@ -40,7 +40,10 @@ export default function InvitationView({
   paymentMethods = null,
 }) {
   const theme = getTheme(cfg.template);
-  const Layout = getThemeLayout(cfg.template);
+  const Layout = useMemo(
+    () => getThemeLayout(cfg.template),
+    [cfg.template]
+  );
 
   const attending = guests.filter((g) => g.registered).length;
   const declining = guests.filter((g) => g.declined).length;

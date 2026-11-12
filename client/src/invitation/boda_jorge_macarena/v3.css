@@ -136,6 +136,11 @@
 
 /* El sobre no debe aportar altura al documento: es una capa fija sobre la
    página. Así `body.scrollHeight` no cambia al desmontarlo. */
+html.de-envelope-fade {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .mjv3-envelope-root {
   position: fixed;
   inset: 0;
@@ -540,6 +545,17 @@
   justify-content: flex-start;
 }
 
+@keyframes mjv3-cover-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .mjv3-cover-content {
   position: relative;
   z-index: 10;
@@ -552,14 +568,13 @@
   text-align: center;
   gap: 24px;
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 1.4s ease 0.3s,
-    transform 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s;
+  transform: translateY(24px) scale(0.99);
 }
 
 .mjv3-cover-content.is-revealed {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
+  animation: mjv3-cover-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -567,6 +582,7 @@
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+    animation: none !important;
   }
   .mjv3-sheet-content {
     opacity: 1 !important;
