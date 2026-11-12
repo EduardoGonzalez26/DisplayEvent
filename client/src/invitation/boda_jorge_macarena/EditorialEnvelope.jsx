@@ -17,9 +17,7 @@ import "./v3.css";
 ------------------------------------------------------------------- */
 
 function familyLine(value) {
-  const family = String(value || "").trim();
-  if (!family) return "";
-  return /^familia\b/i.test(family) ? family : `la Familia ${family}`;
+  return String(value || "").trim();
 }
 
 export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, onReveal }) {
