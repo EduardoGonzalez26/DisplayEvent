@@ -227,6 +227,8 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 11. **Regalo** (`v3/GiftsSection.jsx`): mesa de regalos + mensaje privado (ver §2.3).
 12. **Cierre** (`v3/ClosingSection.jsx`): dibujo, frase, monograma, `event.place · fecha`, badge **“Powered by Webi”** y “DisplayEvent” salvo `hideBrand`.
 
+**Deep link de recordatorio:** los enlaces de WhatsApp con hash **`#confirmar`** hacen que `InvitationView` **omita el sobre** y que el layout v3 reintente el scroll al bloque de Confirmación a **100/400/900 ms**. Sin hash, el comportamiento es el anterior. El ancla solo existe en v3.
+
 **Chrome fijo:** botón de música (`MusicToggle`, solo con `music_url`) y capa de grano (`.mjv3-grain`). **No hay** `BottomNav` ni `SectionNav`.
 
 **Portada pública del dominio propio (`MacarenaJorgeCover.jsx`):** reutiliza los componentes v3 en orden Portada · Granada · El gran día (ubicaciones) · Vestimenta · Viaje (04) · Hospedaje (05) · “Tu invitación” · Cierre. No monta Icebreaker, Recomendaciones, RSVP, Regalo ni Mensajes, no muestra contactos y no renderiza `gallery`/`hero_image`.
@@ -251,13 +253,18 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 - **Cuenta Stripe (columna del evento, fuera del JSONB):** el evento 2 usa **webi/BBVA …3892** (`acct_1UT7NAFnv8uJBZLH`); antes usaba Akala …0134. Los pagos históricos a Akala se **borraron de `gifts`**; solo se concilian en el dashboard de Stripe. El panel (`6fbc07c`) y el blindaje (`a9610b6`) siguen locales.
 - **Segundo correo:** `events.gift_message_email_2` ya está aplicada en BD; el editor (`24cd461`) y el envío (`01d395a`) siguen locales. Evento 2: principal `jgegmz@gmail.com`, adicional `NULL`.
 - **Pagos históricos:** se borraron de `gifts` los ids 11/12/13 (live, Akala); Live vacío y Test 2. Los pagos siguen en Stripe.
+- **Recordatorios WhatsApp:** no dependen del seed. `779f61b` (backend) y `5f6ba27` (UI + `#confirmar`) siguen locales; el evento 2 tiene **1 grupo y 0 pendientes**, por lo que “Recordar confirmar” aparece deshabilitado.
 - **Aplicado:** el seed v4 del evento 2 y las columnas de alergia/rango (`guests.age_range_id`/`age_range_label`) + `events.age_ranges` (`init-db`) ya están aplicados; al momento de este ajuste hay **198 invitados con `age_range_id`/`age_range_label` NULL** y los eventos existentes tienen `age_ranges = NULL` (defaults en la UI hasta guardar). El evento 2 tiene principal `jgegmz@gmail.com` y adicional `NULL`; existe **1 mensaje guardado** (actividad externa; no tocar).
 
 ---
 
 ## 8. Pendientes / oportunidades
 
-- [ ] **Push y deploy de `ff2b988` (UI de cuenta), `a9610b6` (blindaje), `6fbc07c` (panel de pagos), `01d395a` (segundo correo backend) y `24cd461` (segundo correo editor)**; el panel y el segundo correo no existen en producción hasta el deploy.
+- [ ] **Push y deploy de `ff2b988` (UI de cuenta), `a9610b6` (blindaje), `6fbc07c` (panel de pagos), `01d395a` (segundo correo backend), `24cd461` (segundo correo editor), `779f61b` (recordatorios backend) y `5f6ba27` (recordatorios UI + `#confirmar`)**; el panel, el segundo correo y los recordatorios no existen en producción hasta el deploy.
+- [ ] **Probar con un grupo que tenga pendientes** (o dejar un invitado sin confirmar) para ver el modal “Recordar confirmación”.
+- [ ] **Validar el enlace `#confirmar` en navegador/WhatsApp**; el ancla solo existe en v3.
+- [ ] **Cloud API:** validar que la plantilla aprobada acepte el fragmento `#confirmar`; los recordatorios cloud marcan `whatsapp_sent_at`.
+- [ ] **Decidir si se separa “recordatorio enviado” de “invitación enviada”**; hoy cloud comparte `whatsapp_sent_at`.
 - [ ] **Verificar un pago live nuevo** (idealmente pequeño) después del deploy: debe caer en webi/BBVA …3892 y el panel debe mostrarlo como **“Cuenta actual”**.
 - [x] ~~**MX$20 pagados a Akala**~~ → asumidos como **pérdida operativa**; se borraron de `gifts` y no aparecen en el panel. Siguen en Stripe.
 - [ ] **Configurar el segundo correo desde el editor si se desea**; el evento 2 tiene principal `jgegmz@gmail.com` y adicional `NULL`.

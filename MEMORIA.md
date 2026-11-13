@@ -350,6 +350,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
+- [ ] **Recordatorios de confirmación (`779f61b`/`5f6ba27`, locales; ver §12.1):** push/deploy; probar con un grupo con pendientes; validar `#confirmar` en navegador/WhatsApp; confirmar que la plantilla cloud acepta el fragmento; decidir si se separa “recordatorio enviado” de “invitación enviada”.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (commiteada en `fae3ca5`; la base ya está desplegada y queda el redeploy de `8d70217`/`efb424b`).
 - [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; la base ya está desplegada y queda el redeploy de **`8d70217`/`efb424b`**. La iteración de **"La estancia" + hoteles + scroll suave** quedó **commiteada en `389403d`**; **§15.2** (Viaje/Hospedaje) se commiteó en **`4773112`** y sus ajustes en **`8d70217`** (Madrid) y **`efb424b`** (sin IATA). El working tree de código está limpio al 2026-11-13; solo quedan cambios documentales.
 - [ ] **Push de `8d70217`, `efb424b` y `ff2b988`; redeploy** para que la llegada fija a Madrid, la UI sin IATA y la cuenta Stripe restringida estén en el bundle desplegado (la base `4773112` ya está desplegada y el API ya devuelve `stay`/`trip`; ver §15.2 y §15.1).
@@ -537,7 +538,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 | ------ | ---- | ----------- |
 | GET | `/api/events/:id/whatsapp` | Modo activo, presets, preset por defecto y mensaje guardado. |
 | PUT | `/api/events/:id/whatsapp/message` | Guarda el mensaje del evento (≤800 caracteres; garantiza `{{enlace}}`). |
-| POST | `/api/events/:id/whatsapp/send` | Prepara (`link`) o envía (`cloud`) a los líderes con teléfono válido; rate limit **10/10 min por usuario**; filtros opcionales `groupIds` (≤500) y `onlyPending`. |
+| POST | `/api/events/:id/whatsapp/send` | Prepara (`link`) o envía (`cloud`) a los líderes con teléfono válido; rate limit **10/10 min por usuario**; filtros opcionales `groupIds` (≤500) y `onlyPending`. Acepta `{ reminder:true, message }` para recordatorios (ver §12.1). |
 | POST | `/api/events/:id/whatsapp/mark` | Marca como enviadas (1–500 ids) las confirmadas manualmente en modo `link`. |
 
 **Límites y limitaciones:**
@@ -547,6 +548,46 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 - En modo `link` cada apertura la hace el organizador desde su equipo; el rate limit del endpoint protege ante reintentos/automatizaciones accidentales.
 
 **Estado de verificación (2026-09-14, reportado por el agente):** `npm run build` del client exit 0 y smoke en puerto alterno OK (`/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403). `node --check` OK en los JS de servidor (`routes/whatsapp.js`, `utils/whatsapp.js`, `utils/phone.js`, `routes/groups.js` e `index.js`; `db/init.js` corregido y verificado 2026-09-14). Revisión profunda de SecDevOps **cancelada**. Commiteada en `8fd76c1` (docs en `91b407d`).
+
+### 12.1 Recordatorios de confirmación por WhatsApp (2026-11-13, commits locales)
+
+**Estado:** implementado en **`779f61b`** (backend) y **`5f6ba27`** (UI + deep link), **commits locales sin push/deploy**. El envío de invitaciones original no cambia. Build del cliente: **951 módulos**. Evento 2: la consulta devuelve **1 grupo y 0 grupos con pendientes**, así que **“Recordar confirmar” aparece deshabilitado** hasta que haya un invitado sin confirmar o se agregue otro grupo. No se enviaron mensajes reales; el entorno está en modo **link** (`WHATSAPP_*` sin configurar).
+
+**Filtro de recordatorio:**
+
+- Se envía a grupos con al menos un invitado sin confirmar: `registered_count + declined_count < guests_count`.
+- **Incluye** grupos ya marcados como enviados; en modo recordatorio se **ignora `whatsapp_sent_at`**.
+- **Excluye** grupos con todos confirmados/declinados y grupos sin invitados.
+- El modal muestra grupos con pendientes, invitados por confirmar, y avisos de grupos ya confirmados y de grupos sin teléfono/enlace.
+
+**UI (Invitados):**
+
+- Botón **“Recordar confirmar”** junto a **“Enviar invitaciones”**, con contador de grupos con pendientes. Si no hay pendientes, queda **deshabilitado**.
+- Modal **“Recordar confirmación”** con mensaje por defecto editable, **sin presets de invitación**; ese mensaje **no se guarda** en `events.whatsapp_message`.
+- Envío: `POST /api/events/:id/whatsapp/send` con `{ reminder: true, message, onlyPending: false }`; los reintentos incluyen `reminder` y `message`.
+- En modo **link**, el mensaje/`waUrl` incluye el enlace con **`#confirmar`**.
+
+**Deep link a confirmación:**
+
+- `buildInviteUrl` (cliente) y `buildInvitationUrl` (servidor) aceptan **hash**; el recordatorio usa **`#confirmar`**.
+- `InvitationView` **omite el sobre** cuando el hash inicial es `#confirmar`.
+- La layout v3 reintenta el scroll a `#confirmar` a **100/400/900 ms**. Sin hash, el comportamiento es el anterior.
+- El ancla `#confirmar` solo existe en la **v3**.
+
+**Backend:**
+
+- `POST /api/events/:eventId/whatsapp/send` acepta **`reminder`** y **`message`** (máx. **800**, agrega `{{enlace}}` si falta; fallback a **`REMINDER_PRESET_TEXT`**).
+- El query de grupos agrega **`registered_count`/`declined_count`**.
+- En recordatorios **omite `sin_pendientes`**, **ignora `whatsapp_sent_at`** y **no modifica** el mensaje guardado.
+- En modo **cloud** sigue usando la **misma plantilla aprobada**; el texto editable del recordatorio **solo aplica al modo link**. Los recordatorios cloud **marcan `whatsapp_sent_at`**.
+
+**Pendientes:**
+
+- [ ] **Push/deploy de `779f61b`/`5f6ba27`**.
+- [ ] **Probar con un grupo que tenga pendientes** (o dejar un invitado sin confirmar) para ver el modal y el deep link.
+- [ ] **Validar el enlace `#confirmar` en navegador/WhatsApp**; el ancla solo existe en v3.
+- [ ] **Cloud API:** validar que la plantilla aprobada acepte el fragmento `#confirmar`.
+- [ ] **Decidir si se separa “recordatorio enviado” de “invitación enviada”**; hoy cloud marca el mismo `whatsapp_sent_at`.
 
 ---
 
@@ -783,7 +824,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Producción en Railway (runbook revisado 2026-10-11; estado 2026-10-22):**
 
-- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`6fbc07c`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6` y `6fbc07c` siguen locales, pendientes de push/deploy.
+- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`5f6ba27`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6`, `6fbc07c`, `01d395a`, `24cd461`, `779f61b` y `5f6ba27` siguen locales, pendientes de push/deploy.
 - **Dominio `macarenayjorge.com`:** Settings → Networking → + Custom Domain; el dashboard exige **CNAME target `xxxxx.up.railway.app` + TXT de verificación (ambos obligatorios; sin TXT → 404)**; SSL Let's Encrypt automático (≤1 h); límite de plan (Trial 1 dominio / Hobby 2). Registradores sin ALIAS/flattening → nameservers a Cloudflare (CNAME `@` con proxy ON, SSL "Full"). Detalle en §7. **El webhook live ya está configurado en `https://macarenayjorge.com/api/webhooks/stripe` (2026-10-22).**
 - `custom_domain` del evento en el panel; `npm run init-db` solo en BD distintas de la ya migrada (la configurada en `server/.env` ya tiene `events.stripe_account_id`).
 - **Cloudinary en producción** (disco efímero): para persistir fotos/audio y para la imagen del OG; alternativa: volumen Railway en `/app/server/uploads`. **Serverless/sleep desactivado** para la boda.
@@ -1119,10 +1160,12 @@ Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlac
 
 ### Historial reciente relevante (git)
 
-> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, y el segundo correo de avisos es **`01d395a`** + **`24cd461`**; todos locales y sin deploy (ver §15.1.1/§18).
+> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, el segundo correo de avisos es **`01d395a`** + **`24cd461`**, y los recordatorios de WhatsApp son **`779f61b`** + **`5f6ba27`**; todos locales y sin deploy (ver §12.1/§15.1.1/§18).
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `5f6ba27` | WhatsApp: botón de recordatorios y deep link a confirmación (`#confirmar`, sin sobre, scroll v3); local, no desplegado; ver §12.1. |
+| `779f61b` | WhatsApp: recordatorios para invitados sin confirmar (filtro RSVP, `reminder`, `message`, `#confirmar`); local, no desplegado; ver §12.1. |
 | `24cd461` | Editor: agregar segundo correo de mensajes (`gift_message_email_2` en el editor v3 y `EventInvitation`); local, no desplegado; ver §18. |
 | `01d395a` | Mensajes: agregar segundo correo de aviso (`gift_message_email_2`, envío separado/deduplicado y fallback); local, no desplegado; ver §18. |
 | `6fbc07c` | Panel: agregar conciliación de pagos y regalos (`/events/:id/pagos`, `GET /api/events/:id/gifts`); local, no desplegado; ver §15.1.1. |
