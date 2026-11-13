@@ -354,6 +354,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
 - [ ] **Recordatorios de confirmación (`779f61b`/`5f6ba27`/`67ac08d`, locales; ver §12.1):** push/deploy; probar con un grupo con pendientes; validar `#confirmar` en navegador/WhatsApp en las plantillas compartidas y en v3; verificar la invitación de Renata cuando exista; confirmar que la plantilla cloud acepta el fragmento; decidir si se separa “recordatorio enviado” de “invitación enviada”.
 - [ ] **RSVP compartido `b3ce2cd` (local, ver §4):** push/deploy; probar **confirmar + “Editar respuesta”** en una invitación XV; la invitación de Renata no está en la BD local, pero el fix aplica a la plantilla compartida.
+- [ ] **Layout del panel `ceed778` (local, ver §14.2):** push/deploy; verificar en desktop y móvil el ancho de 1500px, la sidebar sticky, el header sticky del editor y el guardado siempre visible.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (commiteada en `fae3ca5`; la base ya está desplegada y queda el redeploy de `8d70217`/`efb424b`).
 - [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; la base ya está desplegada y queda el redeploy de **`8d70217`/`efb424b`**. La iteración de **"La estancia" + hoteles + scroll suave** quedó **commiteada en `389403d`**; **§15.2** (Viaje/Hospedaje) se commiteó en **`4773112`** y sus ajustes en **`8d70217`** (Madrid) y **`efb424b`** (sin IATA). El working tree de código está limpio al 2026-11-13; solo quedan cambios documentales.
 - [ ] **Push de `8d70217`, `efb424b` y `ff2b988`; redeploy** para que la llegada fija a Madrid, la UI sin IATA y la cuenta Stripe restringida estén en el bundle desplegado (la base `4773112` ya está desplegada y el API ya devuelve `stay`/`trip`; ver §15.2 y §15.1).
@@ -746,6 +747,17 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Limitaciones:** no se probó contra el **backend real**; los nombres de grupo extremadamente largos aumentan la altura de fila. La feature sigue **sin commit**; los cambios locales ajenos (`client/src/invitation/boda_jorge_macarena/BottomNav.jsx` eliminado, `client/src/lib/publicDomain.js` y `package-lock.json` raíz modificados) **no se tocaron**.
 
+### 14.2 Layout amplio del panel, sidebar y guardado sticky (2026-11-13, commit local `ceed778`)
+
+**Estado:** ajuste **solo frontend**, **commiteado en local y sin push/deploy**. No hay migración de BD ni cambios de backend/API. Build del cliente: **951 módulos** (solo warnings preexistentes de fuentes/chunks).
+
+- **`client/src/App.jsx`:** el header y el main autenticados pasan de `max-w-5xl` a **`max-w-[1500px]`**, con `px-4 lg:px-6`.
+- **`client/src/pages/EventPage.jsx`:** el `<aside>` es **sticky en desktop** (`md:sticky md:top-20 md:self-start`) con `md:max-h-[calc(100vh-6rem)] md:overflow-y-auto`. En móvil se conserva la fila horizontal.
+- **`client/src/pages/event/EventInvitation.jsx`:** el bloque superior con título “Invitación” y botones (Vista previa, Ver invitación, Plantillas, Guardar cambios) es **sticky bajo el header global**: `sticky top-[64px] z-30`, fondo `bg-gray-950/95`, borde inferior y backdrop. Los botones usan `flex-wrap` en móvil.
+- Se conserva el **Guardar del footer**; la lógica de guardado no cambió.
+- Capas: header global **z-20**, editor sticky **z-30**, modales **z-50**.
+- **Pendientes:** push/deploy y verificación responsive (sidebar sticky, header sticky, guardado visible en desktop y móvil).
+
 ---
 
 ## 15. Boda Jorge & Macarena — rediseño v2 (HISTÓRICO; superado por v3) (2026-10-11)
@@ -832,7 +844,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Producción en Railway (runbook revisado 2026-10-11; estado 2026-10-22):**
 
-- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`b3ce2cd`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6`, `6fbc07c`, `01d395a`, `24cd461`, `779f61b`, `5f6ba27`, `67ac08d` y `b3ce2cd` siguen locales, pendientes de push/deploy.
+- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`ceed778`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6`, `6fbc07c`, `01d395a`, `24cd461`, `779f61b`, `5f6ba27`, `67ac08d`, `b3ce2cd` y `ceed778` siguen locales, pendientes de push/deploy.
 - **Dominio `macarenayjorge.com`:** Settings → Networking → + Custom Domain; el dashboard exige **CNAME target `xxxxx.up.railway.app` + TXT de verificación (ambos obligatorios; sin TXT → 404)**; SSL Let's Encrypt automático (≤1 h); límite de plan (Trial 1 dominio / Hobby 2). Registradores sin ALIAS/flattening → nameservers a Cloudflare (CNAME `@` con proxy ON, SSL "Full"). Detalle en §7. **El webhook live ya está configurado en `https://macarenayjorge.com/api/webhooks/stripe` (2026-10-22).**
 - `custom_domain` del evento en el panel; `npm run init-db` solo en BD distintas de la ya migrada (la configurada en `server/.env` ya tiene `events.stripe_account_id`).
 - **Cloudinary en producción** (disco efímero): para persistir fotos/audio y para la imagen del OG; alternativa: volumen Railway en `/app/server/uploads`. **Serverless/sleep desactivado** para la boda.
@@ -1168,10 +1180,11 @@ Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlac
 
 ### Historial reciente relevante (git)
 
-> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, el segundo correo de avisos es **`01d395a`** + **`24cd461`**, y los recordatorios de WhatsApp son **`779f61b`** + **`5f6ba27`**, el ancla `#confirmar` en el RSVP compartido es **`67ac08d`**, y el fix de confirmación/edición del RSVP compartido es **`b3ce2cd`**; todos locales y sin deploy (ver §4/§12.1/§15.1.1/§18).
+> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, el segundo correo de avisos es **`01d395a`** + **`24cd461`**, y los recordatorios de WhatsApp son **`779f61b`** + **`5f6ba27`**, el ancla `#confirmar` en el RSVP compartido es **`67ac08d`**, el fix de confirmación/edición del RSVP compartido es **`b3ce2cd`**, y el layout del panel es **`ceed778`**; todos locales y sin deploy (ver §4/§12.1/§14.2/§15.1.1/§18).
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `ceed778` | Panel: ampliar layout, fijar sidebar/header del editor y guardado visible; solo frontend, local, no desplegado; ver §14.2. |
 | `b3ce2cd` | RSVP: mostrar gracias y permitir editar respuesta (`editing`/`canEdit`, “Editar respuesta”); local, no desplegado; ver §4. |
 | `67ac08d` | Invitaciones: ancla `#confirmar` en `shared/Rsvp.jsx` y scroll genérico en `InvitationView` para las plantillas con RSVP compartido; local, no desplegado; ver §12.1. |
 | `5f6ba27` | WhatsApp: botón de recordatorios y deep link a confirmación (`#confirmar`, sin sobre, scroll v3); local, no desplegado; ver §12.1. |
