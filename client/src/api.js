@@ -49,6 +49,7 @@ export const api = {
     stats: (id) => request(`/events/${id}/stats`),
     invitation: (id) => request(`/events/${id}/invitation`),
     setInvitation: (id, payload) => request(`/events/${id}/invitation`, { method: "PUT", body: JSON.stringify(payload) }),
+    gifts: (id) => request(`/events/${id}/gifts`),
     giftMessages: (id) => request(`/events/${id}/gift-messages`),
     markGiftMessageRead: (id, messageId) =>
       request(`/events/${id}/gift-messages/${messageId}`, {

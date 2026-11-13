@@ -21,6 +21,9 @@ const ICONS = {
   Mensajes: (
     <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm3 5h10M7 13h6" />
   ),
+  Pagos: (
+    <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5v-9Zm0 2.5h18M6.5 14h4" />
+  ),
 };
 
 const NAV = [
@@ -30,6 +33,7 @@ const NAV = [
   { to: "dashboard", label: "Dashboard" },
   { to: "invitacion", label: "Invitación" },
   { to: "mensajes", label: "Mensajes" },
+  { to: "pagos", label: "Pagos" },
 ];
 
 export default function EventPage() {

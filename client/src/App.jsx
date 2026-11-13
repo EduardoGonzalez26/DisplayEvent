@@ -7,6 +7,7 @@ import EventGuests from "./pages/event/EventGuests.jsx";
 import EventTables from "./pages/event/EventTables.jsx";
 import EventDashboard from "./pages/event/EventDashboard.jsx";
 import EventMessages from "./pages/event/EventMessages.jsx";
+import EventPayments from "./pages/event/EventPayments.jsx";
 import InvitationPage from "./invitation/InvitationPage.jsx";
 import LandingPage from "./landing/LandingPage.jsx";
 import { isCustomDomainHost } from "./lib/customDomainHome.js";
@@ -209,6 +210,7 @@ export default function App() {
             <Route path="mesas" element={<EventTables />} />
             <Route path="dashboard" element={<EventDashboard />} />
             <Route path="mensajes" element={<EventMessages />} />
+            <Route path="pagos" element={<EventPayments />} />
             <Route
               path="invitacion"
               element={
