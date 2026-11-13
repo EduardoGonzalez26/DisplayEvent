@@ -5,6 +5,7 @@ import { normalizePhone } from "../utils/phone.js";
 import {
   MESSAGE_PRESETS,
   DEFAULT_PRESET_ID,
+  REMINDER_PRESET_TEXT,
   renderMessage,
   formatEventDate,
   buildInvitationUrl,
@@ -41,6 +42,22 @@ function parseGroupIdsFilter(body) {
     return { error: "groupIds debe ser una lista de hasta 500 enteros" };
   }
   return { value: raw };
+}
+
+// Mensaje opcional del recordatorio. Sin mensaje se usa la plantilla del
+// servidor; si no incluye {{enlace}}, se agrega al final (igual que /message).
+function parseReminderMessage(body) {
+  const raw = body?.message;
+  if (raw === undefined || raw === null) return { value: REMINDER_PRESET_TEXT };
+  if (typeof raw !== "string" || !raw.trim()) {
+    return { error: "El mensaje de recordatorio no puede estar vacío" };
+  }
+  let message = raw.trim();
+  if (message.length > 800) {
+    return { error: "El mensaje no puede superar los 800 caracteres" };
+  }
+  if (!message.includes("{{enlace}}")) message = `${message}\n{{enlace}}`;
+  return { value: message };
 }
 
 // GET /api/events/:eventId/whatsapp
@@ -95,10 +112,20 @@ router.put("/message", async (req, res, next) => {
 // Modo "link": devuelve los enlaces wa.me para que el organizador confirme
 // cada envío (no marca nada). Modo "cloud": envía desde el servidor y marca
 // `whatsapp_sent_at` por grupo; un fallo aislado no aborta el resto.
+// `reminder: true` envía un recordatorio solo a grupos con invitados sin
+// confirmar y apunta el enlace a `#confirmar`; ignora `whatsapp_sent_at`.
 router.post("/send", sendLimiter, async (req, res, next) => {
   const onlyPending = parseOnlyPending(req.body);
+  const reminder = req.body?.reminder === true;
   const filter = parseGroupIdsFilter(req.body);
   if (filter.error) return res.status(400).json({ error: filter.error });
+
+  let reminderMessage = null;
+  if (reminder) {
+    const parsed = parseReminderMessage(req.body);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    reminderMessage = parsed.value;
+  }
 
   try {
     const events = await query(
@@ -111,7 +138,9 @@ router.post("/send", sendLimiter, async (req, res, next) => {
 
     const params = [req.params.eventId];
     let sql = `SELECT g.id, g.name, g.leader_name, g.leader_phone, g.invitation_token,
-                      g.whatsapp_sent_at, COUNT(gu.id)::int AS guests_count
+                      g.whatsapp_sent_at, COUNT(gu.id)::int AS guests_count,
+                      COUNT(gu.id) FILTER (WHERE gu.registered)::int AS registered_count,
+                      COUNT(gu.id) FILTER (WHERE gu.declined)::int AS declined_count
                FROM "groups" g
                LEFT JOIN guests gu ON gu.group_id = g.id
                WHERE g.event_id = $1`;
@@ -122,8 +151,9 @@ router.post("/send", sendLimiter, async (req, res, next) => {
     sql += ` GROUP BY g.id ORDER BY g.name ASC`;
     const groups = await query(sql, params);
 
-    const template =
-      typeof event.whatsapp_message === "string" && event.whatsapp_message.trim()
+    const template = reminder
+      ? reminderMessage
+      : typeof event.whatsapp_message === "string" && event.whatsapp_message.trim()
         ? event.whatsapp_message
         : null;
     const dateText = formatEventDate(event);
@@ -132,6 +162,15 @@ router.post("/send", sendLimiter, async (req, res, next) => {
     const recipients = [];
     const skipped = [];
     for (const group of groups) {
+      if (reminder) {
+        const total = Number(group.guests_count) || 0;
+        const answered =
+          (Number(group.registered_count) || 0) + (Number(group.declined_count) || 0);
+        if (total <= 0 || answered >= total) {
+          skipped.push({ group_id: group.id, group_name: group.name, reason: "sin_pendientes" });
+          continue;
+        }
+      }
       // Sin teléfono válido no hay a quién escribirle.
       const phone = normalizePhone(group.leader_phone);
       if (!phone.ok) {
@@ -139,12 +178,12 @@ router.post("/send", sendLimiter, async (req, res, next) => {
         continue;
       }
       // Sin token no se puede construir la invitación personal.
-      const link = buildInvitationUrl(event, group);
+      const link = buildInvitationUrl(event, group, reminder ? { hash: "confirmar" } : {});
       if (!link) {
         skipped.push({ group_id: group.id, group_name: group.name, reason: "sin_enlace" });
         continue;
       }
-      if (onlyPending && group.whatsapp_sent_at) {
+      if (!reminder && onlyPending && group.whatsapp_sent_at) {
         skipped.push({ group_id: group.id, group_name: group.name, reason: "ya_enviada" });
         continue;
       }

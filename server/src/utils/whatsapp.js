@@ -27,6 +27,11 @@ export const MESSAGE_PRESETS = [
 
 export const DEFAULT_PRESET_ID = "cercano";
 
+// Plantilla para recordar la confirmación a grupos con invitados pendientes.
+// El enlace del recordatorio se genera con `#confirmar`.
+export const REMINDER_PRESET_TEXT =
+  "Hola {{lider}}, te recordamos confirmar tu asistencia a {{evento}} el {{fecha}} en {{lugar}}. Puedes confirmar directamente aquí: {{enlace}}";
+
 // Tiempo máximo de espera de la Graph API antes de abortar el envío.
 const CLOUD_TIMEOUT_MS = 10 * 1000;
 
@@ -99,16 +104,26 @@ export function formatEventDate(event) {
 // URL pública de la invitación del grupo:
 //   - con dominio propio:  https://<custom_domain>/invitacion/<token>
 //   - sin dominio:         /invitacion/<slug>/<token> (o /invitacion/<token> sin slug)
+// `options.hash` añade un fragmento normalizado (sin "#", trim y encodeURIComponent),
+// p. ej. { hash: "confirmar" } => .../invitacion/<token>#confirmar.
 // null sin token.
-export function buildInvitationUrl(event, group) {
+export function buildInvitationUrl(event, group, options = {}) {
   const token = group?.invitation_token;
   if (!token) return null;
   const customDomain =
     typeof event?.custom_domain === "string" ? event.custom_domain.trim() : "";
-  if (customDomain) return `https://${customDomain}/invitacion/${token}`;
-  const base = clientUrl();
-  const slug = event?.slug;
-  return slug ? `${base}/invitacion/${slug}/${token}` : `${base}/invitacion/${token}`;
+  let url;
+  if (customDomain) {
+    url = `https://${customDomain}/invitacion/${token}`;
+  } else {
+    const base = clientUrl();
+    const slug = event?.slug;
+    url = slug ? `${base}/invitacion/${slug}/${token}` : `${base}/invitacion/${token}`;
+  }
+
+  const rawHash = typeof options?.hash === "string" ? options.hash.trim() : "";
+  const hash = rawHash.replace(/^#+/, "").trim();
+  return hash ? `${url}#${encodeURIComponent(hash)}` : url;
 }
 
 // Enlace wa.me listo para abrir WhatsApp con el mensaje precargado.
