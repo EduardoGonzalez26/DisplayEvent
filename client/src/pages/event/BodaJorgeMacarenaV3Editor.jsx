@@ -11,6 +11,8 @@ import { FileUploader } from "./editorFields.jsx";
    hoteles, cita de Hospedaje, correo de mensajes y viaje/hospedaje.
 ------------------------------------------------------------------- */
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const RECOMMENDATION_ICONS = [
   { value: "shoe", label: "Calzado" },
   { value: "weather", label: "Clima" },
@@ -49,6 +51,8 @@ export default function BodaJorgeMacarenaV3Editor({
   onFileUploadingChange,
   giftMessageEmail,
   setGiftMessageEmail,
+  giftMessageEmail2,
+  setGiftMessageEmail2,
 }) {
   const update = (path, value) =>
     setForm((current) => setField(current, path, value));
@@ -62,7 +66,9 @@ export default function BodaJorgeMacarenaV3Editor({
   const lodging = Array.isArray(form.lodging) ? form.lodging : [];
   const stay = form.stay || {};
   const email = String(giftMessageEmail || "").trim();
-  const emailInvalid = !!email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const emailInvalid = !!email && !EMAIL_RE.test(email);
+  const email2 = String(giftMessageEmail2 || "").trim();
+  const email2Invalid = !!email2 && !EMAIL_RE.test(email2);
 
   const setRecommendation = (index, patch) =>
     setForm((current) => {
@@ -647,14 +653,14 @@ export default function BodaJorgeMacarenaV3Editor({
 
       <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
         <h2 className="text-base font-semibold text-white mb-1">
-          Correo para mensajes de los novios
+          Correos para mensajes de los novios
         </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Recibirá los mensajes que los invitados escriban desde la tarjeta de
-          Regalo.
+          Ambos correos recibirán los mensajes que los invitados escriban desde
+          la tarjeta de Regalo. El segundo es opcional.
         </p>
         <label className="block">
-          <span className="text-sm text-gray-400 mb-1 block">Email</span>
+          <span className="text-sm text-gray-400 mb-1 block">Email principal</span>
           <input
             className={inputCls}
             type="email"
@@ -664,20 +670,47 @@ export default function BodaJorgeMacarenaV3Editor({
             autoComplete="off"
             spellCheck={false}
             aria-invalid={emailInvalid ? "true" : undefined}
+            aria-describedby={emailInvalid ? "gift-email-error" : undefined}
           />
         </label>
-        {emailInvalid ? (
-          <p className="text-sm text-red-400 mt-2">
-            El correo no tiene un formato válido.
+        {emailInvalid && (
+          <p id="gift-email-error" className="text-sm text-red-400 mt-2">
+            El email principal no tiene un formato válido.
           </p>
-        ) : !email ? (
-          <p className="text-xs text-amber-400 mt-2">
-            Sin correo, los mensajes solo se verán en el panel (Mensajes).
+        )}
+
+        <label className="block mt-3">
+          <span className="text-sm text-gray-400 mb-1 block">
+            Email adicional (opcional)
+          </span>
+          <input
+            className={inputCls}
+            type="email"
+            value={giftMessageEmail2 || ""}
+            onChange={(e) => setGiftMessageEmail2(e.target.value)}
+            placeholder="otro@ejemplo.com"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={email2Invalid ? "true" : undefined}
+            aria-describedby={email2Invalid ? "gift-email-2-error" : undefined}
+          />
+        </label>
+        {email2Invalid && (
+          <p id="gift-email-2-error" className="text-sm text-red-400 mt-2">
+            El email adicional no tiene un formato válido.
           </p>
-        ) : (
-          <p className="text-xs text-gray-500 mt-2">
-            Se guarda en el evento, no en la configuración pública.
-          </p>
+        )}
+
+        {!emailInvalid && !email2Invalid && (
+          !email && !email2 ? (
+            <p className="text-xs text-amber-400 mt-2">
+              Sin correos, los mensajes solo se verán en el panel (Mensajes).
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 mt-2">
+              Se guardan en el evento, no en la configuración pública.
+            </p>
+          )
         )}
       </section>
 

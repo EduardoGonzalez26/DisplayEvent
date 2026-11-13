@@ -21,6 +21,7 @@ import { FileUploader } from "./editorFields.jsx";
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SLUG_MIN = 3;
 const SLUG_MAX = 60;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Claves de `EXTRA_FIELDS` que se editan en secciones dedicadas (no en la
 // grilla genérica "Datos del formato"): historia/música, hospedaje/viaje
@@ -200,8 +201,9 @@ export default function EventInvitation() {
     setFileUploading(fileUploadsRef.current > 0);
   };
   const [event, setEvent] = useState(null);
-  // Correo (nivel evento) que recibe los mensajes de la sección Regalo.
+  // Correos (nivel evento) que reciben los mensajes de la sección Regalo.
   const [giftMessageEmail, setGiftMessageEmail] = useState("");
+  const [giftMessageEmail2, setGiftMessageEmail2] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -288,6 +290,7 @@ export default function EventInvitation() {
   useEffect(() => {
     setEvent(null);
     setGiftMessageEmail("");
+    setGiftMessageEmail2("");
     setSlug("");
     setCustomDomain("");
     setStripeAccountId("");
@@ -302,6 +305,7 @@ export default function EventInvitation() {
         setCustomDomain(ev?.custom_domain || "");
         setStripeAccountId(ev?.stripe_account_id || "");
         setGiftMessageEmail(ev?.gift_message_email || "");
+        setGiftMessageEmail2(ev?.gift_message_email_2 || "");
       })
       .catch(() => setEvent(null));
     api.templates.list().then(setTemplates).catch(() => setTemplates([]));
@@ -535,13 +539,16 @@ export default function EventInvitation() {
       return;
     }
     const emailValue = String(giftMessageEmail || "").trim();
-    if (
-      form.template === "boda_jorge_macarena" &&
-      emailValue &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)
-    ) {
-      setError("El correo para mensajes no tiene un formato válido.");
-      return;
+    const emailValue2 = String(giftMessageEmail2 || "").trim();
+    if (form.template === "boda_jorge_macarena") {
+      if (emailValue && !EMAIL_RE.test(emailValue)) {
+        setError("El correo principal para mensajes no tiene un formato válido.");
+        return;
+      }
+      if (emailValue2 && !EMAIL_RE.test(emailValue2)) {
+        setError("El correo adicional para mensajes no tiene un formato válido.");
+        return;
+      }
     }
     const missing = templateFields.filter((f) => {
       const value = getField(form, f.key);
@@ -584,6 +591,7 @@ export default function EventInvitation() {
           slug: slugValue,
           custom_domain: domainValue,
           gift_message_email: emailValue,
+          gift_message_email_2: emailValue2,
         };
         // Si la cuenta guardada ya no está habilitada o no aparece en la lista,
         // se omite la clave para que el backend conserve el valor almacenado y
@@ -614,6 +622,9 @@ export default function EventInvitation() {
         }
         if (typeof updatedEvent.gift_message_email === "string") {
           setGiftMessageEmail(updatedEvent.gift_message_email);
+        }
+        if (typeof updatedEvent.gift_message_email_2 === "string") {
+          setGiftMessageEmail2(updatedEvent.gift_message_email_2);
         }
       }
       if (finalSlug && finalSlug !== slugValue) {
@@ -1074,6 +1085,8 @@ export default function EventInvitation() {
             onFileUploadingChange={onFileUploadingChange}
             giftMessageEmail={giftMessageEmail}
             setGiftMessageEmail={setGiftMessageEmail}
+            giftMessageEmail2={giftMessageEmail2}
+            setGiftMessageEmail2={setGiftMessageEmail2}
           />
         )}
 
