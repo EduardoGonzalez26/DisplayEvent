@@ -18,6 +18,8 @@ const CURRENCIES = {
   eur: { symbol: "€", label: "EUR" },
 };
 
+const STRIPE_MIN_AMOUNT = { mxn: 10, eur: 1 };
+
 // Detecta moneda por locale + zona horaria. Devuelve "mxn" | "eur".
 function detectCurrency() {
   const lang = (navigator.language || "").toLowerCase();
@@ -174,7 +176,10 @@ export default function Gifts({ cfg, theme, token, publishableKey, paymentMethod
 
   const suggested = registry[`suggested_${currency}`] || [];
   const hasSuggested = suggested.length > 0;
-  const min = registry[`min_${currency}`] || 0;
+  const min = Math.max(
+    Number(registry[`min_${currency}`]) || 0,
+    STRIPE_MIN_AMOUNT[currency] || 0
+  );
   const allowCustom = !!registry.allow_custom;
   // Sin montos sugeridos, el input libre es la única forma de elegir cantidad
   // y pasa a mostrarse con la etiqueta "Monto".

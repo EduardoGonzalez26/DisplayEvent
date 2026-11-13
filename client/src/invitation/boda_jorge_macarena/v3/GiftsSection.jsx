@@ -14,6 +14,8 @@ const CURRENCIES = {
   eur: { symbol: "€", label: "EUR" },
 };
 
+const STRIPE_MIN_AMOUNT = { mxn: 10, eur: 1 };
+
 function detectCurrency() {
   const lang = (navigator.language || "").toLowerCase();
   if (lang.startsWith("es-mx") || lang.startsWith("es-419")) return "mxn";
@@ -202,7 +204,10 @@ export default function GiftsSection({
   const bankTitle = isMxn ? "Desde México" : "Desde España";
   const unlockKey = isMxn ? "clabe" : "iban";
 
-  const min = Number(registry[`min_${currency}`]) || 0;
+  const min = Math.max(
+    Number(registry[`min_${currency}`]) || 0,
+    STRIPE_MIN_AMOUNT[currency] || 0
+  );
   const activeAmount = amount === "" ? NaN : Number(amount);
   const cardConfigured = !!registry.stripe_enabled;
   const paymentLink = String(registry.payment_link_url || "").trim();
@@ -368,7 +373,7 @@ export default function GiftsSection({
             <input
               className="mjv3-amount-input"
               type="number"
-              min="0"
+              min={min}
               step="1"
               inputMode="numeric"
               placeholder="0"
@@ -380,6 +385,16 @@ export default function GiftsSection({
             />
           </span>
         </label>
+        <p
+          className="mjv3-muted-note"
+          style={{
+            gridColumn: "1 / -1",
+            textAlign: "center",
+            fontSize: 13,
+          }}
+        >
+          Monto mínimo {formatAmount(currency, min)}
+        </p>
       </div>
 
       <div className="mjv3-gift-actions">

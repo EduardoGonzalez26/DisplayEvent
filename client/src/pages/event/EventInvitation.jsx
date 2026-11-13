@@ -1294,6 +1294,10 @@ export default function EventInvitation() {
                   />
                 </label>
               </div>
+              <p className="text-xs text-gray-500">
+                Stripe exige un mínimo de $10 MXN / €1 EUR; si configuras menos,
+                se aplicará ese mínimo.
+              </p>
 
               {!isV3 && (
                 <>
