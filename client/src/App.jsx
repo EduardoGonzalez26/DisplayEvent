@@ -135,7 +135,7 @@ export default function App() {
       </div>
 
       <header className="border-b border-gray-800 bg-gray-900/70 sticky top-0 z-20 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-[1500px] mx-auto px-4 lg:px-6 py-3 flex items-center justify-between gap-4">
           <NavLink to="/eventos" className="flex items-center gap-2.5 font-bold text-lg text-gray-50">
             <span className="grid place-items-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 text-white shadow-md shadow-indigo-900/40">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -187,7 +187,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 py-8">
+      <main className="relative z-10 max-w-[1500px] mx-auto px-4 lg:px-6 py-8">
         <Routes>
           <Route
             path="/eventos"

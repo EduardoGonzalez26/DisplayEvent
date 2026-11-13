@@ -714,9 +714,9 @@ export default function EventInvitation() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
+      <div className="sticky top-[64px] z-30 flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 bg-gray-950/95 py-3 backdrop-blur mb-2">
         <h1 className="text-xl font-bold text-white">Invitación</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
             Vista previa
           </Button>
