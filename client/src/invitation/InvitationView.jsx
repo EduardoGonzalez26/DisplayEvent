@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { getTheme, getThemeLayout } from "./themes/index.js";
 import { motion } from "motion/react";
 import { InvitationLoader } from "./shared/util.jsx";
@@ -66,6 +66,24 @@ export default function InvitationView({
   const Envelope =
     (opening?.envelopeVariant && ENVELOPE_VARIANTS[opening.envelopeVariant]) ||
     EnvelopeLoader;
+
+  // Deep link genérico #confirmar para las plantillas con RSVP compartido.
+  // Se reintenta el scroll porque el layout puede montarse después.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#confirmar") {
+      return undefined;
+    }
+    const scrollToConfirm = () => {
+      const target = document.getElementById("confirmar");
+      if (target) target.scrollIntoView({ block: "start", behavior: "auto" });
+    };
+    const timers = [100, 400, 900].map((delay) =>
+      window.setTimeout(scrollToConfirm, delay)
+    );
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
 
   return (
     <motion.div

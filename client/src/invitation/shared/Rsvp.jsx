@@ -119,6 +119,7 @@ export default function RsvpSection({
 
   return (
     <section id="rsvp" className="py-24 px-4 bg-inv-bg-alt">
+      <span id="confirmar" aria-hidden="true" className="block scroll-mt-24" />
       <div className="max-w-2xl mx-auto">
         <motion.div
           className="text-center mb-12"
