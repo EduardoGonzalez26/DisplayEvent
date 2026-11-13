@@ -4,7 +4,7 @@
 >
 > **Plantilla:** `boda_jorge_macarena` · **Diseño vigente (v3 + delta v4, 2026-11-10):** papel de algodón, marco nazarí, granada en acuarela, letterpress y dibujos `.webp` con `multiply`. Tipografías **Cormorant Upright** (display) y **Nikolai Condensed** (labels; fallback Noto Serif Display). El v2 editorial (2026-10-11) y el diseño nocturno anterior quedan como **histórico** en `MEMORIA.md` §15/§16.
 >
-> **Estado (2026-11-10):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y **alergias + rango de edad** en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia, **`guests.age_range_id`/`age_range_label`** y **`events.age_ranges`**) y el seed v4 del evento 2 ya están aplicados; al momento de este ajuste hay **198 invitados con `age_range_id`/`age_range_label` NULL**. Pendientes: fuente Nikolai y deploy.
+> **Estado (2026-11-10; pagos 2026-11-13):** la plantilla fue **reemplazada en sitio** por el v3; el **delta v4** añade “Ver ideas”, la 5.ª recomendación y **alergias + rango de edad** en el RSVP. **No hay plantilla nueva ni selector v2/v3/v4**. El código v4 está en el **working tree, sin commit ni push**. El esquema (`init-db`, incluidas las columnas de alergia, **`guests.age_range_id`/`age_range_label`** y **`events.age_ranges`**) y el seed v4 del evento 2 ya están aplicados; al momento de este ajuste hay **198 invitados con `age_range_id`/`age_range_label` NULL**. Pendientes: fuente Nikolai y deploy. En pagos, el evento 2 usa **webi/BBVA …3892**; la UI de cuenta (`ff2b988`), el blindaje (`a9610b6`) y el panel `/events/:id/pagos` (`6fbc07c`) están locales, sin deploy.
 >
 > **Archivos clave:**
 > - Vista pública: `client/src/invitation/InvitationPage.jsx` (obtiene datos por token).
@@ -110,7 +110,9 @@ Internamente, la vista los recibe con estos nombres de prop:
 | `bank_eur` | `{ enabled, bank_name, holder, iban, concept }` | Depósito **desde España** (EUR); `iban` desbloquea el mensaje. El seed la deja `enabled:false` hasta configurarla |
 
 - **Moneda:** selector MXN/EUR; el bloque de banco cambia de título (“Desde México” / “Desde España”) y de filas.
-- **Stripe:** si `payment_link_url` existe, el CTA es un `<a>` externo; si no, se usa **Checkout embebido** (`POST /api/invitations/:token/payment` → `client_secret`; `createEmbeddedCheckoutPage`/`initEmbeddedCheckout`). Maneja `?payment=success|cancelled`, errores y reintento.
+- **Stripe:** si `payment_link_url` existe, el CTA es un `<a>` externo; si no, se usa **Checkout embebido** (`POST /api/invitations/:token/payment` → `client_secret`; `createEmbeddedCheckoutPage`/`initEmbeddedCheckout`). Maneja `?payment=success|cancelled`, errores y reintento. **Blindaje local (`a9610b6`, sin deploy):** rechaza montos ≤ 0, usa solo `payment_method_types: ["card"]`, añade `destination_account` a la metadata y el webhook maneja `completed`/`async_payment_succeeded`/`async_payment_failed` con upsert idempotente.
+- **Cuenta del evento 2:** **webi.mx / BBVA …3892** (`acct_1UT7NAFnv8uJBZLH`); la anterior era **Displayevent / Akala …0134** (`acct_1UPr9eC0wYMF53iO`). El cambio ya está en la BD y el backend desplegado lo lee, así que los pagos nuevos deberían ir a webi/BBVA aunque el código nuevo no esté desplegado.
+- **Panel de pagos (`6fbc07c`, local):** ruta **`/events/:id/pagos`** y `GET /api/events/:id/gifts`; muestra totales live/test, estados, cuenta destino y enlaces a Stripe. Los **3 pagos live históricos** aparecen como **“Otra cuenta”**, incluido el de **MX$20** pagado a Akala (payout `paid`; no se movió dinero ni se crearon refunds/transferencias). La BD ya tiene `livemode`, `destination_account` y `stripe_checkout_session_id`; el webhook desplegado antiguo no guardará esos campos hasta el deploy. Build del cliente con el panel: **951 módulos**.
 - **Mensaje a los novios:** el textarea **solo aparece después de copiar la CLABE/IBAN o tocar “Pagar con tarjeta”**. Se envía a `POST /api/invitations/:token/gift-message` con `message`, `currency`, `channel` (`transfer`/`card`) y `amount` opcional. Se guarda siempre en `gift_messages`; el correo es best-effort. El panel lo muestra en **Mensajes** (`/events/:id/mensajes`).
 - **Correo del aviso:** `events.gift_message_email` (se configura en el editor v3). Si está vacío, el servidor usa el email del dueño como fallback; si tampoco hay, el mensaje se guarda sin aviso. **Evento 2:** el correo ya está configurado en el panel y existe **1 mensaje guardado** (actividad externa; no tocar).
 
@@ -246,19 +248,25 @@ El layout `BodaJorgeMacarenaLayout` arma la página con **hojas apilables v3** (
 - **Alcance:** evento id 2 (o nombre que contenga Macarena y Jorge, con verificación). Hace **merge** del JSONB `invitation` y conserva las claves no listadas (incluida `music_url`). No toca `gift_message_email` (columna del evento).
 - **Actualiza:** `template/version/couple`, `story`, `icebreaker`, `recommendations` (**5 items**, `image: invitations/macarena-jorge-v3/c-p10.webp`, nueva recomendación `taxi` “Moverse por Granada” con `phone`), `locations` (2), `dress_code`/`dress_note`, `itinerary: []`, `gallery: []`, `hero_image: ""`, `contacts: []`, `og_image`, `lodging` (2 hoteles), `stay` (Albaicín, fechas y cita), `trip` (4 orígenes, Madrid, fechas, 1 adulto, avión/autobús on, **tren off**), `registry` (monto libre, mínimos, BBVA + CLABE, `bank_eur` deshabilitada; conserva `enabled`/`stripe_enabled`/`payment_link_url`/sugeridos), `rsvp_editable: true` y `rsvp_edit_deadline: 2027-02-21T14:00:00+01:00`.
 - **Verificación posterior:** comprueba template, versión, pareja, historia, Icebreaker, **5 recomendaciones** (incluida la `taxi` con teléfono), `recommendations.image = c-p10`, 2 ubicaciones, vestimenta, 2 hoteles, `stay`, `trip`, CLABE, RSVP y `og_image`.
+- **Cuenta Stripe (columna del evento, fuera del JSONB):** el evento 2 usa **webi/BBVA …3892** (`acct_1UT7NAFnv8uJBZLH`); antes usaba Akala …0134. Los pagos históricos a Akala se concilian en **`/events/:id/pagos`**; el commit del panel (`6fbc07c`) y el blindaje (`a9610b6`) siguen locales.
 - **Aplicado:** el seed v4 del evento 2 y las columnas de alergia/rango (`guests.age_range_id`/`age_range_label`) + `events.age_ranges` (`init-db`) ya están aplicados; al momento de este ajuste hay **198 invitados con `age_range_id`/`age_range_label` NULL** y los eventos existentes tienen `age_ranges = NULL` (defaults en la UI hasta guardar). El correo de mensajes del evento 2 está configurado y existe **1 mensaje guardado** (actividad externa; no tocar).
 
 ---
 
 ## 8. Pendientes / oportunidades
 
+- [ ] **Push y deploy de `ff2b988` (UI de cuenta), `a9610b6` (blindaje) y `6fbc07c` (panel de pagos)**; el panel `/events/:id/pagos` no existe en producción hasta el deploy.
+- [ ] **Verificar un pago live nuevo** (idealmente pequeño) después del deploy: debe caer en webi/BBVA …3892 y el panel debe mostrarlo como **“Cuenta actual”**.
+- [ ] **Decidir qué hacer con los MX$20 pagados a Akala** (reversión con Stripe/banco, compensación manual o asumirlo como pérdida); no se movió nada.
+- [ ] **Decidir si se eliminan las otras 3 cuentas Stripe o solo se ocultan**; el evento usa webi/BBVA.
+- [ ] *(Preexistente)* Actualizar la **API de Stripe** usada por el SDK (`2024-06-20`).
 - [ ] **Subir `client/public/fonts/Nikolai-Condensed.woff2`** (hoy falta; el directorio está vacío).
 - [ ] **Commit/deploy del v4** y smoke en la invitación y en la portada del dominio (incluye “Ver ideas”, recomendaciones, **alergias/edad**, PDF, OG con crawler y bandeja `/events/:id/mensajes`).
 - [ ] **Probar el guardado real del editor con sesión** (Icebreaker, Recomendaciones, ubicaciones, hoteles, cita, CLABE/IBAN, `gift_message_email`).
 - [ ] **Confirmar que los assets v4 entran al build** (`client/public/invitations/macarena-jorge-v3/`: 15 `.webp` + 6 `idea-*.jpg` + `og-v3.jpg` + `webi-logo.png`).
 - [ ] **Música:** si `music_url` sigue apuntando a YouTube, el `<audio>` nativo no lo reproduce; subir MP3/M4A/OGG desde el editor.
 - [ ] **Fase B:** adoptar el sistema v3 en `xv`, `cumpleanos` y `baby_shower`; `alice_xv` queda intacta.
-- [ ] Histórico: los pendientes v2 de Viaje/Hospedaje (`8d70217`, `efb424b`, `ff2b988`) y el scrim de `SectionPhoto` ya **no aplican** a la boda v3.
+- [ ] Histórico: los pendientes v2 de Viaje/Hospedaje (`8d70217`, `efb424b`) y el scrim de `SectionPhoto` ya **no aplican** a la boda v3; `ff2b988` sí sigue pendiente para el editor de cuenta.
 
 ---
 
