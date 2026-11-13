@@ -115,6 +115,31 @@ export function useV3Reveal(rootRef, readyKey = "always") {
   }, [rootRef, readyKey]);
 }
 
+/* Variantes móviles disponibles en el paquete. `c-p2.webp` no tiene
+   versión -720, así que debe conservar la ruta original. */
+const MOBILE_DRAWING_VARIANTS = new Set([
+  "c-portada",
+  "c-historia",
+  "c-icebreaker",
+  "c-iglesia",
+  "c-alhambra",
+  "c-p7",
+  "c-p10",
+  "c-p9",
+  "c-p3",
+  "c-p1",
+  "c-p5",
+]);
+
+function mobileDrawingSrc(src) {
+  const raw = String(src || "").trim();
+  if (!raw) return "";
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith("//")) return "";
+  const match = raw.match(/(?:^|\/)invitations\/macarena-jorge-v3\/(c-[^/]+)\.webp$/);
+  if (!match || !MOBILE_DRAWING_VARIANTS.has(match[1])) return "";
+  return raw.replace(/\.webp$/, "-720.webp");
+}
+
 /* Dibujo con transparencia: el papel se transparenta con multiply. */
 export function Drawing({
   src,
@@ -126,6 +151,7 @@ export function Drawing({
   children,
 }) {
   if (!src) return null;
+  const mobileSrc = mobileDrawingSrc(src);
   return (
     <div
       className={className}
@@ -136,7 +162,11 @@ export function Drawing({
         role="img"
         aria-label={alt || "Dibujo de Macarena y Jorge"}
         className="mj-drawing"
-        style={{ aspectRatio: ratio, backgroundImage: `url("${src}")` }}
+        style={{
+          aspectRatio: ratio,
+          "--mj-bg": `url("${src}")`,
+          "--mj-bg-mobile": `url("${mobileSrc || src}")`,
+        }}
       >
         {children}
       </div>

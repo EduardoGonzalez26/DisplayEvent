@@ -821,10 +821,17 @@ html.de-envelope-fade {
 
 .mj-drawing {
   position: relative;
+  background-image: var(--mj-bg);
   background-position: 50% 50%;
   background-size: 100% 100%;
   background-repeat: no-repeat;
   mix-blend-mode: multiply;
+}
+
+@media (max-width: 900px) {
+  .mj-drawing {
+    background-image: var(--mj-bg-mobile, var(--mj-bg));
+  }
 }
 
 .mjv3-drawing--small {
@@ -2961,6 +2968,10 @@ textarea.mjv3-field {
 /* Móvil: una sola capa de grano fina + sin overlay fijo con blend.
    Reduce el coste de las tres capas SVG pesadas de .algodon y del grain. */
 @media (max-width: 900px) {
+  .mjv3-paper {
+    transform: none !important;
+  }
+
   .mjv3-grain {
     display: none !important;
   }

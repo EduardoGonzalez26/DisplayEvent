@@ -46,14 +46,14 @@ export const V3 = {
   p5: v3Asset("c-p5.webp"),
   ideas: {
     ellos: [
-      v3Asset("idea-ellos-1.jpg"),
-      v3Asset("idea-ellos-2.jpg"),
-      v3Asset("idea-ellos-3.jpg"),
+      v3Asset("idea-ellos-1.webp"),
+      v3Asset("idea-ellos-2.webp"),
+      v3Asset("idea-ellos-3.webp"),
     ],
     ellas: [
-      v3Asset("idea-ellas-1.jpg"),
-      v3Asset("idea-ellas-2.jpg"),
-      v3Asset("idea-ellas-3.jpg"),
+      v3Asset("idea-ellas-1.webp"),
+      v3Asset("idea-ellas-2.webp"),
+      v3Asset("idea-ellas-3.webp"),
     ],
   },
   mapaCeremonia: v3Asset("m-ceremonia.webp"),
