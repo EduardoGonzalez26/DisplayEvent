@@ -33,6 +33,10 @@ const SUPPORTED_CURRENCIES = ["mxn", "eur"];
 //   2) No superar el límite por cobro de Stripe (999.999,99 en unidades menores).
 const MAX_AMOUNT = 999_999;
 
+// Mínimos de Stripe para un cobro con tarjeta, en unidades mayores. La app
+// solo admite importes enteros, así que EUR usa 1 aunque Stripe acepte 0.50.
+const STRIPE_MIN_AMOUNT = { mxn: 10, eur: 1 };
+
 async function getGuests(groupId) {
   return query(
     `SELECT id, name, is_child, is_leader, registered, declined, companion_id,
@@ -599,7 +603,10 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       return res.status(400).json({ error: `El monto máximo es ${MAX_AMOUNT} ${currency.toUpperCase()}` });
     }
 
-    const min = currency === "mxn" ? registry.min_mxn : registry.min_eur;
+    const configuredMin = currency === "mxn" ? registry.min_mxn : registry.min_eur;
+    // El mínimo configurado puede ser 0: Stripe impone además su propio
+    // mínimo por moneda y rechazaría la Checkout Session con 500.
+    const min = Math.max(configuredMin, STRIPE_MIN_AMOUNT[currency] || 0);
     const suggested = currency === "mxn" ? registry.suggested_mxn : registry.suggested_eur;
 
     if (amount < min) {
@@ -708,6 +715,34 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
 
     res.json({ client_secret: session.client_secret });
   } catch (err) {
+    // Errores de validación de Stripe: el invitado recibe un 400 accionable,
+    // nunca el mensaje crudo de Stripe (puede incluir detalles internos).
+    if (err?.type === "StripeInvalidRequestError") {
+      console.error(
+        "[stripe] Error de validación al crear Checkout Session:",
+        err.code || err.type,
+        err.message
+      );
+      if (err.code === "amount_too_small") {
+        const min = STRIPE_MIN_AMOUNT[currency] || 0;
+        return res.status(400).json({
+          error: `El monto mínimo es ${min} ${String(currency).toUpperCase()}`,
+        });
+      }
+      return res.status(400).json({
+        error: "La solicitud de pago no es válida. Revisa el monto y la moneda e inténtalo de nuevo.",
+      });
+    }
+
+    // Fallos de Stripe no atribuibles a la petición (autenticación, red,
+    // API, etc.): no es un error interno del servidor.
+    if (typeof err?.type === "string" && err.type.startsWith("Stripe")) {
+      console.error("[stripe] Error al crear Checkout Session:", err.type, err.message);
+      return res.status(502).json({
+        error: "No se pudo iniciar el pago en línea. Inténtalo de nuevo.",
+      });
+    }
+
     next(err);
   }
 });
