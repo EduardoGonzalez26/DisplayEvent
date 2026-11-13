@@ -51,6 +51,7 @@ export default function RsvpSection({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(attending > 0 || declining > 0);
+  const [editing, setEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   // Instante actual (ms): se refresca justo al cruzar el límite (+250 ms)
   // y al recuperar el foco de la pestaña, para conmutar a "plazo cerrado"
@@ -86,7 +87,7 @@ export default function RsvpSection({
   }, [hasDeadline, deadlineMs]);
 
   const expired = hasDeadline && now > deadlineMs;
-  const editingOpen = editable && !expired;
+  const canEdit = editable && !expired;
 
   const setAnswer = (id, value) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -106,6 +107,7 @@ export default function RsvpSection({
         note,
       });
       setSubmitted(true);
+      setEditing(false);
       onDone(updated);
     } catch (err) {
       setMessage(err.message);
@@ -192,7 +194,7 @@ export default function RsvpSection({
           </div>
         )}
 
-        {!preview && submitted && !editingOpen && (
+        {!preview && submitted && (!editing || expired) && (
           <SubmitConfirmation
             count={attending}
             declining={declining}
@@ -200,7 +202,8 @@ export default function RsvpSection({
             family={family}
             contacts={contacts}
             contactNote={contactNote}
-            editable={editingOpen}
+            editable={canEdit}
+            onEdit={() => setEditing(true)}
             deadlineLabel={deadlineLabel}
             expired={expired}
           />
@@ -210,7 +213,7 @@ export default function RsvpSection({
           <DeadlineClosed contacts={contacts} contactNote={contactNote} />
         )}
 
-        {!preview && !expired && (!submitted || editingOpen) && (
+        {!preview && !expired && (!submitted || editing) && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -221,7 +224,7 @@ export default function RsvpSection({
             <p className="text-sm text-inv-text-soft mb-5">
               Marca en cada pase si asistirá o no a la celebración:
             </p>
-            {editingOpen && hasDeadline && (
+            {canEdit && hasDeadline && (
               <p className="-mt-3 mb-5 text-xs text-inv-text-soft/80">
                 Recuerda que podrás confirmar o modificar tu respuesta antes del{" "}
                 {deadlineLabel}.
@@ -434,6 +437,7 @@ function SubmitConfirmation({
   contacts,
   contactNote,
   editable,
+  onEdit,
   deadlineLabel,
   expired,
 }) {
@@ -476,6 +480,15 @@ function SubmitConfirmation({
               ? "Puedes cambiarla en cualquier momento."
               : "La selección ya no puede modificarse."}
       </p>
+      {editable && onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="mb-5 mt-3 inline-flex items-center justify-center rounded-xl border border-inv-primary/50 bg-inv-surface px-5 py-2.5 text-sm font-medium text-inv-text transition-all hover:border-inv-primary hover:bg-inv-bg active:scale-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inv-primary/60"
+        >
+          Editar respuesta
+        </button>
+      )}
       <ContactsLine contacts={contacts} contactNote={contactNote} />
     </motion.div>
   );
