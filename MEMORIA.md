@@ -175,6 +175,7 @@ Las dos plantillas de encargo (`alice_xv`, `boda_jorge_macarena`) **no usan `sha
 - **Semántica:** `""` = **sin límite**; con valor, **ISO 8601 UTC con milisegundos** (`new Date(v).toISOString()`, ej. `"2026-11-01T05:59:00.000Z"`). **Solo aplica si `rsvp_editable === true`**; vencido = `Date.now() > Date.parse(...)`.
 - **Puente local↔ISO** en `client/src/invitation/schema/normalize.js`: `toIsoDate` (tolerante: no parseable → `""`; idempotente) e `isoToLocalInput` (exportado); `toFormState` precarga el input en **hora local** y `serializeForm`/`normalizeInvitation` persisten ISO UTC. `server/src/schemas/invitation.js` espeja `toIsoDate` + `z.string().default("")` en `commonFields`.
 - **Editor** (`EventInvitation.jsx`, "Confirmación de asistencia"): input `datetime-local` **visible solo con el toggle `rsvp_editable` activo**, label "Límite para confirmar o editar (opcional)" y botón **"Quitar límite"**; captura hora local y guarda ISO UTC.
+- **Ancla `#confirmar` (`67ac08d`, local):** `shared/Rsvp.jsx` incluye un `<span id="confirmar">` al inicio y conserva `<section id="rsvp">`; `InvitationView` hace scroll genérico a `#confirmar` con reintentos 100/400/900 ms. Cubre `xv`, `boda`, `baby_shower`, `cumpleanos` y `alice_xv`; v3 conserva su propio ancla/efecto.
 - **RSVP público** (`shared/Rsvp.jsx`, compartido por los genéricos y `alice_xv`; la boda v3 usa `v3/RsvpSection.jsx`, ver §18): con deadline vigente muestra la nota "Podrás confirmar o modificar tu respuesta antes del {fecha}" (flags `expired`/`editingOpen`); **vencido y sin respuesta** → tarjeta "El plazo de confirmación ha terminado" (con contactos, sin formulario); **vencido con respuesta** → resumen con "El plazo para modificar la confirmación terminó."; el modal y `SubmitConfirmation` usan texto condicional; `preview` intacto.
 - **Copy de motivación (commit `9d4bf71`):** nueva línea bajo el saludo con override `theme?.labels?.rsvpHelp` y fallback "Ayúdanos a confirmar tu asistencia para la organización en el salón." (visible también en `preview`, antes de la nota del límite); la preposición del límite pasa de "hasta el {fecha}" a **"antes del {fecha}"** en las 4 ubicaciones (nota de cabecera, nota del formulario, modal de confirmación y `SubmitConfirmation`). Sin cambios en estados cerrados ni en la lógica `expired`/`editingOpen`.
 - **Servidor** (`server/src/routes/invitations.js`, `PUT /:token/rsvp`): **guarda 1** → `403` "El plazo para confirmar o modificar la asistencia ha terminado." si editable + deadline vencido; **guarda 2** → `403` "La confirmación ya no puede modificarse." si el grupo ya respondió y `rsvp_editable === false`; el resto del flujo intacto. La lectura de `guests` pasó a hacerse **antes de la transacción** (la respuesta del grupo se reconstruye desde esa lectura).
@@ -350,7 +351,7 @@ Se **retiraron los ornamentos 3D** (perlas XV, anillos boda) — quedan inertes 
 - [ ] *(Menor)* `robots.txt` sin línea `Sitemap:`: añadir `Sitemap: https://displayevent.com/sitemap.xml` (ver AUDITORIA.md §4.5).
 - [ ] *(Opcional)* Aplicar soporte de `hero_image` a los formatos genéricos `xv` y `boda` (hoy solo lo soportan `cumpleanos`, `baby_shower` y `alice_xv`).
 - [ ] **Envío por WhatsApp (`8fd76c1`, docs en `91b407d`; ver §10 y §12):** revisión profunda de SecDevOps **cancelada** (smoke básico OK: `/api/health` 200, `GET .../whatsapp` sin sesión 401, `POST` con `Origin` ajeno 403); falta probar el flujo manual completo en el panel; activar el modo `cloud` cuando existan credenciales y plantilla Utility aprobada de Meta.
-- [ ] **Recordatorios de confirmación (`779f61b`/`5f6ba27`, locales; ver §12.1):** push/deploy; probar con un grupo con pendientes; validar `#confirmar` en navegador/WhatsApp; confirmar que la plantilla cloud acepta el fragmento; decidir si se separa “recordatorio enviado” de “invitación enviada”.
+- [ ] **Recordatorios de confirmación (`779f61b`/`5f6ba27`/`67ac08d`, locales; ver §12.1):** push/deploy; probar con un grupo con pendientes; validar `#confirmar` en navegador/WhatsApp en las plantillas compartidas y en v3; verificar la invitación de Renata cuando exista; confirmar que la plantilla cloud acepta el fragmento; decidir si se separa “recordatorio enviado” de “invitación enviada”.
 - [ ] **Dominio personalizado + Payment Link externo (2026-09-21; ver §13):** confirmar compra/DNS del dominio `macarenayjorge.com` y ejecutar los runbooks de Railway y de la cuenta Stripe de la pareja; después, **commit + deploy + smoke final**. El smoke debe cubrir `npm run build`, `init-db` en la BD desplegada, enlaces con dominio, footer sin marca en el host propio, Payment Link y CORS. ⚠️ (2026-10-19) El runbook vigente es de **Railway** (§7/§15); el pago con tarjeta pasó a **Stripe Connect** (§15) y el Payment Link externo sigue disponible; la raíz del dominio ya no muestra la landing sino la portada pública de §16 (commiteada en `fae3ca5`; la base ya está desplegada y queda el redeploy de `8d70217`/`efb424b`).
 - [ ] **Portada pública del dominio propio (2026-10-19; ver §16):** implementada, verificada y **commiteada en `fae3ca5`**; la base ya está desplegada y queda el redeploy de **`8d70217`/`efb424b`**. La iteración de **"La estancia" + hoteles + scroll suave** quedó **commiteada en `389403d`**; **§15.2** (Viaje/Hospedaje) se commiteó en **`4773112`** y sus ajustes en **`8d70217`** (Madrid) y **`efb424b`** (sin IATA). El working tree de código está limpio al 2026-11-13; solo quedan cambios documentales.
 - [ ] **Push de `8d70217`, `efb424b` y `ff2b988`; redeploy** para que la llegada fija a Madrid, la UI sin IATA y la cuenta Stripe restringida estén en el bundle desplegado (la base `4773112` ya está desplegada y el API ya devuelve `stay`/`trip`; ver §15.2 y §15.1).
@@ -551,7 +552,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 ### 12.1 Recordatorios de confirmación por WhatsApp (2026-11-13, commits locales)
 
-**Estado:** implementado en **`779f61b`** (backend) y **`5f6ba27`** (UI + deep link), **commits locales sin push/deploy**. El envío de invitaciones original no cambia. Build del cliente: **951 módulos**. Evento 2: la consulta devuelve **1 grupo y 0 grupos con pendientes**, así que **“Recordar confirmar” aparece deshabilitado** hasta que haya un invitado sin confirmar o se agregue otro grupo. No se enviaron mensajes reales; el entorno está en modo **link** (`WHATSAPP_*` sin configurar).
+**Estado:** implementado en **`779f61b`** (backend), **`5f6ba27`** (UI + deep link) y **`67ac08d`** (ancla `#confirmar` en RSVP compartido + scroll genérico), **commits locales sin push/deploy**. El envío de invitaciones original no cambia. Build del cliente: **951 módulos**. Evento 2: la consulta devuelve **1 grupo y 0 grupos con pendientes**, así que **“Recordar confirmar” aparece deshabilitado** hasta que haya un invitado sin confirmar o se agregue otro grupo. No se enviaron mensajes reales; el entorno está en modo **link** (`WHATSAPP_*` sin configurar).
 
 **Filtro de recordatorio:**
 
@@ -571,8 +572,12 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 - `buildInviteUrl` (cliente) y `buildInvitationUrl` (servidor) aceptan **hash**; el recordatorio usa **`#confirmar`**.
 - `InvitationView` **omite el sobre** cuando el hash inicial es `#confirmar`.
-- La layout v3 reintenta el scroll a `#confirmar` a **100/400/900 ms**. Sin hash, el comportamiento es el anterior.
-- El ancla `#confirmar` solo existe en la **v3**.
+- **RSVP compartido (`shared/Rsvp.jsx`):** ahora incluye **`<span id="confirmar">`** al inicio y conserva **`<section id="rsvp">`**. Cubre `xv`, `boda`, `baby_shower`, `cumpleanos` y `alice_xv` (en Alice XV el ancla queda dentro del StackCard `confirmaciones`). `#rsvp` se mantiene para no romper enlaces existentes.
+- **Scroll genérico (`InvitationView.jsx`):** si el hash inicial es `#confirmar`, hace `scrollIntoView` a `document.getElementById("confirmar")` con reintentos **100/400/900 ms**, para cualquier plantilla con RSVP compartido.
+- La **v3** de Macarena & Jorge conserva su propio `id="confirmar"` y su efecto de scroll; no depende del genérico.
+- Sin hash, el comportamiento es el anterior.
+
+**Cobertura y estado local:** el arreglo es de plantilla compartida y aplica a cualquier XV que use `xv`/`alice_xv`, aunque **no se pudo verificar un evento “Renata”**: en la BD local consultada solo existen los eventos **id 1 (XV de Alice)**, **id 2 (Boda)** e **id 5 (Ggh, template `xv`)**.
 
 **Backend:**
 
@@ -583,9 +588,10 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Pendientes:**
 
-- [ ] **Push/deploy de `779f61b`/`5f6ba27`**.
+- [ ] **Push/deploy de `779f61b`/`5f6ba27`/`67ac08d`**.
 - [ ] **Probar con un grupo que tenga pendientes** (o dejar un invitado sin confirmar) para ver el modal y el deep link.
-- [ ] **Validar el enlace `#confirmar` en navegador/WhatsApp**; el ancla solo existe en v3.
+- [ ] **Validar el enlace `#confirmar` en navegador/WhatsApp** en las plantillas con RSVP compartido y en la v3.
+- [ ] **Verificar el enlace en la invitación de Renata** cuando exista/esté disponible; en la BD local no hay evento “Renata” (solo id 1 XV de Alice, id 2 Boda e id 5 Ggh con template `xv`).
 - [ ] **Cloud API:** validar que la plantilla aprobada acepte el fragmento `#confirmar`.
 - [ ] **Decidir si se separa “recordatorio enviado” de “invitación enviada”**; hoy cloud marca el mismo `whatsapp_sent_at`.
 
@@ -824,7 +830,7 @@ Feature **commiteada** (`8fd76c1`, docs en `91b407d`; ver §10): el panel puede 
 
 **Producción en Railway (runbook revisado 2026-10-11; estado 2026-10-22):**
 
-- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`5f6ba27`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6`, `6fbc07c`, `01d395a`, `24cd461`, `779f61b` y `5f6ba27` siguen locales, pendientes de push/deploy.
+- **Plataforma confirmada: Railway** (el usuario lo confirmó; `render.yaml` queda como legacy). Deploy vía **Railpack** desde GitHub (`EduardoGonzalez26/DisplayEvent`, rama `main`): detecta `build`/`start` del `package.json` raíz, `NODE_ENV=production`, `PORT` inyectado y healthcheck en `GET /api/health` (Settings → Deploy). El último commit es **`67ac08d`**; la base `4773112` de §15.2 ya está desplegada, pero `8d70217`, `efb424b`, `ff2b988`, `a9610b6`, `6fbc07c`, `01d395a`, `24cd461`, `779f61b`, `5f6ba27` y `67ac08d` siguen locales, pendientes de push/deploy.
 - **Dominio `macarenayjorge.com`:** Settings → Networking → + Custom Domain; el dashboard exige **CNAME target `xxxxx.up.railway.app` + TXT de verificación (ambos obligatorios; sin TXT → 404)**; SSL Let's Encrypt automático (≤1 h); límite de plan (Trial 1 dominio / Hobby 2). Registradores sin ALIAS/flattening → nameservers a Cloudflare (CNAME `@` con proxy ON, SSL "Full"). Detalle en §7. **El webhook live ya está configurado en `https://macarenayjorge.com/api/webhooks/stripe` (2026-10-22).**
 - `custom_domain` del evento en el panel; `npm run init-db` solo en BD distintas de la ya migrada (la configurada en `server/.env` ya tiene `events.stripe_account_id`).
 - **Cloudinary en producción** (disco efímero): para persistir fotos/audio y para la imagen del OG; alternativa: volumen Railway en `/app/server/uploads`. **Serverless/sleep desactivado** para la boda.
@@ -1160,10 +1166,11 @@ Sustituyen al placeholder **"Hotel ESPAÑA"** (Google Maps, sin nota). Los enlac
 
 ### Historial reciente relevante (git)
 
-> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, el segundo correo de avisos es **`01d395a`** + **`24cd461`**, y los recordatorios de WhatsApp son **`779f61b`** + **`5f6ba27`**; todos locales y sin deploy (ver §12.1/§15.1.1/§18).
+> El trabajo de **§18** (rediseño v3 + delta v4) está en el **working tree, sin commit ni push** al 2026-11-10: no hay hash todavía. El trabajo de **§15.2** (Viaje/Hospedaje) quedó commiteado en **`4773112`**, con ajustes locales en **`8d70217`** y **`efb424b`**; la restricción de cuenta Stripe es **`ff2b988`**. El blindaje de pagos y el panel de conciliación son **`a9610b6`** y **`6fbc07c`**, el segundo correo de avisos es **`01d395a`** + **`24cd461`**, y los recordatorios de WhatsApp son **`779f61b`** + **`5f6ba27`**, y el ancla `#confirmar` en el RSVP compartido es **`67ac08d`**; todos locales y sin deploy (ver §12.1/§15.1.1/§18).
 
 | Commit | Descripción |
 | ------ | ----------- |
+| `67ac08d` | Invitaciones: ancla `#confirmar` en `shared/Rsvp.jsx` y scroll genérico en `InvitationView` para las plantillas con RSVP compartido; local, no desplegado; ver §12.1. |
 | `5f6ba27` | WhatsApp: botón de recordatorios y deep link a confirmación (`#confirmar`, sin sobre, scroll v3); local, no desplegado; ver §12.1. |
 | `779f61b` | WhatsApp: recordatorios para invitados sin confirmar (filtro RSVP, `reminder`, `message`, `#confirmar`); local, no desplegado; ver §12.1. |
 | `24cd461` | Editor: agregar segundo correo de mensajes (`gift_message_email_2` en el editor v3 y `EventInvitation`); local, no desplegado; ver §18. |
