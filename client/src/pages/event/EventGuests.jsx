@@ -13,6 +13,22 @@ import GroupFiltersBar from "../../components/GroupFiltersBar.jsx";
 import WhatsAppSendModal from "../../components/WhatsAppSendModal.jsx";
 import ExportGuestsPdfModal from "../../components/ExportGuestsPdfModal.jsx";
 
+// Grupos con al menos un invitado sin confirmar (ni aceptado ni declinado).
+// Misma regla que usa WhatsAppSendModal para el envío de recordatorios.
+function rsvpPending(group) {
+  const total = Number(group?.guests_count) || 0;
+  const answered =
+    (Number(group?.registered_count) || 0) + (Number(group?.declined_count) || 0);
+  return total > 0 && answered < total;
+}
+
+function pendingGuestCount(group) {
+  const total = Number(group?.guests_count) || 0;
+  const answered =
+    (Number(group?.registered_count) || 0) + (Number(group?.declined_count) || 0);
+  return Math.max(0, total - answered);
+}
+
 function GroupForm({ initial, onSubmit, onCancel }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [leaderName, setLeaderName] = useState(initial?.leader_name ?? "");
@@ -650,6 +666,21 @@ export default function EventGuests() {
     setModal({ mode: "whatsapp" });
   };
 
+  const handleOpenReminders = () => {
+    if (pendingRsvpGroups.length === 0) {
+      notify("No hay grupos con invitados sin confirmar");
+      return;
+    }
+    setModal({ mode: "whatsapp", reminder: true });
+  };
+
+  // Grupos e invitados que aún no confirman ni declinan: candidatos a recordatorio.
+  const pendingRsvpGroups = useMemo(() => groups.filter(rsvpPending), [groups]);
+  const pendingRsvpGuests = useMemo(
+    () => pendingRsvpGroups.reduce((sum, group) => sum + pendingGuestCount(group), 0),
+    [pendingRsvpGroups]
+  );
+
   // Índice de invitados por grupo para buscar por nombre (aunque el grupo esté
   // colapsado). Se reconstruye solo cuando cambia el índice completo.
   const guestsByGroupId = useMemo(() => indexGuestsByGroup(allGuests), [allGuests]);
@@ -681,6 +712,41 @@ export default function EventGuests() {
               <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Zm0 2a7 7 0 1 1-3.6 13l-.4-.2-2.2.6.6-2.1-.2-.4A7 7 0 0 1 12 5Zm-2.7 3.2c-.2 0-.5.1-.7.4-.2.3-.8 1-.8 2s.6 2 .8 2.2c.3.4 1.5 2.3 3.7 3.1 1.8.7 2.2.6 2.6.6.5 0 1.4-.5 1.6-1.1.2-.6.2-1 .2-1.1-.1-.2-.3-.2-.6-.3l-1.4-.7c-.2-.1-.4-.1-.5.1l-.6.8c-.1.1-.2.2-.4.1a5.7 5.7 0 0 1-1.7-1 6.4 6.4 0 0 1-1.2-1.5c-.1-.2 0-.3.1-.4l.5-.6c.1-.2.2-.3.1-.5l-.6-1.5c-.2-.4-.3-.4-.5-.4h-.5Z" />
             </svg>
             Enviar invitaciones
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleOpenReminders}
+            disabled={pendingRsvpGroups.length === 0}
+            title={
+              pendingRsvpGroups.length === 0
+                ? "No hay invitados sin confirmar"
+                : `Recordar a ${pendingRsvpGroups.length} ${
+                    pendingRsvpGroups.length === 1 ? "grupo" : "grupos"
+                  } (${pendingRsvpGuests} ${
+                    pendingRsvpGuests === 1 ? "invitado" : "invitados"
+                  } sin confirmar)`
+            }
+            className="inline-flex items-center gap-2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 text-amber-300"
+              aria-hidden="true"
+            >
+              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+              <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+            </svg>
+            Recordar confirmar
+            {pendingRsvpGroups.length > 0 && (
+              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
+                {pendingRsvpGroups.length}
+              </span>
+            )}
           </Button>
           <Button
             variant="secondary"
@@ -792,11 +858,18 @@ export default function EventGuests() {
           eventId={id}
           event={event}
           groups={groups}
+          reminder={!!modal.reminder}
           onClose={() => setModal(null)}
           onDone={(message, type) => {
             setModal(null);
             refreshGroups();
-            notify(message || "Invitaciones actualizadas", type || "success");
+            notify(
+              message ||
+                (modal.reminder
+                  ? "Recordatorios actualizados"
+                  : "Invitaciones actualizadas"),
+              type || "success"
+            );
           }}
         />
       )}

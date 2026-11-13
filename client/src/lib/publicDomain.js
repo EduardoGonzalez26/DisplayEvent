@@ -28,13 +28,20 @@ export function normalizeDomain(value) {
 // Enlace público de una invitación.
 // - Con `domain`: https://<domain>/invitacion/<token> (sin slug).
 // - Sin `domain`: <origin>/invitacion[/<slug>]/<token> (comportamiento actual).
-export function buildInviteUrl({ domain, slug, token, origin } = {}) {
+// - `hash` opcional: agrega #<hash> (p. ej. "confirmar" para RSVP directo).
+export function buildInviteUrl({ domain, slug, token, origin, hash } = {}) {
   if (!token) return "";
+  // Se acepta con o sin `#`; se codifica para que el fragmento sea seguro.
+  const cleanHash = String(hash ?? "")
+    .trim()
+    .replace(/^#+/, "")
+    .trim();
+  const suffix = cleanHash ? `#${encodeURIComponent(cleanHash)}` : "";
   const custom = normalizeDomain(domain);
-  if (custom) return `https://${custom}/invitacion/${token}`;
+  if (custom) return `https://${custom}/invitacion/${token}${suffix}`;
   const base = `${origin || window.location.origin}/invitacion`;
   const cleanSlug = String(slug ?? "").trim();
-  return cleanSlug ? `${base}/${cleanSlug}/${token}` : `${base}/${token}`;
+  return cleanSlug ? `${base}/${cleanSlug}/${token}${suffix}` : `${base}/${token}${suffix}`;
 }
 
 // true si el dominio configurado corresponde al host actual (tolera `www.`

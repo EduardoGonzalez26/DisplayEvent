@@ -5,10 +5,39 @@ import { buildInviteUrl } from "../lib/publicDomain.js";
 
 const STEPS = ["Resumen", "Mensaje", "Confirmación", "Envío"];
 
+// Mismo texto que usa el backend para el recordatorio. El enlace incluye
+// #confirmar para abrir la invitación directamente en la sección de RSVP.
+const REMINDER_TEXT =
+  "Hola {{lider}}, te recordamos confirmar tu asistencia a {{evento}} el {{fecha}} en {{lugar}}. Puedes confirmar directamente aquí: {{enlace}}";
+
+function rsvpAnswered(group) {
+  return (Number(group?.registered_count) || 0) + (Number(group?.declined_count) || 0);
+}
+
+function rsvpTotal(group) {
+  return Number(group?.guests_count) || 0;
+}
+
+// Grupos con al menos un invitado sin confirmar (ni aceptado ni declinado).
+function rsvpPending(group) {
+  const total = rsvpTotal(group);
+  return total > 0 && rsvpAnswered(group) < total;
+}
+
+function pendingGuests(group) {
+  return Math.max(0, rsvpTotal(group) - rsvpAnswered(group));
+}
+
 // Mismo criterio de enlace que el botón "Invitación" de EventGuests.
 // Con dominio propio: https://<dominio>/invitacion/<token> (sin slug).
-function inviteLink(event, token) {
-  return buildInviteUrl({ domain: event?.custom_domain, slug: event?.slug, token });
+// En modo recordatorio agrega #confirmar para abrir directo el RSVP.
+function inviteLink(event, token, { reminder = false } = {}) {
+  return buildInviteUrl({
+    domain: event?.custom_domain,
+    slug: event?.slug,
+    token,
+    hash: reminder ? "confirmar" : undefined,
+  });
 }
 
 // Mismo formato que renderiza el servidor: "sábado 12 de septiembre de 2026 · 17:00".
@@ -43,10 +72,10 @@ function formatEventDate(date, time) {
 
 // Reemplaza variables y, si el mensaje ya no trae {{enlace}}, lo agrega al final
 // (igual que lo hará el servidor al enviar).
-function renderMessage(template, group, event) {
+function renderMessage(template, group, event, { reminder = false } = {}) {
   if (!group) return template || "";
   const source = String(template || "");
-  const link = inviteLink(event, group.invitation_token);
+  const link = inviteLink(event, group.invitation_token, { reminder });
   let text = source
     .replace(/\{\{lider\}\}/g, group.leader_name || "invitado")
     .replace(/\{\{evento\}\}/g, event?.name || "")
@@ -138,13 +167,20 @@ function Stepper({ step }) {
   );
 }
 
-export default function WhatsAppSendModal({ eventId, event, groups = [], onClose, onDone }) {
+export default function WhatsAppSendModal({
+  eventId,
+  event,
+  groups = [],
+  reminder = false,
+  onClose,
+  onDone,
+}) {
   const [step, setStep] = useState(1);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState("");
   const [mode, setMode] = useState("link");
   const [presets, setPresets] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(reminder ? REMINDER_TEXT : "");
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [error, setError] = useState("");
   // idle | sending | done | error
@@ -164,13 +200,20 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
         const list = Array.isArray(data?.presets) ? data.presets : [];
         setMode(data?.mode === "cloud" ? "cloud" : "link");
         setPresets(list);
-        const preset = list.find((p) => p.id === data?.default_preset) || list[0] || null;
-        if (data?.message) {
-          setMessage(data.message);
+        if (reminder) {
+          // El recordatorio tiene su propio texto y nunca reutiliza el mensaje
+          // guardado de la invitación ni un preset.
+          setMessage(REMINDER_TEXT);
           setSelectedPreset(null);
         } else {
-          setMessage(preset?.text || "");
-          setSelectedPreset(preset?.id ?? null);
+          const preset = list.find((p) => p.id === data?.default_preset) || list[0] || null;
+          if (data?.message) {
+            setMessage(data.message);
+            setSelectedPreset(null);
+          } else {
+            setMessage(preset?.text || "");
+            setSelectedPreset(preset?.id ?? null);
+          }
         }
         setLoadingConfig(false);
       })
@@ -182,13 +225,38 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, reminder]);
 
-  // Grupos pendientes de invitación: los ya marcados como enviados quedan fuera
-  // de todo el flujo del modal (contadores, vista previa, envío y marcado).
-  const pendingGroups = useMemo(() => groups.filter((g) => !g.whatsapp_sent_at), [groups]);
-  // Grupos que ya recibieron su invitación; solo se usan para el aviso del paso 1.
-  const sentGroups = useMemo(() => groups.filter((g) => g.whatsapp_sent_at), [groups]);
+  // Grupos con al menos un invitado sin confirmar, sin importar si ya
+  // recibieron la invitación: candidatos a recordatorio.
+  const reminderGroups = useMemo(() => groups.filter(rsvpPending), [groups]);
+  // En modo normal, los grupos ya marcados como enviados quedan fuera de todo
+  // el flujo. En modo recordatorio se usan los grupos con pendientes.
+  const pendingGroups = useMemo(
+    () =>
+      reminder
+        ? reminderGroups
+        : groups.filter((g) => !g.whatsapp_sent_at),
+    [groups, reminder, reminderGroups]
+  );
+  // Grupos que ya recibieron su invitación; solo se usan para el aviso del
+  // paso 1 en modo normal.
+  const sentGroups = useMemo(
+    () => (reminder ? [] : groups.filter((g) => g.whatsapp_sent_at)),
+    [groups, reminder]
+  );
+  // Grupos con todos sus invitados confirmados o declinados: no reciben
+  // recordatorio. Solo se usan para el aviso del paso 1.
+  const confirmedGroups = useMemo(
+    () =>
+      reminder
+        ? groups.filter((g) => {
+            const total = rsvpTotal(g);
+            return total > 0 && rsvpAnswered(g) >= total;
+          })
+        : [],
+    [groups, reminder]
+  );
   const sendableGroups = useMemo(
     () => pendingGroups.filter((g) => g.leader_phone && g.invitation_token),
     [pendingGroups]
@@ -202,13 +270,17 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     [pendingGroups]
   );
   const coveredGuests = useMemo(
-    () => sendableGroups.reduce((sum, g) => sum + (Number(g.guests_count) || 0), 0),
-    [sendableGroups]
+    () =>
+      sendableGroups.reduce(
+        (sum, g) => sum + (reminder ? pendingGuests(g) : Number(g.guests_count) || 0),
+        0
+      ),
+    [sendableGroups, reminder]
   );
   const previewGroup = sendableGroups[0] || null;
   const previewText = useMemo(
-    () => renderMessage(message, previewGroup, event),
-    [message, previewGroup, event]
+    () => renderMessage(message, previewGroup, event, { reminder }),
+    [message, previewGroup, event, reminder]
   );
 
   const recipients = Array.isArray(result?.recipients) ? result.recipients : [];
@@ -230,8 +302,14 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     setPhase("sending");
     setStep(4);
     try {
-      await api.whatsapp.saveMessage(eventId, message);
-      const res = await api.whatsapp.send(eventId, { onlyPending: true });
+      // El recordatorio no reemplaza el mensaje de invitación guardado.
+      if (!reminder) await api.whatsapp.saveMessage(eventId, message);
+      const res = await api.whatsapp.send(
+        eventId,
+        reminder
+          ? { reminder: true, message, onlyPending: false }
+          : { onlyPending: true }
+      );
       if (res?.mode) setMode(res.mode);
       setResult(res);
       setOpenedIds(new Set());
@@ -276,9 +354,13 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     try {
       await api.whatsapp.mark(eventId, ids);
       onDone?.(
-        ids.length === 1
-          ? "Se marcó 1 invitación como enviada"
-          : `Se marcaron ${ids.length} invitaciones como enviadas`,
+        reminder
+          ? ids.length === 1
+            ? "Se marcó 1 recordatorio como enviado"
+            : `Se marcaron ${ids.length} recordatorios como enviados`
+          : ids.length === 1
+            ? "Se marcó 1 invitación como enviada"
+            : `Se marcaron ${ids.length} invitaciones como enviadas`,
         "success"
       );
     } catch (err) {
@@ -293,7 +375,12 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     setRetrying(true);
     setError("");
     try {
-      const res = await api.whatsapp.send(eventId, { groupIds: failedIds, onlyPending: true });
+      const payload = { groupIds: failedIds, onlyPending: !reminder };
+      if (reminder) {
+        payload.reminder = true;
+        payload.message = message;
+      }
+      const res = await api.whatsapp.send(eventId, payload);
       if (res?.mode) setMode(res.mode);
       setResult((prev) => ({
         ...res,
@@ -337,21 +424,43 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     body = (
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-2.5">
-          <SummaryTile label="Grupos" value={pendingGroups.length} />
+          <SummaryTile
+            label={reminder ? "Grupos con pendientes" : "Grupos"}
+            value={pendingGroups.length}
+          />
           <SummaryTile
             label="Enviables"
             value={sendableGroups.length}
             accent={sendableGroups.length > 0 ? "text-indigo-300" : "text-gray-50"}
           />
-          <SummaryTile label="Invitados cubiertos" value={coveredGuests} />
+          <SummaryTile
+            label={reminder ? "Invitados por confirmar" : "Invitados cubiertos"}
+            value={coveredGuests}
+          />
         </div>
 
         <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-4 text-sm text-gray-300 leading-relaxed">
           {sendableGroups.length > 0 ? (
-            <>
-              Se enviará la invitación a <b className="text-gray-100">{sendableGroups.length} líderes</b> de
-              grupo y cubrirá a <b className="text-gray-100">{coveredGuests} invitados</b>.
-            </>
+            reminder ? (
+              <>
+                Se enviará un recordatorio a{" "}
+                <b className="text-gray-100">
+                  {sendableGroups.length} {sendableGroups.length === 1 ? "líder" : "líderes"}
+                </b>{" "}
+                por{" "}
+                <b className="text-gray-100">
+                  {coveredGuests} {coveredGuests === 1 ? "invitado sin confirmar" : "invitados sin confirmar"}
+                </b>
+                .
+              </>
+            ) : (
+              <>
+                Se enviará la invitación a <b className="text-gray-100">{sendableGroups.length} líderes</b> de
+                grupo y cubrirá a <b className="text-gray-100">{coveredGuests} invitados</b>.
+              </>
+            )
+          ) : reminder ? (
+            <>No hay grupos con invitados sin confirmar y datos completos.</>
           ) : sentGroups.length > 0 ? (
             <>No hay invitaciones pendientes: los grupos ya marcados como enviados no se vuelven a incluir en este envío.</>
           ) : (
@@ -359,12 +468,22 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
           )}
         </div>
 
-        {sentGroups.length > 0 && (
+        {!reminder && sentGroups.length > 0 && (
           <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
             <p className="text-sm font-medium text-emerald-300">
               {sentGroups.length === 1
                 ? "1 grupo ya recibió su invitación y no se incluye en este envío."
                 : `${sentGroups.length} grupos ya recibieron su invitación y no se incluyen en este envío.`}
+            </p>
+          </div>
+        )}
+
+        {reminder && confirmedGroups.length > 0 && (
+          <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
+            <p className="text-sm font-medium text-emerald-300">
+              {confirmedGroups.length === 1
+                ? "1 grupo ya confirmó o declinó y no se incluye en este recordatorio."
+                : `${confirmedGroups.length} grupos ya confirmaron o declinaron y no se incluyen en este recordatorio.`}
             </p>
           </div>
         )}
@@ -416,7 +535,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
   } else if (step === 2) {
     body = (
       <div className="space-y-4">
-        {presets.length > 0 && (
+        {!reminder && presets.length > 0 && (
           <div className="grid sm:grid-cols-3 gap-2">
             {presets.map((preset) => {
               const active = selectedPreset === preset.id;
@@ -446,7 +565,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
           </div>
         )}
 
-        <Field label="Mensaje para los líderes">
+        <Field label={reminder ? "Mensaje del recordatorio" : "Mensaje para los líderes"}>
           <textarea
             className={`${inputClass} min-h-[140px] resize-y`}
             maxLength={800}
@@ -455,7 +574,11 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
               setMessage(e.target.value);
               setSelectedPreset(null);
             }}
-            placeholder="Escribe el mensaje de la invitación…"
+            placeholder={
+              reminder
+                ? "Escribe el mensaje del recordatorio…"
+                : "Escribe el mensaje de la invitación…"
+            }
           />
           <span className="flex items-center justify-between gap-3 mt-1">
             <span className="text-xs text-gray-500">
@@ -509,16 +632,35 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
       <div className="space-y-3">
         <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-5">
           <p className="text-base text-gray-100 leading-relaxed">
-            Se enviarán <b className="text-white">{sendableGroups.length}</b>{" "}
-            {sendableGroups.length === 1 ? "invitación" : "invitaciones"} por WhatsApp a los líderes
-            {coveredGuests > 0 ? (
+            {reminder ? (
               <>
-                {" "}
-                y cubren <b className="text-white">{coveredGuests}</b>{" "}
-                {coveredGuests === 1 ? "invitado" : "invitados"}.
+                {sendableGroups.length === 1 ? "Se enviará" : "Se enviarán"}{" "}
+                <b className="text-white">{sendableGroups.length}</b>{" "}
+                {sendableGroups.length === 1 ? "recordatorio" : "recordatorios"} por WhatsApp a los líderes
+                {coveredGuests > 0 ? (
+                  <>
+                    {" "}
+                    por <b className="text-white">{coveredGuests}</b>{" "}
+                    {coveredGuests === 1 ? "invitado sin confirmar" : "invitados sin confirmar"}.
+                  </>
+                ) : (
+                  "."
+                )}
               </>
             ) : (
-              "."
+              <>
+                Se enviarán <b className="text-white">{sendableGroups.length}</b>{" "}
+                {sendableGroups.length === 1 ? "invitación" : "invitaciones"} por WhatsApp a los líderes
+                {coveredGuests > 0 ? (
+                  <>
+                    {" "}
+                    y cubren <b className="text-white">{coveredGuests}</b>{" "}
+                    {coveredGuests === 1 ? "invitado" : "invitados"}.
+                  </>
+                ) : (
+                  "."
+                )}
+              </>
             )}
           </p>
           <p className="text-sm text-gray-300 mt-3">
@@ -526,9 +668,16 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
               ? "Se enviarán automáticamente desde el servidor."
               : "Se abrirán las conversaciones con el mensaje listo; tú confirmas cada envío."}
           </p>
+          {reminder && (
+            <p className="text-sm text-gray-300 mt-2">
+              El enlace de cada mensaje abre directo en la sección Confirmación de la invitación.
+            </p>
+          )}
         </div>
         <p className="text-xs text-gray-500">
-          Guardaremos este mensaje para futuros envíos del evento.
+          {reminder
+            ? "Este mensaje no se guarda: se usa solo para este recordatorio."
+            : "Guardaremos este mensaje para futuros envíos del evento."}
         </p>
       </div>
     );
@@ -546,7 +695,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
     body = (
       <div className="py-12 flex flex-col items-center gap-3 text-gray-300">
         <Spinner className="w-6 h-6 text-indigo-400" />
-        <p className="text-sm">Enviando invitaciones…</p>
+        <p className="text-sm">{reminder ? "Enviando recordatorios…" : "Enviando invitaciones…"}</p>
         <p className="text-xs text-gray-500">Esto puede tardar unos segundos.</p>
       </div>
     );
@@ -652,23 +801,33 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
           Cerrar sin marcar
         </Button>
         <Button onClick={handleMark} disabled={marking || recipients.length === 0}>
-          {marking ? "Marcando…" : "Marcar como enviadas"}
+          {marking ? "Marcando…" : reminder ? "Marcar como enviados" : "Marcar como enviadas"}
         </Button>
       </>
     );
   } else {
     const sentTotal = Number(result?.sent) || 0;
     const cloudSummary = failed.length
-      ? `Enviadas ${sentTotal}, fallaron ${failed.length}`
+      ? reminder
+        ? `Recordatorios enviados ${sentTotal}, fallaron ${failed.length}`
+        : `Enviadas ${sentTotal}, fallaron ${failed.length}`
       : sentTotal === 1
-        ? "Se envió 1 invitación"
-        : `Se enviaron ${sentTotal} invitaciones`;
+        ? reminder
+          ? "Se envió 1 recordatorio"
+          : "Se envió 1 invitación"
+        : reminder
+          ? `Se enviaron ${sentTotal} recordatorios`
+          : `Se enviaron ${sentTotal} invitaciones`;
     body = (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-2.5">
-          <SummaryTile label="Enviadas" value={sentTotal} accent="text-emerald-300" />
           <SummaryTile
-            label="Fallidas"
+            label={reminder ? "Enviados" : "Enviadas"}
+            value={sentTotal}
+            accent="text-emerald-300"
+          />
+          <SummaryTile
+            label={reminder ? "Fallidos" : "Fallidas"}
             value={failed.length}
             accent={failed.length > 0 ? "text-red-300" : "text-gray-50"}
           />
@@ -687,7 +846,9 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
           </div>
         ) : (
           <p className="text-sm text-emerald-300">
-            Todas las invitaciones se enviaron correctamente.
+            {reminder
+              ? "Todos los recordatorios se enviaron correctamente."
+              : "Todas las invitaciones se enviaron correctamente."}
           </p>
         )}
 
@@ -709,7 +870,7 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
       <>
         {failed.length > 0 && (
           <Button variant="secondary" onClick={handleRetry} disabled={retrying}>
-            {retrying ? "Reintentando…" : "Reintentar fallidas"}
+            {retrying ? "Reintentando…" : reminder ? "Reintentar fallidos" : "Reintentar fallidas"}
           </Button>
         )}
         <Button onClick={() => onDone?.(cloudSummary, failed.length > 0 ? "error" : "success")}>
@@ -720,7 +881,12 @@ export default function WhatsAppSendModal({ eventId, event, groups = [], onClose
   }
 
   return (
-    <Modal open onClose={handleClose} title="Enviar invitaciones por WhatsApp" wide>
+    <Modal
+      open
+      onClose={handleClose}
+      title={reminder ? "Recordar confirmación" : "Enviar invitaciones por WhatsApp"}
+      wide
+    >
       <Stepper step={step} />
       <div className="max-h-[58vh] overflow-y-auto pr-1 -mr-1">{body}</div>
       {error && phase !== "error" && <p className="text-sm text-red-400 mt-3">{error}</p>}

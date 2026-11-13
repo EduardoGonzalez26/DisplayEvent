@@ -50,7 +50,11 @@ export default function InvitationView({
 
   // Experiencia de apertura (sobre digital) configurada por plantilla.
   const opening = theme.opening;
-  const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  // Deep link a RSVP: #confirmar abre la invitación sin sobre para que la
+  // sección de confirmación quede visible desde el primer render.
+  const [envelopeOpen, setEnvelopeOpen] = useState(
+    () => typeof window !== "undefined" && window.location.hash === "#confirmar"
+  );
   const [envelopeRevealing, setEnvelopeRevealing] = useState(false);
   const showEnvelope = !preview && !!opening?.envelope && !envelopeOpen;
   // Marca el momento en que la invitación "se abre" para disparar las

@@ -194,6 +194,22 @@ export default function BodaJorgeMacarenaLayout({
   const containerRef = useStackedSheets(layoutKey);
   useV3Reveal(containerRef, layoutKey);
 
+  // Deep link #confirmar: las hojas se montan con animaciones/reveal, así que
+  // se reintenta el scroll en intervalos cortos hasta que la sección exista.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#confirmar") {
+      return undefined;
+    }
+    const scrollToRsvp = () => {
+      const target = document.getElementById("confirmar");
+      if (target) target.scrollIntoView({ block: "start", behavior: "auto" });
+    };
+    const timers = [100, 400, 900].map((delay) => window.setTimeout(scrollToRsvp, delay));
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
+
   let z = 1;
   const zCover = z++;
   const zStory = z++;
