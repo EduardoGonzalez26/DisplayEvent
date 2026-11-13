@@ -116,6 +116,11 @@ CREATE TABLE IF NOT EXISTS gifts (
   currency VARCHAR(3) NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
   stripe_payment_intent_id VARCHAR(255),
+  -- Trazabilidad del pago: modo Stripe (live/test), cuenta Connect que
+  -- recibió la transferencia y Checkout Session que originó el regalo.
+  livemode BOOLEAN NOT NULL DEFAULT FALSE,
+  destination_account VARCHAR(255),
+  stripe_checkout_session_id VARCHAR(255),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -213,6 +218,15 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS age_ranges JSONB;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_id TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_mxn TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS stripe_account_eur TEXT;
+
+-- 2.2c) Trazabilidad de pagos de regalos. Columnas añadidas después de la
+--       creación inicial de `gifts`; el índice se crea DESPUÉS de los ALTER
+--       para que también funcione en BD existentes.
+ALTER TABLE gifts ADD COLUMN IF NOT EXISTS livemode BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE gifts ADD COLUMN IF NOT EXISTS destination_account VARCHAR(255);
+ALTER TABLE gifts ADD COLUMN IF NOT EXISTS stripe_checkout_session_id VARCHAR(255);
+CREATE INDEX IF NOT EXISTS idx_gifts_event_mode_date
+  ON gifts(event_id, livemode, created_at DESC);
 
 -- 2.3) events.user_id: columna (BD legacy) + FK garantizada. La FK se añade solo
 --      si no existe ya una FK sobre esa misma columna (sin importar su nombre).

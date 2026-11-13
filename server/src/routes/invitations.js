@@ -570,8 +570,8 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
     if (!SUPPORTED_CURRENCIES.includes(currency)) {
       return res.status(400).json({ error: 'Moneda inválida: usa "mxn" o "eur"' });
     }
-    if (!Number.isInteger(amount) || amount < 0) {
-      return res.status(400).json({ error: "El monto debe ser un entero mayor o igual a 0" });
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return res.status(400).json({ error: "El monto debe ser mayor que 0" });
     }
     if (amount > MAX_AMOUNT) {
       return res.status(400).json({ error: `El monto máximo es ${MAX_AMOUNT} ${currency.toUpperCase()}` });
@@ -649,6 +649,9 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
       mode: "payment",
+      // Solo tarjeta: evita métodos asíncronos/diferidos (p. ej. OXXO) que
+      // dejaban el regalo en `pending` y requerían webhooks adicionales.
+      payment_method_types: ["card"],
       redirect_on_completion: "if_required",
       line_items: [
         {
@@ -668,6 +671,7 @@ router.post("/:token/payment", paymentLimiter, async (req, res, next) => {
       metadata: {
         event_id: String(inv.event_id),
         group_id: String(inv.group_id),
+        destination_account: destination.stripe_account_id,
       },
     });
 

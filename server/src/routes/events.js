@@ -182,6 +182,40 @@ router.get("/:id/gift-messages", async (req, res, next) => {
   }
 });
 
+// Lista de regalos/pagos del evento para el panel, del más reciente al más
+// antiguo. `event_account_id` es la cuenta Connect configurada actualmente en
+// el evento (solo el `acct_...`; nunca datos bancarios ni secretos).
+router.get("/:id/gifts", async (req, res, next) => {
+  try {
+    const owned = await query(
+      `SELECT id, stripe_account_id
+         FROM events
+        WHERE id = $1 AND user_id = $2
+        LIMIT 1`,
+      [req.params.id, req.user.id]
+    );
+    if (owned.length === 0) return res.status(404).json({ error: "Evento no encontrado" });
+
+    // `amount_minor` es BIGINT: pg lo entrega como string y se conserva así
+    // (consistente con gift-messages y sin riesgo de pérdida de precisión).
+    const rows = await query(
+      `SELECT gi.id, gi.event_id, gi.group_id, g.name AS group_name,
+              gi.amount_minor, gi.currency, gi.status, gi.livemode,
+              gi.destination_account, gi.stripe_payment_intent_id,
+              gi.stripe_checkout_session_id, gi.created_at
+         FROM gifts gi
+         LEFT JOIN "groups" g ON g.id = gi.group_id
+        WHERE gi.event_id = $1
+        ORDER BY gi.created_at DESC, gi.id DESC`,
+      [req.params.id]
+    );
+
+    res.json({ data: rows, event_account_id: owned[0].stripe_account_id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Marca/desmarca un mensaje como leído. Body: { read: boolean }.
 router.patch("/:id/gift-messages/:messageId", async (req, res, next) => {
   const read = req.body?.read;
