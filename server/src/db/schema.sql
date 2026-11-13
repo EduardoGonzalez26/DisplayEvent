@@ -197,8 +197,10 @@ CREATE INDEX IF NOT EXISTS idx_guest_age_range ON guests(age_range_id);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(80);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_message TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
--- Correo (opcional) al que se avisa cuando un invitado deja un mensaje de regalo.
+-- Correos (opcionales) a los que se avisa cuando un invitado deja un mensaje
+-- de regalo. El segundo slot es adicional; ambos son privados.
 ALTER TABLE events ADD COLUMN IF NOT EXISTS gift_message_email VARCHAR(255);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS gift_message_email_2 VARCHAR(255);
 -- Rangos de edad configurables para el dashboard del evento.
 -- Array JSON: [{ label, min, max }]; max null = rango abierto.
 ALTER TABLE events ADD COLUMN IF NOT EXISTS age_ranges JSONB;

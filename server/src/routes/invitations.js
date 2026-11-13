@@ -509,39 +509,61 @@ router.post("/:token/gift-message", giftMessageLimiter, async (req, res, next) =
       [inv.event_id, inv.group_id, senderName, message, amountMinor, currency, channel]
     );
 
-    // Aviso por correo: privado (gift_message_email) con respaldo en el email
-    // del dueño del evento. Cualquier fallo aquí no afecta la respuesta.
+    // Aviso por correo: hasta dos destinatarios privados
+    // (`gift_message_email` y `gift_message_email_2`), con respaldo en el
+    // email del dueño del evento. Se deduplican (sin distinguir mayúsculas)
+    // y se envía por separado a cada uno para no exponer sus correos entre
+    // sí. Cualquier fallo aquí no afecta la respuesta al invitado.
     try {
-      let recipient =
-        typeof inv.gift_message_email === "string" ? inv.gift_message_email.trim() : "";
-      if (!recipient && inv.owner_user_id) {
+      const recipients = [];
+      const seenRecipients = new Set();
+      for (const value of [inv.gift_message_email, inv.gift_message_email_2]) {
+        const email = typeof value === "string" ? value.trim() : "";
+        if (!email) continue;
+        const key = email.toLowerCase();
+        if (seenRecipients.has(key)) continue;
+        seenRecipients.add(key);
+        recipients.push(email);
+      }
+
+      if (recipients.length === 0 && inv.owner_user_id) {
         const owners = await query(`SELECT email FROM users WHERE id = $1 LIMIT 1`, [
           inv.owner_user_id,
         ]);
-        recipient = owners[0]?.email ? String(owners[0].email).trim() : "";
+        const ownerEmail = owners[0]?.email ? String(owners[0].email).trim() : "";
+        if (ownerEmail) recipients.push(ownerEmail);
       }
 
-      if (!recipient) {
+      if (recipients.length === 0) {
         console.warn(
           "[gift-message] Mensaje guardado sin aviso: no hay correo configurado",
           { event_id: inv.event_id }
         );
       } else {
-        await sendGiftMessageEmail({
-          to: recipient,
-          eventName: inv.event_name,
-          senderName,
-          senderLeader: inv.leader_name || "",
-          message,
-          amount: hasAmount ? body.amount : null,
-          currency,
-          channel,
-          eventId: inv.event_id,
-        });
+        for (const recipient of recipients) {
+          try {
+            await sendGiftMessageEmail({
+              to: recipient,
+              eventName: inv.event_name,
+              senderName,
+              senderLeader: inv.leader_name || "",
+              message,
+              amount: hasAmount ? body.amount : null,
+              currency,
+              channel,
+              eventId: inv.event_id,
+            });
+          } catch (mailErr) {
+            console.error(
+              "[gift-message] No se pudo enviar el aviso a un destinatario:",
+              mailErr.message
+            );
+          }
+        }
       }
     } catch (mailErr) {
       console.error(
-        "[gift-message] No se pudo enviar el aviso por correo:",
+        "[gift-message] No se pudo preparar el aviso por correo:",
         mailErr.message
       );
     }

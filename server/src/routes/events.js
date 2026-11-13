@@ -601,10 +601,14 @@ router.put("/:id", async (req, res, next) => {
     const stripeInput = await parseStripeAccountInput(body.stripe_account_id, req.user.id);
     if (stripeInput.error) return res.status(400).json({ error: stripeInput.error });
 
-    // Correo privado de avisos: misma semántica "keep if absent".
+    // Correos privados de avisos: misma semántica "keep if absent" en ambos.
     const giftEmailInput = parseGiftMessageEmailInput(body.gift_message_email);
     if (giftEmailInput.error) {
       return res.status(400).json({ error: giftEmailInput.error });
+    }
+    const giftEmail2Input = parseGiftMessageEmailInput(body.gift_message_email_2);
+    if (giftEmail2Input.error) {
+      return res.status(400).json({ error: giftEmail2Input.error });
     }
 
     // Excluye el propio evento: si el slug no cambia se conserva tal cual y,
@@ -627,6 +631,10 @@ router.put("/:id", async (req, res, next) => {
     if (!giftEmailInput.keep) {
       params.push(giftEmailInput.value ?? null);
       assignments.push(`gift_message_email = $${params.length}`);
+    }
+    if (!giftEmail2Input.keep) {
+      params.push(giftEmail2Input.value ?? null);
+      assignments.push(`gift_message_email_2 = $${params.length}`);
     }
     const idIndex = params.push(req.params.id);
     const userIndex = params.push(req.user.id);
