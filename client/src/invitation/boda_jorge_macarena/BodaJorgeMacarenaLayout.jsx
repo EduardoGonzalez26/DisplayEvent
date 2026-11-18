@@ -54,36 +54,55 @@ function useStackedSheets(layoutKey) {
     const frame = () => {
       raf = 0;
       const vh = window.innerHeight;
+      const n = sheets.length;
+      const margin = vh * 0.5;
 
-      for (const s of sheets) {
-        const h = s.sec.offsetHeight;
-        const top = Math.min(0, vh - h);
+      // Pasada 1: solo lecturas (un rect por hoja, reutilizado para p y e).
+      for (let i = 0; i < n; i++) {
+        const s = sheets[i];
+        s.h = s.sec.offsetHeight;
+        s.rt = s.sec.getBoundingClientRect().top;
+      }
+
+      // Pasada 2: solo escrituras.
+      let topChanged = false;
+      for (let i = 0; i < n; i++) {
+        const s = sheets[i];
+        const top = Math.min(0, vh - s.h);
         if (s.top !== top) {
           s.sec.style.top = `${top}px`;
           s.top = top;
+          topChanged = true;
         }
-      }
 
-      for (let i = 0; i < sheets.length; i++) {
-        const s = sheets[i];
-        const next = sheets[i + 1];
-        const p = next ? clamp(1 - next.sec.getBoundingClientRect().top / vh) : 0;
-        const e = i === 0 ? 1 : clamp(1 - s.sec.getBoundingClientRect().top / vh);
+        const nextTop = i + 1 < n ? sheets[i + 1].rt : null;
+        // -1: lejos por debajo (en entrada), 1: lejos por encima (hundida), 0: cerca.
+        const side =
+          nextTop !== null && nextTop <= -margin ? 1 : s.rt >= vh + margin ? -1 : 0;
+        // Las lejanas ya asentadas en su estado final no se tocan.
+        if (side !== 0 && s.side === side) continue;
+        s.side = side;
+
+        const p = nextTop !== null ? clamp(1 - nextTop / vh) : 0;
+        const e = i === 0 ? 1 : clamp(1 - s.rt / vh);
         const dir = i % 2 ? 1 : -1;
 
         if (s.paper) {
           const atRest = e === 1 && p === 0;
-          if (reduce || atRest) {
-            if (s.paper.style.transform) s.paper.style.transform = "";
-          } else {
+          let tf = "";
+          if (!reduce && !atRest) {
             const inRot = (1 - e) * 3.2 * dir;
             const inX = (1 - e) * 4 * dir;
             const outRot = -p * 1.6 * dir;
             const sc = 1 - 0.08 * p;
             const ty = -p * 2.5;
-            s.paper.style.transform = `translate3d(${inX}%, ${ty}%, 0) rotate(${(
-              inRot + outRot
-            ).toFixed(3)}deg) scale(${sc.toFixed(4)})`;
+            tf = `translate3d(${inX}%, ${ty}%, 0) rotate(${(inRot + outRot).toFixed(
+              3
+            )}deg) scale(${sc.toFixed(4)})`;
+          }
+          if ((s.tf ?? "") !== tf) {
+            s.paper.style.transform = tf;
+            s.tf = tf;
           }
         }
 
@@ -94,6 +113,12 @@ function useStackedSheets(layoutKey) {
             s.origin = o;
           }
         }
+      }
+
+      // Si cambió algún `top` sticky, las posiciones leídas pudieron variar.
+      if (topChanged) {
+        for (const s of sheets) s.side = undefined;
+        raf = requestAnimationFrame(frame);
       }
     };
 
