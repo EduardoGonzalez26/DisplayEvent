@@ -54,7 +54,6 @@ function useStackedSheets(layoutKey) {
     const frame = () => {
       raf = 0;
       const vh = window.innerHeight;
-      const narrow = window.innerWidth <= 900;
 
       for (const s of sheets) {
         const h = s.sec.offsetHeight;
@@ -74,7 +73,7 @@ function useStackedSheets(layoutKey) {
 
         if (s.paper) {
           const atRest = e === 1 && p === 0;
-          if (reduce || narrow || atRest) {
+          if (reduce || atRest) {
             if (s.paper.style.transform) s.paper.style.transform = "";
           } else {
             const inRot = (1 - e) * 3.2 * dir;
