@@ -94,7 +94,7 @@ export default function InvitationView({
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-inv-bg text-inv-text font-inv-body overflow-x-clip"
     >
-      <Suspense fallback={<InvitationLoader />}>
+      <Suspense fallback={<InvitationLoader themeId={theme.id} />}>
         <Layout
           event={event}
           family={family}

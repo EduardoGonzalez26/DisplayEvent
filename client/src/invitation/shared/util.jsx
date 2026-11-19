@@ -1,4 +1,4 @@
-import { Reveal, motion, EASE, useReducedMotion } from "../motion.jsx";
+import { Reveal, motion, EASE } from "../motion.jsx";
 
 export { Reveal };
 
@@ -65,28 +65,52 @@ export function SectionTitle({ eyebrow, title, subtitle }) {
    Estados de carga y error
 ------------------------------------------------------------------ */
 
-export function InvitationLoader() {
-  const reduced = useReducedMotion();
+/* Recuerdo del tema por token (solo el id del tema, ningún dato personal):
+   permite que recargas y visitas repetidas pinten el loader del tema desde
+   el primer frame. Todo en try/catch (modo privado, cuota, SSR). */
+const THEME_KEY_PREFIX = "de:inv-theme:";
+const THEME_ID_RE = /^[a-z0-9_-]{1,48}$/i;
+
+export function readStoredThemeId(token) {
+  if (!token) return null;
+  try {
+    const id = window.localStorage.getItem(THEME_KEY_PREFIX + token);
+    return id && THEME_ID_RE.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function storeThemeId(token, themeId) {
+  if (!token || !themeId || !THEME_ID_RE.test(themeId)) return;
+  try {
+    window.localStorage.setItem(THEME_KEY_PREFIX + token, themeId);
+  } catch {
+    /* sin almacenamiento: se usa el loader neutro */
+  }
+}
+
+/* Loader neutro (papel cálido + grafito, estilos en index.css bajo
+   `.inv-loader`). `themeId` solo afina el aspecto de temas conocidos
+   (hoy: boda_jorge_macarena); cualquier otro id usa el neutro. */
+export function InvitationLoader({ themeId = null }) {
   return (
-    <div className="min-h-screen bg-inv-bg grid place-items-center text-inv-text-soft px-6">
-      <motion.div
-        className="text-center"
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: EASE }}
-      >
-        <motion.div
-          className="font-inv-script text-8xl text-gold-gradient leading-[1.4]"
-          animate={reduced ? {} : { opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          &
-        </motion.div>
-        <Ornament className="mt-5" />
-        <div className="mt-6 text-[0.65rem] tracking-[0.45em] uppercase opacity-80">
-          Preparando la invitación…
+    <div
+      className="inv-loader"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      data-loader-theme={themeId || undefined}
+    >
+      <div className="inv-loader__inner">
+        <div className="inv-loader__mark" aria-hidden="true">
+          &amp;
         </div>
-      </motion.div>
+        <div className="inv-loader__orn" aria-hidden="true">
+          <i />
+        </div>
+        <p className="inv-loader__text">Preparando la invitación…</p>
+      </div>
     </div>
   );
 }

@@ -709,3 +709,108 @@ html.de-cover-scroll {
     scroll-behavior: auto !important;
   }
 }
+/* ------------------------------------------------------------------
+   Loader de la invitación (InvitationLoader).
+   Paleta neutra propia (papel cálido + grafito): NO depende de los
+   tokens --inv-* por defecto (rosa/dorado), porque al cargar aún no hay
+   tema aplicado. Cada variable --inv-loader-* admite override; los temas
+   conocidos (id guardado por token) lo hacen vía data-loader-theme.
+   Animación solo con opacity/transform.
+------------------------------------------------------------------ */
+.inv-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background-color: var(--inv-loader-bg, #f5f4f1);
+  background-image: var(--inv-loader-texture, none);
+  color: var(--inv-loader-ink, #585c62);
+  font-family: var(--inv-loader-font, "Cormorant Garamond", "Noto Serif Display", Georgia, serif);
+}
+.inv-loader[data-loader-theme="boda_jorge_macarena"] {
+  --inv-loader-bg: #f5f4f1;
+  --inv-loader-mark: #74787e;
+  --inv-loader-ink: #585c62;
+  --inv-loader-line: #b9b6af;
+  --inv-loader-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .42 0 0 0 0 .4 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+.inv-loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: inv-loader-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.inv-loader__mark {
+  font-size: 88px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1;
+  color: var(--inv-loader-mark, #74787e);
+  animation: inv-loader-breathe 3.2s ease-in-out infinite;
+}
+.inv-loader__orn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  color: var(--inv-loader-line, #b9b6af);
+}
+.inv-loader__orn::before,
+.inv-loader__orn::after {
+  content: "";
+  width: 48px;
+  height: 1px;
+  background: currentColor;
+}
+.inv-loader__orn i {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+.inv-loader__text {
+  margin-top: 20px;
+  font-size: 17px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+@keyframes inv-loader-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes inv-loader-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inv-loader__inner,
+  .inv-loader__mark {
+    animation: none;
+  }
+  .inv-loader__mark {
+    opacity: 0.8;
+  }
+}
+
+/* Fondo del documento en la ruta de invitación: html.de-invitation lo
+   pone el script de index.html antes del montaje, así no se ve otro color
+   (blanco/oscuro) detrás del loader. */
+html.de-invitation,
+html.de-invitation body {
+  background-color: #f5f4f1;
+}

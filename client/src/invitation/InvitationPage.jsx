@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api.js";
 import { isCustomDomainActive } from "../lib/publicDomain.js";
 import InvitationView from "./InvitationView.jsx";
-import { InvitationLoader, InvitationNotFound } from "./shared/util.jsx";
+import { getTheme } from "./themes/index.js";
+import {
+  InvitationLoader,
+  InvitationNotFound,
+  readStoredThemeId,
+  storeThemeId,
+} from "./shared/util.jsx";
 
 export default function InvitationPage() {
   // Funciona con ambas rutas: /invitacion/:token y /invitacion/:slug/:token.
@@ -13,10 +19,17 @@ export default function InvitationPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Id del tema recordado para este token (solo el id): permite pintar el
+  // loader del tema en recargas; sin dato, el loader es neutro.
+  const storedThemeId = useMemo(() => readStoredThemeId(token), [token]);
+
   useEffect(() => {
     api.invitations
       .get(token)
-      .then(setData)
+      .then((res) => {
+        storeThemeId(token, getTheme(res?.event?.invitation?.template).id);
+        setData(res);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
@@ -40,7 +53,7 @@ export default function InvitationPage() {
     return () => meta.remove();
   }, [hideBrand]);
 
-  if (loading) return <InvitationLoader />;
+  if (loading) return <InvitationLoader themeId={storedThemeId} />;
   if (error || !data) return <InvitationNotFound />;
 
   const { event, group, guests, public_config, payment_methods } = data;

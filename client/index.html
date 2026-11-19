@@ -9,6 +9,7 @@
       content="Invitaciones digitales para XV años, bodas, cumpleaños y baby showers. Confirma asistencias por grupo, acomoda mesas y recibe regalos desde un solo panel."
     />
     <meta name="theme-color" content="#fcfbf7" />
+    <style>html.de-invitation,html.de-invitation body{background-color:#f5f4f1}</style>
     <link rel="canonical" href="https://displayevent.com/" />
 
     <meta property="og:type" content="website" />
@@ -40,6 +41,10 @@
           var t = localStorage.getItem("de-theme");
           var theme = t === "light" ? "light" : "dark";
           if (window.location.pathname === "/") theme = "light";
+          // Ruta de invitación: fondo papel desde el primer pintado (la clase
+          // la gestiona después InvitationPage); evita blanco/oscuro detrás del loader.
+          if (window.location.pathname.indexOf("/invitacion/") === 0)
+            document.documentElement.classList.add("de-invitation");
           document.documentElement.dataset.theme = theme;
         } catch (e) {}
       })();
