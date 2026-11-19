@@ -31,6 +31,7 @@
   position: relative;
   overflow-x: clip;
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--mj-bg);
   color: var(--mj-ink);
   font-family: var(--mj-serif);
@@ -380,6 +381,18 @@ html.de-envelope-fade {
   box-shadow: 0 -22px 44px -14px rgba(0, 0, 0, 0.45),
     inset 0 0 90px rgba(110, 105, 98, 0.07);
   will-change: transform;
+}
+
+/* iOS Safari: `will-change` fijo en 12 capas grandes con textura agota la
+   memoria GPU (parpadeos en blanco). Solo se promueven las hojas cercanas
+   (`data-near`, lo marca el motor en BodaJorgeMacarenaLayout). */
+@supports (-webkit-touch-callout: none) {
+  .mjv3-paper {
+    will-change: auto;
+  }
+  .mjv3-paper[data-near] {
+    will-change: transform;
+  }
 }
 
 .mjv3-paper--cover {
@@ -2274,6 +2287,7 @@ textarea.mjv3-field {
     radial-gradient(ellipse at 10% 0%, rgba(122, 116, 110, 0.08), transparent 45%),
     var(--mj-paper);
   min-height: 100vh;
+  min-height: 100svh;
 }
 
 .mjv3-coverpage-paper {
@@ -2977,5 +2991,25 @@ textarea.mjv3-field {
     background-size: 220px 220px;
     background-repeat: repeat;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* iOS (Safari/WebKit): texturas WebP en lugar de SVG feTurbulence (2x, tamano CSS explicito). */
+@supports (-webkit-touch-callout: none) {
+  [data-invitation-theme="boda_jorge_macarena"] .algodon {
+    background-color: #F5F4F1;
+    background-image: url("/invitations/macarena-jorge-v3/tex/paper-relief.webp"),
+      url("/invitations/macarena-jorge-v3/tex/paper-grain.webp"),
+      url("/invitations/macarena-jorge-v3/tex/paper-cloud.webp");
+    background-size: 300px 300px, 240px 240px, 600px 600px;
+    background-repeat: repeat;
+  }
+
+  @media (max-width: 900px) {
+    [data-invitation-theme="boda_jorge_macarena"] .algodon {
+      background-image: url("/invitations/macarena-jorge-v3/tex/paper-grain-fixed.webp");
+      background-size: 220px 220px;
+      background-repeat: repeat;
+    }
   }
 }

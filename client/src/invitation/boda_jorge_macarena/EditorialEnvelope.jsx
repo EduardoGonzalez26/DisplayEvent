@@ -177,7 +177,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
   if (stage >= 5) return null;
 
   const sheetStyle = sheetFull
-    ? { top: 0, left: 0, width: "100vw", height: "100vh" }
+    ? { top: 0, left: 0, width: "100vw", height: "100%" }
     : {
         top: sheet?.top ?? 0,
         left: sheet?.left ?? 0,

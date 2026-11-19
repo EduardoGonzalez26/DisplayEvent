@@ -51,9 +51,46 @@ function useStackedSheets(layoutKey) {
     let raf = 0;
     const clamp = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
+    // Altura de viewport estable SOLO en iOS. En iOS Safari `innerHeight`
+    // cambia al colapsar/mostrar la barra de URL durante el scroll, mientras
+    // el CSS usa `100svh` (estable): `top = min(0, vh - h)` variaba en pleno
+    // scroll y las hojas saltaban. Fuera de iOS se mantiene `innerHeight` por
+    // frame, exactamente como antes.
+    const ua = navigator.userAgent || "";
+    const isIOS =
+      /iP(hone|ad|od)/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    let probe = null;
+    let stableVh = 0;
+    let lastW = 0;
+    let lastH = 0;
+    const measureVh = () => (probe && probe.offsetHeight) || window.innerHeight;
+    if (isIOS) {
+      probe = document.createElement("div");
+      probe.setAttribute("aria-hidden", "true");
+      probe.style.cssText =
+        "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
+      root.appendChild(probe);
+      stableVh = measureVh();
+      lastW = window.innerWidth;
+      lastH = window.innerHeight;
+    }
+    // Refresca la medida solo si cambió el ancho o la altura varió > ~120 px
+    // (los cambios pequeños son la barra de URL y se ignoran).
+    const refreshVh = () => {
+      if (!probe) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w !== lastW || Math.abs(h - lastH) > 120) {
+        lastW = w;
+        lastH = h;
+        stableVh = measureVh();
+      }
+    };
+
     const frame = () => {
       raf = 0;
-      const vh = window.innerHeight;
+      const vh = probe ? stableVh : window.innerHeight;
       const n = sheets.length;
       const margin = vh * 0.5;
 
@@ -82,6 +119,16 @@ function useStackedSheets(layoutKey) {
         // Las lejanas ya asentadas en su estado final no se tocan.
         if (side !== 0 && s.side === side) continue;
         s.side = side;
+
+        // `will-change` dinámico (solo lo usa el CSS de iOS): hojas cercanas.
+        if (s.paper) {
+          const near = side === 0;
+          if (s.near !== near) {
+            if (near) s.paper.setAttribute("data-near", "");
+            else s.paper.removeAttribute("data-near");
+            s.near = near;
+          }
+        }
 
         const p = nextTop !== null ? clamp(1 - nextTop / vh) : 0;
         const e = i === 0 ? 1 : clamp(1 - s.rt / vh);
@@ -127,9 +174,15 @@ function useStackedSheets(layoutKey) {
       raf = requestAnimationFrame(frame);
     };
 
+    const onResize = () => {
+      refreshVh();
+      onScroll();
+    };
+
     onScroll();
     document.addEventListener("scroll", onScroll, { passive: true, capture: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
     let ro = null;
     if (typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(onScroll);
@@ -137,8 +190,10 @@ function useStackedSheets(layoutKey) {
     }
     return () => {
       document.removeEventListener("scroll", onScroll, { capture: true });
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       ro?.disconnect();
+      probe?.remove();
       if (raf) cancelAnimationFrame(raf);
     };
   }, [layoutKey]);
