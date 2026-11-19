@@ -235,7 +235,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
 
             <div
               ref={letterRef}
-              className="mjv3-envelope-letter algodon"
+              className={`mjv3-envelope-letter algodon${family ? " mjv3-envelope-letter--family" : ""}`}
               style={{
                 backgroundColor: "#FBFAF8",
                 transform: stage >= 2 ? "translateY(-62%)" : "translateY(0%)",
@@ -243,6 +243,9 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
             >
               <div className="mjv3-envelope-letter-kicker">{letterKicker}</div>
               <div className="mjv3-envelope-letter-names">{names}</div>
+              {family ? (
+                <div className="mjv3-envelope-letter-family">{familyLine(family)}</div>
+              ) : null}
             </div>
 
             <div className="mjv3-envelope-pocket algodon"

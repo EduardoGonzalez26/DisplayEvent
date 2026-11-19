@@ -248,6 +248,26 @@ html.de-envelope-fade {
   color: var(--mj-ink);
 }
 
+/* Con nombre de grupo: sube un poco el contenido para que 2-3 líneas
+   queden por encima del bolsillo cuando la carta sube (-62%). */
+.mjv3-envelope-letter--family {
+  padding-top: 6%;
+}
+
+.mjv3-envelope-letter-family {
+  max-width: 90%;
+  margin-top: 2px;
+  font-family: var(--mj-serif);
+  font-weight: 500;
+  font-size: clamp(16px, 4.8vw, 20px);
+  line-height: 1.2;
+  color: var(--mj-ink);
+  opacity: 0.8;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
 .mjv3-envelope-pocket {
   position: absolute;
   inset: 0;
