@@ -49,6 +49,7 @@ function useStackedSheets(layoutKey) {
     if (sheets.length === 0) return undefined;
 
     let raf = 0;
+    let heightsDirty = true;
     const clamp = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
     // Altura de viewport estable SOLO en iOS. En iOS Safari `innerHeight`
@@ -95,9 +96,13 @@ function useStackedSheets(layoutKey) {
       const margin = vh * 0.5;
 
       // Pasada 1: solo lecturas (un rect por hoja, reutilizado para p y e).
+      // Las alturas solo cambian con resize/contenido: se releen únicamente
+      // cuando el ResizeObserver o un resize marcan `heightsDirty`.
+      const remeasure = heightsDirty;
+      heightsDirty = false;
       for (let i = 0; i < n; i++) {
         const s = sheets[i];
-        s.h = s.sec.offsetHeight;
+        if (remeasure || s.h === undefined) s.h = s.sec.offsetHeight;
         s.rt = s.sec.getBoundingClientRect().top;
       }
 
@@ -176,6 +181,12 @@ function useStackedSheets(layoutKey) {
 
     const onResize = () => {
       refreshVh();
+      heightsDirty = true;
+      onScroll();
+    };
+
+    const onContentResize = () => {
+      heightsDirty = true;
       onScroll();
     };
 
@@ -185,8 +196,10 @@ function useStackedSheets(layoutKey) {
     window.addEventListener("orientationchange", onResize);
     let ro = null;
     if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(onScroll);
-      ro.observe(root);
+      ro = new ResizeObserver(onContentResize);
+      // Cada hoja: un desplegable que crece dentro de una hoja cambia su
+      // altura (y su `top` sticky) aunque el total del contenedor no varíe.
+      for (const s of sheets) ro.observe(s.sec);
     }
     return () => {
       document.removeEventListener("scroll", onScroll, { capture: true });

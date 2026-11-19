@@ -415,6 +415,25 @@ html.de-envelope-fade {
   }
 }
 
+/* Android y cualquier pantalla táctil/estrecha: misma estrategia que iOS.
+   Promover las ~12 hojas a la vez satura la GPU del móvil y el scroll se
+   traba; solo las cercanas (`data-near`) llevan capa propia. */
+@media (max-width: 900px), (pointer: coarse) {
+  .mjv3-paper {
+    will-change: auto;
+  }
+  .mjv3-paper[data-near] {
+    will-change: transform;
+  }
+}
+
+/* La sombra que oscurece la hoja hundida cambia de opacidad en cada frame.
+   Sin capa propia, cada cambio repinta la hoja entera con su textura
+   (feTurbulence en Android = muy caro). Con capa propia es solo composición. */
+.mjv3-paper[data-near] > .mjv3-shade {
+  will-change: opacity;
+}
+
 .mjv3-paper--cover {
   max-width: none;
   overflow: hidden;
