@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3, resolveInvitationImage } from "./assets.js";
 import { DEFAULT_RECOMMENDATIONS } from "./index.js";
@@ -68,6 +69,57 @@ function RecommendationIcon({ icon }) {
   }
 }
 
+const LABEL_MORE = "Ver más";
+const LABEL_LESS = "Ver menos";
+
+/* Recomendación individual: solo icono + título; el texto se despliega. */
+function RecommendationCard({ item }) {
+  const [open, setOpen] = useState(false);
+  const uid = useId();
+  const titleId = `${uid}-title`;
+  const panelId = `${uid}-panel`;
+
+  return (
+    <div className="mjv3-rec-card" data-open={open ? "true" : "false"}>
+      <span className="mjv3-rec-icon" aria-hidden="true">
+        <RecommendationIcon icon={item.icon} />
+      </span>
+      <div className="mjv3-rec-body">
+        <div className="mjv3-rec-title" id={titleId}>
+          {item.title}
+        </div>
+        {item.text ? (
+          <>
+            <button
+              type="button"
+              className="mjv3-rec-toggle"
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setOpen((value) => !value)}
+            >
+              <span>{open ? LABEL_LESS : LABEL_MORE}</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="mjv3-rec-chevron">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={titleId}
+              className="mjv3-collapse"
+              data-open={open ? "true" : "false"}
+            >
+              <div className="mjv3-collapse-inner">
+                <p className="mjv3-rec-text">{renderRichText(item.text, item.phone)}</p>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function RecommendationsSection({ cfg }) {
   const recommendations = cfg?.recommendations;
   if (!recommendations?.enabled) return null;
@@ -95,17 +147,7 @@ export default function RecommendationsSection({ cfg }) {
         </h2>
         <div className="mjv3-rec-list">
           {items.map((item, index) => (
-            <div className="mjv3-rec-card" key={`${item.icon || "stay"}-${index}`}>
-              <span className="mjv3-rec-icon" aria-hidden="true">
-                <RecommendationIcon icon={item.icon} />
-              </span>
-              <div>
-                <div className="mjv3-rec-title">{item.title}</div>
-                {item.text ? (
-                  <p className="mjv3-rec-text">{renderRichText(item.text, item.phone)}</p>
-                ) : null}
-              </div>
-            </div>
+            <RecommendationCard key={`${item.icon || "stay"}-${index}`} item={item} />
           ))}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3 } from "./assets.js";
 import { buildModeLinks, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
@@ -32,6 +32,80 @@ function BusIcon() {
       <rect x="4" y="3" width="16" height="15" rx="2" />
       <path d="M4 10h16M8 18v3M16 18v3M8 14h.01M16 14h.01" />
     </svg>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+/* Modo de transporte plegable (acordeón independiente, empieza cerrado). */
+function TravelMode({ mode }) {
+  const [open, setOpen] = useState(false);
+  const uid = useId();
+  const buttonId = `${uid}-btn`;
+  const panelId = `${uid}-panel`;
+
+  return (
+    <div className="mjv3-mode" data-open={open ? "true" : "false"}>
+      <h3 className="mjv3-mode-heading">
+        <button
+          type="button"
+          id={buttonId}
+          className="mjv3-mode-head mjv3-mode-toggle"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="mjv3-mode-icon" aria-hidden="true">
+            {mode.key === "flight" ? <PlaneIcon /> : <BusIcon />}
+          </span>
+          <span className="mjv3-mode-title">{mode.title}</span>
+          <span className="mjv3-mode-line" aria-hidden="true" />
+          <span className="mjv3-mode-chevron" aria-hidden="true">
+            <Chevron />
+          </span>
+        </button>
+      </h3>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        className="mjv3-collapse"
+        data-open={open ? "true" : "false"}
+      >
+        <div className="mjv3-collapse-inner">
+          <div className="mjv3-mode-body">
+            <p className="mjv3-mode-desc">{mode.desc}</p>
+            <div className="mjv3-provider-grid">
+              {mode.providers.map((provider) => (
+                <a
+                  key={provider.id}
+                  className="mjv3-provider-card"
+                  href={provider.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>
+                    <span className="mjv3-provider-name">{provider.label}</span>
+                    {provider.note ? (
+                      <span className="mjv3-provider-note">{provider.note}</span>
+                    ) : null}
+                  </span>
+                  <span className="mjv3-provider-cta">
+                    Buscar<span aria-hidden="true">→</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -172,37 +246,7 @@ export default function TravelSection({ cfg }) {
       {builtModes.length ? (
         <div className="mjv3-travel-modes">
           {builtModes.map((mode) => (
-            <div key={mode.key}>
-              <div className="mjv3-mode-head">
-                <span className="mjv3-mode-icon" aria-hidden="true">
-                  {mode.key === "flight" ? <PlaneIcon /> : <BusIcon />}
-                </span>
-                <h3 className="mjv3-mode-title">{mode.title}</h3>
-                <div className="mjv3-mode-line" />
-              </div>
-              <p className="mjv3-mode-desc">{mode.desc}</p>
-              <div className="mjv3-provider-grid">
-                {mode.providers.map((provider) => (
-                  <a
-                    key={provider.id}
-                    className="mjv3-provider-card"
-                    href={provider.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span>
-                      <span className="mjv3-provider-name">{provider.label}</span>
-                      {provider.note ? (
-                        <span className="mjv3-provider-note">{provider.note}</span>
-                      ) : null}
-                    </span>
-                    <span className="mjv3-provider-cta">
-                      Buscar<span aria-hidden="true">→</span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <TravelMode key={mode.key} mode={mode} />
           ))}
         </div>
       ) : (
