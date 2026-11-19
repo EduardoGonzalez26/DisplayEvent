@@ -434,6 +434,71 @@ html.de-envelope-fade {
   will-change: opacity;
 }
 
+/* Animaciones ligadas al scroll (compositor, sin JS por frame). El motor
+   fija `animation-range` en px por hoja y activa la animación solo en las
+   hojas cercanas. Entrada (`translate` + `rotate`) y salida (`transform`)
+   son propiedades distintas, así que conviven en la misma hoja; fuera de
+   sus rangos no dejan transform (fill none / forwards). */
+@keyframes mjv3-sheet-in {
+  from {
+    translate: calc(var(--mj-dir, 1) * 4%) 0;
+    rotate: calc(var(--mj-dir, 1) * 3.2deg);
+  }
+  to {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
+@keyframes mjv3-sheet-out {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  to {
+    transform: translate3d(0, -2.5%, 0) rotate(calc(var(--mj-dir, 1) * -1.6deg))
+      scale(0.92);
+  }
+}
+
+@keyframes mjv3-shade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+.mjv3[data-sda] .mjv3-paper[data-near] {
+  animation-name: mjv3-sheet-in, mjv3-sheet-out;
+  animation-duration: auto, auto;
+  animation-timing-function: linear, linear;
+  animation-fill-mode: none, forwards;
+  animation-timeline: scroll(root), scroll(root);
+}
+
+.mjv3[data-sda] .mjv3-paper[data-near][data-first] {
+  animation-name: none, mjv3-sheet-out;
+}
+
+.mjv3[data-sda] .mjv3-paper[data-near] > .mjv3-shade {
+  animation-name: mjv3-shade-in;
+  animation-duration: auto;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-timeline: scroll(root);
+}
+
+/* Hojas ya cubiertas: estado final estático, sin animación ni capa. */
+.mjv3[data-sda] .mjv3-paper[data-sunk] {
+  transform: translate3d(0, -2.5%, 0) rotate(calc(var(--mj-dir, 1) * -1.6deg))
+    scale(0.92);
+}
+
+.mjv3[data-sda] .mjv3-paper[data-sunk] > .mjv3-shade {
+  opacity: 0.5;
+}
+
 .mjv3-paper--cover {
   max-width: none;
   overflow: hidden;
@@ -887,8 +952,24 @@ html.de-envelope-fade {
 }
 
 .mjv3-drawing--small {
-  max-width: 320px;
-  margin-bottom: 8px;
+  max-width: 280px;
+  margin-bottom: 14px;
+}
+
+/* Móvil: los dibujos ocupaban casi todo el ancho de la hoja. */
+@media (max-width: 600px) {
+  .mjv3-drawing--small {
+    max-width: 210px;
+    margin-bottom: 18px;
+  }
+  .mjv3-split-media {
+    flex-basis: auto;
+    width: 100%;
+    max-width: 240px;
+  }
+  .mjv3-split {
+    gap: 40px;
+  }
 }
 
 .mjv3-drawing--closing {
@@ -1097,6 +1178,56 @@ textarea.mjv3-field {
 
 .mjv3-field::placeholder {
   color: #a9a59e;
+}
+
+/* Campos dentro de grids (viaje, hospedaje): sin ancho mínimo intrínseco,
+   que en móvil empujaba los campos fuera de la tarjeta. */
+.mjv3-travel-fields > label,
+.mjv3-stay-dates > label {
+  display: block;
+  min-width: 0;
+}
+
+.mjv3-field {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+select.mjv3-field {
+  text-overflow: ellipsis;
+}
+
+input[type="date"].mjv3-field {
+  display: block;
+  line-height: 50px;
+  text-align: left;
+}
+
+/* iOS Safari: el input de fecha nativo ignora `width: 100%` y se centra. */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"].mjv3-field {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+input[type="date"].mjv3-field::-webkit-date-and-time-value {
+  margin: 0;
+  text-align: left;
+}
+
+@media (max-width: 600px) {
+  .mjv3-travel-card {
+    padding: 18px 16px;
+  }
+  .mjv3-stay-dates {
+    padding: 16px 14px;
+  }
+  .mjv3-field {
+    font-size: 17px;
+    padding: 0 10px;
+  }
 }
 
 .mjv3-form-grid {

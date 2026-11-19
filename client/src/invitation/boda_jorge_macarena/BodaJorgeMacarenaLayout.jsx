@@ -16,15 +16,39 @@ import { V3 } from "./v3/assets.js";
 import "./v3.css";
 
 /* ------------------------------------------------------------------
-   Motor de hojas apiladas (idéntico al v2, que ya funciona en producción):
+   Motor de hojas apiladas:
    - Cada sección `[data-sheet]` es sticky; la hoja `[data-paper]` entra
      inclinada, se endereza y la anterior se hunde/oscurece.
-   - En reposo se retira el `transform` para que los descendientes
+   - Las posiciones se calculan a partir de offsets cacheados (no de los
+     rects reales): con sticky, el rect de la hoja siguiente se queda en 0
+     y las hojas ya tapadas nunca se daban por "lejanas".
+   - Si el navegador soporta animaciones ligadas al scroll
+     (`animation-timeline`), la inclinación y el oscurecido corren en el
+     compositor: el JS solo fija los rangos (en resize) y marca qué hojas
+     están cerca (`data-near`) o ya hundidas (`data-sunk`). Si no, se
+     escriben transform/opacity por frame como antes.
+   - En reposo no hay `transform`, para que los descendientes
      `position: fixed` (checkout de Stripe) se anclen al viewport.
    - `prefers-reduced-motion`: nunca se aplica transform.
-   - Escucha scroll en fase de captura (ventana y contenedores internos,
-     como la vista previa del editor).
+   - En la vista previa del editor el scroll es de un contenedor interno:
+     se usa siempre el motor por frame con ese contenedor.
 ------------------------------------------------------------------- */
+function findScroller(el) {
+  for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy === "auto" || oy === "scroll") && p.scrollHeight > p.clientHeight + 1) return p;
+  }
+  return null;
+}
+
+function supportsScrollTimeline() {
+  try {
+    return !!window.CSS?.supports?.("animation-timeline: scroll()");
+  } catch {
+    return false;
+  }
+}
+
 function useStackedSheets(layoutKey) {
   const rootRef = useRef(null);
 
@@ -39,110 +63,140 @@ function useStackedSheets(layoutKey) {
       /* noop */
     }
 
-    const sheets = Array.from(root.querySelectorAll("[data-sheet]")).map((sec) => ({
+    const sheets = Array.from(root.querySelectorAll("[data-sheet]")).map((sec, i) => ({
       sec,
       paper: sec.querySelector("[data-paper]"),
       shade: sec.querySelector("[data-shade]"),
-      top: null,
-      origin: null,
+      dir: i % 2 ? 1 : -1,
     }));
     if (sheets.length === 0) return undefined;
 
+    const scroller = findScroller(root);
+    const sda = !reduce && !scroller && supportsScrollTimeline();
+    if (sda) root.setAttribute("data-sda", "");
+    for (const s of sheets) {
+      if (s.paper) s.paper.style.setProperty("--mj-dir", String(s.dir));
+    }
+    if (sheets[0].paper) sheets[0].paper.setAttribute("data-first", "");
+
+    const getScrollTop = () => (scroller ? scroller.scrollTop : window.scrollY);
+
     let raf = 0;
-    let heightsDirty = true;
+    let dirty = true;
     const clamp = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
     // Altura de viewport estable SOLO en iOS. En iOS Safari `innerHeight`
     // cambia al colapsar/mostrar la barra de URL durante el scroll, mientras
-    // el CSS usa `100svh` (estable): `top = min(0, vh - h)` variaba en pleno
-    // scroll y las hojas saltaban. Fuera de iOS se mantiene `innerHeight` por
-    // frame, exactamente como antes.
+    // el CSS usa `100svh` (estable). Fuera de iOS se usa `innerHeight`.
     const ua = navigator.userAgent || "";
     const isIOS =
       /iP(hone|ad|od)/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let probe = null;
-    let stableVh = 0;
-    let lastW = 0;
-    let lastH = 0;
-    const measureVh = () => (probe && probe.offsetHeight) || window.innerHeight;
     if (isIOS) {
       probe = document.createElement("div");
       probe.setAttribute("aria-hidden", "true");
       probe.style.cssText =
         "position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";
       root.appendChild(probe);
-      stableVh = measureVh();
-      lastW = window.innerWidth;
-      lastH = window.innerHeight;
     }
-    // Refresca la medida solo si cambió el ancho o la altura varió > ~120 px
-    // (los cambios pequeños son la barra de URL y se ignoran).
-    const refreshVh = () => {
-      if (!probe) return;
+    let vh = 0;
+    let lastW = 0;
+    let lastH = 0;
+    const readVh = () => {
+      if (!probe) return window.innerHeight;
+      // Solo se refresca si cambió el ancho o la altura varió > ~120 px
+      // (los cambios pequeños son la barra de URL y se ignoran).
       const w = window.innerWidth;
       const h = window.innerHeight;
-      if (w !== lastW || Math.abs(h - lastH) > 120) {
+      if (!vh || w !== lastW || Math.abs(h - lastH) > 120) {
         lastW = w;
         lastH = h;
-        stableVh = measureVh();
+        return probe.offsetHeight || h;
       }
+      return vh;
     };
 
-    const frame = () => {
-      raf = 0;
-      const vh = probe ? stableVh : window.innerHeight;
-      const n = sheets.length;
-      const margin = vh * 0.5;
-
-      // Pasada 1: solo lecturas (un rect por hoja, reutilizado para p y e).
-      // Las alturas solo cambian con resize/contenido: se releen únicamente
-      // cuando el ResizeObserver o un resize marcan `heightsDirty`.
-      const remeasure = heightsDirty;
-      heightsDirty = false;
-      for (let i = 0; i < n; i++) {
-        const s = sheets[i];
-        if (remeasure || s.h === undefined) s.h = s.sec.offsetHeight;
-        s.rt = s.sec.getBoundingClientRect().top;
+    // Lecturas de layout: solo en el arranque, resize o cambio de contenido.
+    const measure = () => {
+      vh = readVh();
+      const rootRect = root.getBoundingClientRect();
+      const base = scroller
+        ? rootRect.top - scroller.getBoundingClientRect().top + scroller.scrollTop
+        : rootRect.top + window.scrollY;
+      let y = base + (parseFloat(getComputedStyle(root).paddingTop) || 0);
+      for (const s of sheets) {
+        s.h = s.sec.offsetHeight;
+        s.docTop = y;
+        y += s.h;
       }
-
-      // Pasada 2: solo escrituras.
-      let topChanged = false;
+      // Escrituras.
+      const n = sheets.length;
       for (let i = 0; i < n; i++) {
         const s = sheets[i];
         const top = Math.min(0, vh - s.h);
         if (s.top !== top) {
           s.sec.style.top = `${top}px`;
           s.top = top;
-          topChanged = true;
         }
+        if (sda && s.paper) {
+          // Entrada: la hoja sube desde abajo del viewport hasta su sitio.
+          // Salida: la siguiente hoja la cubre (y la oscurece).
+          const inA = Math.round(s.docTop - vh);
+          const inB = Math.round(s.docTop);
+          const next = sheets[i + 1];
+          const outRange = next
+            ? `${Math.round(next.docTop - vh)}px ${Math.round(next.docTop)}px`
+            : "10000000px 10000001px";
+          s.paper.style.animationRange = `${inA}px ${inB}px, ${outRange}`;
+          if (s.shade) s.shade.style.animationRange = outRange;
+        }
+        s.side = undefined;
+      }
+    };
 
-        const nextTop = i + 1 < n ? sheets[i + 1].rt : null;
-        // -1: lejos por debajo (en entrada), 1: lejos por encima (hundida), 0: cerca.
+    const setAttr = (el, name, on) => {
+      if (!el) return;
+      if (on) el.setAttribute(name, "");
+      else el.removeAttribute(name);
+    };
+
+    const frame = () => {
+      raf = 0;
+      if (dirty) {
+        dirty = false;
+        measure();
+      }
+      const scrollY = getScrollTop();
+      const n = sheets.length;
+      const margin = vh * 0.5;
+
+      for (let i = 0; i < n; i++) {
+        const s = sheets[i];
+        // Posición "virtual" (sin sticky) de esta hoja y de la siguiente.
+        const rt = s.docTop - scrollY;
+        const nextTop = i + 1 < n ? sheets[i + 1].docTop - scrollY : null;
+        // -1: lejos por debajo, 1: ya cubierta (hundida), 0: cerca.
         const side =
-          nextTop !== null && nextTop <= -margin ? 1 : s.rt >= vh + margin ? -1 : 0;
-        // Las lejanas ya asentadas en su estado final no se tocan.
+          nextTop !== null && nextTop <= -margin ? 1 : rt >= vh + margin ? -1 : 0;
         if (side !== 0 && s.side === side) continue;
+        const sideChanged = s.side !== side;
         s.side = side;
 
-        // `will-change` dinámico (solo lo usa el CSS de iOS): hojas cercanas.
-        if (s.paper) {
-          const near = side === 0;
-          if (s.near !== near) {
-            if (near) s.paper.setAttribute("data-near", "");
-            else s.paper.removeAttribute("data-near");
-            s.near = near;
-          }
+        if (sideChanged) {
+          setAttr(s.paper, "data-near", side === 0);
+          if (sda) setAttr(s.paper, "data-sunk", side === 1);
         }
+        if (sda || reduce) continue;
 
         const p = nextTop !== null ? clamp(1 - nextTop / vh) : 0;
-        const e = i === 0 ? 1 : clamp(1 - s.rt / vh);
-        const dir = i % 2 ? 1 : -1;
+        const e = i === 0 ? 1 : clamp(1 - rt / vh);
+        const dir = s.dir;
 
         if (s.paper) {
           const atRest = e === 1 && p === 0;
           let tf = "";
-          if (!reduce && !atRest) {
+          if (!atRest) {
             const inRot = (1 - e) * 3.2 * dir;
             const inX = (1 - e) * 4 * dir;
             const outRot = -p * 1.6 * dir;
@@ -160,17 +214,11 @@ function useStackedSheets(layoutKey) {
 
         if (s.shade) {
           const o = (p * 0.5).toFixed(3);
-          if (s.origin !== o) {
+          if (s.op !== o) {
             s.shade.style.opacity = o;
-            s.origin = o;
+            s.op = o;
           }
         }
-      }
-
-      // Si cambió algún `top` sticky, las posiciones leídas pudieron variar.
-      if (topChanged) {
-        for (const s of sheets) s.side = undefined;
-        raf = requestAnimationFrame(frame);
       }
     };
 
@@ -179,35 +227,43 @@ function useStackedSheets(layoutKey) {
       raf = requestAnimationFrame(frame);
     };
 
-    const onResize = () => {
-      refreshVh();
-      heightsDirty = true;
-      onScroll();
-    };
-
-    const onContentResize = () => {
-      heightsDirty = true;
+    const onLayoutChange = () => {
+      dirty = true;
       onScroll();
     };
 
     onScroll();
-    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
+    const scrollTarget = scroller || window;
+    scrollTarget.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onLayoutChange);
+    window.addEventListener("orientationchange", onLayoutChange);
     let ro = null;
     if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(onContentResize);
-      // Cada hoja: un desplegable que crece dentro de una hoja cambia su
-      // altura (y su `top` sticky) aunque el total del contenedor no varíe.
+      ro = new ResizeObserver(onLayoutChange);
+      // Cada hoja: un bloque que crece dentro de una hoja cambia su altura
+      // (y su `top` sticky) y las posiciones de las siguientes.
       for (const s of sheets) ro.observe(s.sec);
     }
     return () => {
-      document.removeEventListener("scroll", onScroll, { capture: true });
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+      scrollTarget.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onLayoutChange);
+      window.removeEventListener("orientationchange", onLayoutChange);
       ro?.disconnect();
       probe?.remove();
       if (raf) cancelAnimationFrame(raf);
+      root.removeAttribute("data-sda");
+      for (const s of sheets) {
+        if (s.paper) {
+          s.paper.style.animationRange = "";
+          s.paper.style.transform = "";
+          s.paper.removeAttribute("data-near");
+          s.paper.removeAttribute("data-sunk");
+        }
+        if (s.shade) {
+          s.shade.style.animationRange = "";
+          s.shade.style.opacity = "";
+        }
+      }
     };
   }, [layoutKey]);
 

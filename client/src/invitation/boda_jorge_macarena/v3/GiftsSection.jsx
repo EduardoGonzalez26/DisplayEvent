@@ -61,26 +61,6 @@ function CardIcon() {
   );
 }
 
-function Chevron({ open }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      style={{
-        strokeWidth: 1.6,
-        transform: open ? "rotate(180deg)" : "rotate(0deg)",
-        transition: "transform 0.4s ease",
-      }}
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
 export default function GiftsSection({
   cfg,
   token,
@@ -91,7 +71,6 @@ export default function GiftsSection({
   const registry = cfg?.registry || {};
   const [currency, setCurrency] = useState(() => detectCurrency());
   const [amount, setAmount] = useState("");
-  const [bankOpen, setBankOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [giftMessage, setGiftMessage] = useState("");
   const [unlocked, setUnlocked] = useState(false);
@@ -343,7 +322,7 @@ export default function GiftsSection({
       <OrnamentRule />
       <h2 className="mj-display mj-display--sm">Con todo nuestro cariño</h2>
       <p className="mj-copy mjv3-gift-copy">
-        Que vengáis es, de verdad, nuestro mejor regalo. Si además queréis tener
+        Que vengan es, de verdad, nuestro mejor regalo. Si además quieren tener
         un detalle con nosotros, una aportación nos ayudará a empezar esta nueva
         vida juntos.
       </p>
@@ -437,21 +416,10 @@ export default function GiftsSection({
           </p>
         ) : null}
 
-        {bankEnabled ? (
-          <button
-            type="button"
-            className="mjv3-btn mjv3-btn--outline"
-            aria-expanded={bankOpen}
-            onClick={() => setBankOpen((open) => !open)}
-          >
-            Transferencia bancaria
-            <Chevron open={bankOpen} />
-          </button>
-        ) : null}
       </div>
 
       {bankEnabled ? (
-        <div className="mjv3-gift-accordion" data-open={bankOpen ? "true" : "false"}>
+        <div className="mjv3-gift-accordion" data-open="true">
           <div className="mjv3-gift-accordion-inner">
             <div>
               <div className="mjv3-bank-card">
@@ -482,7 +450,7 @@ export default function GiftsSection({
       <div className="mjv3-gift-message">
         {messageSent ? (
           <p className="mjv3-gift-sent">
-            ¡Gracias! Vuestro mensaje ya está en camino a los novios.
+            ¡Gracias! Su mensaje ya está en camino a los novios.
           </p>
         ) : (
           <>

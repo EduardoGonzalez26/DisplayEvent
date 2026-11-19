@@ -309,10 +309,10 @@ export default function RsvpSection({ rsvp }) {
   const deadlineText = !editable
     ? "Una vez confirmada, la selección no podrá modificarse."
     : hasDeadline
-      ? `Podéis confirmar o modificar vuestra respuesta hasta el ${deadlineLabel(
+      ? `Pueden confirmar o modificar su respuesta hasta el ${deadlineLabel(
           deadlineMs
         )}.`
-      : "Podéis confirmar o modificar vuestra respuesta en cualquier momento.";
+      : "Pueden confirmar o modificar su respuesta en cualquier momento.";
 
   const showSent = submitted && !preview && (!editing || expired);
   const showClosed = !preview && !submitted && expired;
@@ -417,7 +417,7 @@ export default function RsvpSection({ rsvp }) {
           <OrnamentRule />
           <h2 className="mj-display mj-display--sm">Confirma tu asistencia</h2>
           <p className="mjv3-rsvp-family">
-            {familyLabel}, contadnos quiénes podrán acompañarnos.
+            {familyLabel}, cuéntennos quiénes podrán acompañarnos.
           </p>
           <p className="mjv3-rsvp-help">{deadlineText}</p>
 

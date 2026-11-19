@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3 } from "./assets.js";
 import { buildStayUrl, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
@@ -9,7 +9,7 @@ import {
 } from "./index.js";
 
 const DEFAULT_INTRO =
-  "Granada se disfruta sin prisa. Os recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tenéis nuestros hoteles favoritos y buscadores para encontrar más opciones.";
+  "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.";
 const DEFAULT_CHECKIN = "2027-06-08";
 const DEFAULT_CHECKOUT = "2027-06-12";
 const ALBAICIN_MAPS =
@@ -49,53 +49,20 @@ function SearchIcon() {
   );
 }
 
-function Chevron() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
-
-/* Grupo plegable (acordeón independiente, empieza cerrado). */
+/* Grupo (siempre desplegado). */
 function StayGroup({ title, icon, children }) {
-  const [open, setOpen] = useState(false);
-  const uid = useId();
-  const buttonId = `${uid}-btn`;
-  const panelId = `${uid}-panel`;
-
   return (
-    <div className="mjv3-mode mjv3-stay-group" data-open={open ? "true" : "false"}>
+    <div className="mjv3-mode mjv3-stay-group" data-open="true">
       <h3 className="mjv3-mode-heading">
-        <button
-          type="button"
-          id={buttonId}
-          className="mjv3-mode-head mjv3-mode-toggle"
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={() => setOpen((value) => !value)}
-        >
+        <span className="mjv3-mode-head">
           <span className="mjv3-mode-icon" aria-hidden="true">
             {icon}
           </span>
           <span className="mjv3-mode-title">{title}</span>
           <span className="mjv3-mode-line" aria-hidden="true" />
-          <span className="mjv3-mode-chevron" aria-hidden="true">
-            <Chevron />
-          </span>
-        </button>
+        </span>
       </h3>
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={buttonId}
-        className="mjv3-collapse"
-        data-open={open ? "true" : "false"}
-      >
-        <div className="mjv3-collapse-inner">
-          <div className="mjv3-mode-body">{children}</div>
-        </div>
-      </div>
+      <div className="mjv3-mode-body">{children}</div>
     </div>
   );
 }

@@ -33,28 +33,28 @@ const RECOMMENDATIONS = [
   {
     icon: "shoe",
     title: "Calzado",
-    text: "Para ellas, os recomendamos tacón bajo o ancho: de la iglesia al Carmen iremos caminando por calles empedradas.",
+    text: "Para ellas, les recomendamos tacón bajo o ancho: de la iglesia al Carmen iremos caminando por calles empedradas.",
   },
   {
     icon: "weather",
     title: "Clima",
-    text: "Granada es de contrastes: de día hace calor y por la noche puede refrescar bastante. Traed algo para abrigaros.",
+    text: "Granada es de contrastes: de día hace calor y por la noche puede refrescar bastante. Traigan algo para abrigarse.",
   },
   {
     icon: "transport",
     title: "Transporte",
-    text: "Por los acontecimientos recientes, de momento no recomendamos viajar en tren. Os sugerimos avión, autobús o alquilar un coche.",
+    text: "Por los acontecimientos recientes, de momento no recomendamos viajar en tren. Les sugerimos avión, autobús o rentar un auto.",
   },
   {
     icon: "taxi",
     title: "Moverse por Granada",
-    text: "Dentro de la ciudad es más práctico usar **PideTaxi**, el servicio de taxis por WhatsApp, que Uber. Teléfono: {phone}. También podéis bajar su app en App Store o Google Play.",
+    text: "Dentro de la ciudad es más práctico usar **PideTaxi**, el servicio de taxis por WhatsApp, que Uber. Teléfono: {phone}. También pueden descargar su app en App Store o Google Play.",
     phone: "+34 958 28 00 00",
   },
   {
     icon: "stay",
     title: "Alojamiento",
-    text: "Os recomendamos alojaros en el Albaicín o sus alrededores: estaréis a un paseo de la iglesia y del Carmen.",
+    text: "Les recomendamos hospedarse en el Albaicín o sus alrededores: estarán a un paseo de la iglesia y del Carmen.",
   },
 ];
 
@@ -103,7 +103,7 @@ const LODGING = [
 const STAY = {
   enabled: true,
   intro:
-    "Granada se disfruta sin prisa. Os recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tenéis nuestros hoteles favoritos y buscadores para encontrar más opciones.",
+    "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.",
   zone: {
     lat: 37.181,
     lng: -3.592,
@@ -154,7 +154,7 @@ const STAY = {
 const TRIP = {
   enabled: true,
   intro:
-    "Si venís desde México, aquí tenéis las mejores opciones para llegar a Granada. Elegid vuestra ciudad de salida y las fechas: los buscadores se actualizan solos.",
+    "Si vienen desde México, aquí tienen las mejores opciones para llegar a Granada. Elijan su ciudad de salida y las fechas: los buscadores se actualizan solos.",
   origins: [
     { code: "MEX", label: "CDMX – Benito Juárez" },
     { code: "NLU", label: "CDMX – AIFA" },
@@ -217,7 +217,7 @@ function buildPatch(current) {
     },
     locations: LOCATIONS,
     dress_code: [{ label: "Formal" }],
-    dress_note: "Queremos veros guapísimos.",
+    dress_note: "Queremos verlos guapísimos.",
     itinerary: [],
     gallery: [],
     hero_image: "",
