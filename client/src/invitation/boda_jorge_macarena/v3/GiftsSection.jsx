@@ -8,6 +8,7 @@ import {
   OrnamentRule,
   copyToClipboard,
 } from "./index.js";
+import { buildBankAccounts } from "./bankAccounts.js";
 
 const CURRENCIES = {
   mxn: { symbol: "$", label: "MXN" },
@@ -161,27 +162,8 @@ export default function GiftsSection({
 
   if (!registry.enabled) return null;
 
-  const isMxn = currency === "mxn";
-  const bank = isMxn ? registry.bank || {} : registry.bank_eur || {};
-  const bankRows = (
-    isMxn
-      ? [
-          { key: "bank_name", label: "Banco" },
-          { key: "holder", label: "Titular" },
-          { key: "account_number", label: "Cuenta" },
-          { key: "clabe", label: "CLABE" },
-          { key: "concept", label: "Concepto" },
-        ]
-      : [
-          { key: "bank_name", label: "Banco" },
-          { key: "holder", label: "Titular" },
-          { key: "iban", label: "IBAN / Cuenta" },
-          { key: "concept", label: "Concepto" },
-        ]
-  ).filter((row) => String(bank[row.key] ?? "").trim() !== "");
-  const bankEnabled = !!bank.enabled && bankRows.length > 0;
-  const bankTitle = isMxn ? "Desde México" : "Desde España";
-  const unlockKey = isMxn ? "clabe" : "iban";
+  const accounts = buildBankAccounts(registry, currency);
+  const bankEnabled = accounts.length > 0;
 
   const min = Math.max(
     Number(registry[`min_${currency}`]) || 0,
@@ -208,7 +190,9 @@ export default function GiftsSection({
     const ok = await copyToClipboard(String(value ?? ""));
     if (!ok) return;
     setCopiedKey(key);
-    if (key === unlockKey) unlockGift("transfer");
+    // key = "<cuenta>:<campo>"; copiar la CLABE o el IBAN desbloquea el mensaje.
+    const field = String(key).split(":")[1];
+    if (field === "clabe" || field === "iban") unlockGift("transfer");
     window.setTimeout(
       () => setCopiedKey((current) => (current === key ? null : current)),
       1800
@@ -422,23 +406,31 @@ export default function GiftsSection({
         <div className="mjv3-gift-accordion" data-open="true">
           <div className="mjv3-gift-accordion-inner">
             <div>
-              <div className="mjv3-bank-card">
-                <div className="mjv3-bank-head">{bankTitle}</div>
-                {bankRows.map((row) => (
-                  <div className="mjv3-bank-row" key={row.key}>
-                    <div>
-                      <div className="mjv3-bank-label">{row.label}</div>
-                      <div className="mjv3-bank-value">{bank[row.key]}</div>
-                    </div>
-                    <button
-                      type="button"
-                      className="mjv3-copy-btn"
-                      data-copied={copiedKey === row.key ? "true" : "false"}
-                      aria-label={`Copiar ${row.label}`}
-                      onClick={() => doCopy(row.key, bank[row.key])}
-                    >
-                      {copiedKey === row.key ? "Copiado ✓" : "Copiar"}
-                    </button>
+              <div className="mjv3-bank-list">
+                {accounts.map((account) => (
+                  <div className="mjv3-bank-card" key={account.id}>
+                    <div className="mjv3-bank-head">{account.title}</div>
+                    {account.rows.map((row) => {
+                      const key = `${account.id}:${row.key}`;
+                      const value = account.data[row.key];
+                      return (
+                        <div className="mjv3-bank-row" key={key}>
+                          <div>
+                            <div className="mjv3-bank-label">{row.label}</div>
+                            <div className="mjv3-bank-value">{value}</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="mjv3-copy-btn"
+                            data-copied={copiedKey === key ? "true" : "false"}
+                            aria-label={`Copiar ${row.label} (${account.title})`}
+                            onClick={() => doCopy(key, value)}
+                          >
+                            {copiedKey === key ? "Copiado ✓" : "Copiar"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
