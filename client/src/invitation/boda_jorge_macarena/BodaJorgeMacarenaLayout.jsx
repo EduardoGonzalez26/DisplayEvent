@@ -75,7 +75,16 @@ function useStackedSheets(layoutKey) {
     if (sheets.length === 0) return undefined;
 
     const scroller = findScroller(root);
-    const sda = !reduce && !scroller && supportsScrollTimeline();
+    // Animaciones ligadas al scroll solo en móvil/táctil (allí quitaron la
+    // traba). En escritorio, Chrome mostraba destellos con hojas muy altas
+    // (Regalo); ahí se usa el motor por frame, fluido en un ordenador.
+    let touchOrNarrow = false;
+    try {
+      touchOrNarrow = !!window.matchMedia?.("(max-width: 900px), (pointer: coarse)").matches;
+    } catch {
+      /* noop */
+    }
+    const sda = !reduce && !scroller && touchOrNarrow && supportsScrollTimeline();
     if (sda) root.setAttribute("data-sda", "");
     for (const s of sheets) {
       if (s.paper) s.paper.style.setProperty("--mj-dir", String(s.dir));
