@@ -4116,7 +4116,7 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 }
 
 .mjv3-guest-status--saved {
-  color: var(--mj-ink);
+  color: #2f5d3a;
   font-weight: 600;
   animation: mjv3-range-in 0.3s ease both;
 }
