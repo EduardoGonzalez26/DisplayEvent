@@ -10,7 +10,6 @@ import {
   prettyTime,
 } from "../invitation/boda_jorge_macarena/helpers.js";
 import { extractInvitationToken } from "./invitationLink.js";
-import { isCustomDomainActive } from "../lib/publicDomain.js";
 import CoverSection from "../invitation/boda_jorge_macarena/v3/CoverSection.jsx";
 import StorySection from "../invitation/boda_jorge_macarena/v3/StorySection.jsx";
 import LocationSection from "../invitation/boda_jorge_macarena/v3/LocationSection.jsx";
@@ -315,7 +314,6 @@ export default function MacarenaJorgeCover() {
 
   const showTrip = !!cfg.trip?.enabled;
   const showStay = !!cfg.stay?.enabled;
-  const hideBrand = isCustomDomainActive(data?.public_config?.custom_domain);
 
   return (
     <div
@@ -406,7 +404,7 @@ export default function MacarenaJorgeCover() {
         style={{ minHeight: "auto" }}
       >
         <NazariFrame cover />
-        <ClosingSection event={event} cfg={cfg} hideBrand={hideBrand} />
+        <ClosingSection event={event} cfg={cfg} />
       </section>
 
       <div className="mjv3-grain" aria-hidden="true" />

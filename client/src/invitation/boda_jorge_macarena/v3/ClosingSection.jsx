@@ -4,7 +4,7 @@ import { displayNames, initialsOf, longDateLine, parseEventDate } from "../helpe
 
 const FALLBACK_DATE = "10 de junio de 2027";
 
-export default function ClosingSection({ event, cfg, hideBrand = false }) {
+export default function ClosingSection({ event, cfg }) {
   const names = displayNames(cfg);
   const initials = initialsOf(cfg);
   const left = initials[0] || "M";
@@ -46,7 +46,6 @@ export default function ClosingSection({ event, cfg, hideBrand = false }) {
         <span>Powered by</span>
         <img src={V3.webiLogo} alt="Webi" width="62" height="22" />
       </a>
-      {!hideBrand ? <p className="mjv3-displayevent">DisplayEvent</p> : null}
     </div>
   );
 }

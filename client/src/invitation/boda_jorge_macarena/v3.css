@@ -2613,16 +2613,6 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   width: auto;
 }
 
-.mjv3-displayevent {
-  margin: 0;
-  font-family: var(--mj-label);
-  font-stretch: 62.5%;
-  font-size: 9px;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--mj-author);
-}
-
 /* ------------------------------ Música ----------------------------- */
 
 .mjv3-music {

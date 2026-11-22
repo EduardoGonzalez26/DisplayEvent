@@ -315,7 +315,6 @@ export default function BodaJorgeMacarenaLayout({
   reveal = true,
   token,
   publishableKey,
-  hideBrand = false,
   paymentMethods = null,
 }) {
   // Tono mexicano en los textos generales del evento (ver v3/voice.js).
@@ -458,7 +457,7 @@ export default function BodaJorgeMacarenaLayout({
       )}
 
       <StackCardBare id="cierre" zIndex={zClosing}>
-        <ClosingSection event={event} cfg={cfg} hideBrand={hideBrand} />
+        <ClosingSection event={event} cfg={cfg} />
       </StackCardBare>
 
       {musicUrl ? (
