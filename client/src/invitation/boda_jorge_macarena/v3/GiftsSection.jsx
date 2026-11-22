@@ -91,6 +91,7 @@ export default function GiftsSection({
   const [paid, setPaid] = useState(false);
   const [status, setStatus] = useState(null);
   const checkoutRef = useRef(null);
+  const amountRef = useRef(null);
   const mountRef = useRef(null);
   const closeCheckoutRef = useRef(null);
 
@@ -211,11 +212,13 @@ export default function GiftsSection({
     unlockGift("card");
     if (linkMode) return;
     if (!Number.isFinite(activeAmount) || activeAmount <= 0) {
-      setError("Selecciona un monto para continuar.");
+      setError("Escribe el monto de tu regalo para continuar.");
+      amountRef.current?.focus();
       return;
     }
     if (activeAmount < min) {
-      setError(`El monto mínimo es ${formatAmount(currency, min)}.`);
+      setError(`El monto mínimo con tarjeta es ${formatAmount(currency, min)}.`);
+      amountRef.current?.focus();
       return;
     }
     if (!stripeReady) {
@@ -341,6 +344,7 @@ export default function GiftsSection({
               {CURRENCIES[currency].symbol}
             </span>
             <input
+              ref={amountRef}
               className="mjv3-amount-input"
               type="number"
               min={min}
@@ -394,6 +398,14 @@ export default function GiftsSection({
         {cardConfigured && !cardAvailable ? (
           <p className="mjv3-muted-note" style={{ textAlign: "center" }}>
             {cardUnavailableMessage}
+          </p>
+        ) : null}
+
+        {/* El aviso va junto al botón: abajo de la sección no se veía y
+            parecía que "Con tarjeta" no hacía nada. */}
+        {error ? (
+          <p className="mjv3-error" role="alert" style={{ textAlign: "center", margin: 0 }}>
+            {error}
           </p>
         ) : null}
 
@@ -537,7 +549,6 @@ export default function GiftsSection({
         )}
       </div>
 
-      {error ? <p className="mjv3-error">{error}</p> : null}
       {status === "success" ? (
         <p className="mjv3-gift-status">¡Gracias por tu regalo!</p>
       ) : status === "cancelled" ? (
