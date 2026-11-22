@@ -310,10 +310,24 @@ export function buildBusUrl(provider, { from, date } = {}) {
 
   let url = "";
   switch (key) {
-    case "alsa":
-      // Deep link de ruta; ALSA no recibe la fecha por query.
-      url = `https://www.alsa.es/autobuses/${encodeURIComponent(city)}-granada`;
+    case "alsa": {
+      // Búsqueda directa Madrid → Granada con fecha (verificado 2026-11-22:
+      // abre los horarios del día sin sesión previa). IDs de estación de
+      // ALSA: Madrid (todas las paradas) 90155, Granada (todas) 99084.
+      // Para otros orígenes se mantiene el enlace de ruta sin fecha.
+      if (city === "madrid") {
+        const [y, m, d] = day.split("-");
+        url =
+          "https://www.alsa.es/checkout?p_p_id=com_babel_alsa_espania_purchase_web_PurchasePortlet" +
+          "&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view" +
+          "&_com_babel_alsa_espania_purchase_web_PurchasePortlet_javax.portlet.action=SearchJourneysAction" +
+          `&originStationId=90155&destinationStationId=99084&departureDate=${d}%2F${m}%2F${y}` +
+          "&returnDate=&seats=1&promoCode=&youngPromoCode=&travelType=OUTWARD&employee=false&passengerType-1=1";
+      } else {
+        url = `https://www.alsa.es/autobuses/${encodeURIComponent(city)}-granada`;
+      }
       break;
+    }
     case "omio":
       url = `https://www.omio.es/autobuses/${encodeURIComponent(city)}/granada?date=${day}`;
       break;
@@ -363,8 +377,10 @@ export function buildModeLinks(mode, ctx = {}) {
       datesPrefilled = id === "omio" && !!url;
     } else if (key === "bus") {
       url = buildBusUrl(id, { from: ctx.from, date: ctx.date });
-      // Omio y FlixBus reciben la fecha en la URL; ALSA no.
-      datesPrefilled = (id === "omio" || id === "flixbus") && !!url;
+      // Omio, FlixBus y ALSA (desde Madrid) reciben la fecha en la URL.
+      datesPrefilled =
+        (id === "omio" || id === "flixbus" || (id === "alsa" && url.includes("departureDate="))) &&
+        !!url;
     }
 
     const href = safeHttpUrl(url);

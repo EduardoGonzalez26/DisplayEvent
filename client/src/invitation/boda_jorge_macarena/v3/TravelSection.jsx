@@ -17,9 +17,57 @@ const EXTRA_ORIGINS = [
   { code: "DEL", label: "Nueva Delhi – Indira Gandhi" },
 ];
 
+// Aerolíneas con enlace directo a resultados (verificado 2026-11-22: abren
+// la lista de vuelos con origen, destino y fechas ya puestos).
+function yyyymmdd(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  return m ? { y: m[1], m: m[2], d: m[3] } : null;
+}
+
+function iberiaUrl({ origin, destination, dateFrom, dateTo, adults }) {
+  const a = yyyymmdd(dateFrom);
+  const b = yyyymmdd(dateTo);
+  if (!a || !b) return "https://www.iberia.com/mx/";
+  const q = new URLSearchParams({
+    market: "MX",
+    language: "es",
+    appliesOMB: "false",
+    splitEndCity: "false",
+    initializedOMB: "true",
+    flexible: "true",
+    TRIP_TYPE: "2",
+    BEGIN_CITY_01: origin,
+    END_CITY_01: destination,
+    BEGIN_DAY_01: a.d,
+    BEGIN_MONTH_01: `${a.y}${a.m}`,
+    BEGIN_YEAR_01: a.y,
+    END_DAY_01: b.d,
+    END_MONTH_01: `${b.y}${b.m}`,
+    END_YEAR_01: b.y,
+    FARE_TYPE: "R",
+    ADT: String(adults || 1),
+    CHD: "0",
+    INF: "0",
+    BNN: "0",
+    YTH: "0",
+    YCD: "0",
+    BV_UseBVCookie: "no",
+    boton: "Buscar",
+    bookingMarket: "MX",
+  });
+  return `https://www.iberia.com/flights/?${q.toString()}#!/availability`;
+}
+
+function aeromexicoUrl({ origin, destination, dateFrom, dateTo, adults }) {
+  if (!yyyymmdd(dateFrom) || !yyyymmdd(dateTo)) return "https://www.aeromexico.com/es-mx";
+  // Tramos separados por punto (formato de los enlaces de Aeroméxico).
+  const itinerary = `${origin}_${destination}_${dateFrom}.${destination}_${origin}_${dateTo}`;
+  return `https://www.aeromexico.com/es-mx/reserva/opciones?itinerary=${itinerary}&leg=1&travelers=A${adults || 1}_C0_I0_PH0_PC0`;
+}
+
 const FLIGHT_EXTRA = [
-  { id: "iberia", label: "Iberia", url: "https://www.iberia.com/mx/" },
-  { id: "aeromexico", label: "Aeroméxico", url: "https://aeromexico.com/es-mx" },
+  { id: "iberia", label: "Iberia", build: iberiaUrl },
+  { id: "aeromexico", label: "Aeroméxico", build: aeromexicoUrl },
 ];
 
 const MODE_COPY = {
@@ -87,19 +135,18 @@ function TravelMode({ mode }) {
 function providerCards(mode, ctx, extras = []) {
   const links = buildModeLinks(mode, ctx);
   const seen = new Set(links.map((link) => link.id));
-  const selected = Array.isArray(ctx.providers) ? ctx.providers : null;
   const extraLinks = extras
     .filter((extra) => !seen.has(extra.id))
-    .filter((extra) => !selected || selected.includes(extra.id))
     .map((extra) => ({
       id: extra.id,
       label: extra.label,
-      url: safeHttpUrl(extra.url),
-      datesPrefilled: false,
-      note: "Selecciona la fecha en el proveedor.",
+      url: safeHttpUrl(extra.build(ctx)),
+      datesPrefilled: true,
+      note: "",
     }))
     .filter((extra) => extra.url);
-  return [...links, ...extraLinks];
+  // Aerolíneas primero (son las que más se usan), luego comparadores.
+  return [...extraLinks, ...links];
 }
 
 export default function TravelSection({ cfg }) {
@@ -141,7 +188,9 @@ export default function TravelSection({ cfg }) {
             from: arrival.code || "MAD",
             date: dateFrom,
             adults,
-            providers: Array.isArray(mode.providers) ? mode.providers : undefined,
+            // Todos los buscadores (la selección del evento dejaba solo
+            // algunos): aerolíneas, comparadores y autobuses.
+            providers: undefined,
           },
           key === "flight" ? FLIGHT_EXTRA : []
         );
