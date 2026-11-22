@@ -73,6 +73,7 @@ export default function GiftsSection({
   const [currency, setCurrency] = useState(() => detectCurrency());
   const [amount, setAmount] = useState("");
   const [copiedKey, setCopiedKey] = useState(null);
+  const [activeAccountId, setActiveAccountId] = useState(null);
   const [giftMessage, setGiftMessage] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [channel, setChannel] = useState("");
@@ -162,8 +163,12 @@ export default function GiftsSection({
 
   if (!registry.enabled) return null;
 
-  const accounts = buildBankAccounts(registry, currency);
-  const bankEnabled = accounts.length > 0;
+  const accounts = buildBankAccounts(registry);
+  const bankEnabled = accounts.some((account) => !account.pending);
+  const activeAccount =
+    accounts.find((account) => account.id === activeAccountId) ||
+    accounts.find((account) => account.currency === currency && !account.pending) ||
+    accounts[0];
 
   const min = Math.max(
     Number(registry[`min_${currency}`]) || 0,
@@ -406,13 +411,57 @@ export default function GiftsSection({
         <div className="mjv3-gift-accordion" data-open="true">
           <div className="mjv3-gift-accordion-inner">
             <div>
-              <div className="mjv3-bank-list">
-                {accounts.map((account) => (
-                  <div className="mjv3-bank-card" key={account.id}>
-                    <div className="mjv3-bank-head">{account.title}</div>
-                    {account.rows.map((row) => {
-                      const key = `${account.id}:${row.key}`;
-                      const value = account.data[row.key];
+              <div className="mjv3-bank-tabs" role="tablist" aria-label="Cuentas para transferencia">
+                {accounts.map((account) => {
+                  const selected = account.id === activeAccount?.id;
+                  return (
+                    <button
+                      key={account.id}
+                      type="button"
+                      role="tab"
+                      id={`mjv3-bank-tab-${account.id}`}
+                      aria-selected={selected}
+                      aria-controls="mjv3-bank-panel"
+                      tabIndex={selected ? 0 : -1}
+                      className="mjv3-bank-tab"
+                      onClick={() => setActiveAccountId(account.id)}
+                      onKeyDown={(event) => {
+                        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                        const index = accounts.findIndex((item) => item.id === account.id);
+                        const step = event.key === "ArrowRight" ? 1 : -1;
+                        const next = accounts[(index + step + accounts.length) % accounts.length];
+                        setActiveAccountId(next.id);
+                        document.getElementById(`mjv3-bank-tab-${next.id}`)?.focus();
+                      }}
+                    >
+                      <span className="mjv3-bank-tab-name">{account.tab}</span>
+                      <span className="mjv3-bank-tab-cur">{account.currency.toUpperCase()}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {activeAccount ? (
+                <div
+                  className="mjv3-bank-card"
+                  role="tabpanel"
+                  id="mjv3-bank-panel"
+                  aria-labelledby={`mjv3-bank-tab-${activeAccount.id}`}
+                >
+                  <div className="mjv3-bank-head">{activeAccount.subtitle}</div>
+                  {activeAccount.pending ? (
+                    <>
+                      <div className="mjv3-bank-row">
+                        <div>
+                          <div className="mjv3-bank-label">Titular</div>
+                          <div className="mjv3-bank-value">{activeAccount.data.holder}</div>
+                        </div>
+                      </div>
+                      <p className="mjv3-bank-pending">Datos bancarios próximamente.</p>
+                    </>
+                  ) : (
+                    activeAccount.rows.map((row) => {
+                      const key = `${activeAccount.id}:${row.key}`;
+                      const value = activeAccount.data[row.key];
                       return (
                         <div className="mjv3-bank-row" key={key}>
                           <div>
@@ -423,17 +472,17 @@ export default function GiftsSection({
                             type="button"
                             className="mjv3-copy-btn"
                             data-copied={copiedKey === key ? "true" : "false"}
-                            aria-label={`Copiar ${row.label} (${account.title})`}
+                            aria-label={`Copiar ${row.label} (${activeAccount.tab})`}
                             onClick={() => doCopy(key, value)}
                           >
                             {copiedKey === key ? "Copiado ✓" : "Copiar"}
                           </button>
                         </div>
                       );
-                    })}
-                  </div>
-                ))}
-              </div>
+                    })
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

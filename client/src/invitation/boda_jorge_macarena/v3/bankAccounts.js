@@ -49,40 +49,42 @@ function withRows(account) {
   return { ...account, rows };
 }
 
-// Devuelve las cuentas listas para pintar (solo las que tienen CLABE/IBAN),
-// con las de la moneda seleccionada primero (orden estable: Macarena es la 1).
-export function buildBankAccounts(registry = {}, currency = "mxn") {
+// Devuelve las tres cuentas en orden fijo (Macarena es la 1). Una cuenta
+// sin CLABE/IBAN llega con `pending: true`: su pestaña muestra el nombre
+// del titular y "Datos bancarios próximamente".
+export function buildBankAccounts(registry = {}) {
   const dbBank = registry.bank || {};
   const dbEur = registry.bank_eur || {};
   const eurFromEvent = !!dbEur.enabled && filled(dbEur.iban);
 
-  const accounts = [
+  return [
     {
       id: "macarena",
       currency: "mxn",
-      title: "Macarena · pesos mexicanos",
+      tab: "Macarena",
+      subtitle: "Pesos mexicanos · MXN",
       unlockKey: "clabe",
       data: MACARENA_MXN,
     },
     {
       id: "jorge",
       currency: "mxn",
-      title: "Jorge · pesos mexicanos",
+      tab: "Jorge",
+      subtitle: "Pesos mexicanos · MXN",
       unlockKey: "clabe",
       data: dbBank.enabled ? dbBank : {},
     },
     {
       id: "concepcion",
       currency: "eur",
-      title: "Desde España · euros",
+      tab: "Concepción",
+      subtitle: "Euros · EUR",
       unlockKey: "iban",
       data: eurFromEvent ? { ...CONCEPCION_EUR, ...dbEur } : CONCEPCION_EUR,
     },
   ]
     .map(withRows)
-    .filter((account) => filled(account.data[account.unlockKey]));
-
-  return accounts.sort(
-    (a, b) => (a.currency === currency ? 0 : 1) - (b.currency === currency ? 0 : 1)
-  );
+    .map((account) => ({ ...account, pending: !filled(account.data[account.unlockKey]) }))
+    // Jorge sin datos en el evento: no hay nada que mostrar, ni nombre.
+    .filter((account) => !account.pending || filled(account.data.holder));
 }
