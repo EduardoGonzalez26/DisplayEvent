@@ -206,7 +206,7 @@ function useStackedSheets(layoutKey) {
             const inRot = (1 - e) * 3.2 * dir;
             const inX = (1 - e) * 4 * dir;
             const outRot = -p * 1.6 * dir;
-            const sc = 1 - 0.08 * p;
+            const sc = 1; // sin escala (evita re-rasterizar hojas altas)
             const ty = -p * 2.5;
             tf = `translate3d(${inX}%, ${ty}%, 0) rotate(${(inRot + outRot).toFixed(
               3

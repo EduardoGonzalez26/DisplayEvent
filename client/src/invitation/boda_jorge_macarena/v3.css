@@ -514,13 +514,15 @@ html.de-envelope-fade {
   }
 }
 
+/* Salida sin `scale`: al cambiar de escala, Chrome de escritorio vuelve a
+   rasterizar la hoja a la nueva resolución y en hojas altas (Regalo) se
+   veía un destello al salir. Hundirse = subir, girar y oscurecer. */
 @keyframes mjv3-sheet-out {
   from {
-    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
   to {
-    transform: translate3d(0, -2.5%, 0) rotate(calc(var(--mj-dir, 1) * -1.6deg))
-      scale(0.92);
+    transform: translate3d(0, -2.5%, 0) rotate(calc(var(--mj-dir, 1) * -1.6deg));
   }
 }
 
@@ -4134,4 +4136,32 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   color: #2f5d3a;
   font-weight: 600;
   animation: mjv3-range-in 0.3s ease both;
+}
+
+
+/* Regalo: "Con transferencia" despliega las cuentas. */
+.mjv3-transfer-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mjv3-transfer-chevron {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s ease;
+}
+
+.mjv3-transfer-toggle[aria-expanded="true"] .mjv3-transfer-chevron {
+  transform: rotate(180deg);
+}
+
+.mjv3-gift-accordion[hidden] {
+  display: none;
 }

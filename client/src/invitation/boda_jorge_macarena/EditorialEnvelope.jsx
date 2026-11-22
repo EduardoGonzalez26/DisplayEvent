@@ -24,7 +24,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
   const reduced = useReducedMotion();
   const config = opening?.editorial || {};
   const kicker = config.kicker || "Una invitación para";
-  const letterKicker = config.letterKicker || "Nos casamos";
+  const letterKicker = config.letterKicker || "¡Nos casamos!";
   const hint = config.hint || "Toca para abrir";
 
   const names =

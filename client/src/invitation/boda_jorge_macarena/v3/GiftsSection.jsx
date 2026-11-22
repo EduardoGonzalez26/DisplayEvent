@@ -74,6 +74,8 @@ export default function GiftsSection({
   const [amount, setAmount] = useState("");
   const [copiedKey, setCopiedKey] = useState(null);
   const [activeAccountId, setActiveAccountId] = useState(null);
+  // Las cuentas se muestran solo al pulsar "Con transferencia".
+  const [transferOpen, setTransferOpen] = useState(false);
   const [giftMessage, setGiftMessage] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [channel, setChannel] = useState("");
@@ -303,7 +305,7 @@ export default function GiftsSection({
 
   const cardUnavailableMessage =
     `El pago con tarjeta no está disponible para ${CURRENCIES[currency].label} por ahora.` +
-    (bankEnabled ? " Puedes usar la transferencia bancaria." : "");
+    (bankEnabled ? " Puedes usar «Con transferencia»." : "");
 
   return (
     <div className="mjv3-stack mjv3-stack--gift">
@@ -353,16 +355,6 @@ export default function GiftsSection({
             />
           </span>
         </label>
-        <p
-          className="mjv3-muted-note"
-          style={{
-            gridColumn: "1 / -1",
-            textAlign: "center",
-            fontSize: 13,
-          }}
-        >
-          Monto mínimo {formatAmount(currency, min)}
-        </p>
       </div>
 
       <div className="mjv3-gift-actions">
@@ -385,7 +377,7 @@ export default function GiftsSection({
               }}
             >
               <CardIcon />
-              Pagar con tarjeta
+              Con tarjeta
             </a>
           ) : (
             <Button
@@ -394,7 +386,7 @@ export default function GiftsSection({
               disabled={paying || !stripeReady || !cardUsable || !cardAvailable}
             >
               <CardIcon />
-              {paying ? "Abriendo pago…" : "Pagar con tarjeta"}
+              {paying ? "Abriendo pago…" : "Con tarjeta"}
             </Button>
           )
         ) : null}
@@ -405,10 +397,29 @@ export default function GiftsSection({
           </p>
         ) : null}
 
+        {bankEnabled ? (
+          <button
+            type="button"
+            className="mjv3-btn mjv3-btn--outline mjv3-transfer-toggle"
+            aria-expanded={transferOpen}
+            aria-controls="mjv3-transfer-panel"
+            onClick={() => setTransferOpen((open) => !open)}
+          >
+            Con transferencia
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="mjv3-transfer-chevron">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
       {bankEnabled ? (
-        <div className="mjv3-gift-accordion" data-open="true">
+        <div
+          className="mjv3-gift-accordion"
+          id="mjv3-transfer-panel"
+          data-open={transferOpen ? "true" : "false"}
+          hidden={!transferOpen}
+        >
           <div className="mjv3-gift-accordion-inner">
             <div>
               <div className="mjv3-bank-tabs" role="tablist" aria-label="Cuentas para transferencia">

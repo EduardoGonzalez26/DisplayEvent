@@ -218,7 +218,7 @@ export const boda_jorge_macarena = {
     sealText: () => "&",
     editorial: {
       kicker: "Una invitación para",
-      letterKicker: "Nos casamos",
+      letterKicker: "¡Nos casamos!",
       hint: "Toca para abrir",
       familyPrefix: "la Familia",
       names: (cfg) => orderedNames(cfg).join(" & ") || "&",
@@ -227,7 +227,7 @@ export const boda_jorge_macarena = {
   },
   labels: {
     // Portada.
-    heroEyebrow: "Nos casamos",
+    heroEyebrow: "¡Nos casamos!",
     heroScroll: "Desliza",
 
     // Música (botón flotante).

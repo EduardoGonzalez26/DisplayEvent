@@ -36,7 +36,7 @@ export default function CoverSection({ event, cfg, drawing = null, reveal = true
     <div className="mjv3-cover">
       <div className="mjv3-cover-gradient" aria-hidden="true" />
       <div className={`mjv3-cover-content${reveal ? " is-revealed" : ""}`}>
-        <div className="mj-label mj-label--xl">Nos casamos</div>
+        <div className="mj-label mj-label--xl">¡Nos casamos!</div>
         <h1 className="mjv3-cover-title">
           <span>{first}</span>
           <span className="mjv3-cover-amp" aria-hidden="true">
