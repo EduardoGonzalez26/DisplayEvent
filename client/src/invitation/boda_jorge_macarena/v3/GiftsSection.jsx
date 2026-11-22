@@ -466,7 +466,9 @@ export default function GiftsSection({
                         <div className="mjv3-bank-row" key={key}>
                           <div>
                             <div className="mjv3-bank-label">{row.label}</div>
-                            <div className="mjv3-bank-value">{value}</div>
+                            <div className="mjv3-bank-value">
+                              {row.format ? row.format(value) : value}
+                            </div>
                           </div>
                           <button
                             type="button"

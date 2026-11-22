@@ -5,8 +5,8 @@
    - Concepción Collado González (EUR): `registry.bank_eur` del evento si
      está activa y con IBAN; si no, los datos de aquí abajo.
 
-   PENDIENTE: completar los datos de Concepción. Mientras
-   una cuenta no tenga CLABE/IBAN no se muestra en la invitación.
+   Una cuenta sin CLABE/IBAN muestra solo el titular y "Datos bancarios
+   próximamente".
 ------------------------------------------------------------------- */
 
 const MACARENA_MXN = {
@@ -18,10 +18,10 @@ const MACARENA_MXN = {
 };
 
 const CONCEPCION_EUR = {
-  bank_name: "", // TODO: banco
-  holder: "Concepción Collado González",
-  iban: "", // TODO: IBAN (ES…)
-  swift: "", // TODO: BIC/SWIFT (opcional, útil desde México)
+  bank_name: "Santander",
+  holder: "María Concepción Collado González",
+  iban: "ES6400494947172393429549",
+  swift: "BSCHESMMXXX",
   concept: "Regalo Jorge Macarena",
 };
 
@@ -36,7 +36,8 @@ const MXN_FIELDS = [
 const EUR_FIELDS = [
   { key: "bank_name", label: "Banco" },
   { key: "holder", label: "Titular" },
-  { key: "iban", label: "IBAN" },
+  // Se copia sin espacios; se muestra en bloques de 4 para leerlo mejor.
+  { key: "iban", label: "IBAN", format: (v) => String(v).replace(/\s+/g, "").replace(/(.{4})/g, "$1 ").trim() },
   { key: "swift", label: "BIC / SWIFT" },
   { key: "concept", label: "Concepto" },
 ];
