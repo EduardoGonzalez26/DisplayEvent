@@ -39,7 +39,7 @@ export const DEFAULT_RECOMMENDATIONS = [
   {
     icon: "stay",
     title: "Alojamiento",
-    text: "Les recomendamos hospedarse en el Albaicín o sus alrededores: estarán a un paseo de la iglesia y del Carmen.",
+    text: "Les recomendamos hospedarse en el Albaicín bajo o sus alrededores: estarán a un paseo de la iglesia y del Carmen.",
   },
 ];
 

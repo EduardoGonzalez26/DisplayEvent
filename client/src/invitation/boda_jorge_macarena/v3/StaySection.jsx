@@ -10,7 +10,7 @@ import {
 } from "./index.js";
 
 const DEFAULT_INTRO =
-  "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.";
+  "Granada se disfruta sin prisa. Les recomendamos el Albaicín bajo y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.";
 const DEFAULT_CHECKIN = "2027-06-08";
 const DEFAULT_CHECKOUT = "2027-06-12";
 // Zona sugerida (fija en la plantilla): Albaicín bajo, de San Nicolás a
@@ -44,7 +44,7 @@ function hotelPhoto(name) {
 }
 
 const DEFAULT_CARDS = [
-  { id: "booking", platform: "booking", title: "Booking.com", description: "Hoteles, apartamentos y casas en el Albaicín y alrededores.", url: "", auto: true },
+  { id: "booking", platform: "booking", title: "Booking.com", description: "Hoteles, apartamentos y casas en el Albaicín bajo y alrededores.", url: "", auto: true },
   { id: "airbnb", platform: "airbnb", title: "Airbnb", description: "Alojamientos completos y habitaciones en Granada.", url: "", auto: true },
   { id: "google_hotels", platform: "google_hotels", title: "Google Hotels", description: "Busca hoteles y compara opciones cerca de la zona.", url: "", auto: true },
 ];

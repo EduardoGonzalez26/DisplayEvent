@@ -54,10 +54,19 @@ export function toMexican(text) {
   return RULES.reduce((acc, [re, to]) => acc.replace(re, to), text);
 }
 
-function mapStrings(obj, keys) {
+// Zona recomendada para hospedarse: el Albaicín *bajo* (no todo el barrio).
+// Solo en textos de hospedaje/recomendaciones; "Albaicín bajo" no se duplica.
+const LOWER_ALBAICIN = /(?<!\p{L})(el|del) Albaicín(?! bajo)(?!\p{L})/gu;
+
+export function lowerAlbaicin(text) {
+  if (typeof text !== "string" || !text) return text;
+  return text.replace(LOWER_ALBAICIN, "$1 Albaicín bajo");
+}
+
+function mapStrings(obj, keys, fn = toMexican) {
   const out = { ...obj };
   for (const key of keys) {
-    if (typeof obj[key] === "string") out[key] = toMexican(obj[key]);
+    if (typeof obj[key] === "string") out[key] = fn(obj[key]);
   }
   return out;
 }
@@ -76,7 +85,7 @@ export function mexicanizeCfg(cfg) {
       items: Array.isArray(cfg.recommendations.items)
         ? cfg.recommendations.items.map((item) =>
             item && typeof item === "object"
-              ? mapStrings(item, ["title", "text"])
+              ? mapStrings(item, ["title", "text"], (t) => lowerAlbaicin(toMexican(t)))
               : item
           )
         : cfg.recommendations.items,
@@ -85,11 +94,11 @@ export function mexicanizeCfg(cfg) {
   if (cfg.stay && typeof cfg.stay === "object") {
     next.stay = {
       ...cfg.stay,
-      ...mapStrings(cfg.stay, ["intro"]),
+      ...mapStrings(cfg.stay, ["intro"], (t) => lowerAlbaicin(toMexican(t))),
       cards: Array.isArray(cfg.stay.cards)
         ? cfg.stay.cards.map((card) =>
             card && typeof card === "object"
-              ? mapStrings(card, ["description"])
+              ? mapStrings(card, ["description"], (t) => lowerAlbaicin(toMexican(t)))
               : card
           )
         : cfg.stay.cards,

@@ -54,7 +54,7 @@ const RECOMMENDATIONS = [
   {
     icon: "stay",
     title: "Alojamiento",
-    text: "Les recomendamos hospedarse en el Albaicín o sus alrededores: estarán a un paseo de la iglesia y del Carmen.",
+    text: "Les recomendamos hospedarse en el Albaicín bajo o sus alrededores: estarán a un paseo de la iglesia y del Carmen.",
   },
 ];
 
@@ -103,7 +103,7 @@ const LODGING = [
 const STAY = {
   enabled: true,
   intro:
-    "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.",
+    "Granada se disfruta sin prisa. Les recomendamos el Albaicín bajo y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.",
   zone: {
     lat: 37.18046,
     lng: -3.59048,
@@ -117,7 +117,7 @@ const STAY = {
       id: "booking",
       platform: "booking",
       title: "Booking.com",
-      description: "Hoteles, apartamentos y casas en el Albaicín y alrededores.",
+      description: "Hoteles, apartamentos y casas en el Albaicín bajo y alrededores.",
       url: "",
       auto: true,
     },
