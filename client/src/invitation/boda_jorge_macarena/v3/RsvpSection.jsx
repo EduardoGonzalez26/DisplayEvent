@@ -64,6 +64,53 @@ function buildAgeSelections(guests, ranges) {
   return map;
 }
 
+/* Borrador de la confirmación en el dispositivo: cada selección se guarda
+   al momento y se recupera al volver a abrir la invitación (aunque solo se
+   haya contestado por 1 de varios pases). Al confirmar se borra. */
+const DRAFT_PREFIX = "mj:rsvp-draft:";
+
+function readDraft(token) {
+  if (!token) return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_PREFIX + token);
+    const data = raw ? JSON.parse(raw) : null;
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(token, data) {
+  if (!token) return;
+  try {
+    window.localStorage.setItem(DRAFT_PREFIX + token, JSON.stringify(data));
+  } catch {
+    /* sin almacenamiento: no se guarda el borrador */
+  }
+}
+
+function clearDraft(token) {
+  if (!token) return;
+  try {
+    window.localStorage.removeItem(DRAFT_PREFIX + token);
+  } catch {
+    /* noop */
+  }
+}
+
+// Aplica los valores del borrador sobre los del servidor, solo para los
+// pases que siguen en el grupo.
+function withDraft(base, draftMap, guests) {
+  if (!draftMap || typeof draftMap !== "object") return base;
+  const out = { ...base };
+  for (const guest of guests) {
+    if (Object.prototype.hasOwnProperty.call(draftMap, guest.id)) {
+      out[guest.id] = draftMap[guest.id];
+    }
+  }
+  return out;
+}
+
 function pad2(value) {
   return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
 }
@@ -136,11 +183,21 @@ export default function RsvpSection({ rsvp }) {
     }
   })();
 
-  const [answers, setAnswers] = useState(() => buildAnswers(guests));
-  const [allergies, setAllergies] = useState(() => buildAllergies(guests));
-  const [allergyText, setAllergyText] = useState(() => buildAllergyText(guests));
+  // Ya confirmado en el servidor: manda lo del servidor. Si no, se recupera
+  // el borrador guardado en este dispositivo.
+  const serverAnswered = attending > 0 || declining > 0;
+  const draft = !preview && !serverAnswered ? readDraft(token) : null;
+  const [answers, setAnswers] = useState(() =>
+    withDraft(buildAnswers(guests), draft?.answers, guests)
+  );
+  const [allergies, setAllergies] = useState(() =>
+    withDraft(buildAllergies(guests), draft?.allergies, guests)
+  );
+  const [allergyText, setAllergyText] = useState(() =>
+    withDraft(buildAllergyText(guests), draft?.allergyText, guests)
+  );
   const [ageSelections, setAgeSelections] = useState(() =>
-    buildAgeSelections(guests, ageRangesList)
+    withDraft(buildAgeSelections(guests, ageRangesList), draft?.ageSelections, guests)
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -152,11 +209,27 @@ export default function RsvpSection({ rsvp }) {
   const justSubmittedRef = useRef(false);
 
   useEffect(() => {
-    setAnswers(buildAnswers(guests));
-    setAllergies(buildAllergies(guests));
-    setAllergyText(buildAllergyText(guests));
-    setAgeSelections(buildAgeSelections(guests, ageRangesList));
-  }, [guests, ageRangesKey]);
+    const saved = !preview && !(attending > 0 || declining > 0) ? readDraft(token) : null;
+    setAnswers(withDraft(buildAnswers(guests), saved?.answers, guests));
+    setAllergies(withDraft(buildAllergies(guests), saved?.allergies, guests));
+    setAllergyText(withDraft(buildAllergyText(guests), saved?.allergyText, guests));
+    setAgeSelections(
+      withDraft(buildAgeSelections(guests, ageRangesList), saved?.ageSelections, guests)
+    );
+  }, [guests, ageRangesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cada selección se guarda al momento (mientras no esté confirmado o se
+  // esté editando una confirmación).
+  useEffect(() => {
+    if (preview || !token) return;
+    if (submitted && !editing) return;
+    const touched =
+      Object.keys(answers).length > 0 ||
+      Object.values(allergies).some((v) => typeof v === "boolean") ||
+      Object.values(ageSelections).some(Boolean);
+    if (!touched) return;
+    writeDraft(token, { answers, allergies, allergyText, ageSelections, t: Date.now() });
+  }, [answers, allergies, allergyText, ageSelections, preview, token, submitted, editing]);
 
   useEffect(() => {
     const hasAnswer = attending > 0 || declining > 0;
@@ -287,6 +360,7 @@ export default function RsvpSection({ rsvp }) {
         })),
         note,
       });
+      clearDraft(token);
       setSubmitted(true);
       setEditing(false);
       runEnvelope();

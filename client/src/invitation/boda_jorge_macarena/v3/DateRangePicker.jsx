@@ -58,6 +58,7 @@ export default function DateRangePicker({
   startLabel = "Llegada",
   endLabel = "Salida",
   unit = "noche",
+  cta = "Seleccionar noches",
 }) {
   const startDate = parseISO(start);
   const endDate = parseISO(end);
@@ -159,11 +160,17 @@ export default function DateRangePicker({
           <span className="mjv3-field-label">{endLabel}</span>
           <span className="mjv3-range-date">{shortLabel(endDate)}</span>
         </span>
-        {nights > 0 ? (
-          <span className="mjv3-range-nights">
-            {nights} {unitLabel}
+        <span className="mjv3-range-foot">
+          {nights > 0 ? (
+            <span className="mjv3-range-nights">
+              {nights} {unitLabel}
+            </span>
+          ) : null}
+          <span className="mjv3-range-cta">
+            {cta}
+            <span aria-hidden="true"> →</span>
           </span>
-        ) : null}
+        </span>
       </button>
 
       {open ? (

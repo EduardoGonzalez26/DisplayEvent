@@ -11,6 +11,12 @@ const DEFAULT_DATE_TO = "2027-06-12";
 const DEFAULT_INTRO =
   "Si venís desde México, aquí tenéis las mejores opciones para llegar a Granada. Elegid vuestra ciudad de salida y las fechas: los buscadores se actualizan solos.";
 
+const EXTRA_ORIGINS = [
+  { code: "MXP", label: "Milán – Malpensa" },
+  { code: "YYZ", label: "Toronto – Pearson" },
+  { code: "DEL", label: "Nueva Delhi – Indira Gandhi" },
+];
+
 const FLIGHT_EXTRA = [
   { id: "iberia", label: "Iberia", url: "https://www.iberia.com/mx/" },
   { id: "aeromexico", label: "Aeroméxico", url: "https://aeromexico.com/es-mx" },
@@ -99,11 +105,16 @@ function providerCards(mode, ctx, extras = []) {
 export default function TravelSection({ cfg }) {
   const trip = cfg?.trip || {};
   const origins = Array.isArray(trip.origins) ? trip.origins : [];
+  // Ciudades de salida: las del evento + las de invitados de otros países.
+  const originList = [...(origins.length ? origins : [{ code: "MEX", label: "CDMX – Benito Juárez" }])];
+  for (const extra of EXTRA_ORIGINS) {
+    if (!originList.some((place) => place.code === extra.code)) originList.push(extra);
+  }
   // Decisión v3: la llegada a España está fijada en Madrid.
   const arrival = { code: "MAD", label: "Madrid" };
   const adults = Math.max(1, Number(trip.adults) || 1);
 
-  const [origin, setOrigin] = useState(() => origins[0]?.code || "MEX");
+  const [origin, setOrigin] = useState(() => originList[0]?.code || "MEX");
   const [dateFrom, setDateFrom] = useState(
     () => DEFAULT_DATE_FROM
   );
@@ -166,33 +177,31 @@ export default function TravelSection({ cfg }) {
       </p>
 
       <div className="mjv3-travel-card">
-        <div className="mjv3-travel-row">
-          <span className="mj-label mj-label--md">Ciudad de llegada</span>
-          <span className="mjv3-arrival">{arrival.label || "Madrid"}</span>
-          <span className="mj-label mj-label--md mjv3-adults">
-            {adults === 1 ? "1 adulto" : `${adults} adultos`}
-          </span>
-        </div>
-
-        <div className="mjv3-travel-fields">
-          <label>
-            <span className="mjv3-field-label">Ciudad de salida</span>
+        <div className="mjv3-route-row">
+          <label className="mjv3-route-from">
+            <span className="mjv3-field-label"><span className="mjv3-lbl-long">Ciudad de </span>salida</span>
             <select
               className="mjv3-field"
               value={origin}
               onChange={(event) => setOrigin(event.target.value)}
             >
-              {origins.length ? (
-                origins.map((place) => (
-                  <option key={place.code} value={place.code}>
-                    {place.label || place.code}
-                  </option>
-                ))
-              ) : (
-                <option value="MEX">CDMX – Benito Juárez</option>
-              )}
+              {originList.map((place) => (
+                <option key={place.code} value={place.code}>
+                  {place.label || place.code}
+                </option>
+              ))}
             </select>
           </label>
+          <span className="mjv3-route-arrow" aria-hidden="true">
+            →
+          </span>
+          <div className="mjv3-route-to">
+            <span className="mjv3-field-label"><span className="mjv3-lbl-long">Ciudad de </span>llegada</span>
+            <span className="mjv3-route-city">{arrival.label || "Madrid"}</span>
+          </div>
+        </div>
+
+        <div className="mjv3-travel-fields">
           <DateRangePicker
             start={dateFrom}
             end={dateTo}

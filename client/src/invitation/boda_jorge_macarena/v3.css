@@ -3810,9 +3810,6 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 
 .mjv3-range-part .mjv3-field-label {
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .mjv3-range-date {
@@ -3828,9 +3825,32 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   padding-top: 18px;
 }
 
-.mjv3-range-nights {
+.mjv3-range-foot {
   grid-column: 1 / -1;
-  justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mjv3-range-cta {
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mj-ink);
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+
+.mjv3-range[data-open="true"] .mjv3-range-cta {
+  visibility: hidden;
+}
+
+.mjv3-range-nights {
   padding: 3px 10px;
   border-radius: 999px;
   background: #f1efeb;
@@ -4137,36 +4157,57 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 }
 
 
-/* Aviso de versión nueva (solo si el invitado estaba a media acción). */
-.mjv3-update-toast {
-  position: fixed;
-  left: 50%;
-  bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 120;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
+/* Viaje: ciudad de salida → ciudad de llegada en un renglón. */
+.mjv3-route-row {
+  display: flex;
+  align-items: flex-end;
   gap: 12px;
-  min-height: 44px;
-  padding: 0 8px 0 18px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--mj-ink);
-  color: #f7f6f3;
-  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6);
-  font-family: var(--mj-label);
-  font-stretch: 62.5%;
-  font-size: 14px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  animation: mjv3-range-in 0.3s ease both;
 }
 
-.mjv3-update-toast-cta {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #f7f6f3;
-  color: var(--mj-ink);
+.mjv3-route-from {
+  flex: 1 1 62%;
+  min-width: 0;
+  display: block;
+}
+
+.mjv3-route-arrow {
+  flex: none;
+  padding-bottom: 14px;
+  font-size: 20px;
+  color: var(--mj-accent);
+}
+
+.mjv3-route-to {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 34%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mjv3-route-city {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  font-family: var(--mj-serif);
+  font-size: 21px;
   font-weight: 600;
+  color: var(--mj-ink);
+}
+
+/* "Ciudad de salida" → "Salida" en móvil (la flecha ya da el sentido). */
+.mjv3-route-row .mjv3-field-label::first-letter {
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .mjv3-route-row .mjv3-lbl-long {
+    display: none;
+  }
+  .mjv3-route-row {
+    gap: 8px;
+  }
+  .mjv3-route-city {
+    font-size: 18px;
+  }
 }
