@@ -6,7 +6,7 @@ import { buildModeLinks, safeHttpUrl } from "../../../wedding/stayTravelLinks.js
 const DEFAULT_DATE_FROM = "2027-06-08";
 const DEFAULT_DATE_TO = "2027-06-12";
 const DEFAULT_INTRO =
-  "Si vienen desde México, aquí tienen las mejores opciones para llegar a Granada. Elijan su ciudad de salida y las fechas: los buscadores se actualizan solos.";
+  "Si venís desde México, aquí tenéis las mejores opciones para llegar a Granada. Elegid vuestra ciudad de salida y las fechas: los buscadores se actualizan solos.";
 
 const FLIGHT_EXTRA = [
   { id: "iberia", label: "Iberia", url: "https://www.iberia.com/mx/" },

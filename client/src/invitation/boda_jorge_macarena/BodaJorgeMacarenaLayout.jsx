@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import CoverSection from "./v3/CoverSection.jsx";
 import StorySection from "./v3/StorySection.jsx";
 import IcebreakerSection from "./v3/IcebreakerSection.jsx";
@@ -13,6 +13,7 @@ import ClosingSection from "./v3/ClosingSection.jsx";
 import MusicToggle from "./MusicToggle.jsx";
 import { NazariFrame, useV3Reveal } from "./v3/index.js";
 import { V3 } from "./v3/assets.js";
+import { mexicanizeCfg } from "./v3/voice.js";
 import "./v3.css";
 
 /* ------------------------------------------------------------------
@@ -308,7 +309,7 @@ function StackCardBare({ id, zIndex, children }) {
 export default function BodaJorgeMacarenaLayout({
   event,
   family,
-  cfg,
+  cfg: rawCfg,
   theme,
   rsvp,
   reveal = true,
@@ -317,6 +318,8 @@ export default function BodaJorgeMacarenaLayout({
   hideBrand = false,
   paymentMethods = null,
 }) {
+  // Tono mexicano en los textos generales del evento (ver v3/voice.js).
+  const cfg = useMemo(() => mexicanizeCfg(rawCfg), [rawCfg]);
   const locations = (cfg?.locations || []).filter(
     (item) => item && (String(item.label || "").trim() || String(item.place || "").trim())
   );

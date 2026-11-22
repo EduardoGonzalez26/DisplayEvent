@@ -154,7 +154,7 @@ const STAY = {
 const TRIP = {
   enabled: true,
   intro:
-    "Si vienen desde México, aquí tienen las mejores opciones para llegar a Granada. Elijan su ciudad de salida y las fechas: los buscadores se actualizan solos.",
+    "Si venís desde México, aquí tenéis las mejores opciones para llegar a Granada. Elegid vuestra ciudad de salida y las fechas: los buscadores se actualizan solos.",
   origins: [
     { code: "MEX", label: "CDMX – Benito Juárez" },
     { code: "NLU", label: "CDMX – AIFA" },

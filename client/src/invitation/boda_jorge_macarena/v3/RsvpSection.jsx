@@ -94,10 +94,10 @@ function deadlineLabel(ms) {
   }
 }
 
+// Nombre del grupo tal cual se capturó: no todos los invitados son una
+// familia, así que nunca se antepone "Familia".
 function familyLabelOf(family) {
-  const value = String(family || "").trim();
-  if (!value) return "Familia";
-  return /^familia\b/i.test(value) ? value : `Familia ${value}`;
+  return String(family || "").trim();
 }
 
 function isFamilyGroup(guests) {
@@ -372,7 +372,9 @@ export default function RsvpSection({ rsvp }) {
               transform: tStage >= 4 ? "translateY(0)" : "translateY(10px)",
             }}
           >
-            <h2 className="mjv3-sent-title">¡Gracias, {familyLabel}!</h2>
+            <h2 className="mjv3-sent-title">
+              {familyLabel ? `¡Gracias, ${familyLabel}!` : "¡Gracias!"}
+            </h2>
             <p className="mj-copy mjv3-rsvp-help" style={{ fontStyle: "normal" }}>
               {thanksLine}
             </p>
@@ -417,7 +419,9 @@ export default function RsvpSection({ rsvp }) {
           <OrnamentRule />
           <h2 className="mj-display mj-display--sm">Confirma tu asistencia</h2>
           <p className="mjv3-rsvp-family">
-            {familyLabel}, cuéntennos quiénes podrán acompañarnos.
+            {familyLabel
+              ? `${familyLabel}, cuéntennos quiénes podrán acompañarnos.`
+              : "Cuéntennos quiénes podrán acompañarnos."}
           </p>
           <p className="mjv3-rsvp-help">{deadlineText}</p>
 
