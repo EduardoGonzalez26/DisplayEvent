@@ -1,19 +1,19 @@
 /* ------------------------------------------------------------------
    Cuentas para transferencia (Regalo). Tres cuentas:
+   - Macarena (MXN, cuenta 1): datos aquí abajo.
    - Jorge (MXN): viene del evento (`registry.bank`, editable en el panel).
-   - Macarena (MXN): datos aquí abajo.
    - Concepción Collado González (EUR): `registry.bank_eur` del evento si
      está activa y con IBAN; si no, los datos de aquí abajo.
 
-   PENDIENTE: completar los datos de Macarena y de Concepción. Mientras
+   PENDIENTE: completar los datos de Concepción. Mientras
    una cuenta no tenga CLABE/IBAN no se muestra en la invitación.
 ------------------------------------------------------------------- */
 
 const MACARENA_MXN = {
-  bank_name: "", // TODO: banco
-  holder: "", // TODO: titular (nombre completo)
-  account_number: "", // TODO: número de cuenta (opcional)
-  clabe: "", // TODO: CLABE (18 dígitos)
+  bank_name: "BBVA",
+  holder: "Macarena García Collado",
+  account_number: "1594053136",
+  clabe: "012180015940531367",
   concept: "Regalo Jorge Macarena",
 };
 
@@ -50,7 +50,7 @@ function withRows(account) {
 }
 
 // Devuelve las cuentas listas para pintar (solo las que tienen CLABE/IBAN),
-// con las de la moneda seleccionada primero.
+// con las de la moneda seleccionada primero (orden estable: Macarena es la 1).
 export function buildBankAccounts(registry = {}, currency = "mxn") {
   const dbBank = registry.bank || {};
   const dbEur = registry.bank_eur || {};
@@ -58,18 +58,18 @@ export function buildBankAccounts(registry = {}, currency = "mxn") {
 
   const accounts = [
     {
-      id: "jorge",
-      currency: "mxn",
-      title: "Jorge · pesos mexicanos",
-      unlockKey: "clabe",
-      data: dbBank.enabled ? dbBank : {},
-    },
-    {
       id: "macarena",
       currency: "mxn",
       title: "Macarena · pesos mexicanos",
       unlockKey: "clabe",
       data: MACARENA_MXN,
+    },
+    {
+      id: "jorge",
+      currency: "mxn",
+      title: "Jorge · pesos mexicanos",
+      unlockKey: "clabe",
+      data: dbBank.enabled ? dbBank : {},
     },
     {
       id: "concepcion",
