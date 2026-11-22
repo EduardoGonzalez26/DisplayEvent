@@ -79,6 +79,13 @@ function SearchIcon() {
   );
 }
 
+function pairLines(text) {
+  const lines = String(text || "").split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < lines.length; i += 2) out.push(lines.slice(i, i + 2).join(" "));
+  return out;
+}
+
 /* Grupo (siempre desplegado). */
 function StayGroup({ title, icon, children }) {
   return (
@@ -269,8 +276,15 @@ export default function StaySection({ cfg }) {
       </div>
 
       <figure className="mjv3-quote">
-        <blockquote>{quote}</blockquote>
-        <figcaption>{quoteAuthor}</figcaption>
+        {/* Versos de dos en dos: la cita queda más horizontal y legible. */}
+        <blockquote>
+          {pairLines(quote).map((line) => (
+            <span key={line} className="mjv3-quote-line">
+              {line}
+            </span>
+          ))}
+        </blockquote>
+        <figcaption>— {quoteAuthor}</figcaption>
       </figure>
     </div>
   );

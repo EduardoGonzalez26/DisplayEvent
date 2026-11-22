@@ -170,6 +170,14 @@ export function Drawing({
       >
         {children}
       </div>
+      {/* Trazos que "dibujan" la foto: tiras de papel que se apartan
+          (transform = compositor, sin repintar en cada frame). */}
+      <span className="mj-hatch" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
     </div>
   );
 }

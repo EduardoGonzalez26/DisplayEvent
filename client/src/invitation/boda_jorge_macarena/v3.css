@@ -1942,8 +1942,9 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 }
 
 .mjv3-quote {
-  margin: 22px 0 0;
-  max-width: 420px;
+  margin: 26px 0 0;
+  width: 100%;
+  max-width: 760px;
   text-align: center;
 }
 
@@ -1951,15 +1952,20 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   margin: 0;
   font-family: var(--mj-serif-alt);
   font-style: italic;
-  font-weight: 400;
-  font-size: 21px;
-  line-height: 1.5;
-  color: var(--mj-quote);
-  white-space: pre-line;
+  font-weight: 500;
+  font-size: 23px;
+  line-height: 1.45;
+  color: var(--mj-body);
+}
+
+.mjv3-quote-line {
+  display: block;
 }
 
 .mjv3-quote figcaption {
-  margin-top: 10px;
+  margin-top: 12px;
+  text-align: right;
+  color: var(--mj-ink) !important;
   font-family: var(--mj-label);
   font-stretch: 62.5%;
   font-size: 13px;
@@ -3144,18 +3150,34 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   padding: 56px clamp(18px, 4vw, 40px) 36px;
 }
 
+/* Fija en la esquina de la pantalla: el modal hace scroll y la X se perdía. */
 .mjv3-ideas-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 44px;
-  height: 44px;
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: 14px;
+  z-index: 160;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
-  background: transparent;
-  font-size: 28px;
+  border-radius: 50%;
+  background: var(--mj-ink);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+  font-size: 30px;
   line-height: 1;
-  color: var(--mj-ink);
+  color: #f7f6f3;
   cursor: pointer;
+}
+
+.mjv3-ideas-close:hover {
+  background: #3f4246;
+}
+
+.mjv3-ideas-close:focus-visible {
+  outline: 2px solid var(--mj-ink);
+  outline-offset: 3px;
 }
 
 .mjv3-ideas-head {
@@ -3499,266 +3521,119 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 
 
 /* ------------- Fotos: efecto "irse dibujando" por partes -------------
-   Cuatro trazos tipo sombreado a lápiz, alternando dirección (→ ← → ←) y
-   escalonados, descubren la foto ya en color en ~1.3 s. Es una máscara de
-   cuatro capas que solo existe mientras dura la animación (`backwards`):
-   al terminar no queda máscara aplicada. La portada espera a que se abra
-   el sobre. */
-@keyframes mjv3-draw-hatch {
-  0% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 100.0% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 100.0% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
+   Cuatro tiras de papel (→ ← → ←) se apartan escalonadas y descubren la
+   foto en ~1.3 s. Solo `transform` (compositor): antes era una máscara
+   animada que se repintaba en cada frame y trababa el scroll en las hojas
+   con fotos grandes (Cierre). La portada espera a que se abra el sobre. */
+[data-invitation-theme="boda_jorge_macarena"] [data-foto] {
+  position: relative;
+}
+
+.mj-hatch {
+  position: absolute;
+  inset: -2px;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mj-hatch i {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 26%;
+  background-color: #f5f4f1;
+  background-image: url("/invitations/macarena-jorge-v3/tex/paper-grain-fixed.webp");
+  background-size: 220px 220px;
+}
+
+.mj-hatch i:nth-child(1) {
+  top: 0;
+}
+.mj-hatch i:nth-child(2) {
+  top: 25%;
+}
+.mj-hatch i:nth-child(3) {
+  top: 50%;
+}
+.mj-hatch i:nth-child(4) {
+  top: 75%;
+}
+
+@keyframes mjv3-hatch-right {
+  from {
+    transform: translate3d(0, 0, 0);
   }
-  5% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 75.1% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 75.1% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
+  99% {
+    visibility: visible;
   }
-  10% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 54.8% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 54.8% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  }
-  15% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 38.5% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 38.5% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  }
-  20% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 25.8% 0%, 24.9% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 25.8% 0%, 24.9% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  }
-  25% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 16.2% 0%, 45.2% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 16.2% 0%, 45.2% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  }
-  30% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 9.4% 0%, 61.5% 33.333%, 100.0% 66.667%, 0.0% 100%;
-    mask-position: 9.4% 0%, 61.5% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  }
-  35% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 4.8% 0%, 74.2% 33.333%, 75.1% 66.667%, 0.0% 100%;
-    mask-position: 4.8% 0%, 74.2% 33.333%, 75.1% 66.667%, 0.0% 100%;
-  }
-  40% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 2.0% 0%, 83.8% 33.333%, 54.8% 66.667%, 0.0% 100%;
-    mask-position: 2.0% 0%, 83.8% 33.333%, 54.8% 66.667%, 0.0% 100%;
-  }
-  45% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.6% 0%, 90.6% 33.333%, 38.5% 66.667%, 0.0% 100%;
-    mask-position: 0.6% 0%, 90.6% 33.333%, 38.5% 66.667%, 0.0% 100%;
-  }
-  50% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.1% 0%, 95.2% 33.333%, 25.8% 66.667%, 24.9% 100%;
-    mask-position: 0.1% 0%, 95.2% 33.333%, 25.8% 66.667%, 24.9% 100%;
-  }
-  55% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 98.0% 33.333%, 16.2% 66.667%, 45.2% 100%;
-    mask-position: 0.0% 0%, 98.0% 33.333%, 16.2% 66.667%, 45.2% 100%;
-  }
-  60% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 99.4% 33.333%, 9.4% 66.667%, 61.5% 100%;
-    mask-position: 0.0% 0%, 99.4% 33.333%, 9.4% 66.667%, 61.5% 100%;
-  }
-  65% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 99.9% 33.333%, 4.8% 66.667%, 74.2% 100%;
-    mask-position: 0.0% 0%, 99.9% 33.333%, 4.8% 66.667%, 74.2% 100%;
-  }
-  70% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 2.0% 66.667%, 83.8% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 2.0% 66.667%, 83.8% 100%;
-  }
-  75% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.6% 66.667%, 90.6% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.6% 66.667%, 90.6% 100%;
-  }
-  80% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.1% 66.667%, 95.2% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.1% 66.667%, 95.2% 100%;
-  }
-  85% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 98.0% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 98.0% 100%;
-  }
-  90% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 99.4% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 99.4% 100%;
-  }
-  95% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 99.9% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 99.9% 100%;
-  }
-  100% {
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-    -webkit-mask-size: 300% 27%;
-    mask-size: 300% 27%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 100.0% 100%;
-    mask-position: 0.0% 0%, 100.0% 33.333%, 0.0% 66.667%, 100.0% 100%;
+  to {
+    transform: translate3d(101%, 0, 0);
+    visibility: hidden;
   }
 }
 
-[data-invitation-theme="boda_jorge_macarena"] [data-foto]:not(.visto) .mj-drawing {
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(90deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%), linear-gradient(270deg, #000 0%, #000 44%, rgba(0, 0, 0, 0.5) 50%, transparent 57%);
-  -webkit-mask-size: 300% 27%;
-  mask-size: 300% 27%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: 100.0% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
-  mask-position: 100.0% 0%, 0.0% 33.333%, 100.0% 66.667%, 0.0% 100%;
+@keyframes mjv3-hatch-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  99% {
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(-101%, 0, 0);
+    visibility: hidden;
+  }
 }
 
-[data-invitation-theme="boda_jorge_macarena"] [data-foto].visto .mj-drawing {
-  animation: mjv3-draw-hatch 1.3s linear 0.2s backwards;
+[data-foto].visto .mj-hatch i {
+  animation: mjv3-hatch-right 0.7s cubic-bezier(0.55, 0.05, 0.3, 1) both;
 }
 
-/* Portada: no se dibuja tras el sobre; arranca al abrirlo. */
-[data-invitation-theme="boda_jorge_macarena"]
-  .mjv3-cover-content:not(.is-revealed)
-  [data-foto]
-  .mj-drawing {
-  animation: none;
-  -webkit-mask-image: linear-gradient(transparent, transparent);
-  mask-image: linear-gradient(transparent, transparent);
+[data-foto].visto .mj-hatch i:nth-child(even) {
+  animation-name: mjv3-hatch-left;
 }
 
-[data-invitation-theme="boda_jorge_macarena"]
-  .mjv3-cover-content.is-revealed
-  [data-foto].visto
-  .mj-drawing {
+[data-foto].visto .mj-hatch i:nth-child(1) {
+  animation-delay: 0.2s;
+}
+[data-foto].visto .mj-hatch i:nth-child(2) {
+  animation-delay: 0.4s;
+}
+[data-foto].visto .mj-hatch i:nth-child(3) {
+  animation-delay: 0.6s;
+}
+[data-foto].visto .mj-hatch i:nth-child(4) {
+  animation-delay: 0.8s;
+}
+
+/* Portada: los trazos esperan a que se abra el sobre. */
+.mjv3-cover-content:not(.is-revealed) [data-foto] .mj-hatch i {
+  animation: none !important;
+}
+
+.mjv3-cover-content.is-revealed [data-foto].visto .mj-hatch i:nth-child(1) {
   animation-delay: 0.7s;
+}
+.mjv3-cover-content.is-revealed [data-foto].visto .mj-hatch i:nth-child(2) {
+  animation-delay: 0.9s;
+}
+.mjv3-cover-content.is-revealed [data-foto].visto .mj-hatch i:nth-child(3) {
+  animation-delay: 1.1s;
+}
+.mjv3-cover-content.is-revealed [data-foto].visto .mj-hatch i:nth-child(4) {
+  animation-delay: 1.3s;
+}
+
+/* Contenido de las hojas cercanas: capa preparada antes de entrar, para
+   que su aparición (opacidad/posición) no se pinte en el último momento. */
+.mjv3-paper[data-near] > .mjv3-sheet-content {
+  will-change: opacity, transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-invitation-theme="boda_jorge_macarena"] [data-foto] .mj-drawing,
-  [data-invitation-theme="boda_jorge_macarena"] [data-foto]:not(.visto) .mj-drawing,
-  [data-invitation-theme="boda_jorge_macarena"]
-    .mjv3-cover-content:not(.is-revealed)
-    [data-foto]
-    .mj-drawing {
-    -webkit-mask-image: none;
-    mask-image: none;
-    animation: none;
+  .mj-hatch {
+    display: none;
   }
 }
 
@@ -4210,4 +4085,38 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   .mjv3-route-city {
     font-size: 18px;
   }
+}
+
+
+/* RSVP: estado por pase (guardado automático). */
+.mjv3-underline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.mjv3-guest-status {
+  flex: 1 1 100%;
+  margin: 2px 0 0;
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mj-accent);
+}
+
+.mjv3-guest-status--hint {
+  font-family: var(--mj-serif);
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mjv3-guest-status--saved {
+  color: var(--mj-ink);
+  font-weight: 600;
+  animation: mjv3-range-in 0.3s ease both;
 }

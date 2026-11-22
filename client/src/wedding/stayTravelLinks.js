@@ -258,8 +258,12 @@ export function buildFlightUrl(
   let url = "";
   switch (key) {
     case "google_flights": {
-      const q = `Flights from ${from} to ${to} on ${fromDate} through ${toDate} for ${guests} ${adultWord}`;
-      url = `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&hl=es&curr=EUR`;
+      // Orden "to … from … on … through …": con este orden Google rellena
+      // salida y vuelta (verificado 2026-11-22); el anterior ignoraba fechas.
+      const q = `Flights to ${to} from ${from} on ${fromDate} through ${toDate}${
+        guests > 1 ? ` for ${guests} ${adultWord}` : ""
+      }`;
+      url = `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&hl=es&curr=MXN`;
       break;
     }
     case "skyscanner":

@@ -186,7 +186,10 @@ export default function RsvpSection({ rsvp }) {
   // Ya confirmado en el servidor: manda lo del servidor. Si no, se recupera
   // el borrador guardado en este dispositivo.
   const serverAnswered = attending > 0 || declining > 0;
-  const draft = !preview && !serverAnswered ? readDraft(token) : null;
+  // Guardado automático (RSVP editable y dentro de plazo): el borrador del
+  // dispositivo siempre se aplica, porque puede tener selecciones a medias.
+  const autoSaveMode = !preview && !!token && editable;
+  const draft = !preview && (autoSaveMode || !serverAnswered) ? readDraft(token) : null;
   const [answers, setAnswers] = useState(() =>
     withDraft(buildAnswers(guests), draft?.answers, guests)
   );
@@ -209,7 +212,8 @@ export default function RsvpSection({ rsvp }) {
   const justSubmittedRef = useRef(false);
 
   useEffect(() => {
-    const saved = !preview && !(attending > 0 || declining > 0) ? readDraft(token) : null;
+    const saved =
+      !preview && (autoSaveMode || !(attending > 0 || declining > 0)) ? readDraft(token) : null;
     setAnswers(withDraft(buildAnswers(guests), saved?.answers, guests));
     setAllergies(withDraft(buildAllergies(guests), saved?.allergies, guests));
     setAllergyText(withDraft(buildAllergyText(guests), saved?.allergyText, guests));
@@ -222,7 +226,7 @@ export default function RsvpSection({ rsvp }) {
   // esté editando una confirmación).
   useEffect(() => {
     if (preview || !token) return;
-    if (submitted && !editing) return;
+    if (!autoSaveMode && submitted && !editing) return;
     const touched =
       Object.keys(answers).length > 0 ||
       Object.values(allergies).some((v) => typeof v === "boolean") ||
@@ -293,6 +297,104 @@ export default function RsvpSection({ rsvp }) {
   }).length;
   const allAnswered = isFamilyGroup(guests) && pending === 0;
   const yesCount = guests.filter((guest) => answers[guest.id] === "yes").length;
+
+  // ---------------- Guardado automático por pase ----------------
+  // Un pase está completo con "No asistirá", o con "Sí" + alergia (+ rango
+  // de edad si el evento los usa). Solo los completos se envían.
+  const isComplete = (id) => {
+    const answer = answers[id];
+    if (answer === "no") return true;
+    if (answer !== "yes") return false;
+    if (typeof allergies[id] !== "boolean") return false;
+    if (ageRangesList.length === 0) return true;
+    const selected = String(ageSelections[id] || "");
+    return ageRangesList.some((range) => String(range.id) === selected);
+  };
+  const guestSnapshot = (id) =>
+    JSON.stringify([
+      answers[id] || "",
+      answers[id] === "yes" ? allergies[id] : null,
+      answers[id] === "yes" && allergies[id] === true ? String(allergyText[id] || "").trim() : "",
+      answers[id] === "yes" ? String(ageSelections[id] || "") : "",
+    ]);
+  // Lo que ya está en el servidor al abrir cuenta como guardado.
+  const [savedSnap, setSavedSnap] = useState(() => {
+    const map = {};
+    for (const guest of guests) {
+      if (guest.registered || guest.declined) map[guest.id] = "__server__";
+    }
+    return map;
+  });
+  const [autoState, setAutoState] = useState("idle"); // idle | saving | error
+  const lastSentRef = useRef("");
+
+  const buildPayload = () => {
+    const complete = guests.filter((guest) => isComplete(guest.id));
+    return {
+      attending_ids: complete.filter((g) => answers[g.id] === "yes").map((g) => g.id),
+      declining_ids: complete.filter((g) => answers[g.id] === "no").map((g) => g.id),
+      allergies: complete.map((guest) => {
+        const attendingGuest = answers[guest.id] === "yes";
+        const hasAllergy = allergies[guest.id];
+        return {
+          guest_id: guest.id,
+          has_allergy: attendingGuest && typeof hasAllergy === "boolean" ? hasAllergy : null,
+          notes:
+            attendingGuest && hasAllergy === true ? String(allergyText[guest.id] || "").trim() : "",
+        };
+      }),
+      age_selections: complete.map((guest) => ({
+        guest_id: guest.id,
+        range_id: answers[guest.id] === "yes" ? ageSelections[guest.id] || null : null,
+      })),
+      note,
+    };
+  };
+
+  useEffect(() => {
+    if (!autoSaveMode || expired) return undefined;
+    const payload = buildPayload();
+    const key = JSON.stringify(payload);
+    if (key === lastSentRef.current) return undefined;
+    // Al abrir: si lo completo coincide con lo del servidor no se reenvía.
+    const completeIds = guests.filter((g) => isComplete(g.id)).map((g) => g.id);
+    if (
+      !lastSentRef.current &&
+      completeIds.length > 0 &&
+      completeIds.every((id) => savedSnap[id] === "__server__")
+    ) {
+      lastSentRef.current = key;
+      return undefined;
+    }
+    if (!lastSentRef.current && completeIds.length === 0 && !serverAnswered) {
+      lastSentRef.current = key;
+      return undefined;
+    }
+    const snaps = Object.fromEntries(completeIds.map((id) => [id, guestSnapshot(id)]));
+    const timer = window.setTimeout(async () => {
+      setAutoState("saving");
+      try {
+        await api.invitations.rsvp(token, payload);
+        lastSentRef.current = key;
+        setSavedSnap(snaps);
+        setAutoState("idle");
+        setError("");
+      } catch (err) {
+        setAutoState("error");
+        setError(err.message || "No se pudo guardar la respuesta.");
+      }
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [answers, allergies, allergyText, ageSelections, autoSaveMode, expired]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const guestStatus = (id) => {
+    if (!autoSaveMode) return null;
+    if (answers[id] === "yes" && !isComplete(id)) return "incomplete";
+    if (!isComplete(id)) return null;
+    const snap = savedSnap[id];
+    if (snap === "__server__" || snap === guestSnapshot(id)) return "saved";
+    return autoState === "error" ? null : "saving";
+  };
 
   const setAnswer = (id, value) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -380,15 +482,18 @@ export default function RsvpSection({ rsvp }) {
         }. ¡Nos vemos en Granada!`;
 
   const remaining = splitRemaining(deadlineMs - now);
-  const deadlineText = !editable
-    ? "Una vez confirmada, la selección no podrá modificarse."
-    : hasDeadline
-      ? `Pueden confirmar o modificar su respuesta hasta el ${deadlineLabel(
-          deadlineMs
-        )}.`
-      : "Pueden confirmar o modificar su respuesta en cualquier momento.";
+  const deadlineText = !editable ? (
+    "Una vez confirmada, la selección no podrá modificarse."
+  ) : (
+    <>
+      Pueden <span className="mjv3-underline">confirmar o modificar</span> su respuesta{" "}
+      {hasDeadline ? `hasta el ${deadlineLabel(deadlineMs)}.` : "en cualquier momento."}
+    </>
+  );
 
-  const showSent = submitted && !preview && (!editing || expired);
+  const showSent = autoSaveMode
+    ? submitted && expired
+    : submitted && !preview && (!editing || expired);
   const showClosed = !preview && !submitted && expired;
 
   return (
@@ -643,6 +748,17 @@ export default function RsvpSection({ rsvp }) {
                         </div>
                       </div>
                     ) : null}
+                    {guestStatus(guest.id) === "incomplete" ? (
+                      <p className="mjv3-guest-status mjv3-guest-status--hint">
+                        Selecciona todas las casillas
+                      </p>
+                    ) : guestStatus(guest.id) === "saved" ? (
+                      <p className="mjv3-guest-status mjv3-guest-status--saved" role="status">
+                        ✓ Respuesta guardada
+                      </p>
+                    ) : guestStatus(guest.id) === "saving" ? (
+                      <p className="mjv3-guest-status">Guardando…</p>
+                    ) : null}
                   </div>
                 ))}
               </>
@@ -650,6 +766,7 @@ export default function RsvpSection({ rsvp }) {
 
             {error ? <p className="mjv3-error">{error}</p> : null}
 
+            {autoSaveMode ? null : (
             <button
               type="button"
               className="mjv3-btn mjv3-rsvp-submit"
@@ -662,6 +779,7 @@ export default function RsvpSection({ rsvp }) {
                   ? `Faltan ${pending} por responder`
                   : "Confirmar asistencia"}
             </button>
+            )}
           </div>
         </>
       )}
