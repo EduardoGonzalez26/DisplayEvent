@@ -563,6 +563,20 @@ html.de-envelope-fade {
   animation-fill-mode: forwards;
 }
 
+/* Escritorio: las hojas ya cubiertas conservan su estado final (encogida y
+   oscura). Con fill none volvían a tamaño completo y sin sombra, y al
+   encogerse la hoja actual asomaban por los lados iluminadas (parpadeo al
+   entrar/salir de Regalo, la más alta). En escritorio todas las hojas ya
+   tienen capa propia, así que mantener el estado no cuesta memoria extra. */
+@media (min-width: 901px) and (pointer: fine) {
+  .mjv3[data-sda] .mjv3-paper {
+    animation-fill-mode: none, forwards;
+  }
+  .mjv3[data-sda] .mjv3-paper > .mjv3-shade {
+    animation-fill-mode: forwards;
+  }
+}
+
 .mjv3-paper--cover {
   max-width: none;
   overflow: hidden;
@@ -2743,10 +2757,11 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   justify-content: center;
   border-radius: 50%;
   border: 1px solid rgba(216, 214, 209, 0.85);
-  background: rgba(255, 255, 255, 0.82);
+  /* Sin backdrop-filter: el desenfoque se recalculaba en cada frame sobre
+     las hojas en movimiento (coste y parpadeos en Chrome). */
+  background: rgba(255, 255, 255, 0.95);
   color: var(--mj-ink);
   box-shadow: 0 6px 18px -10px rgba(20, 20, 22, 0.55);
-  backdrop-filter: blur(8px);
   cursor: pointer;
   transition: opacity 0.7s ease, background-color 0.3s ease;
 }
