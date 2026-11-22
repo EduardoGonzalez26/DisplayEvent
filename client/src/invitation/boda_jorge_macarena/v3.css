@@ -2009,6 +2009,22 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   gap: 8px;
 }
 
+/* Sí / No asistirá: siempre en un renglón, mitad y mitad. */
+.mjv3-guest-row > .mjv3-answer-group {
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 420px;
+}
+
+.mjv3-guest-row > .mjv3-answer-group > .mjv3-answer {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 6px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .mjv3-answer {
   min-height: 44px;
   padding: 0 14px;
