@@ -481,7 +481,7 @@ html.de-envelope-fade {
 /* La sombra que oscurece la hoja hundida cambia de opacidad en cada frame.
    Sin capa propia, cada cambio repinta la hoja entera con su textura
    (feTurbulence en Android = muy caro). Con capa propia es solo composición. */
-.mjv3:not([data-sda]) .mjv3-paper[data-near] > .mjv3-shade {
+.mjv3-paper[data-near] > .mjv3-shade {
   will-change: opacity;
 }
 
@@ -529,7 +529,6 @@ html.de-envelope-fade {
   animation-timing-function: linear, linear;
   animation-fill-mode: none, none;
   animation-timeline: scroll(root), scroll(root);
-  will-change: auto;
 }
 
 /* Portada: sin entrada; al quedar cubierta conserva su estado hundido

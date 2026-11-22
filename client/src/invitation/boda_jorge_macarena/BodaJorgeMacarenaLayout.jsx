@@ -25,9 +25,10 @@ import "./v3.css";
      y las hojas ya tapadas nunca se daban por "lejanas".
    - Si el navegador soporta animaciones ligadas al scroll
      (`animation-timeline`), la inclinación y el oscurecido corren en el
-     compositor y quedan siempre puestas: el JS solo fija los rangos (en
-     resize) y no escucha el scroll. Si no, se escriben transform/opacity
-     por frame y se marca `data-near` en las hojas cercanas.
+     compositor y quedan siempre puestas: el JS fija los rangos (en resize)
+     y en scroll solo marca `data-near` (capa de GPU preparada antes de que
+     la hoja entre). Sin soporte, además escribe transform/opacity por
+     frame.
    - En reposo no hay `transform`, para que los descendientes
      `position: fixed` (checkout de Stripe) se anclen al viewport.
    - `prefers-reduced-motion`: nunca se aplica transform.
@@ -184,9 +185,13 @@ function useStackedSheets(layoutKey) {
         const sideChanged = s.side !== side;
         s.side = side;
 
-        if (sda) continue;
+        // `data-near` solo da capa propia (will-change) medio viewport ANTES
+        // de que la hoja entre: así se pinta fuera de pantalla. Sin esto el
+        // navegador pintaba la hoja entera (con textura) en el mismo frame
+        // en que arrancaba la animación = parpadeo. Las animaciones no se
+        // tocan: con animation-timeline siguen siempre puestas.
         if (sideChanged) setAttr(s.paper, "data-near", side === 0);
-        if (reduce) continue;
+        if (sda || reduce) continue;
 
         const p = nextTop !== null ? clamp(1 - nextTop / vh) : 0;
         const e = i === 0 ? 1 : clamp(1 - rt / vh);
@@ -233,9 +238,7 @@ function useStackedSheets(layoutKey) {
 
     onScroll();
     const scrollTarget = scroller || window;
-    // Con animaciones ligadas al scroll no hay nada que hacer por frame: solo
-    // se mide en resize/cambio de contenido.
-    if (!sda) scrollTarget.addEventListener("scroll", onScroll, { passive: true });
+    scrollTarget.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayoutChange);
     window.addEventListener("orientationchange", onLayoutChange);
     let ro = null;
