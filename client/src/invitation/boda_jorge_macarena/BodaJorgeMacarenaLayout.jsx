@@ -14,6 +14,7 @@ import MusicToggle from "./MusicToggle.jsx";
 import { NazariFrame, useV3Reveal } from "./v3/index.js";
 import { V3 } from "./v3/assets.js";
 import { mexicanizeCfg } from "./v3/voice.js";
+import { useBuildUpdates, useResumeScroll } from "./v3/useBuildUpdates.js";
 import "./v3.css";
 
 /* ------------------------------------------------------------------
@@ -345,6 +346,8 @@ export default function BodaJorgeMacarenaLayout({
   ].join("|");
 
   const containerRef = useStackedSheets(layoutKey);
+  const { updateReady, reload } = useBuildUpdates();
+  useResumeScroll();
   useV3Reveal(containerRef, layoutKey);
 
   // Deep link #confirmar: las hojas se montan con animaciones/reveal, así que
@@ -468,6 +471,13 @@ export default function BodaJorgeMacarenaLayout({
       ) : null}
 
       <div className="mjv3-grain" aria-hidden="true" />
+
+      {updateReady ? (
+        <button type="button" className="mjv3-update-toast" onClick={reload}>
+          <span>Nueva versión</span>
+          <span className="mjv3-update-toast-cta">Actualizar ↻</span>
+        </button>
+      ) : null}
     </div>
   );
 }

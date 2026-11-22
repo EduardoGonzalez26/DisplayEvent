@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { displayNames, initialsOf } from "./helpers.js";
 import "./v3.css";
+import { readResume } from "./v3/useBuildUpdates.js";
 
 /* ------------------------------------------------------------------
    Sobre v3 — variante de `boda_jorge_macarena` seleccionada con
@@ -36,6 +37,8 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
     initialsOf(cfg).join("&") ||
     "M&J";
 
+  // Recarga por versión nueva: no se vuelve a mostrar el sobre.
+  const [resuming] = useState(() => typeof window !== "undefined" && !!readResume());
   const [stage, setStage] = useState(0);
   const [sheet, setSheet] = useState(null);
   const [sheetFull, setSheetFull] = useState(false);
@@ -48,6 +51,13 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
   };
 
   useEffect(() => {
+    if (!resuming) return;
+    onReveal?.();
+    onOpen?.();
+  }, [resuming]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (resuming) return undefined;
     const root = document.documentElement;
     const body = document.body;
     // Medimos el ancho del scrollbar ANTES de bloquear el scroll.
@@ -174,7 +184,7 @@ export default function EditorialEnvelope({ family, cfg = {}, opening, onOpen, o
     }
   };
 
-  if (stage >= 5) return null;
+  if (resuming || stage >= 5) return null;
 
   const sheetStyle = sheetFull
     ? { top: 0, left: 0, width: "100vw", height: "100%" }

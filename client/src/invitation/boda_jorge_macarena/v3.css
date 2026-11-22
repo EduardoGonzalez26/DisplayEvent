@@ -4135,3 +4135,38 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
     letter-spacing: 0.14em;
   }
 }
+
+
+/* Aviso de versión nueva (solo si el invitado estaba a media acción). */
+.mjv3-update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 120;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 8px 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mj-ink);
+  color: #f7f6f3;
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6);
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: mjv3-range-in 0.3s ease both;
+}
+
+.mjv3-update-toast-cta {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #f7f6f3;
+  color: var(--mj-ink);
+  font-weight: 600;
+}
