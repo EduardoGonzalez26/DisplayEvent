@@ -27,7 +27,7 @@ const ZONE_NAME = "Albaicín bajo y Carrera del Darro";
 const ZONE_MAPS = `https://www.google.com/maps/@${SUGGESTED_ZONE.lat},${SUGGESTED_ZONE.lng},16z`;
 
 const HOTELS_NOTE =
-  "Recomendamos estos hoteles por su calidad, pero por cercanía y comodidad les sugerimos buscar en Airbnb dentro de la zona marcada en el mapa. Los buscadores de abajo los llevan directo a esa zona.";
+  "Recomendamos estos hoteles de alta gama, pero por cercanía y comodidad les sugerimos buscar en Airbnb dentro de la zona marcada en el mapa. Los buscadores de abajo los llevan directo a esa zona.";
 
 // Fotos de los hoteles recomendados, por nombre (el JSON del evento no
 // guarda imagen por hotel).
