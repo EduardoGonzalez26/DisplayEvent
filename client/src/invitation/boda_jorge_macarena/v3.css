@@ -481,7 +481,7 @@ html.de-envelope-fade {
 /* La sombra que oscurece la hoja hundida cambia de opacidad en cada frame.
    Sin capa propia, cada cambio repinta la hoja entera con su textura
    (feTurbulence en Android = muy caro). Con capa propia es solo composición. */
-.mjv3-paper[data-near] > .mjv3-shade {
+.mjv3:not([data-sda]) .mjv3-paper[data-near] > .mjv3-shade {
   will-change: opacity;
 }
 
@@ -520,34 +520,35 @@ html.de-envelope-fade {
   }
 }
 
-.mjv3[data-sda] .mjv3-paper[data-near] {
+.mjv3[data-sda] .mjv3-paper {
+  /* Siempre puestas: fuera de su rango no hacen nada (fill none), así que no
+     hay que activarlas/desactivarlas al hacer scroll (eso daba un frame sin
+     transformación = parpadeo en móvil). */
   animation-name: mjv3-sheet-in, mjv3-sheet-out;
   animation-duration: auto, auto;
   animation-timing-function: linear, linear;
-  animation-fill-mode: none, forwards;
+  animation-fill-mode: none, none;
   animation-timeline: scroll(root), scroll(root);
+  will-change: auto;
 }
 
-.mjv3[data-sda] .mjv3-paper[data-near][data-first] {
+/* Portada: sin entrada; al quedar cubierta conserva su estado hundido
+   (es más ancha que las demás hojas y asoma por los lados). */
+.mjv3[data-sda] .mjv3-paper[data-first] {
   animation-name: none, mjv3-sheet-out;
+  animation-fill-mode: none, forwards;
 }
 
-.mjv3[data-sda] .mjv3-paper[data-near] > .mjv3-shade {
+.mjv3[data-sda] .mjv3-paper > .mjv3-shade {
   animation-name: mjv3-shade-in;
   animation-duration: auto;
   animation-timing-function: linear;
-  animation-fill-mode: forwards;
+  animation-fill-mode: none;
   animation-timeline: scroll(root);
 }
 
-/* Hojas ya cubiertas: estado final estático, sin animación ni capa. */
-.mjv3[data-sda] .mjv3-paper[data-sunk] {
-  transform: translate3d(0, -2.5%, 0) rotate(calc(var(--mj-dir, 1) * -1.6deg))
-    scale(0.92);
-}
-
-.mjv3[data-sda] .mjv3-paper[data-sunk] > .mjv3-shade {
-  opacity: 0.5;
+.mjv3[data-sda] .mjv3-paper[data-first] > .mjv3-shade {
+  animation-fill-mode: forwards;
 }
 
 .mjv3-paper--cover {
