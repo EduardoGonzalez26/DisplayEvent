@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3, v3Asset } from "./assets.js";
 import DateRangePicker from "./DateRangePicker.jsx";
+import { SearchButton, SearchMeta, rangeLabel } from "./SearchCta.jsx";
 import { buildStayUrl, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 import {
   DEFAULT_LODGING,
@@ -255,10 +256,9 @@ export default function StaySection({ cfg }) {
                     {card.description ? (
                       <span className="mjv3-stay-platform-desc">{card.description}</span>
                     ) : null}
+                    {card.auto ? <SearchMeta lines={[rangeLabel(checkin, checkout)]} /> : null}
                   </span>
-                  <span className="mjv3-provider-cta">
-                    Buscar hospedaje<span aria-hidden="true">→</span>
-                  </span>
+                  <SearchButton />
                 </a>
               );
             })}

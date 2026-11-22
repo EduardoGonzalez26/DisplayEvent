@@ -451,6 +451,13 @@ html.de-envelope-fade {
   overflow: hidden;
   box-shadow: 0 -22px 44px -14px rgba(0, 0, 0, 0.45),
     inset 0 0 90px rgba(110, 105, 98, 0.07);
+}
+
+/* Capa de GPU solo para las hojas cercanas (`data-near`, lo marca el motor
+   medio viewport antes de que entren), en todos los dispositivos. Doce capas
+   grandes con textura a la vez agotan la memoria y el navegador acababa
+   mostrando hojas a medio pintar (se veía la de abajo a través). */
+.mjv3-paper[data-near] {
   will-change: transform;
 }
 
@@ -3467,8 +3474,11 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   }
 }
 
-/* iOS (Safari/WebKit): texturas WebP en lugar de SVG feTurbulence (2x, tamano CSS explicito). */
-@supports (-webkit-touch-callout: none) {
+/* Texturas WebP pre-renderizadas en lugar de SVG feTurbulence (2x, tamaño
+   CSS explícito). Antes solo en iOS; en escritorio, pintar tres capas de
+   feTurbulence en hojas de >1200 px de alto (Regalo, Cierre) no llegaba a
+   tiempo y se veían hojas a medio pintar al hacer scroll. */
+@supports (background-image: url("x.webp")) {
   [data-invitation-theme="boda_jorge_macarena"] .algodon {
     background-color: #F5F4F1;
     background-image: url("/invitations/macarena-jorge-v3/tex/paper-relief.webp"),
@@ -3970,5 +3980,158 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 @media (prefers-reduced-motion: reduce) {
   .mjv3-range-panel {
     animation: none;
+  }
+}
+
+
+/* ------------- Tarjetas de búsqueda: invitan a tocar ------------- */
+.mjv3-provider-card,
+.mjv3-stay-platform {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mjv3-provider-card:hover,
+.mjv3-stay-platform:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px var(--mj-line),
+    0 16px 26px -16px rgba(20, 20, 22, 0.5);
+}
+
+.mjv3-provider-card:active,
+.mjv3-stay-platform:active {
+  transform: scale(0.98);
+}
+
+.mjv3-provider-card:focus-visible,
+.mjv3-stay-platform:focus-visible {
+  outline: 2px solid var(--mj-ink);
+  outline-offset: 3px;
+}
+
+.mjv3-search-meta {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  max-width: 100%;
+  background: #f1efeb;
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mj-ink);
+}
+
+.mjv3-search-meta-lines {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.mjv3-search-meta svg {
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.mjv3-provider-cta {
+  border-top: 0;
+  padding-top: 0;
+  justify-content: flex-end;
+}
+
+.mjv3-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px 0 18px;
+  border-radius: 999px;
+  background: var(--mj-ink);
+  color: #f7f6f3;
+  font-family: var(--mj-label);
+  font-stretch: 62.5%;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mjv3-go-arrow {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: mjv3-go-nudge 3.2s ease-in-out infinite;
+}
+
+.mjv3-provider-card:hover .mjv3-go-arrow,
+.mjv3-stay-platform:hover .mjv3-go-arrow {
+  animation: none;
+  transform: translate(2px, -2px);
+}
+
+/* Empujoncito periódico de la flecha: "tócame". */
+@keyframes mjv3-go-nudge {
+  0%, 70%, 100% {
+    transform: translate(0, 0);
+  }
+  78% {
+    transform: translate(3px, -3px);
+  }
+  86% {
+    transform: translate(0, 0);
+  }
+  92% {
+    transform: translate(2px, -2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mjv3-go-arrow {
+    animation: none;
+  }
+  .mjv3-provider-card,
+  .mjv3-stay-platform {
+    transition: none;
+  }
+}
+
+.mjv3-provider-card,
+.mjv3-stay-platform {
+  min-width: 0;
+}
+
+.mjv3-provider-name,
+.mjv3-stay-platform-name {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 600px) {
+  .mjv3-provider-name,
+  .mjv3-stay-platform-name {
+    font-size: 19px;
+  }
+  .mjv3-search-meta {
+    padding: 5px 8px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .mjv3-go {
+    padding: 0 12px 0 14px;
+    letter-spacing: 0.14em;
   }
 }

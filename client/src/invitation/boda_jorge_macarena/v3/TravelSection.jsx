@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3 } from "./assets.js";
 import DateRangePicker from "./DateRangePicker.jsx";
+import { SearchButton, SearchMeta, rangeLabel, dayMonth } from "./SearchCta.jsx";
 import { buildModeLinks, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 
 const DEFAULT_DATE_FROM = "2027-06-08";
@@ -65,10 +66,9 @@ function TravelMode({ mode }) {
                 {provider.note ? (
                   <span className="mjv3-provider-note">{provider.note}</span>
                 ) : null}
+                <SearchMeta lines={[mode.route, provider.datesPrefilled ? mode.dates : ""]} />
               </span>
-              <span className="mjv3-provider-cta">
-                Buscar<span aria-hidden="true">→</span>
-              </span>
+              <SearchButton />
             </a>
           ))}
         </div>
@@ -135,6 +135,8 @@ export default function TravelSection({ cfg }) {
         );
         return {
           key,
+          route: key === "flight" ? `${origin} → ${arrival.code || "MAD"}` : "Madrid → Granada",
+          dates: key === "flight" ? rangeLabel(dateFrom, dateTo) : dayMonth(dateFrom),
           title: key === "flight" ? "Avión" : "Autobús",
           desc: String(mode.note || "").trim() || MODE_COPY[key],
           providers,
