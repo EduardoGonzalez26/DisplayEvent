@@ -105,9 +105,9 @@ const STAY = {
   intro:
     "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.",
   zone: {
-    lat: 37.181,
-    lng: -3.592,
-    radius_km: 1.2,
+    lat: 37.18046,
+    lng: -3.59048,
+    radius_km: 0.42,
     label: "Albaicín, Granada",
   },
   checkin: "2027-06-08",

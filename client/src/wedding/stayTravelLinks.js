@@ -219,7 +219,8 @@ export function buildStayUrl(platform, { zone, checkin, checkout, adults = 1 } =
           `&search_by_map=true` +
           `&ne_lat=${box.neLat}&ne_lng=${box.neLng}` +
           `&sw_lat=${box.swLat}&sw_lng=${box.swLng}` +
-          `&zoom=14`;
+          // Zonas pequeñas (un barrio) piden un mapa más cercano.
+          `&zoom=${point && point.radiusKm <= 0.6 ? 16 : 14}`;
       }
       break;
     case "trivago":

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3, v3Asset } from "./assets.js";
+import DateRangePicker from "./DateRangePicker.jsx";
 import { buildStayUrl, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 import {
   DEFAULT_LODGING,
@@ -12,8 +13,21 @@ const DEFAULT_INTRO =
   "Granada se disfruta sin prisa. Les recomendamos el Albaicín y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.";
 const DEFAULT_CHECKIN = "2027-06-08";
 const DEFAULT_CHECKOUT = "2027-06-12";
-const ALBAICIN_MAPS =
-  "https://www.google.com/maps/search/?api=1&query=Albaic%C3%ADn%2C%20Granada";
+// Zona sugerida (fija en la plantilla): Albaicín bajo, de San Nicolás a
+// Carrera del Darro / San Pedro y hasta la Cuesta del Chapiz. Es la que
+// pinta el mapa `m-zona.webp` y la que usan los buscadores (Booking por
+// centro+radio, Airbnb por recuadro del mapa).
+const SUGGESTED_ZONE = {
+  lat: 37.18046,
+  lng: -3.59048,
+  radius_km: 0.42,
+  label: "Albaicín, Granada",
+};
+const ZONE_NAME = "Albaicín bajo y Carrera del Darro";
+const ZONE_MAPS = `https://www.google.com/maps/@${SUGGESTED_ZONE.lat},${SUGGESTED_ZONE.lng},16z`;
+
+const HOTELS_NOTE =
+  "Recomendamos estos hoteles por su calidad, pero por cercanía y comodidad les sugerimos buscar en Airbnb dentro de la zona marcada en el mapa. Los buscadores de abajo los llevan directo a esa zona.";
 
 // Fotos de los hoteles recomendados, por nombre (el JSON del evento no
 // guarda imagen por hotel).
@@ -96,7 +110,7 @@ export default function StaySection({ cfg }) {
   const hotels = lodging.length ? lodging : DEFAULT_LODGING;
   const cards =
     Array.isArray(stay.cards) && stay.cards.length ? stay.cards : DEFAULT_CARDS;
-  const zone = stay.zone || {};
+  const zone = SUGGESTED_ZONE;
   const quote = String(stay.quote || "").trim() || DEFAULT_STAY_QUOTE;
   const quoteAuthor =
     String(stay.quote_author || "").trim() || DEFAULT_STAY_QUOTE_AUTHOR;
@@ -120,6 +134,7 @@ export default function StaySection({ cfg }) {
 
       <div className="mjv3-travel-modes">
         <StayGroup title="Hoteles recomendados" icon={<BedIcon />}>
+          <p className="mjv3-mode-desc mjv3-hotels-note">{HOTELS_NOTE}</p>
           <div className="mjv3-hotel-grid">
             {hotels.map((hotel, index) => {
               const href = hotelLink(hotel);
@@ -167,22 +182,22 @@ export default function StaySection({ cfg }) {
           </div>
 
           <div className="mjv3-stay-map">
-            <div className="mjv3-stay-map-img">
+            <div className="mjv3-stay-map-img mjv3-stay-map-img--zone">
               <div
                 role="img"
-                aria-label="Mapa del Albaicín"
-                className="mj-drawing"
-                style={{ backgroundImage: `url("${V3.mapaAlbaicin}")` }}
+                aria-label={`Mapa con la zona sugerida: ${ZONE_NAME}`}
+                className="mj-drawing mjv3-stay-map-zone"
+                style={{ backgroundImage: `url("${V3.mapaZona}")` }}
               />
             </div>
             <div className="mjv3-stay-map-foot">
               <div>
                 <div className="mjv3-hotel-label">Zona sugerida</div>
-                <div className="mjv3-stay-zone">Albaicín y alrededores</div>
+                <div className="mjv3-stay-zone">{ZONE_NAME}</div>
               </div>
               <a
                 className="mjv3-stay-map-link"
-                href={ALBAICIN_MAPS}
+                href={ZONE_MAPS}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -193,24 +208,16 @@ export default function StaySection({ cfg }) {
         </StayGroup>
         <StayGroup title="Buscar hospedaje" icon={<SearchIcon />}>
           <div className="mjv3-stay-dates">
-            <label>
-              <span className="mjv3-field-label">Llegada</span>
-              <input
-                type="date"
-                className="mjv3-field"
-                value={checkin}
-                onChange={(event) => setCheckin(event.target.value)}
-              />
-            </label>
-            <label>
-              <span className="mjv3-field-label">Salida</span>
-              <input
-                type="date"
-                className="mjv3-field"
-                value={checkout}
-                onChange={(event) => setCheckout(event.target.value)}
-              />
-            </label>
+            <DateRangePicker
+              start={checkin}
+              end={checkout}
+              startLabel="Llegada"
+              endLabel="Salida"
+              onChange={({ start, end }) => {
+                setCheckin(start);
+                setCheckout(end);
+              }}
+            />
           </div>
 
           <div className="mjv3-stay-platforms">

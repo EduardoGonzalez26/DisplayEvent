@@ -2,8 +2,8 @@
    Cuentas para transferencia (Regalo). Tres cuentas:
    - Macarena (MXN, cuenta 1): datos aquí abajo.
    - Jorge (MXN): viene del evento (`registry.bank`, editable en el panel).
-   - Concepción Collado González (EUR): `registry.bank_eur` del evento si
-     está activa y con IBAN; si no, los datos de aquí abajo.
+   - María Concepción Collado González (EUR, Santander): datos aquí abajo;
+     mandan sobre `registry.bank_eur` del evento.
 
    Una cuenta sin CLABE/IBAN muestra solo el titular y "Datos bancarios
    próximamente".
@@ -55,8 +55,6 @@ function withRows(account) {
 // del titular y "Datos bancarios próximamente".
 export function buildBankAccounts(registry = {}) {
   const dbBank = registry.bank || {};
-  const dbEur = registry.bank_eur || {};
-  const eurFromEvent = !!dbEur.enabled && filled(dbEur.iban);
 
   return [
     {
@@ -81,7 +79,8 @@ export function buildBankAccounts(registry = {}) {
       tab: "Concepción",
       subtitle: "Euros · EUR",
       unlockKey: "iban",
-      data: eurFromEvent ? { ...CONCEPCION_EUR, ...dbEur } : CONCEPCION_EUR,
+      // Datos confirmados por Jorge: mandan sobre lo que haya en el evento.
+      data: CONCEPCION_EUR,
     },
   ]
     .map(withRows)

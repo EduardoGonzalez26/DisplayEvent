@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
 import { V3 } from "./assets.js";
+import DateRangePicker from "./DateRangePicker.jsx";
 import { buildModeLinks, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 
 const DEFAULT_DATE_FROM = "2027-06-08";
@@ -189,24 +190,16 @@ export default function TravelSection({ cfg }) {
               )}
             </select>
           </label>
-          <label>
-            <span className="mjv3-field-label">Llegada a España</span>
-            <input
-              type="date"
-              className="mjv3-field"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-            />
-          </label>
-          <label>
-            <span className="mjv3-field-label">Regreso</span>
-            <input
-              type="date"
-              className="mjv3-field"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-            />
-          </label>
+          <DateRangePicker
+            start={dateFrom}
+            end={dateTo}
+            startLabel="Llegada a España"
+            endLabel="Regreso"
+            onChange={({ start, end }) => {
+              setDateFrom(start);
+              setDateTo(end);
+            }}
+          />
         </div>
       </div>
 

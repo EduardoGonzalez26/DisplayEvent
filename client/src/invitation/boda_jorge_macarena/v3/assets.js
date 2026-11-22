@@ -59,6 +59,7 @@ export const V3 = {
   mapaCeremonia: v3Asset("m-ceremonia.webp"),
   mapaRecepcion: v3Asset("m-recepcion.webp"),
   mapaAlbaicin: v3Asset("m-albaicin.webp"),
+  mapaZona: v3Asset("m-zona.webp"),
   webiLogo: v3Asset("webi-logo.png"),
   og: v3Asset("og-v3.jpg"),
 };
