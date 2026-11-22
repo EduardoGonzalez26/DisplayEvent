@@ -3440,3 +3440,108 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
     }
   }
 }
+
+/* ---------------- Dibujos: efecto "irse dibujando" -----------------
+   1) Un trazo revela el dibujo de izquierda a derecha (máscara con borde
+      suave que se desplaza).
+   2) Al principio solo se ven las líneas oscuras (gris + contraste alto),
+      luego entran sombras y tonos.
+   Con animaciones `backwards`: al terminar no queda máscara ni filtro
+   aplicados (cero coste al hacer scroll). La portada espera a que se abra
+   el sobre (`is-revealed`). */
+@keyframes mjv3-draw-ink {
+  from {
+    filter: grayscale(1) contrast(2) brightness(1.2);
+  }
+  to {
+    filter: grayscale(0) contrast(1) brightness(1);
+  }
+}
+
+[data-invitation-theme="boda_jorge_macarena"] [data-foto] .mj-drawing {
+  -webkit-mask-image: linear-gradient(
+    100deg,
+    #000 0%,
+    #000 40%,
+    rgba(0, 0, 0, 0.45) 47%,
+    rgba(0, 0, 0, 0.12) 53%,
+    transparent 60%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    100deg,
+    #000 0%,
+    #000 40%,
+    rgba(0, 0, 0, 0.45) 47%,
+    rgba(0, 0, 0, 0.12) 53%,
+    transparent 60%,
+    transparent 100%
+  );
+  -webkit-mask-size: 300% 100%;
+  mask-size: 300% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 100% 0;
+  mask-position: 100% 0;
+}
+
+[data-invitation-theme="boda_jorge_macarena"] [data-foto].visto .mj-drawing {
+  -webkit-mask-image: none;
+  mask-image: none;
+  animation: mjv3-draw-stroke-masked 2.4s cubic-bezier(0.45, 0.05, 0.3, 1) 0.35s backwards,
+    mjv3-draw-ink 1.8s ease 1.5s backwards;
+}
+
+/* Portada: no se dibuja tras el sobre; arranca al abrirlo. */
+[data-invitation-theme="boda_jorge_macarena"]
+  .mjv3-cover-content:not(.is-revealed)
+  [data-foto].visto
+  .mj-drawing {
+  animation: none;
+  -webkit-mask-image: linear-gradient(transparent, transparent);
+  mask-image: linear-gradient(transparent, transparent);
+}
+
+[data-invitation-theme="boda_jorge_macarena"]
+  .mjv3-cover-content.is-revealed
+  [data-foto].visto
+  .mj-drawing {
+  animation-delay: 0.9s, 2.1s;
+}
+
+/* La máscara solo existe mientras dura el trazo. */
+@keyframes mjv3-draw-stroke-masked {
+  from {
+    -webkit-mask-image: linear-gradient(100deg, #000 0%, #000 40%, rgba(0, 0, 0, 0.45) 47%, rgba(0, 0, 0, 0.12) 53%, transparent 60%, transparent 100%);
+    mask-image: linear-gradient(100deg, #000 0%, #000 40%, rgba(0, 0, 0, 0.45) 47%, rgba(0, 0, 0, 0.12) 53%, transparent 60%, transparent 100%);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+  to {
+    -webkit-mask-image: linear-gradient(100deg, #000 0%, #000 40%, rgba(0, 0, 0, 0.45) 47%, rgba(0, 0, 0, 0.12) 53%, transparent 60%, transparent 100%);
+    mask-image: linear-gradient(100deg, #000 0%, #000 40%, rgba(0, 0, 0, 0.45) 47%, rgba(0, 0, 0, 0.12) 53%, transparent 60%, transparent 100%);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-invitation-theme="boda_jorge_macarena"] [data-foto] .mj-drawing,
+  [data-invitation-theme="boda_jorge_macarena"] [data-foto].visto .mj-drawing,
+  [data-invitation-theme="boda_jorge_macarena"]
+    .mjv3-cover-content:not(.is-revealed)
+    [data-foto].visto
+    .mj-drawing {
+    -webkit-mask-image: none;
+    mask-image: none;
+    animation: none;
+  }
+}
