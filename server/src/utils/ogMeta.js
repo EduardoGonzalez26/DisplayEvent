@@ -85,11 +85,23 @@ function buildImage(cfg, req) {
   return "";
 }
 
+// Icono de pestaña propio por plantilla (sin la marca de la plataforma).
+// "" -> se conserva el favicon genérico.
+const TEMPLATE_ICONS = {
+  boda_jorge_macarena: "/invitations/macarena-jorge-v3/favicon.svg",
+};
+
+function buildIcon(cfg) {
+  const template = typeof cfg?.template === "string" ? cfg.template : "";
+  return TEMPLATE_ICONS[template] || "";
+}
+
 // Metadatos de una invitación. `inv` es una fila de findInvitationByToken.
 export function buildInvitationMeta(inv, token, req) {
   const cfg = normalizeForRead(inv?.invitation);
   return {
     title: buildTitle(cfg, inv?.event_name),
+    icon: buildIcon(cfg),
     description: OG_DESCRIPTION,
     image: buildImage(cfg, req),
     url: buildInvitationUrl(
@@ -108,6 +120,7 @@ export function buildEventMeta(event, req) {
     typeof event?.custom_domain === "string" ? event.custom_domain.trim() : "";
   return {
     title: buildTitle(cfg, event?.name),
+    icon: buildIcon(cfg),
     description: OG_DESCRIPTION,
     image: buildImage(cfg, req) || absoluteUrl("/og-image.png", req),
     url: domain ? `https://${domain}/` : absoluteUrl("/", req),
@@ -168,6 +181,14 @@ function injectMeta(html, meta) {
   setMeta("name", "twitter:title", title);
   setMeta("name", "twitter:description", description);
   setMeta("name", "twitter:image", image);
+
+  if (meta.icon) {
+    out = replaceTag(
+      out,
+      /(<link\s+rel="icon"[^>]*?\shref=")[^"]*(")/i,
+      escapeHtml(meta.icon)
+    );
+  }
 
   if (url) {
     out = replaceTag(out, /(<link\s+rel="canonical"\s+href=")[^"]*(")/i, url);
