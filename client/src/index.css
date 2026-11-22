@@ -751,6 +751,13 @@ html.de-cover-scroll {
   color: var(--inv-loader-mark, #74787e);
   animation: inv-loader-breathe 3.2s ease-in-out infinite;
 }
+/* Boda Macarena & Jorge: sin el "&" en el loader. El servidor marca el
+   <html> desde el primer frame; el atributo del loader cubre la navegación
+   interna y las visitas con el tema ya recordado. */
+html[data-inv-template="boda_jorge_macarena"] .inv-loader__mark,
+.inv-loader[data-loader-theme="boda_jorge_macarena"] .inv-loader__mark {
+  display: none;
+}
 .inv-loader__orn {
   display: flex;
   align-items: center;

@@ -96,12 +96,22 @@ function buildIcon(cfg) {
   return TEMPLATE_ICONS[template] || "";
 }
 
+// Plantillas que marcan el <html> con `data-inv-template` para que el loader
+// inicial (antes de cargar el JS de la plantilla) pueda ajustarse por CSS.
+const MARKED_TEMPLATES = new Set(["boda_jorge_macarena"]);
+
+function buildTemplateMark(cfg) {
+  const template = typeof cfg?.template === "string" ? cfg.template : "";
+  return MARKED_TEMPLATES.has(template) ? template : "";
+}
+
 // Metadatos de una invitación. `inv` es una fila de findInvitationByToken.
 export function buildInvitationMeta(inv, token, req) {
   const cfg = normalizeForRead(inv?.invitation);
   return {
     title: buildTitle(cfg, inv?.event_name),
     icon: buildIcon(cfg),
+    templateMark: buildTemplateMark(cfg),
     description: OG_DESCRIPTION,
     image: buildImage(cfg, req),
     url: buildInvitationUrl(
@@ -121,6 +131,7 @@ export function buildEventMeta(event, req) {
   return {
     title: buildTitle(cfg, event?.name),
     icon: buildIcon(cfg),
+    templateMark: buildTemplateMark(cfg),
     description: OG_DESCRIPTION,
     image: buildImage(cfg, req) || absoluteUrl("/og-image.png", req),
     url: domain ? `https://${domain}/` : absoluteUrl("/", req),
@@ -181,6 +192,13 @@ function injectMeta(html, meta) {
   setMeta("name", "twitter:title", title);
   setMeta("name", "twitter:description", description);
   setMeta("name", "twitter:image", image);
+
+  if (meta.templateMark && !/<html[^>]*\sdata-inv-template=/i.test(out)) {
+    const mark = escapeHtml(meta.templateMark);
+    out = out.replace(/<html(\s[^>]*)?>/i, (tag, attrs = "") =>
+      `<html${attrs} data-inv-template="${mark}">`
+    );
+  }
 
   if (meta.icon) {
     out = replaceTag(
