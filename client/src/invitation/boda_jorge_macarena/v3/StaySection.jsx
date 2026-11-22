@@ -24,7 +24,9 @@ const SUGGESTED_ZONE = {
   label: "Albaicín, Granada",
 };
 const ZONE_NAME = "Albaicín bajo y Carrera del Darro";
-const ZONE_MAPS = `https://www.google.com/maps/@${SUGGESTED_ZONE.lat},${SUGGESTED_ZONE.lng},16z`;
+// Google Maps no admite dibujar la zona por URL: se abre con un pin en el
+// centro de la zona y zoom 17 (solo el Albaicín bajo, no todo el barrio).
+const ZONE_MAPS = `https://www.google.com/maps/place/${SUGGESTED_ZONE.lat},${SUGGESTED_ZONE.lng}/@${SUGGESTED_ZONE.lat},${SUGGESTED_ZONE.lng},17z`;
 
 const HOTELS_NOTE =
   "Recomendamos estos hoteles de alta gama, pero por cercanía y comodidad les sugerimos buscar en Airbnb dentro de la zona marcada en el mapa. Los buscadores de abajo los llevan directo a esa zona.";
@@ -182,14 +184,20 @@ export default function StaySection({ cfg }) {
           </div>
 
           <div className="mjv3-stay-map">
-            <div className="mjv3-stay-map-img mjv3-stay-map-img--zone">
+            <a
+              className="mjv3-stay-map-img mjv3-stay-map-img--zone"
+              href={V3.mapaZona}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Ver en grande el mapa con la zona sugerida: ${ZONE_NAME}`}
+            >
               <div
                 role="img"
                 aria-label={`Mapa con la zona sugerida: ${ZONE_NAME}`}
                 className="mj-drawing mjv3-stay-map-zone"
                 style={{ backgroundImage: `url("${V3.mapaZona}")` }}
               />
-            </div>
+            </a>
             <div className="mjv3-stay-map-foot">
               <div>
                 <div className="mjv3-hotel-label">Zona sugerida</div>

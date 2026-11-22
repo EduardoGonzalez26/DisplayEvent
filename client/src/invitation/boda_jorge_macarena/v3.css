@@ -1825,8 +1825,10 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 /* Mapa de zona: el recuadro toma la proporción del mapa (1200×523), así
    no hay franjas grises ni se recorta la zona en móvil. */
 .mjv3-stay-map-img--zone {
+  display: block;
   height: auto;
   aspect-ratio: 1200 / 523;
+  cursor: zoom-in;
 }
 
 .mjv3-stay-map-img .mj-drawing.mjv3-stay-map-zone {
