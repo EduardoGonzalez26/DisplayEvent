@@ -110,7 +110,7 @@ const STAY = {
     radius_km: 0.42,
     label: "Albaicín, Granada",
   },
-  checkin: "2027-06-08",
+  checkin: "2027-06-03",
   checkout: "2027-06-12",
   cards: [
     {
@@ -154,7 +154,7 @@ const TRIP = {
     { code: "MTY", label: "Monterrey" },
   ],
   arrivals: [{ code: "MAD", label: "Madrid" }],
-  date_from: "2027-06-08",
+  date_from: "2027-06-03",
   date_to: "2027-06-12",
   adults: 1,
   modes: {
@@ -309,7 +309,7 @@ function verifyResult(invitation) {
     locations: Array.isArray(cfg.locations) && cfg.locations.length === 2,
     dress_code: Array.isArray(cfg.dress_code) && cfg.dress_code[0]?.label === "Formal",
     lodging: Array.isArray(cfg.lodging) && cfg.lodging.length === 2,
-    stay: asObject(cfg.stay).enabled === true && asObject(cfg.stay).checkin === "2027-06-08",
+    stay: asObject(cfg.stay).enabled === true && asObject(cfg.stay).checkin === "2027-06-03",
     trip: asObject(cfg.trip).enabled === true && asObject(cfg.trip).origins?.length === 4,
     registry:
       asObject(cfg.registry).allow_custom === true &&

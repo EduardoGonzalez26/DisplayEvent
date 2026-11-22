@@ -5,7 +5,8 @@ import DateRangePicker from "./DateRangePicker.jsx";
 import { SearchButton, SearchMeta, rangeLabel, dayMonth } from "./SearchCta.jsx";
 import { buildModeLinks, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 
-const DEFAULT_DATE_FROM = "2027-06-08";
+// Fechas por defecto de los buscadores (3–12 jun); mandan sobre las del evento.
+const DEFAULT_DATE_FROM = "2027-06-03";
 const DEFAULT_DATE_TO = "2027-06-12";
 const DEFAULT_INTRO =
   "Si venís desde México, aquí tenéis las mejores opciones para llegar a Granada. Elegid vuestra ciudad de salida y las fechas: los buscadores se actualizan solos.";
@@ -104,10 +105,10 @@ export default function TravelSection({ cfg }) {
 
   const [origin, setOrigin] = useState(() => origins[0]?.code || "MEX");
   const [dateFrom, setDateFrom] = useState(
-    () => String(trip.date_from || "").trim() || DEFAULT_DATE_FROM
+    () => DEFAULT_DATE_FROM
   );
   const [dateTo, setDateTo] = useState(
-    () => String(trip.date_to || "").trim() || DEFAULT_DATE_TO
+    () => DEFAULT_DATE_TO
   );
 
   const modes = trip.modes || {};

@@ -12,7 +12,9 @@ import {
 
 const DEFAULT_INTRO =
   "Granada se disfruta sin prisa. Les recomendamos el Albaicín bajo y sus alrededores, a un paseo de la iglesia y del Carmen. Aquí tienen nuestros hoteles favoritos y buscadores para encontrar más opciones.";
-const DEFAULT_CHECKIN = "2027-06-08";
+// Fechas por defecto de los buscadores (decisión de los novios: 3–12 jun);
+// mandan sobre las que tenga el evento.
+const DEFAULT_CHECKIN = "2027-06-03";
 const DEFAULT_CHECKOUT = "2027-06-12";
 // Zona sugerida (fija en la plantilla): Albaicín bajo, de San Nicolás a
 // Carrera del Darro / San Pedro y hasta la Cuesta del Chapiz. Es la que
@@ -98,10 +100,10 @@ function StayGroup({ title, icon, children }) {
 export default function StaySection({ cfg }) {
   const stay = cfg?.stay || {};
   const [checkin, setCheckin] = useState(
-    () => String(stay.checkin || "").trim() || DEFAULT_CHECKIN
+    () => DEFAULT_CHECKIN
   );
   const [checkout, setCheckout] = useState(
-    () => String(stay.checkout || "").trim() || DEFAULT_CHECKOUT
+    () => DEFAULT_CHECKOUT
   );
 
   if (!stay.enabled) return null;
