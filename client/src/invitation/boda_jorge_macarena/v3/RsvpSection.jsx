@@ -396,8 +396,29 @@ export default function RsvpSection({ rsvp }) {
     return autoState === "error" ? null : "saving";
   };
 
-  const setAnswer = (id, value) =>
+  // Edades de mayor a menor (Adulto primero) y Adulto por defecto.
+  const orderedRanges = [...ageRangesList].sort(
+    (a, b) => (Number(b?.min) || 0) - (Number(a?.min) || 0)
+  );
+  const defaultRangeId = orderedRanges[0] ? String(orderedRanges[0].id) : "";
+
+  // "Sí asistiré" despliega los detalles ya contestados (Adulto, sin
+  // alergias), así queda completo y se guarda al momento; si cambian algo,
+  // se vuelve a guardar.
+  const setAnswer = (id, value) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
+    if (value !== "yes") return;
+    setAllergies((prev) =>
+      typeof prev[id] === "boolean" ? prev : { ...prev, [id]: false }
+    );
+    if (defaultRangeId) {
+      setAgeSelections((prev) => {
+        const current = String(prev[id] || "");
+        const valid = ageRangesList.some((range) => String(range.id) === current);
+        return valid ? prev : { ...prev, [id]: defaultRangeId };
+      });
+    }
+  };
   const setAllergy = (id, value) =>
     setAllergies((prev) => ({ ...prev, [id]: value }));
   const setAllergyTextFor = (id, value) =>
@@ -649,7 +670,7 @@ export default function RsvpSection({ rsvp }) {
                         aria-pressed={answers[guest.id] === "yes"}
                         onClick={() => setAnswer(guest.id, "yes")}
                       >
-                        Sí asistirá
+                        Sí asistiré
                       </button>
                       <button
                         type="button"
@@ -657,7 +678,7 @@ export default function RsvpSection({ rsvp }) {
                         aria-pressed={answers[guest.id] === "no"}
                         onClick={() => setAnswer(guest.id, "no")}
                       >
-                        No asistirá
+                        No asistiré
                       </button>
                     </div>
                     {answers[guest.id] === "yes" ? (
@@ -670,7 +691,7 @@ export default function RsvpSection({ rsvp }) {
                               role="radiogroup"
                               aria-label={`Rango de edad de ${guest.name}`}
                             >
-                              {ageRangesList.map((range) => {
+                              {orderedRanges.map((range) => {
                                 const selected =
                                   String(ageSelections[guest.id] || "") ===
                                   String(range.id);

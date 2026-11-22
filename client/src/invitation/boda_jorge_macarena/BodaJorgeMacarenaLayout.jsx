@@ -172,7 +172,8 @@ function useStackedSheets(layoutKey) {
       }
       const scrollY = getScrollTop();
       const n = sheets.length;
-      const margin = vh * 0.5;
+      // Un viewport de antelación para preparar la capa de la hoja que viene.
+      const margin = vh;
 
       for (let i = 0; i < n; i++) {
         const s = sheets[i];
@@ -301,7 +302,8 @@ function StackCardBare({ id, zIndex, children }) {
         <div data-paper className="mjv3-paper algodon">
           <div data-shade className="mjv3-shade" aria-hidden="true" />
           <NazariFrame />
-          <div data-rv={id} className="mjv3-sheet-content mjv3-sheet-content--bare">
+          {/* Cierre: visible desde el inicio, sin animación de entrada. */}
+          <div className="mjv3-sheet-content mjv3-sheet-content--bare rv-seen">
             {children}
           </div>
         </div>

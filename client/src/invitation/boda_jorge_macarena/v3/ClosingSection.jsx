@@ -21,6 +21,7 @@ export default function ClosingSection({ event, cfg }) {
           alt="Macarena y Jorge en la Mezquita de Córdoba"
           ratio="3 / 4"
           rotate={-0.98}
+          still
         />
       </div>
       <p className="mjv3-closing-phrase">

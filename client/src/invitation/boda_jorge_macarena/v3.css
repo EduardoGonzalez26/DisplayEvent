@@ -453,10 +453,16 @@ html.de-envelope-fade {
     inset 0 0 90px rgba(110, 105, 98, 0.07);
 }
 
-/* Capa de GPU solo para las hojas cercanas (`data-near`, lo marca el motor
-   medio viewport antes de que entren), en todos los dispositivos. Doce capas
-   grandes con textura a la vez agotan la memoria y el navegador acababa
-   mostrando hojas a medio pintar (se veía la de abajo a través). */
+/* Capas de GPU de las hojas:
+   - Escritorio: todas las hojas con capa siempre (como el motor original).
+     Crear la capa justo antes de entrar no daba tiempo a pintarla en hojas
+     tan altas como Regalo/Cierre y se veía la de abajo (parpadeo).
+   - Móvil/táctil (más abajo): solo las cercanas (`data-near`, un viewport
+     antes de entrar) para no agotar la memoria del teléfono. */
+.mjv3-paper {
+  will-change: transform;
+}
+
 .mjv3-paper[data-near] {
   will-change: transform;
 }
@@ -3623,12 +3629,6 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
 }
 .mjv3-cover-content.is-revealed [data-foto].visto .mj-hatch i:nth-child(4) {
   animation-delay: 1.3s;
-}
-
-/* Contenido de las hojas cercanas: capa preparada antes de entrar, para
-   que su aparición (opacidad/posición) no se pinte en el último momento. */
-.mjv3-paper[data-near] > .mjv3-sheet-content {
-  will-change: opacity, transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

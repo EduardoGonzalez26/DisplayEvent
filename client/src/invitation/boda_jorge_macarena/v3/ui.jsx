@@ -149,14 +149,20 @@ export function Drawing({
   className = "",
   style,
   children,
+  still = false,
 }) {
   if (!src) return null;
   const mobileSrc = mobileDrawingSrc(src);
   return (
     <div
       className={className}
-      data-foto="1"
-      style={{ "--r": `${rotate}deg`, ...style }}
+      data-foto={still ? undefined : "1"}
+      style={{
+        "--r": `${rotate}deg`,
+        // Fija (sin animación de entrada): conserva la ligera inclinación.
+        ...(still ? { transform: `rotate(${rotate}deg)` } : null),
+        ...style,
+      }}
     >
       <div
         role="img"
@@ -172,12 +178,14 @@ export function Drawing({
       </div>
       {/* Trazos que "dibujan" la foto: tiras de papel que se apartan
           (transform = compositor, sin repintar en cada frame). */}
-      <span className="mj-hatch" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
+      {still ? null : (
+        <span className="mj-hatch" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+      )}
     </div>
   );
 }
