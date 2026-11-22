@@ -46,7 +46,6 @@ function hotelPhoto(name) {
 const DEFAULT_CARDS = [
   { id: "booking", platform: "booking", title: "Booking.com", description: "Hoteles, apartamentos y casas en el Albaicín y alrededores.", url: "", auto: true },
   { id: "airbnb", platform: "airbnb", title: "Airbnb", description: "Alojamientos completos y habitaciones en Granada.", url: "", auto: true },
-  { id: "trivago", platform: "trivago", title: "Trivago", description: "Compara precios de hoteles en Granada.", url: "", auto: true },
   { id: "google_hotels", platform: "google_hotels", title: "Google Hotels", description: "Busca hoteles y compara opciones cerca de la zona.", url: "", auto: true },
 ];
 
@@ -110,8 +109,10 @@ export default function StaySection({ cfg }) {
     .filter((item) => item && (item.name || item.note))
     .slice(0, 2);
   const hotels = lodging.length ? lodging : DEFAULT_LODGING;
-  const cards =
-    Array.isArray(stay.cards) && stay.cards.length ? stay.cards : DEFAULT_CARDS;
+  // Trivago fuera: no permite llevar a la zona sugerida.
+  const cards = (
+    Array.isArray(stay.cards) && stay.cards.length ? stay.cards : DEFAULT_CARDS
+  ).filter((card) => String(card?.platform || card?.id || "").toLowerCase() !== "trivago");
   const zone = SUGGESTED_ZONE;
   const quote = String(stay.quote || "").trim() || DEFAULT_STAY_QUOTE;
   const quoteAuthor =

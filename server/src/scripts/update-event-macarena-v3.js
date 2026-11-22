@@ -130,14 +130,6 @@ const STAY = {
       auto: true,
     },
     {
-      id: "trivago",
-      platform: "trivago",
-      title: "Trivago",
-      description: "Compara precios de hoteles en Granada.",
-      url: "",
-      auto: true,
-    },
-    {
       id: "google_hotels",
       platform: "google_hotels",
       title: "Google Hotels",
