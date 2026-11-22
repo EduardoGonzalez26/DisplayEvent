@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Drawing, Eyebrow, OrnamentRule } from "./index.js";
-import { V3 } from "./assets.js";
+import { V3, v3Asset } from "./assets.js";
 import { buildStayUrl, safeHttpUrl } from "../../../wedding/stayTravelLinks.js";
 import {
   DEFAULT_LODGING,
@@ -14,6 +14,18 @@ const DEFAULT_CHECKIN = "2027-06-08";
 const DEFAULT_CHECKOUT = "2027-06-12";
 const ALBAICIN_MAPS =
   "https://www.google.com/maps/search/?api=1&query=Albaic%C3%ADn%2C%20Granada";
+
+// Fotos de los hoteles recomendados, por nombre (el JSON del evento no
+// guarda imagen por hotel).
+const HOTEL_PHOTOS = [
+  { match: /alhambra\s+palace/i, file: "hotel-alhambra-palace.webp", position: "50% 38%" },
+  { match: /parador/i, file: "hotel-parador.webp", position: "50% 45%" },
+];
+
+function hotelPhoto(name) {
+  const found = HOTEL_PHOTOS.find((item) => item.match.test(String(name || "")));
+  return found ? { src: v3Asset(found.file), position: found.position } : null;
+}
 
 const DEFAULT_CARDS = [
   { id: "booking", platform: "booking", title: "Booking.com", description: "Hoteles, apartamentos y casas en el Albaicín y alrededores.", url: "", auto: true },
@@ -111,8 +123,19 @@ export default function StaySection({ cfg }) {
           <div className="mjv3-hotel-grid">
             {hotels.map((hotel, index) => {
               const href = hotelLink(hotel);
+              const photo = hotelPhoto(hotel.name);
               const content = (
                 <>
+                  {photo ? (
+                    <img
+                      className="mjv3-hotel-photo"
+                      src={photo.src}
+                      alt={hotel.name || "Hotel recomendado"}
+                      loading="lazy"
+                      decoding="async"
+                      style={{ objectPosition: photo.position }}
+                    />
+                  ) : null}
                   <span className="mjv3-hotel-label">Hotel recomendado</span>
                   <span className="mjv3-hotel-name">
                     {hotel.name || `Hotel ${index + 1}`}

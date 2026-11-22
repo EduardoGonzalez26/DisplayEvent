@@ -1753,6 +1753,16 @@ input[type="date"].mjv3-field::-webkit-date-and-time-value {
   text-align: left;
 }
 
+.mjv3-hotel-photo {
+  display: block;
+  width: calc(100% + 36px);
+  max-width: none;
+  margin: -16px -18px 4px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #eceae6;
+}
+
 .mjv3-hotel-label {
   font-family: var(--mj-label);
   font-stretch: 62.5%;
